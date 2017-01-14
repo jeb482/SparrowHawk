@@ -11,7 +11,8 @@ between January 14 and January 16, 2017, barring unknowns and risks.
 Checklist for SparrowHawk
 =========================
 
-- [ ] Rhino Plugin (Brep & Rhino Plugin)
+- [x] Rhino Plugin (Brep & Rhino Plugin)
+- [ ] Rhino-VR communication
 - [ ] OpenVr (OpenVr from VisualizerVr)
 - [ ] Control loop (VisualizerVr)
 - [ ] OpenGl (glad from Nanogui)
