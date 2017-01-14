@@ -12,7 +12,7 @@ Checklist for SparrowHawk
 =========================
 
 - [x] Rhino Plugin (Brep & Rhino Plugin)
-- [ ] Rhino-VR communication
+- [x] Rhino-VR communication
 - [ ] OpenVr (OpenVr from VisualizerVr)
 - [ ] Control loop (VisualizerVr)
 - [ ] OpenGl (glad from Nanogui)
@@ -24,3 +24,9 @@ Checklist for SparrowHawk
 - [ ] Interaction framework (Interaction and VisualizerVr)
 - [ ] Materials (Material)
 - [ ] Vector Math Library (Eigen from Nanogui)
+
+
+Setup notes
+===========
+*Before running or debugging the plugin, make sure to get the .dll from
+openvr/bin/win64/openvr.dll and put it in the SparrowHawk bin directory.

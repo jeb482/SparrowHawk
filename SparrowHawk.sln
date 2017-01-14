@@ -7,11 +7,14 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SparrowHawk", "src\SparrowH
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		AppDebug64|Any CPU = AppDebug64|Any CPU
 		Debug32|Any CPU = Debug32|Any CPU
 		Debug64|Any CPU = Debug64|Any CPU
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{3E46E3C0-0DF4-4C9D-AF60-8225AE191B76}.AppDebug64|Any CPU.ActiveCfg = AppDebug64|Any CPU
+		{3E46E3C0-0DF4-4C9D-AF60-8225AE191B76}.AppDebug64|Any CPU.Build.0 = AppDebug64|Any CPU
 		{3E46E3C0-0DF4-4C9D-AF60-8225AE191B76}.Debug32|Any CPU.ActiveCfg = Debug32|Any CPU
 		{3E46E3C0-0DF4-4C9D-AF60-8225AE191B76}.Debug32|Any CPU.Build.0 = Debug32|Any CPU
 		{3E46E3C0-0DF4-4C9D-AF60-8225AE191B76}.Debug64|Any CPU.ActiveCfg = Debug64|Any CPU
