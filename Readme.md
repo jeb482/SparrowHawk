@@ -28,5 +28,5 @@ Checklist for SparrowHawk
 
 Setup notes
 ===========
-*Before running or debugging the plugin, make sure to get the .dll from
+* Before running or debugging the plugin, make sure to get the .dll from
 openvr/bin/win64/openvr.dll and put it in the SparrowHawk bin directory.
