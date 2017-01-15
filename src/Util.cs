@@ -5,6 +5,16 @@ using System.Text;
 
 namespace SparrowHawk
 {
+
+    struct FramebufferDesc
+    {
+        public int depthBufferId;
+        public int renderTextureId;
+        public int renderFramebufferId;
+        public int resolveTextureId;
+        public int resolveFramebufferId;
+    }
+
     static class Util
     {
         public static void WriteLine(Rhino.RhinoDoc doc, String str)
