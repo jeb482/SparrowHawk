@@ -5,7 +5,7 @@ using System.Text;
 
 namespace SparrowHawk.Geometry
 {
-    class Geometry
+    public class Geometry
     {
     }
 }

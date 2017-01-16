@@ -3,7 +3,7 @@ using Valve.VR;
 
 namespace SparrowHawk
 {
-    class VrGame
+    public class VrGame
     {
         CVRSystem mHMD;
         CVRRenderModels mRenderModels;

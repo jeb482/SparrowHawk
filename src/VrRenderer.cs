@@ -8,7 +8,7 @@ using OpenTK;
 
 namespace SparrowHawk
 {
-    struct FramebufferDesc
+    public struct FramebufferDesc
     {
         public int depthBufferId;
         public int renderTextureId;
@@ -17,7 +17,7 @@ namespace SparrowHawk
         public int resolveFramebufferId;
     }
 
-    class VrRenderer
+    public class VrRenderer
     {
         uint vrRenderWidth = 0;
         uint vrRenderHeight = 0;

@@ -8,7 +8,7 @@ namespace SparrowHawk
 
 
 
-    static class Util
+    public static class Util
     {
         public static void WriteLine(Rhino.RhinoDoc doc, String str)
         {
