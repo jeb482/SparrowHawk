@@ -11,8 +11,6 @@ namespace SparrowHawk
         String mStrDriver = "No Driver";
 	    String mStrDisplay = "No Display";
         String mWindowTitle;
-        float mNearClip = 0.1f;
-        float mFarClip = 30.0f;
         uint mWindowWidth = 1280;
         uint mWindowHeight = 720;
 

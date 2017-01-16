@@ -6,14 +6,7 @@ using System.Text;
 namespace SparrowHawk
 {
 
-    struct FramebufferDesc
-    {
-        public int depthBufferId;
-        public int renderTextureId;
-        public int renderFramebufferId;
-        public int resolveTextureId;
-        public int resolveFramebufferId;
-    }
+
 
     static class Util
     {
@@ -36,6 +29,22 @@ namespace SparrowHawk
             System.Text.StringBuilder pchBuffer = new System.Text.StringBuilder();
             unRequiredBufferLen = Hmd.GetStringTrackedDeviceProperty(unDevice, prop, pchBuffer, unRequiredBufferLen, ref eError);
             return pchBuffer.ToString();
+        }
+
+        public static OpenTK.Matrix4 steamVRMatrixToMatrix4(Valve.VR.HmdMatrix44_t M)
+        {
+           return new OpenTK.Matrix4(M.m0,  M.m1,  M.m2,  M.m3,
+                                     M.m4,  M.m5,  M.m6,  M.m7,
+                                     M.m8,  M.m9,  M.m10, M.m11, 
+                                     M.m12, M.m13, M.m14, M.m15);
+        }
+
+        public static OpenTK.Matrix4 steamVRMatrixToMatrix4(Valve.VR.HmdMatrix34_t M)
+        {
+            return new OpenTK.Matrix4(M.m0, M.m1, M.m2,  M.m3,
+                                      M.m4, M.m5, M.m6,  M.m7,
+                                      M.m8, M.m9, M.m10, M.m11,
+                                         0,    0,     0,     1);
         }
     }
 }

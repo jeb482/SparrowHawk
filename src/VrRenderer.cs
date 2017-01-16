@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 
 using OpenTK.Graphics.OpenGL4;
+using OpenTK;
 
 namespace SparrowHawk
 {
@@ -18,12 +19,19 @@ namespace SparrowHawk
 
     class VrRenderer
     {
+        uint vrRenderWidth = 0;
+        uint vrRenderHeight = 0;
+        float mNearClip = 0.1f;
+        float mFarClip = 30.0f;
+        FramebufferDesc leftEyeDesc;
+        FramebufferDesc rightEyeDesc;
+
         /**
          * Generates a framebuffer object on the GPU. Taken directly from the OpenGL demo
          * that comes with the openvr project.
          * 
          */
-        public bool CreateFrameBuffer(int width, int height, out FramebufferDesc framebufferDesc)
+        bool CreateFrameBuffer(int width, int height, out FramebufferDesc framebufferDesc)
         {
             framebufferDesc = new FramebufferDesc();
             framebufferDesc.renderFramebufferId = GL.GenFramebuffer();
@@ -56,6 +64,39 @@ namespace SparrowHawk
             GL.BindFramebuffer(FramebufferTarget.Framebuffer, 0);
             return true;
         }
+
+        bool SetupStereoRenderTargets(ref Valve.VR.CVRSystem HMD)
+        {
+            if (HMD == null)
+                return false;
+            HMD.GetRecommendedRenderTargetSize(ref vrRenderWidth, ref vrRenderHeight);
+            CreateFrameBuffer((int) vrRenderWidth, (int) vrRenderHeight, out leftEyeDesc);
+            CreateFrameBuffer((int) vrRenderWidth, (int) vrRenderHeight, out rightEyeDesc);
+            return true;
+        }
+
+        // TODO: Handle this shit.
+        bool SetupDistortion()
+        {
+            return true;
+        }
+
+        Matrix4 GetHMDMatrixProjectionEye(ref Valve.VR.CVRSystem HMD, Valve.VR.EVREye eye)
+        {
+            if (HMD == null)
+                return new Matrix4();
+            Valve.VR.HmdMatrix44_t M = HMD.GetProjectionMatrix(eye, mNearClip, mFarClip);
+            return Util.steamVRMatrixToMatrix4(M);
+        }
+
+        Matrix4 GetHMDMatrixPoseEye(ref Valve.VR.CVRSystem HMD, Valve.VR.EVREye eye)
+        {
+            if (HMD == null)
+                return new Matrix4();
+            Valve.VR.HmdMatrix34_t M = HMD.GetEyeToHeadTransform(eye);
+            return Util.steamVRMatrixToMatrix4(M).Inverted();
+        }
+
 
     }
 }
