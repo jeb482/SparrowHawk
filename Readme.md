@@ -13,9 +13,9 @@ Checklist for SparrowHawk
 
 - [x] Rhino Plugin (Brep & Rhino Plugin)
 - [x] Rhino-VR communication
-- [ ] OpenVr (OpenVr from VisualizerVr)
+- [x] OpenVr (OpenVr from VisualizerVr)
 - [ ] Control loop (VisualizerVr)
-- [ ] OpenGl (glad from Nanogui)
+- [x] OpenGl (glad from Nanogui)
 - [ ] Windowing system (GLFW from Nanogui)
 - [ ] OVRVision Camera (VisualizerVr)
 - [ ] Encoder (VisualizerVr and Encoder)
@@ -23,7 +23,7 @@ Checklist for SparrowHawk
 - [ ] Ray Tracing (Scene and Geometry)
 - [ ] Interaction framework (Interaction and VisualizerVr)
 - [ ] Materials (Material)
-- [ ] Vector Math Library (Eigen from Nanogui)
+- [x] Vector Math Library (Eigen from Nanogui)
 
 
 Setup notes
