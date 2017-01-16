@@ -7,6 +7,7 @@ namespace SparrowHawk
     {
         CVRSystem mHMD;
         CVRRenderModels mRenderModels;
+        Scene mScene;
         VrRenderer mRenderer;
         Rhino.RhinoDoc mDoc;
         String mStrDriver = "No Driver";
@@ -55,13 +56,8 @@ namespace SparrowHawk
             // set screen title
             // make glfwContextCurrent
 
-            mRenderer = new VrRenderer(ref mHMD, ref mWindow);
-            //if (!initCompositor())
-            //{
-            //    Util.WriteLine(mDoc, "Failed to initialize the Compositor.");
-            //    return false; 
-            //}
-            //Util.WriteLine(mDoc, "Compositor Initialized.");
+            mRenderer = new VrRenderer(ref mHMD, ref mWindow, ref mScene);
+        
 
             // build shaders? Maybe in renderer!
             // setup texture maps is commented out.

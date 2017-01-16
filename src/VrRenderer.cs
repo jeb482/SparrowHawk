@@ -27,14 +27,15 @@ namespace SparrowHawk
         FramebufferDesc rightEyeDesc;
         GameWindow mWindow;
         Valve.VR.CVRSystem mHMD;
+        Scene mScene;
 
-        public VrRenderer(ref Valve.VR.CVRSystem HMD, ref GameWindow window)
+        public VrRenderer(ref Valve.VR.CVRSystem HMD, ref GameWindow window, ref Scene scene)
         {
             mHMD = HMD;
             mWindow = window;
+            mScene = scene;
             SetupStereoRenderTargets(ref mHMD);
             SetupDistortion();
-    
         }
 
         /**
@@ -118,11 +119,50 @@ namespace SparrowHawk
 
 
 
-        // TODO: RenderScene
+        protected void RenderScene(Valve.VR.EVREye eye)
+        {
+
+        }
+
         // TODO: CreateShaderProgram
         // TODO: specifyScreenVertexAttributes
-        // TODO: RenderStereoTargets
-        // TODO: RenderDistortion
+
+
+        protected void RenderStereoTargets()
+        {
+            GL.Enable(EnableCap.Multisample);
+            // some ovrcamera stuff here
+
+            // Left Eye. Notably the original openvr code has some lame code duplication here.
+            GL.BindFramebuffer(FramebufferTarget.Framebuffer, leftEyeDesc.renderFramebufferId);
+            GL.Viewport(0, 0, (int) vrRenderWidth, (int) vrRenderHeight);
+            RenderScene(Valve.VR.EVREye.Eye_Left);
+            GL.BindFramebuffer(FramebufferTarget.Framebuffer, 0);
+            GL.Disable(EnableCap.Multisample);
+
+            // BLit Left Eye to Resolve buffer
+            GL.BindFramebuffer(FramebufferTarget.ReadFramebuffer, leftEyeDesc.renderFramebufferId);
+            GL.BindFramebuffer(FramebufferTarget.DrawFramebuffer, leftEyeDesc.resolveFramebufferId);
+            GL.BlitFramebuffer(0, 0, (int) vrRenderWidth, (int) vrRenderHeight, 0, 0, (int) vrRenderWidth, (int) vrRenderHeight, ClearBufferMask.ColorBufferBit, BlitFramebufferFilter.Linear);
+            GL.BindFramebuffer(FramebufferTarget.ReadFramebuffer, 0);
+            GL.BindFramebuffer(FramebufferTarget.DrawFramebuffer, 0);
+
+            // Right Eye.
+            GL.BindFramebuffer(FramebufferTarget.Framebuffer, rightEyeDesc.renderFramebufferId);
+            GL.Viewport(0, 0, (int)vrRenderWidth, (int)vrRenderHeight);
+            RenderScene(Valve.VR.EVREye.Eye_Right);
+            GL.BindFramebuffer(FramebufferTarget.Framebuffer, 0);
+            GL.Disable(EnableCap.Multisample);
+
+            // BLit Right Eye to Resolve buffer
+            GL.BindFramebuffer(FramebufferTarget.ReadFramebuffer, rightEyeDesc.renderFramebufferId);
+            GL.BindFramebuffer(FramebufferTarget.DrawFramebuffer, rightEyeDesc.resolveFramebufferId);
+            GL.BlitFramebuffer(0, 0, (int) vrRenderWidth, (int) vrRenderHeight, 0, 0, (int) vrRenderWidth, (int) vrRenderHeight, ClearBufferMask.ColorBufferBit, BlitFramebufferFilter.Linear);
+            GL.BindFramebuffer(FramebufferTarget.ReadFramebuffer, 0);
+            GL.BindFramebuffer(FramebufferTarget.DrawFramebuffer, 0);
+        }
+        
+            // TODO: RenderDistortion
         
         // TODO: RenderFrame
         public void renderFrame()
@@ -131,7 +171,7 @@ namespace SparrowHawk
             {
                 mWindow.MakeCurrent();
                 // DrawControllers
-                //RenderStereoTargets();
+                RenderStereoTargets();
                 //RenderDistortion();
 
                 Valve.VR.Texture_t leftEyeTexture, rightEyeTexture;
@@ -145,6 +185,9 @@ namespace SparrowHawk
                 pBounds.uMax = 1; pBounds.uMin = 0; pBounds.vMax = 1; pBounds.uMin = 0;
                 Valve.VR.OpenVR.Compositor.Submit(Valve.VR.EVREye.Eye_Left, ref leftEyeTexture, ref pBounds, Valve.VR.EVRSubmitFlags.Submit_Default); // TODO: There's a distortion already applied flag.
                 Valve.VR.OpenVR.Compositor.Submit(Valve.VR.EVREye.Eye_Right, ref leftEyeTexture, ref pBounds, Valve.VR.EVRSubmitFlags.Submit_Default);
+
+                GL.Finish();
+                mWindow.SwapBuffers();
             }
         }
 
