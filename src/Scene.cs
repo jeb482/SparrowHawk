@@ -30,7 +30,7 @@ namespace SparrowHawk
             material = null;
         }
 
-        void render(ref Matrix4 vp, Matrix4 model) {
+        public void render(ref Matrix4 vp, Matrix4 model) {
             if (geometry != null && material != null)
             {
                 model *= transform;
@@ -42,7 +42,7 @@ namespace SparrowHawk
             }
         }
 
-        Matrix4 accumulateTransform()
+        public Matrix4 accumulateTransform()
         {
             if (parent == null)
                 return transform;
@@ -50,7 +50,7 @@ namespace SparrowHawk
         }
 
         // TODO: Actually implement raycasting!
-        bool traceRay()
+        public bool traceRay()
         {
             return false;
         }
@@ -74,8 +74,8 @@ namespace SparrowHawk
         public bool useOvrVision;
         public SceneNode staticGeometry = new SceneNode("Static Scene");
         public SceneNode tableGeometry = new SceneNode("Encoder-Affected Geometry");
-        public SceneNode rightControllerNode = new SceneNode("Right Controller Node");
-        public SceneNode leftControllerNode = new SceneNode("Left Controller Node");
+        public SceneNode leftControllerNode = new SceneNode("Right Controller Node");
+        public SceneNode rightControllerNode = new SceneNode("Left Controller Node");
         // tracked devices
 
         // For rhino positioning
@@ -87,6 +87,21 @@ namespace SparrowHawk
         public Scene(Rhino.RhinoDoc doc)
         {
             rhinoDoc = doc;
+        }
+
+        public void render(ref Matrix4 vp)
+        {
+            Matrix4 m = new Matrix4(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1);
+            staticGeometry.render(ref vp, m);
+            tableGeometry.render(ref vp, m);
+            leftControllerNode.render(ref vp, m);
+            rightControllerNode.render(ref vp, m);
+        }
+
+        // Implement traceray
+        public bool traceRay()
+        {
+            return false;
         }
     }
 }
