@@ -7,10 +7,12 @@ namespace SparrowHawk
     {
         CVRSystem mHMD;
         CVRRenderModels mRenderModels;
+        VrRenderer mRenderer;
         Rhino.RhinoDoc mDoc;
         String mStrDriver = "No Driver";
 	    String mStrDisplay = "No Display";
         String mWindowTitle;
+        OpenTK.GameWindow mWindow;
         uint mWindowWidth = 1280;
         uint mWindowHeight = 720;
 
@@ -44,19 +46,22 @@ namespace SparrowHawk
             // mRenderModels = OpenVR.GetGenericInterface(OpenVR.IVRRenderModels_Version, ref eError);
 
             // Window Setup Info
-            mStrDriver = Util.GetTrackedDeviceString(ref mHMD, OpenVR.k_unTrackedDeviceIndex_Hmd, ETrackedDeviceProperty.Prop_IconPathName_String);
+            mStrDriver = Util.GetTrackedDeviceString(ref mHMD, OpenVR.k_unTrackedDeviceIndex_Hmd, ETrackedDeviceProperty.Prop_TrackingSystemName_String);
             mStrDisplay = Util.GetTrackedDeviceString(ref mHMD, OpenVR.k_unTrackedDeviceIndex_Hmd, ETrackedDeviceProperty.Prop_SerialNumber_String);
             mWindowTitle = "SparrowHawk - " + mStrDriver + " " + mStrDisplay;
-            
+            mWindow.Title = mWindowTitle;
+
+
             // set screen title
             // make glfwContextCurrent
 
-            if (!initCompositor())
-            {
-                Util.WriteLine(mDoc, "Failed to initialize the Compositor.");
-                return false; 
-            }
-            Util.WriteLine(mDoc, "Compositor Initialized.");
+            mRenderer = new VrRenderer(ref mHMD, ref mWindow);
+            //if (!initCompositor())
+            //{
+            //    Util.WriteLine(mDoc, "Failed to initialize the Compositor.");
+            //    return false; 
+            //}
+            //Util.WriteLine(mDoc, "Compositor Initialized.");
 
             // build shaders? Maybe in renderer!
             // setup texture maps is commented out.
@@ -73,19 +78,29 @@ namespace SparrowHawk
         }
 
 
-        public bool initWindow()
+        // TODO: Not sure if this works or not. Also this should probs be in VrGame
+        bool initWindow()
         {
-            return true;
+            try
+            {
+                mWindow = new OpenTK.GameWindow((int) mWindowWidth, (int) mWindowHeight);
+                mWindow.Visible = true;
+                return true;
+            }
+            catch (Exception)
+            {
+                return false;
+            }
         }
 
-        public bool initCompositor()
-        {
-            return true;
-        }
 
         public void runMainLoop()
         {
-
+            // Not sure if this is right. How do we close it?
+            while (true)
+            {
+                mRenderer.renderFrame();
+            }
         }
 
 

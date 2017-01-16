@@ -25,6 +25,17 @@ namespace SparrowHawk
         float mFarClip = 30.0f;
         FramebufferDesc leftEyeDesc;
         FramebufferDesc rightEyeDesc;
+        GameWindow mWindow;
+        Valve.VR.CVRSystem mHMD;
+
+        public VrRenderer(ref Valve.VR.CVRSystem HMD, ref GameWindow window)
+        {
+            mHMD = HMD;
+            mWindow = window;
+            SetupStereoRenderTargets(ref mHMD);
+            SetupDistortion();
+    
+        }
 
         /**
          * Generates a framebuffer object on the GPU. Taken directly from the OpenGL demo
@@ -98,5 +109,45 @@ namespace SparrowHawk
         }
 
 
+
+
+        // TODO: Generate Shaders
+        void generateShaders()
+        {
+        }
+
+
+
+        // TODO: RenderScene
+        // TODO: CreateShaderProgram
+        // TODO: specifyScreenVertexAttributes
+        // TODO: RenderStereoTargets
+        // TODO: RenderDistortion
+        
+        // TODO: RenderFrame
+        public void renderFrame()
+        {
+            if (mHMD != null)
+            {
+                mWindow.MakeCurrent();
+                // DrawControllers
+                //RenderStereoTargets();
+                //RenderDistortion();
+
+                Valve.VR.Texture_t leftEyeTexture, rightEyeTexture;
+                leftEyeTexture.handle = new IntPtr(leftEyeDesc.resolveTextureId);
+                rightEyeTexture.handle = new IntPtr(rightEyeDesc.resolveTextureId);
+                leftEyeTexture.eType = Valve.VR.ETextureType.OpenGL;
+                rightEyeTexture.eType = Valve.VR.ETextureType.OpenGL;
+                leftEyeTexture.eColorSpace = Valve.VR.EColorSpace.Gamma;
+                rightEyeTexture.eColorSpace = Valve.VR.EColorSpace.Gamma;
+                Valve.VR.VRTextureBounds_t pBounds = new Valve.VR.VRTextureBounds_t();
+                pBounds.uMax = 1; pBounds.uMin = 0; pBounds.vMax = 1; pBounds.uMin = 0;
+                Valve.VR.OpenVR.Compositor.Submit(Valve.VR.EVREye.Eye_Left, ref leftEyeTexture, ref pBounds, Valve.VR.EVRSubmitFlags.Submit_Default); // TODO: There's a distortion already applied flag.
+                Valve.VR.OpenVR.Compositor.Submit(Valve.VR.EVREye.Eye_Right, ref leftEyeTexture, ref pBounds, Valve.VR.EVRSubmitFlags.Submit_Default);
+            }
+        }
+
+        // TODO: UpdateHMDMatrixPose
     }
 }
