@@ -18,6 +18,7 @@ Checklist for SparrowHawk
 - [x] OpenGl (glad from Nanogui)
 - [x] Windowing system (GLFW from Nanogui)
 - [x] Scene tree structure (Scene)
+- [x] GLShader framework (Nanogui)
 - [ ] OVRVision Camera (VisualizerVr)
 - [ ] Encoder (VisualizerVr and Encoder)
 - [ ] Mesh, line, curve framework (Geometry and VisualizerVr)
