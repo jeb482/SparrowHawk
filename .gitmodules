@@ -7,3 +7,6 @@
 [submodule "ext/STLdotNet"]
 	path = ext/STLdotNet
 	url = https://github.com/QuantumConcepts/STLdotNET.git
+[submodule "ext/ObjLoader"]
+	path = ext/ObjLoader
+	url = https://github.com/chrisjansson/ObjLoader.git

@@ -7,5 +7,6 @@ namespace SparrowHawk.Geometry
 {
     public class Geometry
     {
+
     }
 }

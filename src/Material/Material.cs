@@ -8,6 +8,6 @@ namespace SparrowHawk.Material
 {
     public abstract class Material
     {
-        public abstract void draw(Geometry.Geometry g, ref Matrix4 model, ref Matrix4 vp) 
-    };
+        public abstract void draw(ref Geometry.Geometry g, ref Matrix4 model, ref Matrix4 vp);
+    }
 }

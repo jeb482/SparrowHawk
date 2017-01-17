@@ -68,8 +68,12 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Material.cs" />
+    <Compile Include="Geometry\Geometry.cs" />
+    <Compile Include="GLShader.cs" />
+    <Compile Include="Material\Material.cs" />
+    <Compile Include="Material\RGBNormalMaterial.cs" />
     <Compile Include="openvr_api.cs" />
+    <Compile Include="Scene.cs" />
     <Compile Include="SparrowHawkCommand.cs" />
     <Compile Include="SparrowHawkPlugIn.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
