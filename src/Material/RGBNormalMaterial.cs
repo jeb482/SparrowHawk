@@ -7,21 +7,26 @@ using OpenTK;
 
 namespace SparrowHawk.Material
 {
-    class RGBNormalMaterial
+    class RGBNormalMaterial : Material
     {
         float mAlpha;
+        
 
-        RGBNormalMaterial(float alpha)
+        RGBNormalMaterial(float alpha, Rhino.RhinoDoc doc)
         {
             // Init Shader?
+            mShader = new GLShader(doc);
+            mShader.init("RGBNormal", ShaderSource.RGBNormalVertShader, ShaderSource.RGBNormalFragShader);
             mAlpha = alpha;
         }
 
-        public void draw(ref Geometry.Geometry g, ref Matrix4 model, ref Matrix4 vp)
+        override public void draw(ref Geometry.Geometry g, ref Matrix4 model, ref Matrix4 vp)
         {
             // bind shader
             GL.Enable(EnableCap.Blend);
             GL.BlendFunc(BlendingFactorSrc.SrcAlpha, BlendingFactorDest.OneMinusSrcAlpha);
+            mShader.uploadIndices(g.getIndices());
+            mShader.uploadAttrib("position", g.getGeometry());
             // upload indices
             // upload attribs
             // set uniforms
