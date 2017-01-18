@@ -30,8 +30,20 @@ namespace SparrowHawk
         int mVertexShader;
         int mFragmentShader;
         int mProgramShader;
+        public bool isInitialized = false;
         SortedDictionary<string, GLBuffer> mBufferObjects;
         Rhino.RhinoDoc mDoc = null;
+
+        public GLShader(Rhino.RhinoDoc doc)
+        {
+            mDoc = doc;
+            mBufferObjects = new SortedDictionary<string, GLBuffer>();
+        }
+
+        public void initFromFile(string name, string vertexFileName, string fragmentFileName)
+        {
+            throw new NotImplementedException();
+        }
 
         public bool init(string name, string vertexSource, string fragmentSource)
         {
@@ -53,10 +65,13 @@ namespace SparrowHawk
             GL.GetProgram(mProgramShader, GetProgramParameterName.LinkStatus, status);
             // if status !+ glTrue, let us know. 
 
+            isInitialized = true;
             return true;
         }
 
-        private static int createShaderHelper(ShaderType type, string name, string shaderSource)
+
+
+        private int createShaderHelper(ShaderType type, string name, string shaderSource)
         {
             if (shaderSource == "")
                 return 0;
@@ -68,8 +83,14 @@ namespace SparrowHawk
             int[] status = new int[1];
             GL.GetShader(id, ShaderParameter.CompileStatus, status);
 
-            //if (status[0] != 1)
-            //"Error while compiling shader.";
+            if (status[0] != 1)
+            {
+                Util.WriteLine(ref mDoc, "Error while compiling shader " + name + ".");
+                if (type == ShaderType.VertexShader)
+                    Util.WriteLine(ref mDoc, "Error in vertex shader.");
+                else if (type == ShaderType.FragmentShader)
+                    Util.WriteLine(ref mDoc, "Error in fragment shader.");
+            }
 
             return id;
         }
@@ -84,7 +105,7 @@ namespace SparrowHawk
         {
             int id = GL.GetAttribLocation(mProgramShader, name);
             if (id == -1 && warn)
-                Util.WriteLine(mDoc, mName + ": warning could not find attrib " + name);
+                Util.WriteLine(ref mDoc, mName + ": warning could not find attrib " + name);
             return id;
         }
 
@@ -92,7 +113,7 @@ namespace SparrowHawk
         {
             int id = GL.GetUniformLocation(mProgramShader, name);
             if (id == -1 && warn)
-                Util.WriteLine(mDoc, mName + ": warning could not find attrib " + name);
+                Util.WriteLine(ref mDoc, mName + ": warning could not find attrib " + name);
             return id;
         }
 
@@ -202,6 +223,8 @@ namespace SparrowHawk
             GL.DeleteProgram(mProgramShader);
             GL.DeleteShader(mVertexShader);
             GL.DeleteShader(mFragmentShader);
+             
+            isInitialized = false;
         }
     }
 }

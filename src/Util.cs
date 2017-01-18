@@ -10,7 +10,7 @@ namespace SparrowHawk
 
     public static class Util
     {
-        public static void WriteLine(Rhino.RhinoDoc doc, String str)
+        public static void WriteLine(ref Rhino.RhinoDoc doc, String str)
         {
             if (doc != null)
                 Rhino.RhinoApp.WriteLine(str);

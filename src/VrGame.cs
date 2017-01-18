@@ -1,6 +1,7 @@
 ﻿using System;
 using Valve.VR;
 
+
 namespace SparrowHawk
 {
     public class VrGame
@@ -21,7 +22,9 @@ namespace SparrowHawk
         {
             mDoc = doc;
             if (init())
-                Util.WriteLine(mDoc, "Initialization complete!");
+                Util.WriteLine(ref mDoc, "Initialization complete!");
+
+            Util.WriteLine(ref mDoc, "Directory: " + System.IO.Directory.GetCurrentDirectory());
           
 
         }
@@ -36,10 +39,10 @@ namespace SparrowHawk
             EVRInitError eError = EVRInitError.None;
             mHMD = OpenVR.Init(ref eError, EVRApplicationType.VRApplication_Scene);
             if (eError == EVRInitError.None)
-                Util.WriteLine(mDoc, "Booted VR System");
+                Util.WriteLine(ref mDoc, "Booted VR System");
             else
             {
-                Util.WriteLine(mDoc, "Failed to boot");
+                Util.WriteLine(ref mDoc, "Failed to boot");
                 return false;
             }
 
@@ -93,10 +96,10 @@ namespace SparrowHawk
         public void runMainLoop()
         {
             // Not sure if this is right. How do we close it?
-            while (true)
-            {
+         //   while (true)
+         //   {
                 mRenderer.renderFrame();
-            }
+         //   }
         }
 
 

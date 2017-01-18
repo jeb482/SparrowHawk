@@ -34,7 +34,7 @@ namespace SparrowHawk
             if (geometry != null && material != null)
             {
                 model *= transform;
-                material.draw(geometry, ref model, ref vp);
+                material.draw(ref geometry, ref model, ref vp);
             }
             foreach (SceneNode n in children)
             {
