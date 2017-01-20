@@ -72,6 +72,7 @@
     <Compile Include="GLShader.cs" />
     <Compile Include="Material\Material.cs" />
     <Compile Include="Material\RGBNormalMaterial.cs" />
+    <Compile Include="Material\ShaderSource.cs" />
     <Compile Include="openvr_api.cs" />
     <Compile Include="Scene.cs" />
     <Compile Include="SparrowHawkCommand.cs" />
@@ -87,6 +88,12 @@
     <None Include="packages.config" />
     <None Include="Shaders\RGBNormal.frag" />
     <None Include="Shaders\RGBNormal.vert" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\ext\ObjLoader\source\CjClutter.ObjLoader.Loader\CjClutter.ObjLoader.Loader.csproj">
+      <Project>{1fd37682-98d6-442f-8e15-646247c690dc}</Project>
+      <Name>CjClutter.ObjLoader.Loader</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

@@ -19,20 +19,18 @@ namespace SparrowHawk
 
     public class VrRenderer
     {
-        uint vrRenderWidth = 0;
-        uint vrRenderHeight = 0;
+        uint vrRenderWidth = 1280;
+        uint vrRenderHeight = 720;
         float mNearClip = 0.1f;
         float mFarClip = 30.0f;
         FramebufferDesc leftEyeDesc;
         FramebufferDesc rightEyeDesc;
-        GameWindow mWindow;
         Valve.VR.CVRSystem mHMD;
         Scene mScene;
 
-        public VrRenderer(ref Valve.VR.CVRSystem HMD, ref GameWindow window, ref Scene scene)
+        public VrRenderer(ref Valve.VR.CVRSystem HMD, ref Scene scene)
         {
             mHMD = HMD;
-            mWindow = window;
             mScene = scene;
             SetupStereoRenderTargets(ref mHMD);
             SetupDistortion();
@@ -119,9 +117,14 @@ namespace SparrowHawk
 
 
 
-        protected void RenderScene(Valve.VR.EVREye eye)
+        public void RenderScene(Valve.VR.EVREye eye)
         {
 
+            Matrix4 vp = Matrix4.CreatePerspectiveFieldOfView(1.2f, 1280f / 760, .01f, 30) * Matrix4.LookAt(new Vector3(-5, -5, -5), new Vector3(0, 0, 0), new Vector3(0, 1, 0));
+            GL.ClearColor(1,0,0,1);
+            GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
+            mScene.render(ref vp);
+            
         }
 
         // TODO: CreateShaderProgram
@@ -160,6 +163,9 @@ namespace SparrowHawk
             GL.BlitFramebuffer(0, 0, (int) vrRenderWidth, (int) vrRenderHeight, 0, 0, (int) vrRenderWidth, (int) vrRenderHeight, ClearBufferMask.ColorBufferBit, BlitFramebufferFilter.Linear);
             GL.BindFramebuffer(FramebufferTarget.ReadFramebuffer, 0);
             GL.BindFramebuffer(FramebufferTarget.DrawFramebuffer, 0);
+
+
+
         }
         
             // TODO: RenderDistortion
@@ -169,7 +175,6 @@ namespace SparrowHawk
         {
             if (mHMD != null)
             {
-                mWindow.MakeCurrent();
                 // DrawControllers
                 RenderStereoTargets();
                 //RenderDistortion();
@@ -187,7 +192,6 @@ namespace SparrowHawk
                 Valve.VR.OpenVR.Compositor.Submit(Valve.VR.EVREye.Eye_Right, ref leftEyeTexture, ref pBounds, Valve.VR.EVRSubmitFlags.Submit_Default);
 
                 GL.Finish();
-                mWindow.SwapBuffers();
             }
         }
 

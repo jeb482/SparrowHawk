@@ -62,7 +62,7 @@ namespace SparrowHawk
 
             GL.LinkProgram(mProgramShader);
             int[] status = new int[0];
-            GL.GetProgram(mProgramShader, GetProgramParameterName.LinkStatus, status);
+            //GL.GetProgram(mProgramShader, GetProgramParameterName.LinkStatus, status);
             // if status !+ glTrue, let us know. 
 
             isInitialized = true;
@@ -109,15 +109,15 @@ namespace SparrowHawk
             return id;
         }
 
-        public int uniform(string name, bool warn)
+        public int uniform(string name, bool warn = false)
         {
             int id = GL.GetUniformLocation(mProgramShader, name);
             if (id == -1 && warn)
-                Util.WriteLine(ref mDoc, mName + ": warning could not find attrib " + name);
+                Util.WriteLine(ref mDoc, mName + ": warning could not find uniform " + name);
             return id;
         }
 
-        public void uploadAttrib<T>(string name, int size, int dim, int compSize, VertexAttribPointerType glType, bool integral, ref T data, int version) where T : struct
+        public void uploadAttrib<T>(string name, int size, int dim, int compSize, VertexAttribPointerType glType, bool integral,  List<T> data, int version) where T : struct
         {
             int attribID = 0;
             if (name != "indices")
@@ -148,14 +148,15 @@ namespace SparrowHawk
             }
             // TODO: do I have to multiple by size?
             int totalSize = size * compSize;
+            T[] dataArray = data.ToArray();
 
             if (name == "indices") {
                 GL.BindBuffer(BufferTarget.ElementArrayBuffer, bufferID);
-                GL.BufferData(BufferTarget.ElementArrayBuffer, totalSize, ref data, BufferUsageHint.DynamicDraw);
+                GL.BufferData(BufferTarget.ElementArrayBuffer, totalSize, ref dataArray[0], BufferUsageHint.DynamicDraw);
             } else
             {
                 GL.BindBuffer(BufferTarget.ArrayBuffer, bufferID);
-                GL.BufferData(BufferTarget.ArrayBuffer, totalSize, ref data, BufferUsageHint.DynamicDraw);
+                GL.BufferData(BufferTarget.ArrayBuffer, totalSize, ref dataArray[0], BufferUsageHint.DynamicDraw);
                 if (size == 0)
                     GL.DisableVertexAttribArray(attribID);
                 else
@@ -165,6 +166,13 @@ namespace SparrowHawk
                 }
             }
         }
+
+        //void setUniform(string name)
+        //{
+        //    int blockIndex =  GL.GetUniformBlockIndex(mProgramShader, name);
+        //    GL.UniformBlockBinding(mProgramShader, blockIndex,  blockIndex,);
+            
+        //}
 
         void downloadAttrib<T>(string name, int size, int dim, int compSize, VertexAttribPointerType glType, ref T data) where T : struct
         {
@@ -220,9 +228,12 @@ namespace SparrowHawk
                 GL.DeleteVertexArray(mVAO);
             }
 
-            GL.DeleteProgram(mProgramShader);
-            GL.DeleteShader(mVertexShader);
-            GL.DeleteShader(mFragmentShader);
+            if (mProgramShader != 0)
+                GL.DeleteProgram(mProgramShader);
+            if (mVertexShader != 0)
+                GL.DeleteShader(mVertexShader);
+            if (mFragmentShader != 0)
+                GL.DeleteShader(mFragmentShader);
              
             isInitialized = false;
         }

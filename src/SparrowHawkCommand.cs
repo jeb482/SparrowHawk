@@ -5,6 +5,7 @@ using Rhino.Commands;
 using Rhino.Geometry;
 using Rhino.Input;
 using Rhino.Input.Custom;
+using System.Threading;
 
 namespace SparrowHawk
 {
@@ -36,7 +37,8 @@ namespace SparrowHawk
             // TODO: Launch only if not running.
             RhinoApp.WriteLine("The {0} command will initialize VR.", EnglishName);
             VrGame SparrowHawkGame = new VrGame(ref doc);
-            SparrowHawkGame.runMainLoop();
+            Thread windowThread = new Thread(() => SparrowHawkGame.Run());
+            windowThread.Start();
             return Result.Success;
         }
     }

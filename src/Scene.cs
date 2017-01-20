@@ -84,13 +84,15 @@ namespace SparrowHawk
         public Matrix4 platformRotation = new Matrix4(1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1);
         public Matrix4 vrToRobot = new Matrix4(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1);
 
-        public Scene(Rhino.RhinoDoc doc)
+        public Scene(ref Rhino.RhinoDoc doc)
         {
             rhinoDoc = doc;
         }
 
         public void render(ref Matrix4 vp)
         {
+            OpenTK.Graphics.OpenGL4.GL.ClearColor(0, 1, 1, 1);
+            OpenTK.Graphics.OpenGL4.GL.Clear(OpenTK.Graphics.OpenGL4.ClearBufferMask.ColorBufferBit | OpenTK.Graphics.OpenGL4.ClearBufferMask.DepthBufferBit);
             Matrix4 m = new Matrix4(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1);
             staticGeometry.render(ref vp, m);
             tableGeometry.render(ref vp, m);
