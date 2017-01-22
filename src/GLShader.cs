@@ -162,7 +162,7 @@ namespace SparrowHawk
                 else
                 {
                     GL.EnableVertexAttribArray(attribID);
-                    GL.VertexAttribPointer(attribID, dim, glType, integral, 0, 0);
+                   // GL.VertexAttribPointer(attribID);
                 }
             }
         }
@@ -212,7 +212,24 @@ namespace SparrowHawk
         {
             if (count == 0)
                 return;
+            ErrorCode error = GL.GetError();
             GL.DrawArrays(type, offset, count);
+            error = GL.GetError();
+        }
+
+        public void drawIndexed(PrimitiveType type, int offset, int count)
+        {
+            if (count == 0)
+                return;
+
+            switch (type)
+            {
+                case PrimitiveType.Triangles:
+                    offset *= 3; count *= 3; break;
+                case PrimitiveType.Lines:
+                    offset *= 2; count *= 2; break;
+            }
+           // GL.DrawElements(type, count, type, offset);
         }
 
         public void free()
