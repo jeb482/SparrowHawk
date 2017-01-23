@@ -91,8 +91,8 @@ namespace SparrowHawk
 
         public void render(ref Matrix4 vp)
         {
-            OpenTK.Graphics.OpenGL4.GL.ClearColor(0, 1, 1, 1);
-            OpenTK.Graphics.OpenGL4.GL.Clear(OpenTK.Graphics.OpenGL4.ClearBufferMask.ColorBufferBit | OpenTK.Graphics.OpenGL4.ClearBufferMask.DepthBufferBit);
+            //OpenTK.Graphics.OpenGL4.GL.ClearColor(0, 1, 1, 1);
+            //OpenTK.Graphics.OpenGL4.GL.Clear(OpenTK.Graphics.OpenGL4.ClearBufferMask.ColorBufferBit | OpenTK.Graphics.OpenGL4.ClearBufferMask.DepthBufferBit);
             Matrix4 m = new Matrix4(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1);
             staticGeometry.render(ref vp, m);
             tableGeometry.render(ref vp, m);

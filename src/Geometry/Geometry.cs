@@ -16,7 +16,7 @@ namespace SparrowHawk.Geometry
         public List<float> mNormals { get; set; } = new List<float>();
         public List<float> mColors { get; set; } = new List<float>();
         public int mNumPrimitives { get; set; }
-        public OpenTK.Graphics.OpenGL4.PrimitiveType primitiveType;
+        public OpenTK.Graphics.OpenGL4.BeginMode primitiveType;
 
         public Geometry(string filename, OpenTK.Graphics.Color4 color)
         {

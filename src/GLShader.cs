@@ -146,23 +146,23 @@ namespace SparrowHawk
                 buf.version = version;
                 mBufferObjects[name] = buf;
             }
-            // TODO: do I have to multiple by size?
+            // TODO: do I have to multiply by size?
             int totalSize = size * compSize;
             T[] dataArray = data.ToArray();
 
             if (name == "indices") {
-                GL.BindBuffer(BufferTarget.ElementArrayBuffer, bufferID);
-                GL.BufferData(BufferTarget.ElementArrayBuffer, totalSize, ref dataArray[0], BufferUsageHint.DynamicDraw);
+                GL.BindBuffer(BufferTarget.ElementArrayBuffer, buf.id);
+                GL.BufferData(BufferTarget.ElementArrayBuffer, totalSize,  dataArray, BufferUsageHint.DynamicDraw);
             } else
             {
                 GL.BindBuffer(BufferTarget.ArrayBuffer, bufferID);
-                GL.BufferData(BufferTarget.ArrayBuffer, totalSize, ref dataArray[0], BufferUsageHint.DynamicDraw);
+                GL.BufferData(BufferTarget.ArrayBuffer, totalSize,  dataArray, BufferUsageHint.DynamicDraw);
                 if (size == 0)
                     GL.DisableVertexAttribArray(attribID);
                 else
                 {
                     GL.EnableVertexAttribArray(attribID);
-                   // GL.VertexAttribPointer(attribID);
+                    GL.VertexAttribPointer(attribID, buf.dim,  buf.glType, true, 0, 0);
                 }
             }
         }
@@ -217,19 +217,21 @@ namespace SparrowHawk
             error = GL.GetError();
         }
 
-        public void drawIndexed(PrimitiveType type, int offset, int count)
+        public void drawIndexed(BeginMode type, int offset, int count)
         {
             if (count == 0)
                 return;
 
             switch (type)
             {
-                case PrimitiveType.Triangles:
+                case BeginMode.Triangles:
                     offset *= 3; count *= 3; break;
-                case PrimitiveType.Lines:
+                case BeginMode.Lines:
                     offset *= 2; count *= 2; break;
             }
-           // GL.DrawElements(type, count, type, offset);
+
+              GL.DrawElements(type, count, DrawElementsType.UnsignedInt, offset);
+
         }
 
         public void free()
