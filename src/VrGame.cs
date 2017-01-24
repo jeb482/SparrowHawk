@@ -36,8 +36,8 @@ namespace SparrowHawk
             MakeCurrent();
             GL.ClearColor(1, 0, 1, 1);
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
-            //mRenderer.renderFrame();
-            mRenderer.RenderScene(EVREye.Eye_Left);
+            mRenderer.renderFrame();
+            //mRenderer.RenderScene(EVREye.Eye_Left);
             SwapBuffers();
             
             GL.ClearColor(0, 0, 0, 1);
