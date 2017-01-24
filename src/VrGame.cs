@@ -85,7 +85,8 @@ namespace SparrowHawk
             g.mNormals.AddRange(new float[] { 0, 0, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 0, 0, 1, 1, 0, 1, 1, 1, 1, 0, 1, 1 });
             g.mNumPrimitives = 12;
             g.primitiveType = BeginMode.Triangles;
-            Material.Material m = new Material.RGBNormalMaterial(1, mDoc);
+            //Material.Material m = new Material.RGBNormalMaterial(1, mDoc);
+            Material.Material m = new Material.NaiveMaterial(mDoc);
             SceneNode cube = new SceneNode("Cube", ref g, ref m); ;
             mScene.staticGeometry.add(ref cube);
 

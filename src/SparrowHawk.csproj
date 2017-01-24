@@ -71,6 +71,7 @@
     <Compile Include="Geometry\Geometry.cs" />
     <Compile Include="GLShader.cs" />
     <Compile Include="Material\Material.cs" />
+    <Compile Include="Material\NaiveMaterial.cs" />
     <Compile Include="Material\RGBNormalMaterial.cs" />
     <Compile Include="Material\ShaderSource.cs" />
     <Compile Include="Material\SingleColorMaterial.cs" />

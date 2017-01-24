@@ -29,7 +29,7 @@ namespace SparrowHawk
         int mVAO = 0;
         int mVertexShader;
         int mFragmentShader;
-        int mProgramShader;
+        public int mProgramShader;
         public bool isInitialized = false;
         SortedDictionary<string, GLBuffer> mBufferObjects;
         Rhino.RhinoDoc mDoc = null;

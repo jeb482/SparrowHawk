@@ -85,7 +85,7 @@ namespace SparrowHawk
         public Matrix4 vrToRobot = new Matrix4(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1);
 
         public Scene(ref Rhino.RhinoDoc doc)
-        {
+        {   
             rhinoDoc = doc;
         }
 
