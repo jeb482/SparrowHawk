@@ -197,6 +197,8 @@ namespace SparrowHawk
                 Valve.VR.OpenVR.Compositor.Submit(Valve.VR.EVREye.Eye_Left, ref leftEyeTexture, ref pBounds, Valve.VR.EVRSubmitFlags.Submit_Default); // TODO: There's a distortion already applied flag.
                 Valve.VR.OpenVR.Compositor.Submit(Valve.VR.EVREye.Eye_Right, ref leftEyeTexture, ref pBounds, Valve.VR.EVRSubmitFlags.Submit_Default);
 
+
+                
                 GL.Finish();
             }
         }

@@ -39,6 +39,11 @@ namespace SparrowHawk
             //mRenderer.renderFrame();
             mRenderer.RenderScene(EVREye.Eye_Left);
             SwapBuffers();
+            
+            GL.ClearColor(0, 0, 0, 1);
+            GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
+            GL.Finish();
+            GL.Flush();
         }
 
         protected override void Dispose(bool manual)
@@ -51,6 +56,8 @@ namespace SparrowHawk
             // Set up HMD
             EVRInitError eError = EVRInitError.None;
             mHMD = OpenVR.Init(ref eError, EVRApplicationType.VRApplication_Scene);
+ 
+            bool can = OpenVR.Compositor.CanRenderScene();
             if (eError == EVRInitError.None)
                 Util.WriteLine(ref mDoc, "Booted VR System");
             else
