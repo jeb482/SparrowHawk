@@ -16,8 +16,10 @@ namespace SparrowHawk
         Rhino.RhinoDoc mDoc;
         String mStrDriver = "No Driver";
 	    String mStrDisplay = "No Display";
-        uint mWindowWidth = 1280;
-        uint mWindowHeight = 720;
+        uint mRenderWidth = 1280;
+        uint mRenderHeight = 720;
+        TrackedDevicePose_t[] renderPoseArray, gamePoseArray;
+
 
         public VrGame(ref Rhino.RhinoDoc doc)
         {
@@ -34,6 +36,7 @@ namespace SparrowHawk
         {
             base.OnRenderFrame(e);
             MakeCurrent();
+            OpenVR.Compositor.WaitGetPoses(renderPoseArray, gamePoseArray);
             GL.ClearColor(1, 0, 1, 1);
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
             mRenderer.renderFrame();
@@ -56,8 +59,10 @@ namespace SparrowHawk
             // Set up HMD
             EVRInitError eError = EVRInitError.None;
             mHMD = OpenVR.Init(ref eError, EVRApplicationType.VRApplication_Scene);
- 
+            
+
             bool can = OpenVR.Compositor.CanRenderScene();
+            
             if (eError == EVRInitError.None)
                 Util.WriteLine(ref mDoc, "Booted VR System");
             else
@@ -67,6 +72,8 @@ namespace SparrowHawk
             }
 
             // Get render models
+            renderPoseArray = new TrackedDevicePose_t[Valve.VR.OpenVR.k_unMaxTrackedDeviceCount];
+            gamePoseArray = new TrackedDevicePose_t[Valve.VR.OpenVR.k_unMaxTrackedDeviceCount];
             // mRenderModels = OpenVR.GetGenericInterface(OpenVR.IVRRenderModels_Version, ref eError);
 
             // Window Setup Info
@@ -79,6 +86,7 @@ namespace SparrowHawk
             MakeCurrent();
 
             mScene = new Scene(ref mDoc);
+            mHMD.GetRecommendedRenderTargetSize(ref mRenderWidth, ref mRenderHeight);
             //OpenTK.Graphics.Color4 aqua = new OpenTK.Graphics.Color4(,);
             //aqua = OpenTK.Graphics.Color4.Aqua;
             //Geometry.Geometry g = new Geometry.Geometry("C:/workspace/Kestrel/resources/meshes/cube.obj", new OpenTK.Graphics.Color4(0,255,255,255));
@@ -97,7 +105,7 @@ namespace SparrowHawk
             SceneNode cube = new SceneNode("Cube", ref g, ref m); ;
             mScene.staticGeometry.add(ref cube);
 
-            mRenderer = new VrRenderer(ref mHMD, ref mScene);
+            mRenderer = new VrRenderer(ref mHMD, ref mScene, mRenderWidth, mRenderWidth);
         
 
             // build shaders? Maybe in renderer!

@@ -19,8 +19,8 @@ namespace SparrowHawk
 
     public class VrRenderer
     {
-        uint vrRenderWidth = 1280;
-        uint vrRenderHeight = 720;
+        uint vrRenderWidth;
+        uint vrRenderHeight;
         float mNearClip = 0.1f;
         float mFarClip = 30.0f;
         FramebufferDesc leftEyeDesc;
@@ -28,12 +28,14 @@ namespace SparrowHawk
         Valve.VR.CVRSystem mHMD;
         Scene mScene;
 
-        public VrRenderer(ref Valve.VR.CVRSystem HMD, ref Scene scene)
+        public VrRenderer(ref Valve.VR.CVRSystem HMD, ref Scene scene, uint mRenderWidth, uint mRenderHeight)
         {
             mHMD = HMD;
             mScene = scene;
             SetupStereoRenderTargets(ref mHMD);
             SetupDistortion();
+            vrRenderWidth = mRenderWidth;
+            vrRenderHeight = mRenderHeight;
         }
 
         /**
