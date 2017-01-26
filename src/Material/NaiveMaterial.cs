@@ -26,11 +26,13 @@ namespace SparrowHawk.Material
             float[] pos = { -1f, -1f, 0f, 1f, -1f, 0f, 0f, 1f, 0f }; 
             GL.BindBuffer(BufferTarget.ArrayBuffer, vboPositions);
             GL.BufferData<float>(BufferTarget.ArrayBuffer, 12 * 4, pos, BufferUsageHint.DynamicDraw);
-            
-            GL.BindBuffer(BufferTarget.ArrayBuffer, 0);
-            GL.EnableVertexAttribArray(0);
-            GL.BindBuffer(BufferTarget.ArrayBuffer, vboPositions);
-            GL.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, 12, 0);
+
+
+            mShader.uploadAttrib<float>("position", 12, 3, 4, VertexAttribPointerType.Float, false, ref pos, 0);
+            //GL.BindBuffer(BufferTarget.ArrayBuffer, 0);
+            //GL.EnableVertexAttribArray(0);
+            //GL.BindBuffer(BufferTarget.ArrayBuffer, vboPositions);
+            //GL.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, 12, 0);
 
 
             int[] idx = { 0, 1, 2 };
@@ -38,8 +40,10 @@ namespace SparrowHawk.Material
             GL.BindBuffer(BufferTarget.ElementArrayBuffer, ibo);
             GL.BufferData<int>(BufferTarget.ElementArrayBuffer, 3 * 4, idx, BufferUsageHint.DynamicDraw);
 
- //           GL.BindBuffer(BufferTarget.ElementArrayBuffer, ibo);
-            GL.BindAttribLocation(mShader.mProgramShader, 0, "position");
+
+    //        GL.BindAttribLocation(mShader.mProgramShader, 0, "position");
+
+            int zero_q = mShader.attrib("position", true);
         }
 
         public override void draw(ref Geometry.Geometry g, ref Matrix4 model, ref Matrix4 vp)

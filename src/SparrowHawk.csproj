@@ -68,6 +68,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="COvrvision.cs" />
     <Compile Include="Geometry\Geometry.cs" />
     <Compile Include="GLShader.cs" />
     <Compile Include="Material\Material.cs" />

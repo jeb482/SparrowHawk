@@ -27,9 +27,27 @@ namespace SparrowHawk.Material
             float[] pos = { -1f, -1f, 0f, 1f, -1f, 0f, 0f, 1f, 0f };
             GL.BindBuffer(BufferTarget.ArrayBuffer, vboPositions);
             GL.BufferData<float>(BufferTarget.ArrayBuffer, 12 * 4, pos, BufferUsageHint.DynamicDraw);
-
             GL.BindBuffer(BufferTarget.ArrayBuffer, 0);
+
             GL.EnableVertexAttribArray(0);
+            GL.BindBuffer(BufferTarget.ArrayBuffer, vboPositions);
+            GL.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, 12, 0);
+            GL.BindBuffer(BufferTarget.ArrayBuffer, 0);
+
+            float[] normals = {1f,0f,0f,  0f,1f,0f,  0f,0f,1f };
+            GL.BindBuffer(BufferTarget.ArrayBuffer, vboNormals);
+            GL.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, true, 12, 0);
+            GL.BindBuffer(BufferTarget.ArrayBuffer, 0);
+
+            int[] idx = { 0, 1, 2 };
+            ibo = GL.GenBuffer();
+            GL.BindBuffer(BufferTarget.ElementArrayBuffer, ibo);
+            GL.BufferData<int>(BufferTarget.ElementArrayBuffer, 3 * 4, idx, BufferUsageHint.DynamicDraw);
+
+            //           GL.BindBuffer(BufferTarget.ElementArrayBuffer, ibo);
+            GL.BindAttribLocation(mShader.mProgramShader, 0, "position");
+            //GL.BindAttribLocation(mShader.mProgramShader, mShader.attrib())
+
         }
 
         override public void draw(ref Geometry.Geometry g, ref Matrix4 model, ref Matrix4 vp)

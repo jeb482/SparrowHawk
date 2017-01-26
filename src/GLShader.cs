@@ -117,7 +117,7 @@ namespace SparrowHawk
             return id;
         }
 
-        public void uploadAttrib<T>(string name, int size, int dim, int compSize, VertexAttribPointerType glType, bool integral,  List<T> data, int version) where T : struct
+        public void uploadAttrib<T>(string name, int size, int dim, int compSize, VertexAttribPointerType glType, bool integral, ref T[] data, int version) where T : struct
         {
             int attribID = 0;
             if (name != "indices")
@@ -148,15 +148,15 @@ namespace SparrowHawk
             }
             // TODO: do I have to multiply by size?
             int totalSize = size * compSize;
-            T[] dataArray = data.ToArray();
+            
 
             if (name == "indices") {
                 GL.BindBuffer(BufferTarget.ElementArrayBuffer, buf.id);
-                GL.BufferData(BufferTarget.ElementArrayBuffer, totalSize,  dataArray, BufferUsageHint.DynamicDraw);
+                GL.BufferData(BufferTarget.ElementArrayBuffer, totalSize,  data, BufferUsageHint.DynamicDraw);
             } else
             {
                 GL.BindBuffer(BufferTarget.ArrayBuffer, bufferID);
-                GL.BufferData(BufferTarget.ArrayBuffer, totalSize,  dataArray, BufferUsageHint.DynamicDraw);
+                GL.BufferData(BufferTarget.ArrayBuffer, totalSize,  data, BufferUsageHint.DynamicDraw);
                 if (size == 0)
                     GL.DisableVertexAttribArray(attribID);
                 else
