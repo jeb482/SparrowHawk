@@ -11,10 +11,6 @@ namespace SparrowHawk.Material
 
     class NaiveMaterial : Material
     {
-        private int vboPositions;
-        private int ibo;
-        private int vao;
-        Rhino.RhinoDoc mDoc;
         public NaiveMaterial(Rhino.RhinoDoc doc)
         {
             mDoc = doc;

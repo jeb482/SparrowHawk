@@ -11,66 +11,25 @@ namespace SparrowHawk.Material
 
     class SingleColorMaterial : Material
     {
-        private uint indexBufferId;
-        private uint vertexBufferId;
-        private uint colorBufferId;
+        OpenTK.Graphics.Color4 mColor; 
 
         public SingleColorMaterial(Rhino.RhinoDoc doc, float r, float g, float b, float a)
         {
+            mColor = new OpenTK.Graphics.Color4(r, g, b, a);
             mShader = new GLShader(doc);
             mShader.init("SingleColorMaterial", ShaderSource.SingleColorVertShader, ShaderSource.SingleColorFragShader);
 
-            uint[] indices = new uint[] {0,1,2,3,2,1};
-            GL.GenBuffers(1, out indexBufferId);
-            GL.BindBuffer(BufferTarget.ElementArrayBuffer, indexBufferId);
-            GL.BufferData(
-                BufferTarget.ElementArrayBuffer,
-                (IntPtr)(indices.Length * sizeof(ushort)),
-                indices,
-                BufferUsageHint.StaticDraw);
-
-            // Set-up vertex buffer:
-            float[] vertexData = new float[] {
-            50.0f, 50.0f,
-            100.0f, 50.0f,
-            100.0f, 100.0f,
-            50.0f, 100.0f };
-
-            GL.GenBuffers(1, out vertexBufferId);
-            GL.BindBuffer(BufferTarget.ArrayBuffer, vertexBufferId);
-            GL.BufferData(
-                BufferTarget.ArrayBuffer,
-                (IntPtr)(vertexData.Length * sizeof(float)),
-                vertexData,
-                BufferUsageHint.StaticDraw);
-
-            // Set-up color buffer:
-            float[] colorData = new float[] {
-            1.0f, 1.0f, 1.0f, 1.0f,
-            1.0f, 1.0f, 1.0f, 1.0f,
-            1.0f, 1.0f, 1.0f, 1.0f,
-            1.0f, 1.0f, 1.0f, 1.0f
-        };
-
-            GL.GenBuffers(1, out colorBufferId);
-            GL.BindBuffer(BufferTarget.ArrayBuffer, colorBufferId);
-            GL.BufferData(
-                BufferTarget.ArrayBuffer,
-                (IntPtr)(colorData.Length * sizeof(float)),
-                colorData,
-                BufferUsageHint.StaticDraw);
 
         }
 
         public override void draw(ref Geometry.Geometry g, ref Matrix4 model, ref Matrix4 vp)
         {
             mShader.bind();
-            GL.Disable(EnableCap.Blend);
-
-
-           // GL.BindVertexBuffer(vertexBufferId, )
-
-    
-                }
+            mShader.uploadAttrib<int>("indices", 3, 3, 4, VertexAttribPointerType.UnsignedInt, false, ref g.mGeometryIndices, 0);
+            mShader.uploadAttrib<float>("position", 12, 3, 4, VertexAttribPointerType.Float, false, ref g.mGeometry, 0);
+            GL.Uniform4(mShader.uniform("color"), mColor);
+            GL.UniformMatrix4(mShader.uniform("modelTransform"), false, ref model);
+            GL.UniformMatrix4(mShader.uniform("viewProjTransform"), false, ref vp);
+        }
     }
 }
