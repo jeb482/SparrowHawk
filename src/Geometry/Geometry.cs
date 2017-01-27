@@ -10,11 +10,11 @@ namespace SparrowHawk.Geometry
 {
     public class Geometry
     {
-        public List<float> mGeometry { get; set; } = new List<float>();
-        public List<int> mGeometryIndices { get; set; } = new List<int>();
-        public List<float> mUvs { get; set; } = new List<float>();
-        public List<float> mNormals { get; set; } = new List<float>();
-        public List<float> mColors { get; set; } = new List<float>();
+        public float[] mGeometry;
+        public int[] mGeometryIndices;
+        public float[] mUvs { get; set; }
+        public float[] mNormals { get; set; }
+        public float[] mColors { get; set; }
         public int mNumPrimitives { get; set; }
         public OpenTK.Graphics.OpenGL4.BeginMode primitiveType;
 
@@ -37,30 +37,32 @@ namespace SparrowHawk.Geometry
             var fileStream = new System.IO.FileStream(filename, System.IO.FileMode.Open);
             var data = objLoader.Load(fileStream);
             
-            foreach (var v in data.Vertices)
-            {
-                mGeometry.Add(v.X); mGeometry.Add(v.Y); mGeometry.Add(v.Z);
-                mColors.Add(color.R); mColors.Add(color.G); mColors.Add(color.B); mColors.Add(color.A);
-            }
+            // THis doesnt work anyway. Thanks CJ loser.
 
-            foreach (var n in data.Normals)
-            {
-                mNormals.Add(n.X); mNormals.Add(n.Y); mNormals.Add(n.Z);
-            }
+            //foreach (var v in data.Vertices)
+            //{
+            //    mGeometry.Add(v.X); mGeometry.Add(v.Y); mGeometry.Add(v.Z);
+            //    mColors.Add(color.R); mColors.Add(color.G); mColors.Add(color.B); mColors.Add(color.A);
+            //}
 
-            foreach (var uv in data.Textures)
-            {
-                mUvs.Add(uv.X); mUvs.Add(uv.Y);
-            }
+            //foreach (var n in data.Normals)
+            //{
+            //    mNormals.Add(n.X); mNormals.Add(n.Y); mNormals.Add(n.Z);
+            //}
 
-            for (int i = 0; i < data.Vertices.Count; i++)
-            {
-                mGeometryIndices.Add(i);
-            }
+            //foreach (var uv in data.Textures)
+            //{
+            //    mUvs.Add(uv.X); mUvs.Add(uv.Y);
+            //}
 
-            // TODO: Add flat shade code;
+            //for (int i = 0; i < data.Vertices.Count; i++)
+            //{
+            //    mGeometryIndices.Add(i);
+            //}
 
-            mNumPrimitives = mGeometryIndices.Count / 3;
+            //// TODO: Add flat shade code;
+
+            //mNumPrimitives = mGeometryIndices.Count / 3;
         }
 
         // TODO: RayTracer

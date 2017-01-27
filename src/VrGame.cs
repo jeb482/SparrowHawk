@@ -87,22 +87,17 @@ namespace SparrowHawk
 
             mScene = new Scene(ref mDoc);
             mHMD.GetRecommendedRenderTargetSize(ref mRenderWidth, ref mRenderHeight);
-            //OpenTK.Graphics.Color4 aqua = new OpenTK.Graphics.Color4(,);
-            //aqua = OpenTK.Graphics.Color4.Aqua;
-            //Geometry.Geometry g = new Geometry.Geometry("C:/workspace/Kestrel/resources/meshes/cube.obj", new OpenTK.Graphics.Color4(0,255,255,255));
-            //g.mColors.Clear();
+
+
             Geometry.Geometry g = new Geometry.Geometry();
-            g.mGeometry.Clear();
-            g.mGeometryIndices.Clear();
-            g.mNormals.Clear();
-            g.mGeometry.AddRange(new float[] { 0, 0, 0, 1, 0, 0, 1, 1, 0, 0,1,0, 0, 0, 1, 1, 0, 1, 1, 1, 1, 0, 1, 1});
-            g.mGeometryIndices.AddRange(new int[] {0,1,4,1,5,4,0,1,3,1,2,3,1,5,2,2,5,6,3,2,7,3,2,6,7,4,7,5,5,7,6,0,3,4,3,7,4});
-            g.mNormals.AddRange(new float[] { 0, 0, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 0, 0, 1, 1, 0, 1, 1, 1, 1, 0, 1, 1 });
-            g.mNumPrimitives = 12;
+            g.mGeometry = new float[] { -1f, -1f, 0f, 1f, -1f, 0f, 0f, 1f, 0f };
+            g.mNormals = new float[] { -1f, -1f, 0f, 1f, -1f, 0f, 0f, 1f, 0f };
+            g.mGeometryIndices = new int[] { 0, 1, 2 };
+            g.mNumPrimitives = 1;
             g.primitiveType = BeginMode.Triangles;
-            //Material.Material m = new Material.RGBNormalMaterial(1, mDoc);
+           
             Material.Material m = new Material.NaiveMaterial(mDoc);
-            SceneNode cube = new SceneNode("Cube", ref g, ref m); ;
+            SceneNode cube = new SceneNode("Triangle", ref g, ref m); ;
             mScene.staticGeometry.add(ref cube);
 
             mRenderer = new VrRenderer(ref mHMD, ref mScene, mRenderWidth, mRenderWidth);
