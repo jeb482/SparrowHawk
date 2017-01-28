@@ -22,7 +22,7 @@ namespace SparrowHawk.Material
         {
             mShader.bind();
             mShader.uploadAttrib<int>("indices", 3, 3, 4, VertexAttribPointerType.UnsignedInt, false, ref g.mGeometryIndices, 0);
-            mShader.uploadAttrib<float>("position", 12, 3, 4, VertexAttribPointerType.Float, false, ref g.mGeometry, 0);
+            mShader.uploadAttrib<float>("position", 9, 3, 4, VertexAttribPointerType.Float, false, ref g.mGeometry, 0);
             mShader.drawIndexed(BeginMode.Triangles, 0, 3);
         }
     }

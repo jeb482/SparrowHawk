@@ -24,12 +24,18 @@ namespace SparrowHawk.Material
 
         public override void draw(ref Geometry.Geometry g, ref Matrix4 model, ref Matrix4 vp)
         {
+            ErrorCode e;
             mShader.bind();
-            mShader.uploadAttrib<int>("indices", 3, 3, 4, VertexAttribPointerType.UnsignedInt, false, ref g.mGeometryIndices, 0);
-            mShader.uploadAttrib<float>("position", 12, 3, 4, VertexAttribPointerType.Float, false, ref g.mGeometry, 0);
+            mShader.uploadAttrib<int>("indices", g.mGeometryIndices.Count(), 3, 4, VertexAttribPointerType.UnsignedInt, false, ref g.mGeometryIndices, 0);
+            e = GL.GetError();
+            mShader.uploadAttrib<float>("position", g.mGeometry.Count(), 3, 4, VertexAttribPointerType.Float, false, ref g.mGeometry, 0);
+            e = GL.GetError();
             GL.Uniform4(mShader.uniform("color"), mColor);
+            e = GL.GetError();
             GL.UniformMatrix4(mShader.uniform("modelTransform"), false, ref model);
+            e = GL.GetError();
             GL.UniformMatrix4(mShader.uniform("viewProjTransform"), false, ref vp);
+            e = GL.GetError();
         }
     }
 }

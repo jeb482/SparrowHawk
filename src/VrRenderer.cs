@@ -23,6 +23,10 @@ namespace SparrowHawk
         uint vrRenderHeight;
         float mNearClip = 0.1f;
         float mFarClip = 30.0f;
+        Matrix4 mEyeProjLeft;
+        Matrix4 mEyeProjRight;
+        Matrix4 mEyePosLeft;
+        Matrix4 mEyePosRight;
         FramebufferDesc leftEyeDesc;
         FramebufferDesc rightEyeDesc;
         Valve.VR.CVRSystem mHMD;
@@ -121,16 +125,17 @@ namespace SparrowHawk
 
         public void RenderScene(Valve.VR.EVREye eye)
         {
-
-            Matrix4 p = Matrix4.CreatePerspectiveFieldOfView(1.2f, 1280f / 760, .01f, 30);
-            Matrix4 v =  Matrix4.LookAt(new Vector3(-5, -5, -5), new Vector3(0, 0, 0), new Vector3(0, 1, 0));
-            Matrix4 vp = p * v;
-            Vector4 t1 = v*new Vector4(1,1,1,1);
-            Vector4 t2 = vp * new Vector4(1,1,1,1);
-            Vector4 o1 = v * new Vector4(0, 0, 0, 1);
-            Vector4 o2 = vp * new Vector4(0,0,0, 1);
-            //GL.ClearColor(1,0,0,1);
-            //GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
+            mHMD.GetEyeToHeadTransform(eye);
+            Matrix4 vp;
+            switch (eye)
+            {
+                case Valve.VR.EVREye.Eye_Left:
+                    vp = mEyeProjLeft * mEyePosLeft;
+                    break;
+                default:
+                    vp = mEyeProjRight * mEyePosRight;
+                    break;
+            }
             mScene.render(ref vp);
             
         }
@@ -176,6 +181,13 @@ namespace SparrowHawk
 
         }
         
+        private void setupCameras()
+        {
+            mEyePosLeft = GetHMDMatrixPoseEye(ref mHMD, Valve.VR.EVREye.Eye_Left);
+            mEyePosRight = GetHMDMatrixPoseEye(ref mHMD, Valve.VR.EVREye.Eye_Right);
+            mEyeProjLeft = GetHMDMatrixProjectionEye(ref mHMD, Valve.VR.EVREye.Eye_Left);
+            mEyeProjRight = GetHMDMatrixProjectionEye(ref mHMD, Valve.VR.EVREye.Eye_Right);
+        }
             // TODO: RenderDistortion
         
         // TODO: RenderFrame
@@ -183,6 +195,8 @@ namespace SparrowHawk
         {
             if (mHMD != null)
             {
+
+                setupCameras();
                 // DrawControllers
                 RenderStereoTargets();
                 //RenderDistortion();

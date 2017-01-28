@@ -37,10 +37,8 @@ namespace SparrowHawk
             base.OnRenderFrame(e);
             MakeCurrent();
             OpenVR.Compositor.WaitGetPoses(renderPoseArray, gamePoseArray);
-            GL.ClearColor(1, 0, 1, 1);
-            GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
             mRenderer.renderFrame();
-            //mRenderer.RenderScene(EVREye.Eye_Left);
+
             SwapBuffers();
             
             GL.ClearColor(0, 0, 0, 1);
@@ -96,7 +94,7 @@ namespace SparrowHawk
             g.mNumPrimitives = 1;
             g.primitiveType = BeginMode.Triangles;
            
-            Material.Material m = new Material.NaiveMaterial(mDoc);
+            Material.Material m = new Material.SingleColorMaterial(mDoc,1f,1f,1f,1f);
             SceneNode cube = new SceneNode("Triangle", ref g, ref m); ;
             mScene.staticGeometry.add(ref cube);
 
