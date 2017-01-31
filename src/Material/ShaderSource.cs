@@ -45,7 +45,7 @@ void main()
 }";
 
 // Read the Vertex Shader code from the file
-public static string TextureVertShader
+public static string TextureVertShader  
 = @"#version 330 core
 uniform mat4 viewProjTransform;
 uniform mat4 modelTransform;

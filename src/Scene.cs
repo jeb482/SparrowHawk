@@ -76,7 +76,12 @@ namespace SparrowHawk
         public SceneNode tableGeometry = new SceneNode("Encoder-Affected Geometry");
         public SceneNode leftControllerNode = new SceneNode("Right Controller Node");
         public SceneNode rightControllerNode = new SceneNode("Left Controller Node");
+
+        // Camera data
+        public Matrix4 mHMDPose;
+
         // tracked devices
+        public Valve.VR.TrackedDevicePose_t[] mTrackedDevices = new Valve.VR.TrackedDevicePose_t[Valve.VR.OpenVR.k_unMaxTrackedDeviceCount];
 
         // For rhino positioning
         public Rhino.RhinoDoc rhinoDoc;

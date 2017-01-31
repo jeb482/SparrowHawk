@@ -130,10 +130,10 @@ namespace SparrowHawk
             switch (eye)
             {
                 case Valve.VR.EVREye.Eye_Left:
-                    vp = mEyeProjLeft * mEyePosLeft;
+                    vp = mEyeProjLeft * mEyePosLeft * mScene.mHMDPose;
                     break;
                 default:
-                    vp = mEyeProjRight * mEyePosRight;
+                    vp = mEyeProjRight * mEyePosRight * mScene.mHMDPose;
                     break;
             }
             mScene.render(ref vp);

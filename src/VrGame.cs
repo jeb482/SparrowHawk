@@ -32,11 +32,31 @@ namespace SparrowHawk
 
         }
 
+        void updateMatrixPose()
+        {
+            if (mHMD == null)
+                return;
+
+            OpenVR.Compositor.WaitGetPoses(mScene.mTrackedDevices, gamePoseArray);
+            foreach (var device in renderPoseArray)
+            {
+                if (device.bPoseIsValid)
+                {
+                    // TODO: Store it?
+                }
+            }
+
+            if (renderPoseArray[OpenVR.k_unTrackedDeviceIndex_Hmd].bPoseIsValid)
+            {
+                mScene.mHMDPose = Util.steamVRMatrixToMatrix4(mScene.mTrackedDevices[OpenVR.k_unTrackedDeviceIndex_Hmd].mDeviceToAbsoluteTracking).Inverted();
+            }
+        }
+
         protected override void OnRenderFrame(FrameEventArgs e)
         {
             base.OnRenderFrame(e);
             MakeCurrent();
-            OpenVR.Compositor.WaitGetPoses(renderPoseArray, gamePoseArray);
+            updateMatrixPose();
             mRenderer.renderFrame();
 
             SwapBuffers();
