@@ -136,10 +136,10 @@ namespace SparrowHawk
                     vp = mEyeProjLeft * mEyePosLeft * mScene.mHMDPose;
                     break;
                 default:
-                    vp = mEyeProjRight * mEyePosRight * mScene.mHMDPose;
+                    vp = mEyeProjRight * mEyePosRight* mScene.mHMDPose;
                     break;
             }
-            //vp.Transpose();
+            vp.Transpose();
             mScene.render(ref vp);
             
         }
@@ -215,7 +215,7 @@ namespace SparrowHawk
                 Valve.VR.VRTextureBounds_t pBounds = new Valve.VR.VRTextureBounds_t();
                 pBounds.uMax = 1; pBounds.uMin = 0; pBounds.vMax = 1; pBounds.uMin = 0;
                 Valve.VR.OpenVR.Compositor.Submit(Valve.VR.EVREye.Eye_Left, ref leftEyeTexture, ref pBounds, Valve.VR.EVRSubmitFlags.Submit_Default); // TODO: There's a distortion already applied flag.
-                Valve.VR.OpenVR.Compositor.Submit(Valve.VR.EVREye.Eye_Right, ref leftEyeTexture, ref pBounds, Valve.VR.EVRSubmitFlags.Submit_Default);
+                Valve.VR.OpenVR.Compositor.Submit(Valve.VR.EVREye.Eye_Right, ref rightEyeTexture, ref pBounds, Valve.VR.EVRSubmitFlags.Submit_Default);
 
                
                 

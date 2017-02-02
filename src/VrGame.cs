@@ -112,7 +112,7 @@ namespace SparrowHawk
 
 
             Geometry.Geometry g = new Geometry.Geometry();
-            g.mGeometry = new float[] { -1f, -1f, 0f, 1f, -1f, 0f, 0f, 1f, 0f };
+            g.mGeometry = new float[] { -1f, 0f, 0f, 1f, 0f, 0f, 0f, 1f, 0f };
             // g.mGeometry = new float[] { -1f, -1f, 1f, 1f, -1f, 1f, 1f, 1f, 1f };
             //g.mGeometry = new float[] { -100f, 0f, -100f, 100f, 0f, -100f, 0f, 0f, 100f };
             //g.mNormals = new float[] { -1f, -1f, 0f, 1f, -1f, 0f, 0f, 1f, 0f };
