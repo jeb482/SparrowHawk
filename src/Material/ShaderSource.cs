@@ -26,26 +26,26 @@ public static class ShaderSource {
 // Read the Vertex Shader code from the file
 public static string SingleColorVertShader
 = @"#version 330 core
-uniform mat4 viewProjTransform;
 uniform mat4 modelTransform;
+uniform mat4 viewProjTransform;
 in vec3 position;
 void main()
 {
-    gl_Position = viewProjTransform * (modelTransform*vec4(position, 1.0));
+    gl_Position = viewProjTransform*(modelTransform*vec4(position, 1));
 }";
-	
-// Read the Fragment Shader code from the file
-public static string SingleColorFragShader
+
+ // Read the Fragment Shader code from the file
+ public static string SingleColorFragShader
 = @"#version 330 core
 uniform vec4 color;
 out vec4 out_color;
-void main()
+void main() 
 {
-	out_color = vec4(color);
+    out_color = color;
 }";
 
 // Read the Vertex Shader code from the file
-public static string TextureVertShader  
+ public static string TextureVertShader  
 = @"#version 330 core
 uniform mat4 viewProjTransform;
 uniform mat4 modelTransform;

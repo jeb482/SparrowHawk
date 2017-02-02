@@ -15,6 +15,7 @@ namespace SparrowHawk
         public Geometry.Geometry geometry;
         public Material.Material material;
         public Matrix4 transform = new Matrix4(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1);
+
         
         public SceneNode(string _name, ref Geometry.Geometry g, ref Material.Material m)
         {
@@ -38,7 +39,7 @@ namespace SparrowHawk
             }
             foreach (SceneNode n in children)
             {
-                n.render(ref vp, model);
+                 n.render(ref vp, model);
             }
         }
 

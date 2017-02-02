@@ -125,17 +125,21 @@ namespace SparrowHawk
 
         public void RenderScene(Valve.VR.EVREye eye)
         {
+            GL.ClearColor(0,0,0,1);
+            GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
             mHMD.GetEyeToHeadTransform(eye);
             Matrix4 vp;
             switch (eye)
             {
                 case Valve.VR.EVREye.Eye_Left:
+                    Util.WriteLine(ref mScene.rhinoDoc, mScene.mHMDPose.ToString());
                     vp = mEyeProjLeft * mEyePosLeft * mScene.mHMDPose;
                     break;
                 default:
                     vp = mEyeProjRight * mEyePosRight * mScene.mHMDPose;
                     break;
             }
+            //vp.Transpose();
             mScene.render(ref vp);
             
         }

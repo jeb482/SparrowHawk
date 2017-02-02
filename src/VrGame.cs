@@ -38,7 +38,7 @@ namespace SparrowHawk
                 return;
 
             OpenVR.Compositor.WaitGetPoses(mScene.mTrackedDevices, gamePoseArray);
-            foreach (var device in renderPoseArray)
+            foreach (var device in gamePoseArray)
             {
                 if (device.bPoseIsValid)
                 {
@@ -46,9 +46,11 @@ namespace SparrowHawk
                 }
             }
 
-            if (renderPoseArray[OpenVR.k_unTrackedDeviceIndex_Hmd].bPoseIsValid)
+            if (gamePoseArray[OpenVR.k_unTrackedDeviceIndex_Hmd].bPoseIsValid)
             {
-                mScene.mHMDPose = Util.steamVRMatrixToMatrix4(mScene.mTrackedDevices[OpenVR.k_unTrackedDeviceIndex_Hmd].mDeviceToAbsoluteTracking).Inverted();
+                Matrix4 view_tmp = Util.steamVRMatrixToMatrix4(gamePoseArray[OpenVR.k_unTrackedDeviceIndex_Hmd].mDeviceToAbsoluteTracking);
+                Matrix4 view_tmp_inv = view_tmp.Inverted();
+                mScene.mHMDPose = Util.steamVRMatrixToMatrix4(gamePoseArray[OpenVR.k_unTrackedDeviceIndex_Hmd].mDeviceToAbsoluteTracking).Inverted();
             }
         }
 
@@ -58,6 +60,8 @@ namespace SparrowHawk
             MakeCurrent();
             updateMatrixPose();
             mRenderer.renderFrame();
+            string A = (mScene.mHMDPose * new Vector4(0, 0, 0, 1)).ToString();
+            //Util.WriteLine(ref mDoc, A);
 
             SwapBuffers();
             
@@ -109,12 +113,15 @@ namespace SparrowHawk
 
             Geometry.Geometry g = new Geometry.Geometry();
             g.mGeometry = new float[] { -1f, -1f, 0f, 1f, -1f, 0f, 0f, 1f, 0f };
-            g.mNormals = new float[] { -1f, -1f, 0f, 1f, -1f, 0f, 0f, 1f, 0f };
+            // g.mGeometry = new float[] { -1f, -1f, 1f, 1f, -1f, 1f, 1f, 1f, 1f };
+            //g.mGeometry = new float[] { -100f, 0f, -100f, 100f, 0f, -100f, 0f, 0f, 100f };
+            //g.mNormals = new float[] { -1f, -1f, 0f, 1f, -1f, 0f, 0f, 1f, 0f };
             g.mGeometryIndices = new int[] { 0, 1, 2 };
             g.mNumPrimitives = 1;
             g.primitiveType = BeginMode.Triangles;
-           
-            Material.Material m = new Material.SingleColorMaterial(mDoc,1f,1f,1f,1f);
+
+            //Material.Material m = new Material.SingleColorMaterial(mDoc,1f,1f,1f,1f);
+            Material.Material m = new Material.SingleColorMaterial(mDoc,1,0,1,1);
             SceneNode cube = new SceneNode("Triangle", ref g, ref m); ;
             mScene.staticGeometry.add(ref cube);
 

@@ -61,9 +61,12 @@ namespace SparrowHawk
             GL.AttachShader(mProgramShader, mFragmentShader);
 
             GL.LinkProgram(mProgramShader);
-            int[] status = new int[0];
-            //GL.GetProgram(mProgramShader, GetProgramParameterName.LinkStatus, status);
+            int status;
+            GL.GetProgram(mProgramShader, GetProgramParameterName.LinkStatus, out status);
             // if status !+ glTrue, let us know. 
+
+            if (status == 0)
+                Util.WriteLine(ref mDoc, "Linker Error: " + GL.GetProgramInfoLog(mProgramShader));
 
             isInitialized = true;
             return true;
