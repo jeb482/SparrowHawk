@@ -76,6 +76,24 @@ namespace SparrowHawk
             base.Dispose(manual);
         }
 
+        /*
+        void FindOrLoadRenderModel(string modelName)
+        {
+            RenderModel_t model;
+            EVRRenderModelError error;
+            IntPtr pRenderModel = new IntPtr();
+
+            error = OpenVR.RenderModels.LoadRenderModel_Async(modelName, ref pRenderModel);
+        }
+
+        protected Geometry.Geometry SetupRenderModelForTrackedDevice(uint trackedDeviceIndex)
+        {
+            if (trackedDeviceIndex >= OpenVR.k_unMaxTrackedDeviceCount)
+                return null;
+            FindOrLoadRenderModel();
+
+        }
+        */
         public bool init()
         {
             // Set up HMD
