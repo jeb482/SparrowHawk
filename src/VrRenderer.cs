@@ -389,9 +389,9 @@ void main()
                 GL.Uniform1(GL.GetUniformLocation(screenShaderProgram, "texFramebuffer"), 0);
 
                 //Thread start
-                //ThreadEnd = false;
-                //UpdateThread = new Thread(new ThreadStart(Camera_UpdateThread));
-                // UpdateThread.Start();
+                ThreadEnd = false;
+                UpdateThread = new Thread(new ThreadStart(Camera_UpdateThread));
+                UpdateThread.Start();
             }
             else
             {
@@ -415,23 +415,28 @@ void main()
 
         private void ProcessFrame()
         {
-            if (Ovrvision.imageDataLeft_Mat.Cols == 0 || Ovrvision.imageDataRight_Mat.Cols == 0 )
+            if (outFrame_L.Cols == 0 || outFrame_R.Cols == 0)
+            {
+                Util.WriteLine(ref mScene.rhinoDoc, "waiting camera view");
                 return;
-
+            }
+            /*
             _frame_L = Ovrvision.imageDataLeft_Mat;
             _frame_R = Ovrvision.imageDataRight_Mat;
 
             CvInvoke.Undistort(_frame_L, outFrame_L, _cameraMatrix_left, _distCoeffs_left);
             CvInvoke.Undistort(_frame_R, outFrame_R, _cameraMatrix_right, _distCoeffs_right);
+            */
             CvInvoke.CvtColor(outFrame_L, _grayFrame_L, ColorConversion.Bgr2Gray);
             CvInvoke.CvtColor(outFrame_R, _grayFrame_R, ColorConversion.Bgr2Gray);
 
             //calculate view and projection matrix for opengl CalibCbType.AdaptiveThresh | CalibCbType.FastCheck | CalibCbType.NormalizeImag
-            _find = CvInvoke.FindChessboardCorners(_grayFrame_L, _patternSize, _corners, CalibCbType.AdaptiveThresh | CalibCbType.FastCheck);
+            _find = CvInvoke.FindChessboardCorners(_grayFrame_L, _patternSize, _corners, CalibCbType.AdaptiveThresh | CalibCbType.FastCheck | CalibCbType.NormalizeImage);
 
             //we use this loop so we can show a colour image rather than a gray:
             if (_find) //chess board found
             {
+                Util.WriteLine(ref mScene.rhinoDoc, "left marker found");
                 //make mesurments more accurate by using FindCornerSubPixel
                 CvInvoke.CornerSubPix(_grayFrame_L, _corners, new Size(11, 11), new Size(-1, -1),
                     new MCvTermCriteria(20, 0.001));
@@ -457,72 +462,134 @@ void main()
                     Array.Clear(imagePoints_L, 0, imagePoints_L.Length);
                 if (imagePoints_axis_L != null)
                     Array.Clear(imagePoints_axis_L, 0, imagePoints_axis_L.Length);
+
             }
+
+            //calculate view and projection matrix for opengl CalibCbType.AdaptiveThresh | CalibCbType.FastCheck | CalibCbType.NormalizeImag
+            _find = CvInvoke.FindChessboardCorners(_grayFrame_R, _patternSize, _corners, CalibCbType.AdaptiveThresh | CalibCbType.FastCheck | CalibCbType.NormalizeImage);
+
+            //we use this loop so we can show a colour image rather than a gray:
+            if (_find) //chess board found
+            {
+                //make mesurments more accurate by using FindCornerSubPixel
+                CvInvoke.CornerSubPix(_grayFrame_R, _corners, new Size(11, 11), new Size(-1, -1),
+                    new MCvTermCriteria(20, 0.001));
+                CvInvoke.SolvePnP(objectList.ToArray(), _corners.ToArray(), _cameraMatrix_right, _distCoeffs_right, _rvecAR, _tvecAR);
+
+                // drawing axis points or cubePoints
+                imagePoints_R = new PointF[cubePoints.Count];
+                imagePoints_R = CvInvoke.ProjectPoints(cubePoints.ToArray(), _rvecAR, _tvecAR, _cameraMatrix_right, _distCoeffs_right);
+
+                imagePoints_axis_R = new PointF[axisPoints.Count];
+                imagePoints_axis_R = CvInvoke.ProjectPoints(axisPoints.ToArray(), _rvecAR, _tvecAR, _cameraMatrix_right, _distCoeffs_right);
+
+                foundMarker_R = true;
+
+                //calculate view matrix
+                //BuildViewMatrix();
+
+
+            }
+            else
+            {
+
+                if (imagePoints_R != null)
+                    Array.Clear(imagePoints_R, 0, imagePoints_R.Length);
+                if (imagePoints_axis_R != null)
+                    Array.Clear(imagePoints_axis_R, 0, imagePoints_axis_R.Length);
+            }
+
 
         }
 
-        private void drawCubeOpenCV()
+        private void drawCubeOpenCV(int eye)
         {
             if (imagePoints_L == null || imagePoints_R == null)
             {
                 return;
             }
-            //draw cube on the imags
-            VectorOfPoint ground = new VectorOfPoint(new Point[4] { new Point((int)imagePoints_L[0].X, (int)imagePoints_L[0].Y),
-                        new Point((int)imagePoints_L[1].X, (int)imagePoints_L[1].Y), new Point((int)imagePoints_L[2].X, (int)imagePoints_L[2].Y), new Point((int)imagePoints[3].X, (int)imagePoints[3].Y) });
-            VectorOfVectorOfPoint contours_ground = new VectorOfVectorOfPoint(ground);
-
-            CvInvoke.DrawContours(Ovrvision.imageDataLeft_Mat, contours_ground, 0, new MCvScalar(0, 255, 255), -1);
-
-            CvInvoke.Line(Ovrvision.imageDataLeft_Mat, new Point((int)imagePoints[0].X, (int)imagePoints[0].Y), new Point((int)imagePoints[4].X, (int)imagePoints[4].Y), new MCvScalar(0, 0, 255), 2);
-            CvInvoke.Line(Ovrvision.imageDataLeft_Mat, new Point((int)imagePoints[1].X, (int)imagePoints[1].Y), new Point((int)imagePoints[5].X, (int)imagePoints[5].Y), new MCvScalar(0, 0, 255), 2);
-            CvInvoke.Line(Ovrvision.imageDataLeft_Mat, new Point((int)imagePoints[2].X, (int)imagePoints[2].Y), new Point((int)imagePoints[6].X, (int)imagePoints[6].Y), new MCvScalar(0, 0, 255), 2);
-            CvInvoke.Line(Ovrvision.imageDataLeft_Mat, new Point((int)imagePoints[3].X, (int)imagePoints[3].Y), new Point((int)imagePoints[7].X, (int)imagePoints[7].Y), new MCvScalar(0, 0, 255), 2);
-
-            VectorOfPoint top = new VectorOfPoint(new Point[4] { new Point((int)imagePoints[4].X, (int)imagePoints[4].Y),
-                        new Point((int)imagePoints[5].X, (int)imagePoints[5].Y), new Point((int)imagePoints[6].X, (int)imagePoints[6].Y), new Point((int)imagePoints[7].X, (int)imagePoints[7].Y) });
-            VectorOfVectorOfPoint contours_top = new VectorOfVectorOfPoint(top);
-
-            CvInvoke.DrawContours(Ovrvision.imageDataLeft_Mat, contours_top, 0, new MCvScalar(255, 0, 0), 2);
-
-
-            //DRAWING
-            //draw the axis on the image
-            CvInvoke.Line(Ovrvision.imageDataLeft_Mat, new Point((int)imagePoints_axis[0].X, (int)imagePoints_axis[0].Y), new Point((int)imagePoints_axis[1].X, (int)imagePoints_axis[1].Y), new MCvScalar(0, 0, 255), 2);
-            CvInvoke.Line(Ovrvision.imageDataLeft_Mat, new Point((int)imagePoints_axis[0].X, (int)imagePoints_axis[0].Y), new Point((int)imagePoints_axis[2].X, (int)imagePoints_axis[2].Y), new MCvScalar(0, 255, 0), 2);
-            CvInvoke.Line(Ovrvision.imageDataLeft_Mat, new Point((int)imagePoints_axis[0].X, (int)imagePoints_axis[0].Y), new Point((int)imagePoints_axis[3].X, (int)imagePoints_axis[3].Y), new MCvScalar(255, 0, 0), 2);
-        }
-
-
-        private void RenderScene_AR(int eye)
-        {
-            Ovrvision.UpdateCamera();
-            
-            // Clear the screen to white
-            GL.ClearColor(1.0f, 1.0f, 1.0f, 1.0f);
-            GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
-
 
             if (eye == 0)
             {
-                Ovrvision.UpdateLeft();
-                ProcessFrame(0);
-                // Get the address of the first line.
+                //draw cube on the imags
+                VectorOfPoint ground = new VectorOfPoint(new Point[4] { new Point((int)imagePoints_L[0].X, (int)imagePoints_L[0].Y),
+                        new Point((int)imagePoints_L[1].X, (int)imagePoints_L[1].Y), new Point((int)imagePoints_L[2].X, (int)imagePoints_L[2].Y), new Point((int)imagePoints_L[3].X, (int)imagePoints_L[3].Y) });
+                VectorOfVectorOfPoint contours_ground = new VectorOfVectorOfPoint(ground);
+
+                CvInvoke.DrawContours(outFrame_L, contours_ground, 0, new MCvScalar(0, 255, 255), -1);
+
+                CvInvoke.Line(outFrame_L, new Point((int)imagePoints_L[0].X, (int)imagePoints_L[0].Y), new Point((int)imagePoints_L[4].X, (int)imagePoints_L[4].Y), new MCvScalar(0, 0, 255), 2);
+                CvInvoke.Line(outFrame_L, new Point((int)imagePoints_L[1].X, (int)imagePoints_L[1].Y), new Point((int)imagePoints_L[5].X, (int)imagePoints_L[5].Y), new MCvScalar(0, 0, 255), 2);
+                CvInvoke.Line(outFrame_L, new Point((int)imagePoints_L[2].X, (int)imagePoints_L[2].Y), new Point((int)imagePoints_L[6].X, (int)imagePoints_L[6].Y), new MCvScalar(0, 0, 255), 2);
+                CvInvoke.Line(outFrame_L, new Point((int)imagePoints_L[3].X, (int)imagePoints_L[3].Y), new Point((int)imagePoints_L[7].X, (int)imagePoints_L[7].Y), new MCvScalar(0, 0, 255), 2);
+
+                VectorOfPoint top = new VectorOfPoint(new Point[4] { new Point((int)imagePoints_L[4].X, (int)imagePoints_L[4].Y),
+                        new Point((int)imagePoints_L[5].X, (int)imagePoints_L[5].Y), new Point((int)imagePoints_L[6].X, (int)imagePoints_L[6].Y), new Point((int)imagePoints_L[7].X, (int)imagePoints_L[7].Y) });
+                VectorOfVectorOfPoint contours_top = new VectorOfVectorOfPoint(top);
+
+                CvInvoke.DrawContours(outFrame_L, contours_top, 0, new MCvScalar(255, 0, 0), 2);
+
+                //DRAWING
+                //draw the axis on the image
+                CvInvoke.Line(outFrame_L, new Point((int)imagePoints_axis_L[0].X, (int)imagePoints_axis_L[0].Y), new Point((int)imagePoints_axis_L[1].X, (int)imagePoints_axis_L[1].Y), new MCvScalar(0, 0, 255), 2);
+                CvInvoke.Line(outFrame_L, new Point((int)imagePoints_axis_L[0].X, (int)imagePoints_axis_L[0].Y), new Point((int)imagePoints_axis_L[2].X, (int)imagePoints_axis_L[2].Y), new MCvScalar(0, 255, 0), 2);
+                CvInvoke.Line(outFrame_L, new Point((int)imagePoints_axis_L[0].X, (int)imagePoints_axis_L[0].Y), new Point((int)imagePoints_axis_L[3].X, (int)imagePoints_axis_L[3].Y), new MCvScalar(255, 0, 0), 2);
+            }
+            else
+            {
+                //draw cube on the imags
+                VectorOfPoint ground = new VectorOfPoint(new Point[4] { new Point((int)imagePoints_R[0].X, (int)imagePoints_R[0].Y),
+                        new Point((int)imagePoints_R[1].X, (int)imagePoints_R[1].Y), new Point((int)imagePoints_R[2].X, (int)imagePoints_R[2].Y), new Point((int)imagePoints_R[3].X, (int)imagePoints_R[3].Y) });
+                VectorOfVectorOfPoint contours_ground = new VectorOfVectorOfPoint(ground);
+
+                CvInvoke.DrawContours(outFrame_R, contours_ground, 0, new MCvScalar(0, 255, 255), -1);
+
+                CvInvoke.Line(outFrame_R, new Point((int)imagePoints_R[0].X, (int)imagePoints_R[0].Y), new Point((int)imagePoints_R[4].X, (int)imagePoints_R[4].Y), new MCvScalar(0, 0, 255), 2);
+                CvInvoke.Line(outFrame_R, new Point((int)imagePoints_R[1].X, (int)imagePoints_R[1].Y), new Point((int)imagePoints_R[5].X, (int)imagePoints_R[5].Y), new MCvScalar(0, 0, 255), 2);
+                CvInvoke.Line(outFrame_R, new Point((int)imagePoints_R[2].X, (int)imagePoints_R[2].Y), new Point((int)imagePoints_R[6].X, (int)imagePoints_R[6].Y), new MCvScalar(0, 0, 255), 2);
+                CvInvoke.Line(outFrame_R, new Point((int)imagePoints_R[3].X, (int)imagePoints_R[3].Y), new Point((int)imagePoints_R[7].X, (int)imagePoints_R[7].Y), new MCvScalar(0, 0, 255), 2);
+
+                VectorOfPoint top = new VectorOfPoint(new Point[4] { new Point((int)imagePoints_R[4].X, (int)imagePoints_R[4].Y),
+                        new Point((int)imagePoints_R[5].X, (int)imagePoints_R[5].Y), new Point((int)imagePoints_R[6].X, (int)imagePoints_R[6].Y), new Point((int)imagePoints_R[7].X, (int)imagePoints_R[7].Y) });
+                VectorOfVectorOfPoint contours_top = new VectorOfVectorOfPoint(top);
+
+                CvInvoke.DrawContours(outFrame_R, contours_top, 0, new MCvScalar(255, 0, 0), 2);
+
+                //DRAWING
+                //draw the axis on the image
+                CvInvoke.Line(outFrame_R, new Point((int)imagePoints_axis_R[0].X, (int)imagePoints_axis_R[0].Y), new Point((int)imagePoints_axis_R[1].X, (int)imagePoints_axis_R[1].Y), new MCvScalar(0, 0, 255), 2);
+                CvInvoke.Line(outFrame_R, new Point((int)imagePoints_axis_R[0].X, (int)imagePoints_axis_R[0].Y), new Point((int)imagePoints_axis_R[2].X, (int)imagePoints_axis_R[2].Y), new MCvScalar(0, 255, 0), 2);
+                CvInvoke.Line(outFrame_R, new Point((int)imagePoints_axis_R[0].X, (int)imagePoints_axis_R[0].Y), new Point((int)imagePoints_axis_R[3].X, (int)imagePoints_axis_R[3].Y), new MCvScalar(255, 0, 0), 2);
+            }
+        }
+
+        private void drawCameraView(int eye)
+        {
+            
+            if (eye == 0)
+            {
+
+                CvInvoke.Undistort(Ovrvision.imageDataLeft_Mat, outFrame_L, _cameraMatrix_left, _distCoeffs_left);
+
+                if (foundMarker_L)
+                    drawCubeOpenCV(0);
+
                 GL.BindTexture(TextureTarget.Texture2D, cameraTexturesLeft);
                 GL.TexSubImage2D(TextureTarget.Texture2D, 0, 0, 0, Ovrvision.imageSizeW, Ovrvision.imageSizeH, OpenTK.Graphics.OpenGL4.PixelFormat.Bgr, PixelType.UnsignedByte, outFrame_L.DataPointer);
                 //OVRVision Texture
                 GL.BindTexture(TextureTarget.Texture2D, cameraTexturesLeft);
 
-            }else
-            {
-                Ovrvision.UpdateRight();
-                //ProcessFrame(1);
-                // Get the address of the first line.
+            }
+            else{
+
+                CvInvoke.Undistort(Ovrvision.imageDataRight_Mat, outFrame_R, _cameraMatrix_right, _distCoeffs_right);
+
+                if (foundMarker_R)
+                    drawCubeOpenCV(1);
                 GL.BindTexture(TextureTarget.Texture2D, cameraTexturesRight);
-                GL.TexSubImage2D(TextureTarget.Texture2D, 0, 0, 0, Ovrvision.imageSizeW, Ovrvision.imageSizeH, OpenTK.Graphics.OpenGL4.PixelFormat.Bgr, PixelType.UnsignedByte, Ovrvision.imageDataRight_Mat.DataPointer);
+                GL.TexSubImage2D(TextureTarget.Texture2D, 0, 0, 0, Ovrvision.imageSizeW, Ovrvision.imageSizeH, OpenTK.Graphics.OpenGL4.PixelFormat.Bgr, PixelType.UnsignedByte, outFrame_R.DataPointer);
                 //OVRVision Texture
                 GL.BindTexture(TextureTarget.Texture2D, cameraTexturesRight);
-               
             }
 
             GL.BindVertexArray(vaoQuad);
@@ -530,8 +597,26 @@ void main()
             GL.UseProgram(screenShaderProgram);
             GL.DrawArrays(PrimitiveType.Triangles, 0, 6);
             GL.BindVertexArray(0);
+        }
 
+        private void RenderScene_AR(int eye)
+        {
+            Ovrvision.UpdateCamera();
+            // Clear the screen to white
+            GL.ClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+            GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
 
+            if (eye == 0)
+            {
+                Ovrvision.UpdateLeft();
+                drawCameraView(0);
+
+            }else
+            {
+                Ovrvision.UpdateRight();
+                drawCameraView(1);
+
+            }
 
         }
 
