@@ -11,7 +11,7 @@ namespace SparrowHawk
         {
             Rhino.RhinoDoc doc = null;
             VrGame game = new VrGame(ref doc);
-            game.Run();
+            game.Run(60);
             return 0;
         }
     }

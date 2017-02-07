@@ -66,6 +66,17 @@ namespace SparrowHawk
         -1.0f,  1.0f,  0.0f, 0.0f
         };
 
+        /*
+        float[] quadVertices2 = new float[24]{
+        -1.0f,  1.0f, 0.05f, 0.0f,
+        1.0f,  1.0f,  1.0f, 0.0f,
+        1.0f, -1.0f,  1.0f, 1.0f,
+
+        1.0f, -1.0f,  1.0f, 1.0f,
+        -1.0f, -1.0f,  0.0f, 1.0f,
+        -1.0f,  1.0f,  0.0f, 0.0f
+        };*/
+
         float[] cubeVertices = new float[180]{
         // Positions          // Texture Coords
         0.0f, 0.0f, 0.0f,  0.0f, 0.0f,
@@ -138,7 +149,7 @@ void main()
         private readonly Mat _grayFrame_R = new Mat();
         int _width = 9; //width of chessboard no. squares in width - 1
         int _height = 6; // heght of chess board no. squares in heigth - 1
-        private float _squareSize = 1.1f;
+        private float _squareSize = 1.4f;
         private Size _patternSize = new Size(9, 6);  //size of chess board to be detected
         VectorOfPointF _corners = new VectorOfPointF(); //corners found from chessboard
         Mat[] _rvecs, _tvecs;
@@ -357,7 +368,7 @@ void main()
         private void initOvrvisoin()
         {
             Ovrvision = new COvrvision();
-            Ovrvision.useProcessingQuality = 1;	//DEMOSAIC & REMAP
+            Ovrvision.useProcessingQuality = 0;	//DEMOSAIC & REMAP
 
             if (Ovrvision.Open(COvrvision.OV_CAMVR_FULL))
             {
@@ -793,8 +804,12 @@ void main()
 
             // Left Eye. Notably the original openvr code has some lame code duplication here.
             GL.BindFramebuffer(FramebufferTarget.Framebuffer, leftEyeDesc.renderFramebufferId);
-            GL.Viewport(0, 0, (int) vrRenderWidth, (int) vrRenderHeight);
+            int ox = ((int)vrRenderWidth - Ovrvision.imageSizeW) / 2;
+            int oy = ((int)vrRenderHeight - Ovrvision.imageSizeH) / 2;
+            GL.Viewport(ox+100, oy, Ovrvision.imageSizeW, Ovrvision.imageSizeH);
+            //GL.Viewport(0, 0, (int) vrRenderWidth, (int) vrRenderHeight);
             RenderScene_AR(0);
+            //GL.Viewport(0, 0, (int)vrRenderWidth, (int)vrRenderHeight);
             RenderScene(Valve.VR.EVREye.Eye_Left);
             GL.BindFramebuffer(FramebufferTarget.Framebuffer, 0);
             GL.Disable(EnableCap.Multisample);
@@ -808,8 +823,10 @@ void main()
 
             // Right Eye.
             GL.BindFramebuffer(FramebufferTarget.Framebuffer, rightEyeDesc.renderFramebufferId);
-            GL.Viewport(0, 0, (int)vrRenderWidth, (int)vrRenderHeight);
+            GL.Viewport(ox-100, oy, Ovrvision.imageSizeW, Ovrvision.imageSizeH);
+            //GL.Viewport(0, 0, (int)vrRenderWidth, (int)vrRenderHeight);
             RenderScene_AR(1);
+            //GL.Viewport(0, 0, (int)vrRenderWidth, (int)vrRenderHeight);
             RenderScene(Valve.VR.EVREye.Eye_Right);
             GL.BindFramebuffer(FramebufferTarget.Framebuffer, 0);
             GL.Disable(EnableCap.Multisample);
