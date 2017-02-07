@@ -143,7 +143,7 @@ namespace SparrowHawk
             SceneNode cube = new SceneNode("Triangle", ref g, ref m); ;
             mScene.staticGeometry.add(ref cube);
 
-            mRenderer = new VrRenderer(ref mHMD, ref mScene, mRenderWidth, mRenderWidth);
+            mRenderer = new VrRenderer(ref mHMD, ref mScene, mRenderWidth, mRenderHeight);
         
 
             // build shaders? Maybe in renderer!
