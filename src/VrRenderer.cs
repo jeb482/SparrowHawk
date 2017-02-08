@@ -170,7 +170,7 @@ void main()
         private readonly Mat _grayFrame_R = new Mat();
         int _width = 9; //width of chessboard no. squares in width - 1
         int _height = 6; // heght of chess board no. squares in heigth - 1
-        private float _squareSize = 1.4f;
+        private float _squareSize = 1.0f;
         private Size _patternSize = new Size(9, 6);  //size of chess board to be detected
         VectorOfPointF _corners = new VectorOfPointF(); //corners found from chessboard
         Mat[] _rvecs, _tvecs;
@@ -210,7 +210,7 @@ void main()
             //ovrvision
             initARscene();
             initCameraPara();
-            //initOvrvisoin();
+            initOvrvisoin();
         }
 
         /**
@@ -298,6 +298,7 @@ void main()
             //GL.ClearColor(0,0,0,1);
             //GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
 
+            /*
             mHMD.GetEyeToHeadTransform(eye);
 
             Matrix4 vp;
@@ -313,7 +314,22 @@ void main()
             }
             vp.Transpose();
             mScene.render(ref vp);
+            */
+
+            switch (eye)
+            {
+                case Valve.VR.EVREye.Eye_Left:
+                    if (foundMarker_L)
+                        drawCubeGL(0);
+                    break;
+                default:
+                    if (foundMarker_R)
+                        drawCubeGL(1);
+                    break;
+            }
+
             
+
         }
 
         //ovrvision stuff
@@ -381,8 +397,8 @@ void main()
             cubePoints.Add(new MCvPoint3D32f(3.0f, 3.0f, -3.0f));
             cubePoints.Add(new MCvPoint3D32f(3.0f, 0.0f, -3.0f));
 
-            BuildProjectionMatrix(0.1f, 30, 0);
-            BuildModelMatrix();
+            
+            
 
         }
 
@@ -447,6 +463,9 @@ void main()
                 // Load textures
                 GL.UseProgram(screenShaderProgram);
                 GL.Uniform1(GL.GetUniformLocation(screenShaderProgram, "texFramebuffer"), 0);
+
+                BuildProjectionMatrix(0.1f, 30, 0);
+                BuildModelMatrix();
 
                 //Thread start
                 ThreadEnd = false;
@@ -605,6 +624,7 @@ void main()
         {
             //Identity matrix doesn't need to transpose. 
             glModelMatrix = new Matrix4(Vector4.UnitX, Vector4.UnitY, Vector4.UnitZ, Vector4.UnitW);
+            glModelMatrix_R = new Matrix4(Vector4.UnitX, Vector4.UnitY, Vector4.UnitZ, Vector4.UnitW);
         }
 
         private void BuildViewMatrix(int eye)
@@ -615,10 +635,10 @@ void main()
 
             //using OpenTK Matrix4
             OpenTK.Matrix4 tempViewMatrix = new Matrix4(
-                rotation.GetValue(0,0), rotation.GetValue(0, 1), rotation.GetValue(0, 2), (float)_tvecAR.Data[0, 0],
-                rotation.GetValue(1,0), rotation.GetValue(1, 1), rotation.GetValue(1, 2), (float)_tvecAR.Data[1, 0],
-                rotation.GetValue(2,0), rotation.GetValue(2, 1), rotation.GetValue(2, 2), (float)_tvecAR.Data[2, 0],
-                rotation.GetValue(3,0), rotation.GetValue(3, 1), rotation.GetValue(3, 2), (float)_tvecAR.Data[3, 0]
+               (float)rotation.GetValue(0,0), (float)rotation.GetValue(0, 1), (float)rotation.GetValue(0, 2), (float)_tvecAR.Data[0, 0],
+               (float)rotation.GetValue(1,0), (float)rotation.GetValue(1, 1), (float)rotation.GetValue(1, 2), (float)_tvecAR.Data[1, 0],
+               (float)rotation.GetValue(2,0), (float)rotation.GetValue(2, 1), (float)rotation.GetValue(2, 2), (float)_tvecAR.Data[2, 0],
+                0, 0, 0, 1
             );
 
             OpenTK.Matrix4 cvToOgl = new Matrix4(
@@ -633,15 +653,17 @@ void main()
             if (eye == 0)
             {
                 OpenTK.Matrix4.Transpose( ref tempViewMatrix, out glViewMatrix);
-                Util.WriteLine(ref mScene.rhinoDoc, glViewMatrix.ToString());
+                //Util.WriteLine(ref mScene.rhinoDoc, glViewMatrix.ToString());
 
-                //debug
-                //calculatePosition();
+               
             }
             else
             {
 
                 OpenTK.Matrix4.Transpose(ref tempViewMatrix, out glViewMatrix_R);
+
+                //debug
+                calculatePosition();
             }
 
 
@@ -658,11 +680,12 @@ void main()
             OpenTK.Matrix4 ModelMatrix_RowMajor = new Matrix4();
 
             //need to transpose back to the row-major format
-            OpenTK.Matrix4.Transpose(ref glProjectionMatrix, out ProjectionMatrix_RowMajor);
-            OpenTK.Matrix4.Transpose(ref glViewMatrix, out ViewMatrix_RowMajor);
-            OpenTK.Matrix4.Transpose(ref glModelMatrix, out ModelMatrix_RowMajor);
+            OpenTK.Matrix4.Transpose(ref glProjectionMatrix_R, out ProjectionMatrix_RowMajor);
+            OpenTK.Matrix4.Transpose(ref glViewMatrix_R, out ViewMatrix_RowMajor);
+            OpenTK.Matrix4.Transpose(ref glModelMatrix_R, out ModelMatrix_RowMajor);
 
             new_point = ProjectionMatrix_RowMajor * ViewMatrix_RowMajor * ModelMatrix_RowMajor * point;
+            new_point /= new_point.W;
 
             Util.WriteLine(ref mScene.rhinoDoc, new_point.ToString());
         }
@@ -805,7 +828,7 @@ void main()
 
         private void drawCameraView(int eye)
         {
-            
+
             if (eye == 0)
             {
 
@@ -814,7 +837,7 @@ void main()
                 if (foundMarker_L)
                 {
                     drawCubeOpenCV(0);
-                    drawCubeGL(0);
+
                 }
 
                 GL.BindTexture(TextureTarget.Texture2D, cameraTexturesLeft);
@@ -822,22 +845,27 @@ void main()
                 //OVRVision Texture
                 GL.BindTexture(TextureTarget.Texture2D, cameraTexturesLeft);
 
+               
+
             }
-            else{
+            else
+            {
 
                 //CvInvoke.Undistort(Ovrvision.imageDataRight_Mat, outFrame_R, _cameraMatrix_right, _distCoeffs_right);
 
                 if (foundMarker_R)
                 {
                     drawCubeOpenCV(1);
-                    drawCubeGL(1);
                 }
+
 
                 GL.BindTexture(TextureTarget.Texture2D, cameraTexturesRight);
                 GL.TexSubImage2D(TextureTarget.Texture2D, 0, 0, 0, Ovrvision.imageSizeW, Ovrvision.imageSizeH, OpenTK.Graphics.OpenGL4.PixelFormat.Bgr, PixelType.UnsignedByte, Ovrvision.imageDataRight_Mat.DataPointer);
                 //OVRVision Texture
                 GL.BindTexture(TextureTarget.Texture2D, cameraTexturesRight);
+
             }
+                
 
             GL.BindVertexArray(vaoQuad);
             GL.Disable(EnableCap.DepthTest);
@@ -938,11 +966,12 @@ void main()
             GL.BindFramebuffer(FramebufferTarget.Framebuffer, leftEyeDesc.renderFramebufferId);
             int ox = ((int)vrRenderWidth - Ovrvision.imageSizeW) / 2;
             int oy = ((int)vrRenderHeight - Ovrvision.imageSizeH) / 2;
+            //ox+100 to deal with blur issue
             GL.Viewport(ox+100, oy, Ovrvision.imageSizeW, Ovrvision.imageSizeH);
             //GL.Viewport(0, 0, (int) vrRenderWidth, (int) vrRenderHeight);
             RenderScene_AR(0);
             //GL.Viewport(0, 0, (int)vrRenderWidth, (int)vrRenderHeight);
-            //RenderScene(Valve.VR.EVREye.Eye_Left);
+            RenderScene(Valve.VR.EVREye.Eye_Left);
             GL.BindFramebuffer(FramebufferTarget.Framebuffer, 0);
             GL.Disable(EnableCap.Multisample);
 
@@ -955,11 +984,12 @@ void main()
 
             // Right Eye.
             GL.BindFramebuffer(FramebufferTarget.Framebuffer, rightEyeDesc.renderFramebufferId);
+            //ox-100 to deal with the blur issue
             GL.Viewport(ox-100, oy, Ovrvision.imageSizeW, Ovrvision.imageSizeH);
             //GL.Viewport(0, 0, (int)vrRenderWidth, (int)vrRenderHeight);
             RenderScene_AR(1);
             //GL.Viewport(0, 0, (int)vrRenderWidth, (int)vrRenderHeight);
-            //RenderScene(Valve.VR.EVREye.Eye_Right);
+            RenderScene(Valve.VR.EVREye.Eye_Right);
             GL.BindFramebuffer(FramebufferTarget.Framebuffer, 0);
             GL.Disable(EnableCap.Multisample);
 
