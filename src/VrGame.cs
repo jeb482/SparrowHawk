@@ -123,9 +123,16 @@ namespace SparrowHawk
             //Material.Material m = new Material.SingleColorMaterial(mDoc,1f,1f,1f,1f);
             Material.Material m = new Material.SingleColorMaterial(mDoc,1,0,1,1);
             SceneNode cube = new SceneNode("Triangle", ref g, ref m); ;
-            mScene.staticGeometry.add(ref cube);
+            //mScene.staticGeometry.add(ref cube);
 
-            mRenderer = new VrRenderer(ref mHMD, ref mScene, mRenderWidth, mRenderWidth);
+            g = new Geometry.PointMarker(new Vector3(0, 0, 0));
+            m = new Material.SingleColorMaterial(mDoc, 1, 1, 1, 1);
+            SceneNode point = new SceneNode("Point 1", ref g, ref m);
+            mScene.staticGeometry.add(ref point);
+            point.transform = new Matrix4(1, 0, 0, 0, 0, 1, 0, 1, 0, 0, 1, 0, 0, 0, 0, 1);
+
+            mRenderer = new VrRenderer(ref mHMD, ref mScene, mRenderWidth, mRenderHeight);
+
         
 
             // build shaders? Maybe in renderer!
@@ -154,8 +161,60 @@ namespace SparrowHawk
       //          mRenderer.renderFrame();
       //      }
       //  }
+        
+
+     Geometry.Geometry FindOrLoadRenderModel(string modelName)
+      {
+          RenderModel_t model;
+          EVRRenderModelError error;
+          IntPtr pRenderModel = new IntPtr();
+          while (true)
+            {
+                error = OpenVR.RenderModels.LoadRenderModel_Async(modelName, ref pRenderModel);
+                if (error != EVRRenderModelError.Loading)
+                    break;
+                System.Threading.Thread.Sleep(1);
+            }
+
+            if ( error != EVRRenderModelError.None)
+            {
+                    Util.WriteLine(ref mDoc,"Unable to load render model " + modelName + " -- " + OpenVR.RenderModels.GetRenderModelErrorNameFromEnum(error));
+                    return null;
+            }
 
 
+            // Unpack
+            int nTexId;
+            Geometry.Geometry mesh = new Geometry.Geometry(pRenderModel, out nTexId);
+
+            //unsafe
+            //{
+            //    RenderModel_TextureMap_t* pTexture;
+                
+            //    IntPtr ppTexture = (IntPtr) &pTexture;
+            //    while (true)
+            //    {
+            //        error = OpenVR.RenderModels.LoadTexture_Async(nTexId, ref ppTexture);
+
+
+
+            //    }
+            //}
+
+
+
+            return null;
+      }
+ 
+      //protected Geometry.Geometry SetupRenderModelForTrackedDevice(uint trackedDeviceIndex)
+      //{
+      //    if (trackedDeviceIndex >= OpenVR.k_unMaxTrackedDeviceCount)
+      //        return null;
+      //    FindOrLoadRenderModel("");
+ 
+      //}
+ 
+         
 
 
     }

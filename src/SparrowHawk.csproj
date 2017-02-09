@@ -69,6 +69,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="COvrvision.cs" />
+    <Compile Include="Geometry\PointMarker.cs" />
     <Compile Include="Geometry\Geometry.cs" />
     <Compile Include="GLShader.cs" />
     <Compile Include="Material\Material.cs" />
@@ -98,6 +99,9 @@
       <Name>CjClutter.ObjLoader.Loader</Name>
     </ProjectReference>
   </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Interaction\" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
@@ -124,5 +128,6 @@ Erase "$(TargetPath)"</PostBuildEvent>
     <StartArguments>
     </StartArguments>
     <StartAction>Program</StartAction>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
 </Project>

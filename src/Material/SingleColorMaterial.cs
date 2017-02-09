@@ -26,7 +26,7 @@ namespace SparrowHawk.Material
 
         public override void draw(ref Geometry.Geometry g, ref Matrix4 model, ref Matrix4 vp)
         {
-            float[] fakeIndices = new float[] { -.5f, -.5f, 0, .5f, -.5f, 0, 0, .5f, 0 }; 
+            //float[] fakeIndices = new float[] { -.5f, -.5f, 0, .5f, -.5f, 0, 0, .5f, 0 }; 
             ErrorCode e;
             mShader.bind();
            
