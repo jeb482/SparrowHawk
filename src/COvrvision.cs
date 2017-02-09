@@ -29,6 +29,13 @@ namespace SparrowHawk
         //Ovrvision Dll import
         //ovrvision_csharp.cpp
         ////////////// Main Ovrvision System //////////////
+        //custom
+        [DllImport("ovrvision", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
+        static extern void ovChangeFocal(float len);
+        //[DllImport("ovrvision", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
+        //static extern float[] ovGetCameraMatrix(System.IntPtr matrix_array, int type);
+        [DllImport("ovrvision", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
+        static extern IntPtr ovGetCameraMatrix(int type);
         [DllImport("ovrvision", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
         static extern int ovOpen(int locationID, float arMeter, int type);
         [DllImport("ovrvision", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
@@ -187,6 +194,23 @@ namespace SparrowHawk
         public void Release()
         {
             ovRelease();
+        }
+
+        //custom fuctions
+        public void ChangeFocal(float len)
+        {
+            ovChangeFocal(len);
+        }
+
+        /*
+        public float[] GetCameraMatrix(System.IntPtr matrix_array, int type )
+        {
+            return ovGetCameraMatrix(matrix_array, type);
+        }*/
+
+        public IntPtr GetCameraMatrix(int type)
+        {
+            return ovGetCameraMatrix(type);
         }
 
         //Open Ovrvision

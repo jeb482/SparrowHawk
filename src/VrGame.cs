@@ -38,12 +38,16 @@ namespace SparrowHawk
                 return;
 
             OpenVR.Compositor.WaitGetPoses(mScene.mTrackedDevices, gamePoseArray);
+
+            int nDevice = 0;
             foreach (var device in gamePoseArray)
             {
                 if (device.bPoseIsValid)
                 {
-                    // TODO: Store it?
+                    // TODO: Store it
+                    mScene.m_rmat4DevicePose[nDevice] = Util.steamVRMatrixToMatrix4(device.mDeviceToAbsoluteTracking);
                 }
+                nDevice++;
             }
 
             if (gamePoseArray[OpenVR.k_unTrackedDeviceIndex_Hmd].bPoseIsValid)

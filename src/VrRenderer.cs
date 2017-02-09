@@ -12,6 +12,8 @@ using Emgu.CV.Util;
 using Emgu.CV.CvEnum;
 using Emgu.CV.Structure;
 using System.Threading;
+using System.Runtime.InteropServices;
+using Valve.VR;
 
 namespace SparrowHawk
 {
@@ -51,8 +53,8 @@ namespace SparrowHawk
         int cameraTexturesLeft;
         int cameraTexturesRight;
         int cubeTexture;
-        int vaoDepth, vaoQuad, vaoCube;
-        int vboDepth, vboQuad, vboCube;
+        int vaoDepth, vaoQuad, vaoCube, vaoController;
+        int vboDepth, vboQuad, vboCube, vboController;
         // Create shader programs
         int screenVertexShader, screenFragmentShader, screenShaderProgram;
         int cubeVertexShader, cubeFragmentShader, cubeShaderProgram;
@@ -111,6 +113,51 @@ namespace SparrowHawk
               3.0f,  3.0f,  -3.0f,  1.0f, 0.0f,
               0.0f,  3.0f,  -3.0f,  0.0f, 0.0f,
               0.0f,  3.0f, 0.0f,  0.0f, 1.0f
+          };
+
+        float[] controllerVertices = new float[180]{
+        // Positions          // Texture Coords
+        0.0f, 0.0f, 0.0f,  0.0f, 0.0f,
+              0.05f, 0.0f, 0.0f,  1.0f, 0.0f,
+              0.05f,  0.05f, 0.0f,  1.0f, 1.0f,
+              0.05f,  0.05f, 0.0f,  1.0f, 1.0f,
+              0.0f,  0.05f, 0.0f,  0.0f, 1.0f,
+              0.0f, 0.0f, 0.0f,  0.0f, 0.0f,
+
+              0.0f, 0.0f,  -0.05f,  0.0f, 0.0f,
+              0.05f, 0.0f,  -0.05f,  1.0f, 0.0f,
+              0.05f,  0.05f,  -0.05f,  1.0f, 1.0f,
+              0.05f,  0.05f,  -0.05f,  1.0f, 1.0f,
+              0.0f,  0.05f,  -0.05f,  0.0f, 1.0f,
+              0.0f, 0.0f,  -0.05f,  0.0f, 0.0f,
+
+              0.0f,  0.05f,  -0.05f,  1.0f, 0.0f,
+              0.0f,  0.05f, 0.0f,  1.0f, 1.0f,
+              0.0f, 0.0f, 0.0f,  0.0f, 1.0f,
+              0.0f, 0.0f, 0.0f,  0.0f, 1.0f,
+              0.0f, 0.0f,  -0.05f,  0.0f, 0.0f,
+              0.0f,  0.05f,  -0.05f,  1.0f, 0.0f,
+
+              0.05f,  0.05f,  -0.05f,  1.0f, 0.0f,
+              0.05f,  0.05f, 0.0f,  1.0f, 1.0f,
+              0.05f, 0.0f, 0.0f,  0.0f, 1.0f,
+              0.05f, 0.0f, 0.0f,  0.0f, 1.0f,
+              0.05f, 0.0f,  -0.05f,  0.0f, 0.0f,
+              0.05f,  0.05f,  -0.05f,  1.0f, 0.0f,
+
+              0.0f, 0.0f, 0.0f,  0.0f, 1.0f,
+              0.05f, 0.0f, 0.0f,  1.0f, 1.0f,
+              0.05f, 0.0f,  -0.05f,  1.0f, 0.0f,
+              0.05f, 0.0f,  -0.05f,  1.0f, 0.0f,
+              0.0f, 0.0f,  -0.05f,  0.0f, 0.0f,
+              0.0f, 0.0f, 0.0f,  0.0f, 1.0f,
+
+              0.0f,  0.05f, 0.0f,  0.0f, 1.0f,
+              0.05f,  0.05f, 0.0f,  1.0f, 1.0f,
+              0.05f,  0.05f,  -0.05f,  1.0f, 0.0f,
+              0.05f,  0.05f,  -0.05f,  1.0f, 0.0f,
+              0.0f,  0.05f,  -0.05f,  0.0f, 0.0f,
+              0.0f,  0.05f, 0.0f,  0.0f, 1.0f
           };
 
         string screenVertexSource = @"#version 150 core
@@ -196,6 +243,8 @@ void main()
         Mat _distCoeffs_left = new Mat(4, 1, DepthType.Cv64F, 1);
         Mat _cameraMatrix_right = new Mat(3, 3, DepthType.Cv64F, 1);
         Mat _distCoeffs_right = new Mat(4, 1, DepthType.Cv64F, 1);
+        Mat _cameraMatrix_new = new Mat(3, 3, DepthType.Cv64F, 1);
+        Mat _distCoeffs_new = new Mat(4, 1, DepthType.Cv64F, 1);
 
 
         public VrRenderer(ref Valve.VR.CVRSystem HMD, ref Scene scene, uint mRenderWidth, uint mRenderHeight)
@@ -208,9 +257,9 @@ void main()
             vrRenderHeight = mRenderHeight;
 
             //ovrvision
-            initARscene();
-            initCameraPara();
+            initARscene();  
             initOvrvisoin();
+            initCameraPara();
         }
 
         /**
@@ -320,11 +369,19 @@ void main()
             {
                 case Valve.VR.EVREye.Eye_Left:
                     if (foundMarker_L)
+                    {
                         drawCubeGL(0);
+                        
+                    }
+                    drawController(0);
                     break;
                 default:
                     if (foundMarker_R)
+                    {
                         drawCubeGL(1);
+                        
+                    }
+                    drawController(1);
                     break;
             }
 
@@ -336,40 +393,12 @@ void main()
 
         private void initCameraPara()
         {
-            //using default values for testing
+            // default values (careful about scale). We use the new camera matrix after stereo remap => move to buildProjection
             // Left CameraInstric   : (6.7970157255511901e+002, 0., 6.0536133655058381e+002, 0., 6.8042527485960966e+002, 5.5465392353996174e+002, 0., 0., 1.);
             // Right CameraInstric   : (6.8865122458251960e+002, 0., 6.1472005979575772e+002, 0., 6.8933034565503726e+002, 5.0684212440916116e+002, 0., 0., 1.);
             // Left Distortion : (-4.1335867833577783e-001, 2.1178505767332989e-001, -4.7504756919241204e-004, 3.2255999104604089e-003, 3.7887562626108255e-002, -9.2038953879423846e-002, 3.1299065818407031e-002, 1.3086219827422665e-001);
             // Right Distortion : (-3.0493990540623439e-001, 1.3662653080461551e-001, 1.0423167776015031e-003, 2.8491358735884113e-003, 5.9120577005421594e-002, 3.3803762878286243e-002, -5.1376486225192128e-002, 1.5379685303460996e-001);;
-            _cameraMatrix_left.SetValue(0, 0, 6.7970157255511901e+002);
-            _cameraMatrix_left.SetValue(0, 1, 0);
-            _cameraMatrix_left.SetValue(0, 2, 6.0536133655058381e+002);
-            _cameraMatrix_left.SetValue(1, 0, 0);
-            _cameraMatrix_left.SetValue(1, 1, 6.8042527485960966e+002);
-            _cameraMatrix_left.SetValue(1, 2, 5.5465392353996174e+002);
-            _cameraMatrix_left.SetValue(2, 0, 0);
-            _cameraMatrix_left.SetValue(2, 1, 0);
-            _cameraMatrix_left.SetValue(2, 2, 1);
 
-            _cameraMatrix_right.SetValue(0, 0, 6.8865122458251960e+002);
-            _cameraMatrix_right.SetValue(0, 1, 0);
-            _cameraMatrix_right.SetValue(0, 2, 6.1472005979575772e+002);
-            _cameraMatrix_right.SetValue(1, 0, 0);
-            _cameraMatrix_right.SetValue(1, 1, 6.8933034565503726e+002);
-            _cameraMatrix_right.SetValue(1, 2, 5.0684212440916116e+002);
-            _cameraMatrix_right.SetValue(2, 0, 0);
-            _cameraMatrix_right.SetValue(2, 1, 0);
-            _cameraMatrix_right.SetValue(2, 2, 1);
-
-            _distCoeffs_left.SetValue(0, 0, -4.1335867833577783e-001);
-            _distCoeffs_left.SetValue(1, 0, 2.1178505767332989e-001);
-            _distCoeffs_left.SetValue(2, 0, -4.7504756919241204e-004);
-            _distCoeffs_left.SetValue(3, 0, 3.2255999104604089e-003);
-
-            _distCoeffs_right.SetValue(0, 0, -3.0493990540623439e-001);
-            _distCoeffs_right.SetValue(1, 0, 1.3662653080461551e-001);
-            _distCoeffs_right.SetValue(2, 0, 1.0423167776015031e-003);
-            _distCoeffs_right.SetValue(3, 0, 2.8491358735884113e-003);
 
             objectList = new List<MCvPoint3D32f>();
             for (int i = 0; i < _height; i++)
@@ -397,9 +426,6 @@ void main()
             cubePoints.Add(new MCvPoint3D32f(3.0f, 3.0f, -3.0f));
             cubePoints.Add(new MCvPoint3D32f(3.0f, 0.0f, -3.0f));
 
-            
-            
-
         }
 
         private void initARscene()
@@ -422,6 +448,21 @@ void main()
             GL.BindBuffer(BufferTarget.ArrayBuffer, vboCube);
 
             specifyCubeVertexAttributes();
+
+            //create controller vao
+            GL.GenVertexArrays(1, out this.vaoController);
+
+            // Load vertex data
+            GL.GenBuffers(1, out this.vboController);
+            GL.BindBuffer(BufferTarget.ArrayBuffer, vboController);
+            GL.BufferData(BufferTarget.ArrayBuffer, controllerVertices.Length * sizeof(float), controllerVertices, BufferUsageHint.StaticDraw);
+
+            // Specify the layout of the vertex data
+            GL.BindVertexArray(vaoController);
+            GL.BindBuffer(BufferTarget.ArrayBuffer, vboController);
+
+            specifyCubeVertexAttributes();
+
         }
 
         private void initOvrvisoin()
@@ -503,9 +544,6 @@ void main()
             _frame_L = Ovrvision.imageDataLeft_Mat;
             _frame_R = Ovrvision.imageDataRight_Mat;
 
-            //CvInvoke.Undistort(_frame_L, outFrame_L, _cameraMatrix_left, _distCoeffs_left);
-            //CvInvoke.Undistort(_frame_R, outFrame_R, _cameraMatrix_right, _distCoeffs_right);
-            
             CvInvoke.CvtColor(_frame_L, _grayFrame_L, ColorConversion.Bgr2Gray);
             CvInvoke.CvtColor(_frame_R, _grayFrame_R, ColorConversion.Bgr2Gray);
 
@@ -519,14 +557,14 @@ void main()
                 //make mesurments more accurate by using FindCornerSubPixel
                 CvInvoke.CornerSubPix(_grayFrame_L, _corners, new Size(11, 11), new Size(-1, -1),
                     new MCvTermCriteria(20, 0.001));
-                CvInvoke.SolvePnP(objectList.ToArray(), _corners.ToArray(), _cameraMatrix_left, _distCoeffs_left, _rvecAR, _tvecAR);
+                CvInvoke.SolvePnP(objectList.ToArray(), _corners.ToArray(), _cameraMatrix_new, _distCoeffs_new, _rvecAR, _tvecAR);
 
                 // drawing axis points or cubePoints
                 imagePoints_L = new PointF[cubePoints.Count];
-                imagePoints_L = CvInvoke.ProjectPoints(cubePoints.ToArray(), _rvecAR, _tvecAR, _cameraMatrix_left, _distCoeffs_left);
+                imagePoints_L = CvInvoke.ProjectPoints(cubePoints.ToArray(), _rvecAR, _tvecAR, _cameraMatrix_new, _distCoeffs_new);
 
                 imagePoints_axis_L = new PointF[axisPoints.Count];
-                imagePoints_axis_L = CvInvoke.ProjectPoints(axisPoints.ToArray(), _rvecAR, _tvecAR, _cameraMatrix_left, _distCoeffs_left);
+                imagePoints_axis_L = CvInvoke.ProjectPoints(axisPoints.ToArray(), _rvecAR, _tvecAR, _cameraMatrix_new, _distCoeffs_new);
 
                 foundMarker_L = true;
 
@@ -557,14 +595,14 @@ void main()
                 //make mesurments more accurate by using FindCornerSubPixel
                 CvInvoke.CornerSubPix(_grayFrame_R, _corners, new Size(11, 11), new Size(-1, -1),
                     new MCvTermCriteria(20, 0.001));
-                CvInvoke.SolvePnP(objectList.ToArray(), _corners.ToArray(), _cameraMatrix_right, _distCoeffs_right, _rvecAR, _tvecAR);
+                CvInvoke.SolvePnP(objectList.ToArray(), _corners.ToArray(), _cameraMatrix_new, _distCoeffs_new, _rvecAR, _tvecAR);
 
                 // drawing axis points or cubePoints
                 imagePoints_R = new PointF[cubePoints.Count];
-                imagePoints_R = CvInvoke.ProjectPoints(cubePoints.ToArray(), _rvecAR, _tvecAR, _cameraMatrix_right, _distCoeffs_right);
+                imagePoints_R = CvInvoke.ProjectPoints(cubePoints.ToArray(), _rvecAR, _tvecAR, _cameraMatrix_new, _distCoeffs_new);
 
                 imagePoints_axis_R = new PointF[axisPoints.Count];
-                imagePoints_axis_R = CvInvoke.ProjectPoints(axisPoints.ToArray(), _rvecAR, _tvecAR, _cameraMatrix_right, _distCoeffs_right);
+                imagePoints_axis_R = CvInvoke.ProjectPoints(axisPoints.ToArray(), _rvecAR, _tvecAR, _cameraMatrix_new, _distCoeffs_new);
 
                 foundMarker_R = true;
 
@@ -590,22 +628,47 @@ void main()
         private void BuildProjectionMatrix(float near, float far, int eye)
         {
 
-            // using the new camrea matrix that we passed in when we do the initundistortremap
-            //TODO: compile new ovrvision dll to get the correct one considering to the distortion. check ovrsetting.cpp file.
+            // using the new camrea matrix that we passed in when we do the initundistortremap in ovrvision.dll
+            float[] camMatirx_array = new float[9];
+            IntPtr ptr = Ovrvision.GetCameraMatrix(0);
+            Marshal.Copy(ptr, camMatirx_array, 0, 9);
 
+            /*
             float alpha = 428.0f;
-            //697.85, 428.0f
             float beta = 428.0f;
-            //443.92, g_pOvrvision->GetCamWidth() / 2
             float x0 = (Ovrvision.imageSizeW / 2);
-            //541.14, g_pOvrvision->GetCamHeight() / 2;
             float y0 = (Ovrvision.imageSizeH / 2);
+            */
+
+            //init new cameraMatrix
+            _cameraMatrix_new.SetValue(0, 0, camMatirx_array[0]);
+            _cameraMatrix_new.SetValue(0, 1, camMatirx_array[1]);
+            _cameraMatrix_new.SetValue(0, 2, camMatirx_array[2]);
+            _cameraMatrix_new.SetValue(1, 0, camMatirx_array[3]);
+            _cameraMatrix_new.SetValue(1, 1, camMatirx_array[4]);
+            _cameraMatrix_new.SetValue(1, 2, camMatirx_array[5]);
+            _cameraMatrix_new.SetValue(2, 0, camMatirx_array[6]);
+            _cameraMatrix_new.SetValue(2, 1, camMatirx_array[7]);
+            _cameraMatrix_new.SetValue(2, 2, camMatirx_array[8]);
+
+            _distCoeffs_new.SetValue(0, 0, 0);
+            _distCoeffs_new.SetValue(1, 0, 0);
+            _distCoeffs_new.SetValue(2, 0, 0);
+            _distCoeffs_new.SetValue(3, 0, 0);
+
+            float alpha = camMatirx_array[0];
+            float beta = camMatirx_array[4];
+            float x0 = camMatirx_array[2];
+            float y0 = camMatirx_array[5];
+
 
             //what should the uint of alpha be
             float left_modified = -(near / alpha) * x0;
             float right_modified = (near / alpha) * x0;
             float bottom_modified = -(near / beta) * y0;
             float top_modified = (near / beta) * y0;
+            
+            
 
             // OpenTK Matrix4 constructor is row-major
             OpenTK.Matrix4 projectionmatrix = new OpenTK.Matrix4(
@@ -724,6 +787,76 @@ void main()
             return texture;
         }
 
+        private void drawController(int eye)
+        {
+            GL.GetError();
+            GL.UseProgram(cubeShaderProgram);
+            GL.GetError();
+            GL.Uniform1(GL.GetUniformLocation(cubeShaderProgram, "texFramebuffer"), 0);
+            GL.GetError();
+
+            Matrix4 glControllerPose = new Matrix4();
+            Matrix4 glViewMatrix_L = mEyePosLeft * mScene.mHMDPose;
+            glViewMatrix_L.Transpose();
+            Matrix4 glViewMatrix_R = mEyePosRight * mScene.mHMDPose;
+            glViewMatrix_R.Transpose();
+            Matrix4 glProjectionMatrix_L = new Matrix4();
+            Matrix4 glProjectionMatrix_R = new Matrix4();
+            Matrix4.Transpose(ref mEyeProjLeft, out glProjectionMatrix_L);
+            Matrix4.Transpose(ref mEyeProjRight, out glProjectionMatrix_R);
+
+
+            //testing drawing at the controller position, mEyeProjLeft * mEyePosLeft * mScene.mHMDPose * mControllerPose;
+            // find the pose of the controllers
+            for (uint nDevice = OpenVR.k_unTrackedDeviceIndex_Hmd + 1; nDevice < OpenVR.k_unMaxTrackedDeviceCount; ++nDevice)
+            {
+                if (!mHMD.IsTrackedDeviceConnected(nDevice))
+                    continue;
+
+                if (mHMD.GetTrackedDeviceClass(nDevice) != ETrackedDeviceClass.Controller)
+                    continue;
+
+                if (!mScene.mTrackedDevices[nDevice].bPoseIsValid)
+                    continue;
+
+
+                Matrix4 mControllerPose = mScene.m_rmat4DevicePose[nDevice]; 
+                Matrix4.Transpose(ref mControllerPose, out glControllerPose);
+
+            }
+
+            if (eye == 0)
+            {
+                GL.UniformMatrix4(GL.GetUniformLocation(cubeShaderProgram, "model"), false, ref glControllerPose);
+                GL.GetError();
+                GL.UniformMatrix4(GL.GetUniformLocation(cubeShaderProgram, "view"), false, ref glViewMatrix_L);
+                GL.GetError();
+                GL.UniformMatrix4(GL.GetUniformLocation(cubeShaderProgram, "projection"), false, ref glProjectionMatrix_L);
+                GL.GetError();
+
+            }
+            else
+            {
+                GL.UniformMatrix4(GL.GetUniformLocation(cubeShaderProgram, "model"), false, ref glControllerPose);
+                GL.GetError();
+                GL.UniformMatrix4(GL.GetUniformLocation(cubeShaderProgram, "view"), false, ref glViewMatrix_R);
+                GL.GetError();
+                GL.UniformMatrix4(GL.GetUniformLocation(cubeShaderProgram, "projection"), false, ref glProjectionMatrix_R);
+                GL.GetError();
+            }
+
+            GL.Enable(EnableCap.DepthTest);
+            GL.BindVertexArray(vaoController);
+            GL.BindTexture(TextureTarget.Texture2D, cubeTexture);
+            GL.DrawArrays(PrimitiveType.Triangles, 0, 36);
+            GL.BindVertexArray(0);
+
+            float[] uniform_values = new float[16];
+            GL.GetUniform(cubeShaderProgram, GL.GetUniformLocation(cubeShaderProgram, "projection"), uniform_values);
+            GL.GetError();
+            GL.UseProgram(0);
+        }
+
         private void drawCubeGL(int eye)
         {
             GL.GetError();
@@ -731,6 +864,7 @@ void main()
             GL.GetError();
             GL.Uniform1(GL.GetUniformLocation(cubeShaderProgram, "texFramebuffer"), 0);
             GL.GetError();
+
 
             if (eye == 0)
             {
@@ -750,7 +884,6 @@ void main()
                 GL.UniformMatrix4(GL.GetUniformLocation(cubeShaderProgram, "projection"), false, ref glProjectionMatrix_R);
                 GL.GetError();
             }
-
 
             GL.Enable(EnableCap.DepthTest);
             GL.BindVertexArray(vaoCube);

@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using OpenTK;
-
+using Valve.VR;
 
 namespace SparrowHawk
 {
@@ -80,6 +80,7 @@ namespace SparrowHawk
 
         // Camera data
         public Matrix4 mHMDPose;
+        public Matrix4[] m_rmat4DevicePose = new Matrix4[OpenVR.k_unMaxTrackedDeviceCount];
 
         // tracked devices
         public Valve.VR.TrackedDevicePose_t[] mTrackedDevices = new Valve.VR.TrackedDevicePose_t[Valve.VR.OpenVR.k_unMaxTrackedDeviceCount];
