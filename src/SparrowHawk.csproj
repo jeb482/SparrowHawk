@@ -78,7 +78,7 @@
     <Reference Include="System.XML" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="COvrvision.cs" />
+    <Compile Include="Ovrvision\COvrvision.cs" />
     <Compile Include="Geometry\CubeGeometry.cs" />
     <Compile Include="Geometry\Geometry.cs" />
     <Compile Include="GLShader.cs" />
@@ -88,8 +88,9 @@
     <Compile Include="Material\ShaderSource.cs" />
     <Compile Include="Material\SingleColorMaterial.cs" />
     <Compile Include="Material\TextureMaterial.cs" />
-    <Compile Include="MatExtension.cs" />
+    <Compile Include="Ovrvision\MatExtension.cs" />
     <Compile Include="openvr_api.cs" />
+    <Compile Include="Ovrvision\OvrvisionController.cs" />
     <Compile Include="Scene.cs" />
     <Compile Include="SparrowHawkCommand.cs" />
     <Compile Include="SparrowHawkPlugIn.cs" />

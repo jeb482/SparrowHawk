@@ -22,7 +22,7 @@ using System.Drawing.Imaging;
 using Emgu.CV;
 using Emgu.CV.CvEnum;
 
-namespace SparrowHawk
+namespace SparrowHawk.Ovrvision
 {
     public class COvrvision
     {

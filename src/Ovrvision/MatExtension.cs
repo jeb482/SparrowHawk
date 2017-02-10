@@ -3,7 +3,7 @@ using Emgu.CV.CvEnum;
 using System.Runtime.InteropServices;
 
 
-namespace SparrowHawk
+namespace SparrowHawk.Ovrvision
 {
     public static class MatExtension
     {

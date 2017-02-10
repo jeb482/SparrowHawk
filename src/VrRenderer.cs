@@ -14,6 +14,7 @@ using Emgu.CV.Structure;
 using System.Threading;
 using System.Runtime.InteropServices;
 using Valve.VR;
+using SparrowHawk.Ovrvision;
 
 namespace SparrowHawk
 {
