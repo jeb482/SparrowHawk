@@ -79,6 +79,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="COvrvision.cs" />
+    <Compile Include="Geometry\CubeGeometry.cs" />
     <Compile Include="Geometry\Geometry.cs" />
     <Compile Include="GLShader.cs" />
     <Compile Include="Material\Material.cs" />
@@ -86,6 +87,7 @@
     <Compile Include="Material\RGBNormalMaterial.cs" />
     <Compile Include="Material\ShaderSource.cs" />
     <Compile Include="Material\SingleColorMaterial.cs" />
+    <Compile Include="Material\TextureMaterial.cs" />
     <Compile Include="MatExtension.cs" />
     <Compile Include="openvr_api.cs" />
     <Compile Include="Scene.cs" />

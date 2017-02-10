@@ -51,6 +51,26 @@ namespace SparrowHawk.Material
             GL.BindTexture(TextureTarget.Texture2D, 0);
         }
 
+        public TextureMaterial(Rhino.RhinoDoc doc, int width, int height, OpenTK.Graphics.OpenGL4.PixelFormat pixelFormat,
+            OpenTK.Graphics.OpenGL4.PixelType pixelType)
+        {
+            texWidth = width;
+            texHeight = height;
+
+            mDoc = doc;
+            mShader = new GLShader(doc);
+            mShader.init("TextureMaterial", ShaderSource.TextureVertShader, ShaderSource.TextureFragShader);
+            mShader.bind();
+
+            m_iTexture = GL.GenTexture();
+            GL.BindTexture(TextureTarget.Texture2D, m_iTexture);
+            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Linear);
+            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Linear);
+            GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgb, width, height, 0, pixelFormat, pixelType, IntPtr.Zero);
+
+            GL.BindTexture(TextureTarget.Texture2D, 0);
+        }
+
         public override void draw(ref Geometry.Geometry g, ref Matrix4 model, ref Matrix4 vp)
         {
             ErrorCode e;
@@ -78,5 +98,16 @@ namespace SparrowHawk.Material
             
             mShader.drawIndexed(g.primitiveType, 0, g.mNumPrimitives);
         }
+
+        public void updateTexture(IntPtr texture)
+        {
+            //	// Update the texture
+            ErrorCode e;
+            mShader.bind();
+            GL.ActiveTexture(TextureUnit.Texture0);
+            GL.BindTexture(TextureTarget.Texture2D, m_iTexture);
+            GL.TexSubImage2D(TextureTarget.Texture2D, 0, 0, 0, texWidth, texHeight, OpenTK.Graphics.OpenGL4.PixelFormat.Bgr, PixelType.UnsignedByte, texture);
+        }
+
     }
 }

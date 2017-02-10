@@ -7,43 +7,40 @@ namespace SparrowHawk.Geometry
 {
     class CubeGeometry : Geometry
     {
-        public CubeGeometry()
-        {
 
-        }
-
-        public CubeGeometry(float width, float depth, float height)
+        
+        public CubeGeometry(float width, float height, float depth)
         {
             mGeometry= new float[72]{
               0.0f, 0.0f, 0.0f,  //bottom
-              3.0f, 0.0f, 0.0f,
-              3.0f, 3.0f, 0.0f,
-              0.0f, 3.0f, 0.0f,
+              width, 0.0f, 0.0f,
+              width, height, 0.0f,
+              0.0f, height, 0.0f,
               
-              0.0f, 0.0f, -3.0f, //top
-              3.0f, 0.0f, -3.0f, 
-              3.0f, 3.0f, -3.0f,  
-              0.0f, 3.0f, -3.0f,
+              0.0f, 0.0f, depth, //top
+              width, 0.0f, depth,
+              width, height, depth,  
+              0.0f, height, depth,
 
-              0.0f, 3.0f, -3.0f, //left
-              0.0f, 3.0f, 0.0f, 
+              0.0f, height, depth, //left
+              0.0f, height, 0.0f, 
               0.0f, 0.0f, 0.0f, 
-              0.0f, 0.0f, -3.0f,
+              0.0f, 0.0f, depth,
 
-              3.0f, 3.0f, -3.0f, //right
-              3.0f, 3.0f, 0.0f, 
-              3.0f, 0.0f, 0.0f,  
-              3.0f, 0.0f, -3.0f,
+              width, height, depth, //right
+              width, height, 0.0f,
+              width, 0.0f, 0.0f,
+              width, 0.0f, depth,
 
               0.0f, 0.0f, 0.0f, // front
-              3.0f, 0.0f, 0.0f,
-              3.0f, 0.0f, -3.0f,
-              0.0f, 0.0f, -3.0f,
+              width, 0.0f, 0.0f,
+              width, 0.0f, depth,
+              0.0f, 0.0f, depth,
 
-              0.0f,  3.0f, 0.0f, //basck
-              3.0f,  3.0f, 0.0f, 
-              3.0f,  3.0f, -3.0f, 
-              0.0f,  3.0f, -3.0f
+              0.0f,  height, 0.0f, //basck
+              width,  height, 0.0f,
+              width,  height, depth, 
+              0.0f,  height, depth
             };
 
             mUvs = new float[48]

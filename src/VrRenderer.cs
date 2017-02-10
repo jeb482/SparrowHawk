@@ -49,164 +49,6 @@ namespace SparrowHawk
         private volatile bool UPDATE_RIGHTDATA = false;
 
         COvrvision Ovrvision = null;
-        int[] _cameraTextures = new int[2];
-        int cameraTexturesLeft;
-        int cameraTexturesRight;
-        int cubeTexture;
-        int vaoDepth, vaoQuad, vaoCube, vaoController;
-        int vboDepth, vboQuad, vboCube, vboController;
-        // Create shader programs
-        int screenVertexShader, screenFragmentShader, screenShaderProgram;
-        int cubeVertexShader, cubeFragmentShader, cubeShaderProgram;
-        int depthVertexShader, depthFragmentShader, depthShaderProgram;
-
-        float[] quadVertices = new float[24]{
-        -1.0f,  1.0f, 0.0f, 0.0f,
-        1.0f,  1.0f,  1.0f, 0.0f,
-        1.0f, -1.0f,  1.0f, 1.0f,
-
-        1.0f, -1.0f,  1.0f, 1.0f,
-        -1.0f, -1.0f,  0.0f, 1.0f,
-        -1.0f,  1.0f,  0.0f, 0.0f
-        };
-
-        float[] cubeVertices = new float[180]{
-        // Positions          // Texture Coords
-        0.0f, 0.0f, 0.0f,  0.0f, 0.0f,
-              3.0f, 0.0f, 0.0f,  1.0f, 0.0f,
-              3.0f,  3.0f, 0.0f,  1.0f, 1.0f,
-              3.0f,  3.0f, 0.0f,  1.0f, 1.0f,
-              0.0f,  3.0f, 0.0f,  0.0f, 1.0f,
-              0.0f, 0.0f, 0.0f,  0.0f, 0.0f,
-
-              0.0f, 0.0f,  -3.0f,  0.0f, 0.0f,
-              3.0f, 0.0f,  -3.0f,  1.0f, 0.0f,
-              3.0f,  3.0f,  -3.0f,  1.0f, 1.0f,
-              3.0f,  3.0f,  -3.0f,  1.0f, 1.0f,
-              0.0f,  3.0f,  -3.0f,  0.0f, 1.0f,
-              0.0f, 0.0f,  -3.0f,  0.0f, 0.0f,
-
-              0.0f,  3.0f,  -3.0f,  1.0f, 0.0f,
-              0.0f,  3.0f, 0.0f,  1.0f, 1.0f,
-              0.0f, 0.0f, 0.0f,  0.0f, 1.0f,
-              0.0f, 0.0f, 0.0f,  0.0f, 1.0f,
-              0.0f, 0.0f,  -3.0f,  0.0f, 0.0f,
-              0.0f,  3.0f,  -3.0f,  1.0f, 0.0f,
-
-              3.0f,  3.0f,  -3.0f,  1.0f, 0.0f,
-              3.0f,  3.0f, 0.0f,  1.0f, 1.0f,
-              3.0f, 0.0f, 0.0f,  0.0f, 1.0f,
-              3.0f, 0.0f, 0.0f,  0.0f, 1.0f,
-              3.0f, 0.0f,  -3.0f,  0.0f, 0.0f,
-              3.0f,  3.0f,  -3.0f,  1.0f, 0.0f,
-
-              0.0f, 0.0f, 0.0f,  0.0f, 1.0f,
-              3.0f, 0.0f, 0.0f,  1.0f, 1.0f,
-              3.0f, 0.0f,  -3.0f,  1.0f, 0.0f,
-              3.0f, 0.0f,  -3.0f,  1.0f, 0.0f,
-              0.0f, 0.0f,  -3.0f,  0.0f, 0.0f,
-              0.0f, 0.0f, 0.0f,  0.0f, 1.0f,
-
-              0.0f,  3.0f, 0.0f,  0.0f, 1.0f,
-              3.0f,  3.0f, 0.0f,  1.0f, 1.0f,
-              3.0f,  3.0f,  -3.0f,  1.0f, 0.0f,
-              3.0f,  3.0f,  -3.0f,  1.0f, 0.0f,
-              0.0f,  3.0f,  -3.0f,  0.0f, 0.0f,
-              0.0f,  3.0f, 0.0f,  0.0f, 1.0f
-          };
-
-        float[] controllerVertices = new float[180]{
-        // Positions          // Texture Coords
-        0.0f, 0.0f, 0.0f,  0.0f, 0.0f,
-              0.05f, 0.0f, 0.0f,  1.0f, 0.0f,
-              0.05f,  0.05f, 0.0f,  1.0f, 1.0f,
-              0.05f,  0.05f, 0.0f,  1.0f, 1.0f,
-              0.0f,  0.05f, 0.0f,  0.0f, 1.0f,
-              0.0f, 0.0f, 0.0f,  0.0f, 0.0f,
-
-              0.0f, 0.0f,  -0.05f,  0.0f, 0.0f,
-              0.05f, 0.0f,  -0.05f,  1.0f, 0.0f,
-              0.05f,  0.05f,  -0.05f,  1.0f, 1.0f,
-              0.05f,  0.05f,  -0.05f,  1.0f, 1.0f,
-              0.0f,  0.05f,  -0.05f,  0.0f, 1.0f,
-              0.0f, 0.0f,  -0.05f,  0.0f, 0.0f,
-
-              0.0f,  0.05f,  -0.05f,  1.0f, 0.0f,
-              0.0f,  0.05f, 0.0f,  1.0f, 1.0f,
-              0.0f, 0.0f, 0.0f,  0.0f, 1.0f,
-              0.0f, 0.0f, 0.0f,  0.0f, 1.0f,
-              0.0f, 0.0f,  -0.05f,  0.0f, 0.0f,
-              0.0f,  0.05f,  -0.05f,  1.0f, 0.0f,
-
-              0.05f,  0.05f,  -0.05f,  1.0f, 0.0f,
-              0.05f,  0.05f, 0.0f,  1.0f, 1.0f,
-              0.05f, 0.0f, 0.0f,  0.0f, 1.0f,
-              0.05f, 0.0f, 0.0f,  0.0f, 1.0f,
-              0.05f, 0.0f,  -0.05f,  0.0f, 0.0f,
-              0.05f,  0.05f,  -0.05f,  1.0f, 0.0f,
-
-              0.0f, 0.0f, 0.0f,  0.0f, 1.0f,
-              0.05f, 0.0f, 0.0f,  1.0f, 1.0f,
-              0.05f, 0.0f,  -0.05f,  1.0f, 0.0f,
-              0.05f, 0.0f,  -0.05f,  1.0f, 0.0f,
-              0.0f, 0.0f,  -0.05f,  0.0f, 0.0f,
-              0.0f, 0.0f, 0.0f,  0.0f, 1.0f,
-
-              0.0f,  0.05f, 0.0f,  0.0f, 1.0f,
-              0.05f,  0.05f, 0.0f,  1.0f, 1.0f,
-              0.05f,  0.05f,  -0.05f,  1.0f, 0.0f,
-              0.05f,  0.05f,  -0.05f,  1.0f, 0.0f,
-              0.0f,  0.05f,  -0.05f,  0.0f, 0.0f,
-              0.0f,  0.05f, 0.0f,  0.0f, 1.0f
-          };
-
-        string screenVertexSource = @"#version 150 core
-in vec2 position;
-in vec2 texcoord;
-out vec2 Texcoord; // must match name in fragment shader
-void main()
-{
-    // gl_Position is a special variable of OpenGL that must be set
-	Texcoord = texcoord;
-	gl_Position = vec4(position, 0.0, 1.0);
-}";
-        string screenFragmentSource = @"#version 150 core
-in vec2 Texcoord; // must match name in vertex shader
-out vec4 outColor; // first out variable is automatically written to the screen
-uniform sampler2D texFramebuffer;
-void main()
-{
-    outColor = texture(texFramebuffer, Texcoord);
-}";
-
-        string augmentedSceneSource_vs = @"#version 330 core
-layout (location = 0) in vec3 position;
-layout (location = 1) in vec2 texcoord;
-
-out vec2 Texcoord;
-
-uniform mat4 model;
-uniform mat4 view;
-uniform mat4 projection;
-
-void main()
-{
-
-    gl_Position = projection * view * model * vec4(position, 1.0);
-    Texcoord = texcoord;
-}";
-
-        string augmentedSceneSource_fs = @"#version 330 core
-in vec2 Texcoord;
-
-out vec4 outColor;
-
-uniform sampler2D texFramebuffer;
-
-void main()
-{             
-    outColor = texture(texFramebuffer, Texcoord);
-}";
 
         // opencv for ovrvision
         private Mat _frame_L = new Mat();
@@ -390,16 +232,19 @@ void main()
         }
 
         //ovrvision stuff
+        Geometry.Geometry marker_cube_g;
+        Material.Material marker_cube_m;
+
+        Geometry.Geometry controller_cube_g;
+        Material.Material controller_cube_m;
+
+        Geometry.Geometry fs_quad_g;
+        Material.TextureMaterial fs_quad_m_L;
+        Material.TextureMaterial fs_quad_m_R;
 
         private void initCameraPara()
         {
-            // default values (careful about scale). We use the new camera matrix after stereo remap => move to buildProjection
-            // Left CameraInstric   : (6.7970157255511901e+002, 0., 6.0536133655058381e+002, 0., 6.8042527485960966e+002, 5.5465392353996174e+002, 0., 0., 1.);
-            // Right CameraInstric   : (6.8865122458251960e+002, 0., 6.1472005979575772e+002, 0., 6.8933034565503726e+002, 5.0684212440916116e+002, 0., 0., 1.);
-            // Left Distortion : (-4.1335867833577783e-001, 2.1178505767332989e-001, -4.7504756919241204e-004, 3.2255999104604089e-003, 3.7887562626108255e-002, -9.2038953879423846e-002, 3.1299065818407031e-002, 1.3086219827422665e-001);
-            // Right Distortion : (-3.0493990540623439e-001, 1.3662653080461551e-001, 1.0423167776015031e-003, 2.8491358735884113e-003, 5.9120577005421594e-002, 3.3803762878286243e-002, -5.1376486225192128e-002, 1.5379685303460996e-001);;
-
-
+ 
             objectList = new List<MCvPoint3D32f>();
             for (int i = 0; i < _height; i++)
             {
@@ -431,41 +276,14 @@ void main()
         private void initARscene()
         {
             //TODO- rewrite with geometry and material
-            Geometry.CubeGeometry g = new Geometry.CubeGeometry();
+            // depth is negtive due to the marker coordinate system
+            marker_cube_g = new Geometry.CubeGeometry(3.0f,3.0f,-3.0f);
+            marker_cube_m = new Material.TextureMaterial(mScene.rhinoDoc, "texture.jpg", false);
 
-
-            //testing
-            cubeTexture = LoadTexture("texture.jpg");
-
-            // Create VAOs
-            GL.GenVertexArrays(1, out this.vaoCube);
-
-            // Load vertex data
-            GL.GenBuffers(1, out this.vboCube);
-            GL.BindBuffer(BufferTarget.ArrayBuffer, vboCube);
-            GL.BufferData(BufferTarget.ArrayBuffer, cubeVertices.Length * sizeof(float), cubeVertices, BufferUsageHint.StaticDraw);
-
-            createShaderProgram(augmentedSceneSource_vs, augmentedSceneSource_fs, out cubeVertexShader, out cubeFragmentShader, out cubeShaderProgram);
-
-            // Specify the layout of the vertex data
-            GL.BindVertexArray(vaoCube);
-            GL.BindBuffer(BufferTarget.ArrayBuffer, vboCube);
-
-            specifyCubeVertexAttributes();
-
-            //create controller vao
-            GL.GenVertexArrays(1, out this.vaoController);
-
-            // Load vertex data
-            GL.GenBuffers(1, out this.vboController);
-            GL.BindBuffer(BufferTarget.ArrayBuffer, vboController);
-            GL.BufferData(BufferTarget.ArrayBuffer, controllerVertices.Length * sizeof(float), controllerVertices, BufferUsageHint.StaticDraw);
-
-            // Specify the layout of the vertex data
-            GL.BindVertexArray(vaoController);
-            GL.BindBuffer(BufferTarget.ArrayBuffer, vboController);
-
-            specifyCubeVertexAttributes();
+            controller_cube_g = new Geometry.CubeGeometry(0.05f, 0.05f, -0.05f);
+            controller_cube_m = new Material.TextureMaterial(mScene.rhinoDoc, "texture.jpg", false);
+            // since markercube use different view matrix with other scene objects, we don't add it to the scene.
+            // instead we use marker_cube_m.draw(ref geometry, ref model, ref vp) to draw it. 
 
         }
 
@@ -477,38 +295,26 @@ void main()
 
             if (Ovrvision.Open(COvrvision.OV_CAMVR_FULL))
             {
-                GL.GenTextures(1, out cameraTexturesLeft);
-                GL.BindTexture(TextureTarget.Texture2D, cameraTexturesLeft);
-                GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Linear);
-                GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Linear);
-                GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgb, Ovrvision.imageSizeW, Ovrvision.imageSizeH, 0, OpenTK.Graphics.OpenGL4.PixelFormat.Bgr, PixelType.UnsignedByte, IntPtr.Zero);
+                //create the fullscreen quad here
+                fs_quad_g = new Geometry.Geometry();
+                fs_quad_g.mGeometry = new float[12] {-1.0f, 1.0f, 0.0f,
+                                                             1.0f,  1.0f, 0.0f,
+                                                             1.0f, -1.0f, 0.0f,
+                                                             -1.0f, -1.0f, 0.0f};
 
-                GL.GenTextures(1, out cameraTexturesRight);
-                GL.BindTexture(TextureTarget.Texture2D, cameraTexturesRight);
-                GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Linear);
-                GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Linear);
-                GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgb, Ovrvision.imageSizeW, Ovrvision.imageSizeH, 0, OpenTK.Graphics.OpenGL4.PixelFormat.Bgr, PixelType.UnsignedByte, IntPtr.Zero);
+                fs_quad_g.mGeometryIndices = new int[6]{ 0, 1, 2,
+                                                             2, 3, 0};
+                fs_quad_g.mUvs = new float[8] { 0.0f, 0.0f,
+                                                1.0f, 0.0f,
+                                                1.0f, 1.0f,
+                                                0.0f, 1.0f};
 
-                GL.BindTexture(TextureTarget.Texture2D, 0);
+                fs_quad_g.mNumPrimitives = 2;
+                fs_quad_g.primitiveType = BeginMode.Triangles;
 
-                // Create VAOs
-                GL.GenVertexArrays(1, out this.vaoQuad);
-
-                // Load vertex data
-                GL.GenBuffers(1, out this.vboQuad);
-                GL.BindBuffer(BufferTarget.ArrayBuffer, vboQuad);
-                GL.BufferData(BufferTarget.ArrayBuffer, quadVertices.Length * sizeof(float), quadVertices, BufferUsageHint.StaticDraw);
-
-                createShaderProgram(screenVertexSource, screenFragmentSource, out screenVertexShader, out screenFragmentShader, out screenShaderProgram);
-
-                // Specify the layout of the vertex data
-                GL.BindVertexArray(vaoQuad);
-                GL.BindBuffer(BufferTarget.ArrayBuffer, vboQuad);
-                specifyScreenVertexAttributes(screenShaderProgram);
-
-                // Load textures
-                GL.UseProgram(screenShaderProgram);
-                GL.Uniform1(GL.GetUniformLocation(screenShaderProgram, "texFramebuffer"), 0);
+                //left eye texture material
+                fs_quad_m_L = new Material.TextureMaterial(mScene.rhinoDoc, Ovrvision.imageSizeW, Ovrvision.imageSizeH, OpenTK.Graphics.OpenGL4.PixelFormat.Bgr, PixelType.UnsignedByte);
+                fs_quad_m_R = new Material.TextureMaterial(mScene.rhinoDoc, Ovrvision.imageSizeW, Ovrvision.imageSizeH, OpenTK.Graphics.OpenGL4.PixelFormat.Bgr, PixelType.UnsignedByte);
 
                 BuildProjectionMatrix(0.1f, 30, 0);
                 BuildModelMatrix();
@@ -780,39 +586,6 @@ void main()
             Util.WriteLine(ref mScene.rhinoDoc, new_point.ToString());
         }
 
-        //for GL render cube testing
-        private int LoadTexture(string path, bool flip_y = false)
-        {
-            Bitmap bitmap = new Bitmap(path);
-            //Flip the image
-            if (flip_y)
-                bitmap.RotateFlip(RotateFlipType.RotateNoneFlipY);
-
-            //Generate a new texture target in gl
-            int texture = GL.GenTexture();
-
-            //Will bind the texture newly/empty created with GL.GenTexture
-            //All gl texture methods targeting Texture2D will relate to this texture
-            GL.BindTexture(TextureTarget.Texture2D, texture);
-            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)All.Linear);
-            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)All.Linear);
-            GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgba, bitmap.Width, bitmap.Height, 0, OpenTK.Graphics.OpenGL4.PixelFormat.Bgra, PixelType.UnsignedByte, IntPtr.Zero);
-
-            //Load the data from are loaded image into virtual memory so it can be read at runtime
-            BitmapData bitmap_data = bitmap.LockBits(new Rectangle(0, 0, bitmap.Width, bitmap.Height),
-                                    ImageLockMode.ReadOnly, System.Drawing.Imaging.PixelFormat.Format32bppArgb);
-
-            GL.TexSubImage2D(TextureTarget.Texture2D, 0, 0, 0, bitmap.Width, bitmap.Height, OpenTK.Graphics.OpenGL4.PixelFormat.Bgra, PixelType.UnsignedByte, bitmap_data.Scan0);
-
-            //Release from memory
-            bitmap.UnlockBits(bitmap_data);
-
-            //get rid of bitmap object its no longer needed in this method
-            bitmap.Dispose();
-            GL.BindTexture(TextureTarget.Texture2D, 0);
-
-            return texture;
-        }
 
         List<MCvPoint3D32f> vr_points = new List<MCvPoint3D32f>();
         List<MCvPoint3D32f> marker_points = new List<MCvPoint3D32f>();
@@ -908,13 +681,9 @@ void main()
             
         }
 
+
         private void drawController(int eye)
         {
-            GL.GetError();
-            GL.UseProgram(cubeShaderProgram);
-            GL.GetError();
-            GL.Uniform1(GL.GetUniformLocation(cubeShaderProgram, "texFramebuffer"), 0);
-            GL.GetError();
 
             Matrix4 glControllerPose = new Matrix4();
             Matrix4 glViewMatrix_L = new Matrix4();
@@ -939,9 +708,6 @@ void main()
                 glViewMatrix_R.Transpose();
             }
 
-
-
-
             //testing drawing at the controller position, mEyeProjLeft * mEyePosLeft * mScene.mHMDPose * mControllerPose;
             // find the pose of the controllers
             for (uint nDevice = OpenVR.k_unTrackedDeviceIndex_Hmd + 1; nDevice < OpenVR.k_unMaxTrackedDeviceCount; ++nDevice)
@@ -961,74 +727,41 @@ void main()
 
             }
 
+            Matrix4 vp = new Matrix4();
             if (eye == 0)
             {
+                //it's already transposed (column-major) so the order is v * p
+                vp = glViewMatrix_L * glProjectionMatrix;
 
-                 GL.UniformMatrix4(GL.GetUniformLocation(cubeShaderProgram, "model"), false, ref glControllerPose);
-                 GL.UniformMatrix4(GL.GetUniformLocation(cubeShaderProgram, "view"), false, ref glViewMatrix_L);
-                 GL.UniformMatrix4(GL.GetUniformLocation(cubeShaderProgram, "projection"), false, ref glProjectionMatrix);
- 
             }
             else
             {
-                GL.UniformMatrix4(GL.GetUniformLocation(cubeShaderProgram, "model"), false, ref glControllerPose);
-                GL.GetError();
-                GL.UniformMatrix4(GL.GetUniformLocation(cubeShaderProgram, "view"), false, ref glViewMatrix_R);
-                GL.GetError();
-                GL.UniformMatrix4(GL.GetUniformLocation(cubeShaderProgram, "projection"), false, ref glProjectionMatrix_R);
-                GL.GetError();
+                //it's already transposed (column-major) so the order is v * p
+                vp = glViewMatrix_R * glProjectionMatrix_R;
+
             }
 
             GL.Enable(EnableCap.DepthTest);
-            GL.BindVertexArray(vaoController);
-            GL.BindTexture(TextureTarget.Texture2D, cubeTexture);
-            GL.DrawArrays(PrimitiveType.Triangles, 0, 36);
-            GL.BindVertexArray(0);
-
-            float[] uniform_values = new float[16];
-            GL.GetUniform(cubeShaderProgram, GL.GetUniformLocation(cubeShaderProgram, "projection"), uniform_values);
-            GL.GetError();
-            GL.UseProgram(0);
+            // glControllerPose pass as model since model matrix is identity matrix
+            controller_cube_m.draw(ref controller_cube_g, ref glControllerPose, ref vp);
         }
+
 
         private void drawCubeGL(int eye)
         {
-            GL.GetError();
-            GL.UseProgram(cubeShaderProgram);
-            GL.GetError();
-            GL.Uniform1(GL.GetUniformLocation(cubeShaderProgram, "texFramebuffer"), 0);
-            GL.GetError();
-
+            Matrix4 vp = new Matrix4();
 
             if (eye == 0)
             {
-                GL.UniformMatrix4(GL.GetUniformLocation(cubeShaderProgram, "model"), false, ref glModelMatrix);
-                GL.GetError();
-                GL.UniformMatrix4(GL.GetUniformLocation(cubeShaderProgram, "view"), false, ref glViewMatrix);
-                GL.GetError();
-                GL.UniformMatrix4(GL.GetUniformLocation(cubeShaderProgram, "projection"), false, ref glProjectionMatrix);
-                GL.GetError();
-
-            }else
+               //watch out the matrix order since we already tranpose the matraix when we create the glMatrix(column-major)
+               vp = glViewMatrix * glProjectionMatrix;
+            }
+            else
             {
-                GL.UniformMatrix4(GL.GetUniformLocation(cubeShaderProgram, "model"), false, ref glModelMatrix_R);
-                GL.GetError();
-                GL.UniformMatrix4(GL.GetUniformLocation(cubeShaderProgram, "view"), false, ref glViewMatrix_R);
-                GL.GetError();
-                GL.UniformMatrix4(GL.GetUniformLocation(cubeShaderProgram, "projection"), false, ref glProjectionMatrix_R);
-                GL.GetError();
+                vp = glViewMatrix_R * glProjectionMatrix_R;
             }
 
-            GL.Enable(EnableCap.DepthTest);
-            GL.BindVertexArray(vaoCube);
-            GL.BindTexture(TextureTarget.Texture2D, cubeTexture);
-            GL.DrawArrays(PrimitiveType.Triangles, 0, 36);
-            GL.BindVertexArray(0);
-
-            float[] uniform_values = new float[16];
-            GL.GetUniform(cubeShaderProgram, GL.GetUniformLocation(cubeShaderProgram, "projection"), uniform_values);
-            GL.GetError();
-            GL.UseProgram(0);
+            marker_cube_m.draw(ref marker_cube_g, ref glModelMatrix, ref vp);
         }
 
 
@@ -1095,50 +828,40 @@ void main()
 
         private void drawCameraView(int eye)
         {
+            //camera draw on a full screen quad so we don't need model, vp matrix.
+            Matrix4 model = new Matrix4(Vector4.UnitX, Vector4.UnitY, Vector4.UnitZ, Vector4.UnitW);
+            Matrix4 vp = new Matrix4(Vector4.UnitX, Vector4.UnitY, Vector4.UnitZ, Vector4.UnitW);
 
             if (eye == 0)
             {
 
-                //CvInvoke.Undistort(Ovrvision.imageDataLeft_Mat, outFrame_L, _cameraMatrix_left, _distCoeffs_left);
-
                 if (foundMarker_L)
                 {
                     drawCubeOpenCV(0);
-
                 }
 
-                GL.BindTexture(TextureTarget.Texture2D, cameraTexturesLeft);
-                GL.TexSubImage2D(TextureTarget.Texture2D, 0, 0, 0, Ovrvision.imageSizeW, Ovrvision.imageSizeH, OpenTK.Graphics.OpenGL4.PixelFormat.Bgr, PixelType.UnsignedByte, Ovrvision.imageDataLeft_Mat.DataPointer);
-                //OVRVision Texture
-                GL.BindTexture(TextureTarget.Texture2D, cameraTexturesLeft);
-
-               
+                fs_quad_m_L.updateTexture(Ovrvision.imageDataLeft_Mat.DataPointer);
+                GL.Disable(EnableCap.DepthTest);
+                fs_quad_m_L.draw(ref fs_quad_g, ref model, ref vp);
 
             }
             else
             {
-
-                //CvInvoke.Undistort(Ovrvision.imageDataRight_Mat, outFrame_R, _cameraMatrix_right, _distCoeffs_right);
 
                 if (foundMarker_R)
                 {
                     drawCubeOpenCV(1);
                 }
 
-
-                GL.BindTexture(TextureTarget.Texture2D, cameraTexturesRight);
-                GL.TexSubImage2D(TextureTarget.Texture2D, 0, 0, 0, Ovrvision.imageSizeW, Ovrvision.imageSizeH, OpenTK.Graphics.OpenGL4.PixelFormat.Bgr, PixelType.UnsignedByte, Ovrvision.imageDataRight_Mat.DataPointer);
-                //OVRVision Texture
-                GL.BindTexture(TextureTarget.Texture2D, cameraTexturesRight);
+                fs_quad_m_R.updateTexture(Ovrvision.imageDataRight_Mat.DataPointer);
+                GL.Disable(EnableCap.DepthTest);
+                fs_quad_m_R.draw(ref fs_quad_g, ref model, ref vp);
 
             }
-                
 
-            GL.BindVertexArray(vaoQuad);
-            GL.Disable(EnableCap.DepthTest);
-            GL.UseProgram(screenShaderProgram);
-            GL.DrawArrays(PrimitiveType.Triangles, 0, 6);
-            GL.BindVertexArray(0);
+            //set back to enable depth test after drawing
+            GL.Enable(EnableCap.DepthTest);
+
         }
 
         private void RenderScene_AR(int eye)
@@ -1157,69 +880,7 @@ void main()
             {
                 Ovrvision.UpdateRight();
                 drawCameraView(1);
-
             }
-
-        }
-
-
-        private void createShaderProgram(string vertSrc, string fragSrc, out int vertexShader, out int fragmentShader, out int shaderProgram)
-        {
-            int statusCode;
-            string info;
-
-            // Create and compile the vertex shader
-            vertexShader = GL.CreateShader(ShaderType.VertexShader);
-            GL.ShaderSource(vertexShader, vertSrc);
-            GL.CompileShader(vertexShader);
-            // Check for compile time errors
-            info = GL.GetShaderInfoLog(vertexShader);
-            Console.Write(string.Format("triangle.vert compile: {0}", info));
-            GL.GetShader(vertexShader, ShaderParameter.CompileStatus, out statusCode);
-            if (statusCode != 1) throw new ApplicationException(info);
-
-            // Create and compile the fragment shader
-            fragmentShader = GL.CreateShader(ShaderType.FragmentShader);
-            GL.ShaderSource(fragmentShader, fragSrc);
-            GL.CompileShader(fragmentShader);
-            info = GL.GetShaderInfoLog(fragmentShader);
-            Console.Write(string.Format("triangle.frag compile: {0}", info));
-            GL.GetShader(fragmentShader, ShaderParameter.CompileStatus, out statusCode);
-            if (statusCode != 1) throw new ApplicationException(info);
-
-            // Link the vertex and fragment shader into a shader program
-            shaderProgram = GL.CreateProgram();
-            GL.AttachShader(shaderProgram, vertexShader);
-            GL.AttachShader(shaderProgram, fragmentShader);
-            GL.BindFragDataLocation(shaderProgram, 0, "outColor");
-            GL.LinkProgram(shaderProgram);
-        }
-
-        private void specifyCubeVertexAttributes()
-        {
-            GL.EnableVertexAttribArray(0);
-            GL.VertexAttribPointer(0, 3, VertexAttribPointerType.Float,
-               false, 5 * sizeof(float), 0);
-            GL.GetError();
-
-            GL.EnableVertexAttribArray(1);
-            GL.VertexAttribPointer(1, 2, VertexAttribPointerType.Float,
-               false, 5 * sizeof(float), (3 * sizeof(float)));
-            GL.GetError();
-
-        }
-
-        private void specifyScreenVertexAttributes(int shaderProgram)
-        {
-            int posAttrib = GL.GetAttribLocation(shaderProgram, "position");
-            GL.EnableVertexAttribArray(posAttrib);
-            GL.VertexAttribPointer(posAttrib, 2, VertexAttribPointerType.Float,
-               false, 4 * sizeof(float), 0);
-
-            int texAttrib = GL.GetAttribLocation(shaderProgram, "texcoord");
-            GL.EnableVertexAttribArray(texAttrib);
-            GL.VertexAttribPointer(texAttrib, 2, VertexAttribPointerType.Float,
-               false, 4 * sizeof(float), (2 * sizeof(float)));
 
         }
 
