@@ -537,7 +537,7 @@ void main()
         {
             if (Ovrvision.imageDataLeft_Mat.Cols == 0 || Ovrvision.imageDataRight_Mat.Cols == 0)
             {
-                Util.WriteLine(ref mScene.rhinoDoc, "waiting camera views");
+                //Util.WriteLine(ref mScene.rhinoDoc, "waiting camera views");
                 return;
             }
             
@@ -553,7 +553,7 @@ void main()
             //we use this loop so we can show a colour image rather than a gray:
             if (_find) //chess board found
             {
-                Util.WriteLine(ref mScene.rhinoDoc, "left marker found");
+                //Util.WriteLine(ref mScene.rhinoDoc, "left marker found");
                 //make mesurments more accurate by using FindCornerSubPixel
                 CvInvoke.CornerSubPix(_grayFrame_L, _corners, new Size(11, 11), new Size(-1, -1),
                     new MCvTermCriteria(20, 0.001));
@@ -591,7 +591,7 @@ void main()
             //we use this loop so we can show a colour image rather than a gray:
             if (_find) //chess board found
             {
-                Util.WriteLine(ref mScene.rhinoDoc, "right marker found");
+                //Util.WriteLine(ref mScene.rhinoDoc, "right marker found");
                 //make mesurments more accurate by using FindCornerSubPixel
                 CvInvoke.CornerSubPix(_grayFrame_R, _corners, new Size(11, 11), new Size(-1, -1),
                     new MCvTermCriteria(20, 0.001));
@@ -690,6 +690,9 @@ void main()
             glModelMatrix_R = new Matrix4(Vector4.UnitX, Vector4.UnitY, Vector4.UnitZ, Vector4.UnitW);
         }
 
+        Matrix4 mHeadtoCam_L = new Matrix4();
+        Matrix4 mHeadtoCam_R = new Matrix4();
+
         private void BuildViewMatrix(int eye)
         {
             Mat rotation = new Mat(3, 3, DepthType.Cv64F, 1);
@@ -716,6 +719,16 @@ void main()
             if (eye == 0)
             {
                 OpenTK.Matrix4.Transpose( ref tempViewMatrix, out glViewMatrix);
+                if(calib_status == 1)
+                {
+                    Matrix4 mHeadInvert = new Matrix4();
+                    Matrix4.Invert(ref mScene.mHMDPose, out mHeadInvert);
+                    mHeadtoCam_L = tempViewMatrix * glmVRtoMarker * mHeadInvert;
+                    calib_status = 2;
+
+                    Util.WriteLine(ref mScene.rhinoDoc,"left eye calibrated");
+                    Util.WriteLine(ref mScene.rhinoDoc, mHeadtoCam_L.ToString());
+                }
                 //Util.WriteLine(ref mScene.rhinoDoc, glViewMatrix.ToString());
 
                
@@ -724,9 +737,18 @@ void main()
             {
 
                 OpenTK.Matrix4.Transpose(ref tempViewMatrix, out glViewMatrix_R);
+                if (calib_status == 2)
+                {
+                    Matrix4 mHeadInvert = new Matrix4();
+                    Matrix4.Invert(ref mScene.mHMDPose, out mHeadInvert);
+                    mHeadtoCam_R = tempViewMatrix * glmVRtoMarker * mHeadInvert;
+                    calib_status = 3;
+                    Util.WriteLine(ref mScene.rhinoDoc, "right eye calibrated");
+                    Util.WriteLine(ref mScene.rhinoDoc, mHeadtoCam_R.ToString());
 
+                }
                 //debug
-                calculatePosition();
+                //calculatePosition();
             }
 
 
@@ -787,6 +809,100 @@ void main()
             return texture;
         }
 
+        List<MCvPoint3D32f> vr_points = new List<MCvPoint3D32f>();
+        List<MCvPoint3D32f> marker_points = new List<MCvPoint3D32f>();
+        Matrix<double> mVRtoMarker;
+        Matrix4 glmVRtoMarker;
+        byte[] inliers;
+        int calib_status = 0; // 0 no cailb, 1 vr points added, 2 left eye matrix rdy , 3 righrt eye matrix rdy
+
+        public void setDefaultMatrixHC()
+        {
+            //(-13.86312, -2.31339, 41.60522, -15.28837)
+            //(-40.69572, 2.709207, -13.83543, 13.93765)
+            //(-1.969063, -40.31068, -1.043179, 32.76967)
+            //(0, 0, 0, 1)
+            glmVRtoMarker = new Matrix4(
+                    -13.86312f, -2.31339f, 41.60522f, -15.28837f,
+                    -40.69572f, 2.709207f, -13.83543f, 13.93765f,
+                    -1.969063f, -40.31068f, -1.043179f, 32.76967f,
+                    0, 0, 0, 1
+           );
+
+            mHeadtoCam_L = new Matrix4(
+                    42.96452f, 0.6706083f, 1.155278f, 1.186528f,
+                    -1.254154f, 44.08835f, 1.114768f, 0.1481566f,
+                    -2.066973f, -1.235542f, 40.16489f, 4.631462f,
+                    0, 0, 0, 1
+           );
+
+            mHeadtoCam_R = new Matrix4(
+                    42.99606f, 0.6534817f, 0.4786577f, -1.238245f,
+                    -1.223896f, 44.08417f, 1.241231f, 0.2366943f,
+                    -1.33017f, -1.375824f, 40.17358f, 4.709026f,
+                    0, 0, 0, 1
+           );
+            calib_status = 3;
+        }
+
+        public void getMatrixHeadtoCamera()
+        {
+            Vector4 center = new Vector4(0, 0, 0, 1);
+            if(vr_points.Count < 8 )
+            {
+                // find the pose of the controllers
+                for (uint nDevice = OpenVR.k_unTrackedDeviceIndex_Hmd + 1; nDevice < OpenVR.k_unMaxTrackedDeviceCount; ++nDevice)
+                {
+                    if (!mHMD.IsTrackedDeviceConnected(nDevice))
+                        continue;
+
+                    if (mHMD.GetTrackedDeviceClass(nDevice) != ETrackedDeviceClass.Controller)
+                        continue;
+
+                    if (!mScene.mTrackedDevices[nDevice].bPoseIsValid)
+                        continue;
+
+
+                    Matrix4 mControllerPose = mScene.m_rmat4DevicePose[nDevice];
+                    center = mControllerPose * new Vector4(0, 0, 0, 1);
+                    Util.WriteLine(ref mScene.rhinoDoc, center.ToString());
+                }
+
+                vr_points.Add(new MCvPoint3D32f(center.X, center.Y, center.Z));
+                calib_status = 0; 
+            }
+            else
+            {
+                marker_points.Add(new MCvPoint3D32f(0, 0, 0));
+                marker_points.Add(new MCvPoint3D32f(3, 0, 0));
+                marker_points.Add(new MCvPoint3D32f(3, 3, 0));
+                marker_points.Add(new MCvPoint3D32f(0, 3, 0));
+
+                marker_points.Add(new MCvPoint3D32f(0, 0, -2.17f));
+                marker_points.Add(new MCvPoint3D32f(2.25f, 0, -2.17f));
+                marker_points.Add(new MCvPoint3D32f(2.25f, 2.25f, -2.17f));
+                marker_points.Add(new MCvPoint3D32f(0, 2.25f, -2.17f));
+
+                CvInvoke.EstimateAffine3D(vr_points.ToArray(), marker_points.ToArray(), out mVRtoMarker, out inliers, 3, 0.99);
+
+                glmVRtoMarker = new Matrix4(
+                    (float)mVRtoMarker[0, 0], (float)mVRtoMarker[0, 1], (float)mVRtoMarker[0, 2], (float)mVRtoMarker[0, 3],
+                    (float)mVRtoMarker[1, 0], (float)mVRtoMarker[1, 1], (float)mVRtoMarker[1, 2], (float)mVRtoMarker[1, 3],
+                    (float)mVRtoMarker[2, 0], (float)mVRtoMarker[2, 1], (float)mVRtoMarker[2, 2], (float)mVRtoMarker[2, 3],
+                    0, 0, 0, 1
+                );
+
+                calib_status = 1;
+                Util.WriteLine(ref mScene.rhinoDoc, "VRtoMarker matrix");
+                Util.WriteLine(ref mScene.rhinoDoc, glmVRtoMarker.ToString());
+
+                vr_points.Clear();
+                marker_points.Clear();
+            }
+
+            
+        }
+
         private void drawController(int eye)
         {
             GL.GetError();
@@ -796,14 +912,29 @@ void main()
             GL.GetError();
 
             Matrix4 glControllerPose = new Matrix4();
-            Matrix4 glViewMatrix_L = mEyePosLeft * mScene.mHMDPose;
-            glViewMatrix_L.Transpose();
-            Matrix4 glViewMatrix_R = mEyePosRight * mScene.mHMDPose;
-            glViewMatrix_R.Transpose();
-            Matrix4 glProjectionMatrix_L = new Matrix4();
-            Matrix4 glProjectionMatrix_R = new Matrix4();
-            Matrix4.Transpose(ref mEyeProjLeft, out glProjectionMatrix_L);
-            Matrix4.Transpose(ref mEyeProjRight, out glProjectionMatrix_R);
+            Matrix4 glViewMatrix_L = new Matrix4();
+            Matrix4 glViewMatrix_R = new Matrix4();
+
+            if (calib_status == 3 )
+            {
+               
+               glViewMatrix_L = mHeadtoCam_L * mScene.mHMDPose;
+               glViewMatrix_L.Transpose();
+
+               glViewMatrix_R = mHeadtoCam_R * mScene.mHMDPose;
+               glViewMatrix_R.Transpose();
+
+            }
+            else
+            {
+                glViewMatrix_L = mEyePosLeft * mScene.mHMDPose;
+                glViewMatrix_L.Transpose();
+
+                glViewMatrix_R = mEyePosRight * mScene.mHMDPose;
+                glViewMatrix_R.Transpose();
+            }
+
+
 
 
             //testing drawing at the controller position, mEyeProjLeft * mEyePosLeft * mScene.mHMDPose * mControllerPose;
@@ -827,13 +958,11 @@ void main()
 
             if (eye == 0)
             {
-                GL.UniformMatrix4(GL.GetUniformLocation(cubeShaderProgram, "model"), false, ref glControllerPose);
-                GL.GetError();
-                GL.UniformMatrix4(GL.GetUniformLocation(cubeShaderProgram, "view"), false, ref glViewMatrix_L);
-                GL.GetError();
-                GL.UniformMatrix4(GL.GetUniformLocation(cubeShaderProgram, "projection"), false, ref glProjectionMatrix_L);
-                GL.GetError();
 
+                 GL.UniformMatrix4(GL.GetUniformLocation(cubeShaderProgram, "model"), false, ref glControllerPose);
+                 GL.UniformMatrix4(GL.GetUniformLocation(cubeShaderProgram, "view"), false, ref glViewMatrix_L);
+                 GL.UniformMatrix4(GL.GetUniformLocation(cubeShaderProgram, "projection"), false, ref glProjectionMatrix);
+ 
             }
             else
             {

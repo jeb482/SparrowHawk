@@ -164,18 +164,28 @@ namespace SparrowHawk
             return true;
         }
 
+        //add key event handler
 
-  
+        protected override void OnKeyPress(OpenTK.KeyPressEventArgs e)
+        {
+            if (e.KeyChar == 'C' || e.KeyChar == 'c')
+                mRenderer.getMatrixHeadtoCamera();
+
+            if (e.KeyChar == 'D' || e.KeyChar == 'd')
+                mRenderer.setDefaultMatrixHC();
+
+        }
 
 
-       // public void runMainLoop()
-      //  {
-      // /     // Not sure if this is right. How do we close it?
-      // /     while (true)
-      //      {
-      //          mRenderer.renderFrame();
-      //      }
-      //  }
+
+        // public void runMainLoop()
+        //  {
+        // /     // Not sure if this is right. How do we close it?
+        // /     while (true)
+        //      {
+        //          mRenderer.renderFrame();
+        //      }
+        //  }
 
 
 
