@@ -12,7 +12,7 @@ namespace SparrowHawk.Geometry
     {
         public float[] mGeometry;
         public int[] mGeometryIndices;
-        public float[] mUvs { get; set; }
+        public float[] mUvs;
         public float[] mNormals { get; set; }
         public float[] mColors { get; set; }
         public int mNumPrimitives { get; set; }

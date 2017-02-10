@@ -431,6 +431,8 @@ void main()
         private void initARscene()
         {
             //TODO- rewrite with geometry and material
+            Geometry.CubeGeometry g = new Geometry.CubeGeometry();
+
 
             //testing
             cubeTexture = LoadTexture("texture.jpg");
