@@ -430,6 +430,8 @@ void main()
 
         private void initARscene()
         {
+            //TODO- rewrite with geometry and material
+
             //testing
             cubeTexture = LoadTexture("texture.jpg");
 
@@ -465,6 +467,7 @@ void main()
 
         }
 
+        //TODO- create a class and texture material
         private void initOvrvisoin()
         {
             Ovrvision = new COvrvision();
