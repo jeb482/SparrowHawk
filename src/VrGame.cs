@@ -169,10 +169,10 @@ namespace SparrowHawk
         protected override void OnKeyPress(OpenTK.KeyPressEventArgs e)
         {
             if (e.KeyChar == 'C' || e.KeyChar == 'c')
-                mRenderer.getMatrixHeadtoCamera();
+                mRenderer.ovrvision_controller.getMatrixHeadtoCamera();
 
             if (e.KeyChar == 'D' || e.KeyChar == 'd')
-                mRenderer.setDefaultMatrixHC();
+                mRenderer.ovrvision_controller.setDefaultMatrixHC();
 
         }
 
