@@ -92,6 +92,8 @@ namespace SparrowHawk
 
         protected void handleInteractions()
         {
+            if (mScene.mInteractionStack.Count == 0)
+                mScene.mInteractionStack.Push(new Interaction.MarkingMenu(ref mScene));
             mScene.mInteractionStack.Peek().handleInput();
         }
 

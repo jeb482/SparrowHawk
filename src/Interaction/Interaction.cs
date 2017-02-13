@@ -9,7 +9,7 @@ namespace SparrowHawk.Interaction
 {
     public class Interaction
     {
-        private Scene mScene;
+        protected Scene mScene;
 
         public void handleInput()
         {
@@ -34,7 +34,8 @@ namespace SparrowHawk.Interaction
         {
             if (vrEvent.eventType == (uint) EVREventType.VREvent_ButtonPress)
             {
-                switch(vrEvent.data.controller.button)
+                Util.WriteLine(ref mScene.rhinoDoc, "Pressed a button");
+                switch (vrEvent.data.controller.button)
                 {
                     case (uint) EVRButtonId.k_EButton_SteamVR_Trigger:
                         onClickViveTrigger(ref vrEvent);

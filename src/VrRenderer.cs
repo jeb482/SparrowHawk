@@ -132,7 +132,6 @@ namespace SparrowHawk
             switch (eye)
             {
                 case Valve.VR.EVREye.Eye_Left:
-                    Util.WriteLine(ref mScene.rhinoDoc, mScene.mHMDPose.ToString());
                     vp = mEyeProjLeft * mEyePosLeft * mScene.mHMDPose;
                     break;
                 default:
