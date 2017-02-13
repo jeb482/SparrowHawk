@@ -32,17 +32,47 @@ namespace SparrowHawk
 
         }
 
+        /**
+         * Updates the poses of all tracked devices in the Matrix4 format. 
+         * Also handles new tracked devices, setting them up in the scene
+         * and loading their render models.
+         */
         void updateMatrixPose()
         {
             if (mHMD == null)
                 return;
 
             OpenVR.Compositor.WaitGetPoses(mScene.mTrackedDevices, gamePoseArray);
-            foreach (var device in gamePoseArray)
+            for (uint i = 0; i < mScene.mTrackedDevices.Length; i++)
             {
+                var device = gamePoseArray[i];
                 if (device.bPoseIsValid)
                 {
-                    // TODO: Store it?
+                    mScene.mDevicePose[i] = Util.steamVRMatrixToMatrix4(mScene.mTrackedDevices[i].mDeviceToAbsoluteTracking);
+                    mHMD.GetTrackedDeviceClass(i);
+                    if (mScene.mDeviceClassChar[i] == 0)
+                    {
+                        switch (mHMD.GetTrackedDeviceClass(i))
+                        {
+                            case ETrackedDeviceClass.Controller:
+                                mScene.mDeviceClassChar[i] = 'C';
+                                string name = Util.GetTrackedDeviceString(ref mHMD, i, ETrackedDeviceProperty.Prop_RenderModelName_String);
+                                if (name.ToLower().Contains("left"))
+                                    mScene.leftControllerIdx = (int)i;
+                                else if (name.ToLower().Contains("right"))
+                                    mScene.leftControllerIdx = (int)i;
+                                else if (mScene.leftControllerIdx < 0)
+                                    mScene.leftControllerIdx = (int) i;
+                                else if (mScene.rightControllerIdx < 0)
+                                    mScene.rightControllerIdx = (int) i;
+                                break;
+                            case ETrackedDeviceClass.HMD: mScene.mDeviceClassChar[i] = 'H'; break;
+                            case ETrackedDeviceClass.Invalid: mScene.mDeviceClassChar[i] = 'I'; break;
+                            case ETrackedDeviceClass.GenericTracker: mScene.mDeviceClassChar[i] = 'G'; break;
+                            case ETrackedDeviceClass.TrackingReference: mScene.mDeviceClassChar[i] = 'T'; break;
+                            default: mScene.mDeviceClassChar[i] = '?'; break;
+                        }
+                    }                  
                 }
             }
 
@@ -52,7 +82,13 @@ namespace SparrowHawk
                 Matrix4 view_tmp_inv = view_tmp.Inverted();
                 mScene.mHMDPose = Util.steamVRMatrixToMatrix4(gamePoseArray[OpenVR.k_unTrackedDeviceIndex_Hmd].mDeviceToAbsoluteTracking).Inverted();
             }
+
+            if (mScene.leftControllerIdx > 0)
+                mScene.leftControllerNode.transform = mScene.mDevicePose[mScene.leftControllerIdx];
+            if (mScene.rightControllerIdx > 0)
+                mScene.rightControllerNode.transform = mScene.mDevicePose[mScene.rightControllerIdx];
         }
+
 
         protected override void OnRenderFrame(FrameEventArgs e)
         {
@@ -60,11 +96,9 @@ namespace SparrowHawk
             MakeCurrent();
             updateMatrixPose();
             mRenderer.renderFrame();
-            string A = (mScene.mHMDPose * new Vector4(0, 0, 0, 1)).ToString();
+            //string A = (mScene.mHMDPose * new Vector4(0, 0, 0, 1)).ToString();
             //Util.WriteLine(ref mDoc, A);
-
             SwapBuffers();
-            
             GL.ClearColor(0, 0, 0, 1);
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
             GL.Finish();
@@ -122,10 +156,11 @@ namespace SparrowHawk
 
             //Material.Material m = new Material.SingleColorMaterial(mDoc,1f,1f,1f,1f);
             Material.Material m = new Material.SingleColorMaterial(mDoc,1,0,1,1);
-            SceneNode cube = new SceneNode("Triangle", ref g, ref m); ;
-            //mScene.staticGeometry.add(ref cube);
+            SceneNode cube = new SceneNode("Triangle", ref g, ref m);
+            cube.transform = new Matrix4(1, 0, 0, 0, 0, 1, 0, 1, 0, 0, 1, 0, 0, 0, 0, 1);
+            mScene.staticGeometry.add(ref cube);
 
-            g = new Geometry.PointMarker(new Vector3(0, 0, 0));
+            g = new Geometry.PointMarker(new Vector3(0, 1, 0));
             m = new Material.SingleColorMaterial(mDoc, 1, 1, 1, 1);
             SceneNode point = new SceneNode("Point 1", ref g, ref m);
             mScene.staticGeometry.add(ref point);
@@ -133,7 +168,20 @@ namespace SparrowHawk
 
             mRenderer = new VrRenderer(ref mHMD, ref mScene, mRenderWidth, mRenderHeight);
 
-        
+            // Left
+            g = new Geometry.PointMarker(new Vector3(0, 0, 0));
+            m = new Material.SingleColorMaterial(mDoc, 1, 0, 0, 1);
+            point = new SceneNode("Left Cursor", ref g, ref m);
+            mScene.leftControllerNode.add(ref point);
+            point.transform = new Matrix4(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1);
+
+            g = new Geometry.PointMarker(new Vector3(0, 0, 0));
+            m = new Material.SingleColorMaterial(mDoc, 0, 0, 1, 1);
+            point = new SceneNode("Right Cursor", ref g, ref m);
+            mScene.rightControllerNode.add(ref point);
+            point.transform = new Matrix4(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1);
+
+
 
             // build shaders? Maybe in renderer!
             // setup texture maps is commented out.

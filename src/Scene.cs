@@ -32,9 +32,9 @@ namespace SparrowHawk
         }
 
         public void render(ref Matrix4 vp, Matrix4 model) {
+            model *= transform;
             if (geometry != null && material != null)
             {
-                model *= transform;
                 material.draw(ref geometry, ref model, ref vp);
             }
             foreach (SceneNode n in children)
@@ -83,6 +83,10 @@ namespace SparrowHawk
 
         // tracked devices
         public Valve.VR.TrackedDevicePose_t[] mTrackedDevices = new Valve.VR.TrackedDevicePose_t[Valve.VR.OpenVR.k_unMaxTrackedDeviceCount];
+        public Matrix4[] mDevicePose = new Matrix4[Valve.VR.OpenVR.k_unMaxTrackedDeviceCount];
+        public char[] mDeviceClassChar = new char[Valve.VR.OpenVR.k_unMaxTrackedDeviceCount];
+        public int leftControllerIdx = -1;
+        public int rightControllerIdx = -1;
 
         // For rhino positioning
         public Rhino.RhinoDoc rhinoDoc;

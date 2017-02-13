@@ -30,21 +30,21 @@ namespace SparrowHawk.Material
             ErrorCode e;
             mShader.bind();
            
-            mShader.uploadAttrib<int>("indices",3, 3, 4, VertexAttribPointerType.UnsignedInt, false, ref g.mGeometryIndices, 0);
+            mShader.uploadAttrib<int>("indices", g.mGeometryIndices.Length, 3, 4, VertexAttribPointerType.UnsignedInt, false, ref g.mGeometryIndices, 0);
             e = GL.GetError();
             //mShader.uploadAttrib<float>("position", 9, 3, 4, VertexAttribPointerType.Float, false, ref fakeIndices, 0);
             mShader.uploadAttrib<float>("position", g.mGeometry.Count(), 3, 4, VertexAttribPointerType.Float, false, ref g.mGeometry, 0);
             e = GL.GetError();
             GL.Uniform4(mShader.uniform("color"), mColor);
             e = GL.GetError();
-            GL.UniformMatrix4(mShader.uniform("modelTransform"), false, ref model);
+            GL.UniformMatrix4(mShader.uniform("modelTransform"), true, ref model);
             e = GL.GetError();
 
             GL.UniformMatrix4(mShader.uniform("viewProjTransform"), false, ref vp);
-            float[] funMatrix = new float[16];
-            GL.GetUniform(mShader.mProgramShader, mShader.uniform("viewProjTransform"), funMatrix);
+            //float[] funMatrix = new float[16];
+            //GL.GetUniform(mShader.mProgramShader, mShader.uniform("viewProjTransform"), funMatrix);
             e = GL.GetError();
-            mShader.drawIndexed(BeginMode.Triangles, 0, 3);
+            mShader.drawIndexed(g.primitiveType, 0, g.mNumPrimitives);
         }
     }
 }
