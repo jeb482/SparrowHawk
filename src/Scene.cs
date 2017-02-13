@@ -16,7 +16,7 @@ namespace SparrowHawk
         public Material.Material material;
         public Matrix4 transform = new Matrix4(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1);
 
-        
+
         public SceneNode(string _name, ref Geometry.Geometry g, ref Material.Material m)
         {
             name = _name;
@@ -39,7 +39,7 @@ namespace SparrowHawk
             }
             foreach (SceneNode n in children)
             {
-                 n.render(ref vp, model);
+                n.render(ref vp, model);
             }
         }
 
@@ -82,6 +82,7 @@ namespace SparrowHawk
         public Matrix4 mHMDPose;
 
         // tracked devices
+        public Valve.VR.CVRSystem mHMD;
         public Valve.VR.TrackedDevicePose_t[] mTrackedDevices = new Valve.VR.TrackedDevicePose_t[Valve.VR.OpenVR.k_unMaxTrackedDeviceCount];
         public Matrix4[] mDevicePose = new Matrix4[Valve.VR.OpenVR.k_unMaxTrackedDeviceCount];
         public char[] mDeviceClassChar = new char[Valve.VR.OpenVR.k_unMaxTrackedDeviceCount];
@@ -91,12 +92,17 @@ namespace SparrowHawk
         // For rhino positioning
         public Rhino.RhinoDoc rhinoDoc;
         public Matrix4 robotToPlatform = new Matrix4(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1);
-        public Matrix4 platformRotation = new Matrix4(1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1);
+        public Matrix4 platformRotation = new Matrix4(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1);
         public Matrix4 vrToRobot = new Matrix4(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1);
 
-        public Scene(ref Rhino.RhinoDoc doc)
+        // Interactions
+        public Stack<Interaction.Interaction> mInteractionStack = new Stack<Interaction.Interaction>();
+        public bool isOculus = false;
+
+        public Scene(ref Rhino.RhinoDoc doc, ref Valve.VR.CVRSystem hmd)
         {   
             rhinoDoc = doc;
+            mHMD = hmd;
         }
 
         public void render(ref Matrix4 vp)

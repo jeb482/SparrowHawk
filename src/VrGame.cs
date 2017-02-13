@@ -90,11 +90,18 @@ namespace SparrowHawk
         }
 
 
+        protected void handleInteractions()
+        {
+            mScene.mInteractionStack.Peek().handleInput();
+        }
+
         protected override void OnRenderFrame(FrameEventArgs e)
         {
             base.OnRenderFrame(e);
             MakeCurrent();
             updateMatrixPose();
+
+            handleInteractions();
             mRenderer.renderFrame();
             //string A = (mScene.mHMDPose * new Vector4(0, 0, 0, 1)).ToString();
             //Util.WriteLine(ref mDoc, A);
@@ -141,7 +148,8 @@ namespace SparrowHawk
 
             MakeCurrent();
 
-            mScene = new Scene(ref mDoc);
+            mScene = new Scene(ref mDoc, ref mHMD);
+            if (mStrDriver.Contains("oculus")) mScene.isOculus = true; else mScene.isOculus = false;
             mHMD.GetRecommendedRenderTargetSize(ref mRenderWidth, ref mRenderHeight);
 
 
