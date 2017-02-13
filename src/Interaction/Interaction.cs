@@ -79,5 +79,38 @@ namespace SparrowHawk.Interaction
         protected virtual void onReleaseViveTouchpad(ref VREvent_t vrEvent) { }
         protected virtual void onReleaseViveGrip(ref VREvent_t vrEvent) { }
         protected virtual void onReleaseViveAppMenu(ref VREvent_t vrEvent) { }
+
+        /// <summary>
+        /// Gives the r-theta parameterization of the point on the touchpad that
+        /// the user is touching.
+        /// </summary>
+        /// <param name="deviceIndex">The index of the controller</param>
+        /// <param name="r">the radius [0,1]</param>
+        /// <param name="theta">the angle made with the x-axis</param>
+        protected void getViveTouchpadPoint(uint deviceIndex, out float r, out float theta)
+        {
+            VRControllerState_t controllerState = new VRControllerState_t();
+            VRControllerAxis_t axis = new VRControllerAxis_t();
+            unsafe {
+                mScene.mHMD.GetControllerState(deviceIndex, ref controllerState, (uint)sizeof(VRControllerState_t));
+            }
+            axis = controllerState.rAxis0;
+            r = (float)Math.Sqrt(axis.x * axis.x + axis.y * axis.y);
+            if (r > 0)
+                theta = (float)Math.Atan2(axis.y / r, axis.x / r); // TODO: Remove divisions?
+            else
+                theta = 0;
+        }
+
+        /// <summary>
+        /// Gives the r-theta parameterization of position of the joystick
+        /// on the Oculus Touch controller.
+        /// </summary>
+        /// <param name="deviceIndex">Index of the controller</param>
+        /// <param name="r">the tilt magnitude [0,1]</param>
+        /// <param name="theta">the angle made with the x-axis</param>
+        protected void getOculusJoystickPoint(uint deviceIndex, out float r, out float theta) {
+            getViveTouchpadPoint(deviceIndex, out r, out theta);
+        }
     }
 }
