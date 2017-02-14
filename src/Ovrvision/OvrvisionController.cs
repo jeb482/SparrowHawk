@@ -25,8 +25,6 @@ namespace SparrowHawk.Ovrvision
         //Thread
         Thread UpdateThread = null;
         bool ThreadEnd = false;
-        private volatile bool UPDATE_LEFTDATA = false;
-        private volatile bool UPDATE_RIGHTDATA = false;
 
         //EmguCV properties for detecting marker and calibration
         private Mat _frame_L = new Mat();
@@ -135,6 +133,10 @@ namespace SparrowHawk.Ovrvision
             controller_cube_g = new Geometry.CubeGeometry(0.05f, 0.05f, -0.05f);
             controller_cube_m = new Material.TextureMaterial(mScene.rhinoDoc, "texture.jpg", false);
 
+            //TODO- how to deal with controllerPose ?
+            //SceneNode controller_cube = new SceneNode("controller_cube", ref controller_cube_g, ref controller_cube_m); ;
+            //mScene.staticGeometry.add(ref controller_cube);
+
             //we need eyepose before calibration
             if (mHMD == null)
                 mEyePosLeft = new Matrix4();
@@ -194,10 +196,10 @@ namespace SparrowHawk.Ovrvision
 
         }
 
-        public void updateCamera(int eye)
+        public void updateCamera(Valve.VR.EVREye eye)
         {
             Ovrvision.UpdateCamera();
-            if (eye == 0)
+            if (eye == Valve.VR.EVREye.Eye_Left)
             {
                 Ovrvision.UpdateLeft();
                 drawCameraView(0);
@@ -641,13 +643,10 @@ namespace SparrowHawk.Ovrvision
 
         }
 
-        public void drawController(int eye)
+        public void getOVRVPMatrix(int eye, ref Matrix4 out_matrix)
         {
-
-            Matrix4 glControllerPose = new Matrix4();
             Matrix4 glViewMatrix_L = new Matrix4();
             Matrix4 glViewMatrix_R = new Matrix4();
-
             if (calib_status == 3)
             {
 
@@ -668,8 +667,25 @@ namespace SparrowHawk.Ovrvision
                 glViewMatrix_R.Transpose();
             }
 
+            if (eye == 0)
+            {
+                //it's already transposed (column-major) so the order is v * p
+                out_matrix = glViewMatrix_L * glProjectionMatrix;
+
+            }
+            else
+            {
+                //it's already transposed (column-major) so the order is v * p
+                out_matrix = glViewMatrix_R * glProjectionMatrix_R;
+
+            }
+        }
+
+        public void drawController(int eye)
+        {
             //testing drawing at the controller position, mEyeProjLeft * mEyePosLeft * mScene.mHMDPose * mControllerPose;
             // find the pose of the controllers
+            Matrix4 glControllerPose = new Matrix4();
             for (uint nDevice = OpenVR.k_unTrackedDeviceIndex_Hmd + 1; nDevice < OpenVR.k_unMaxTrackedDeviceCount; ++nDevice)
             {
                 if (!mHMD.IsTrackedDeviceConnected(nDevice))
@@ -687,20 +703,22 @@ namespace SparrowHawk.Ovrvision
 
             }
 
-            Matrix4 vp = new Matrix4();
+            Matrix4 vp = new Matrix4();          
             if (eye == 0)
             {
                 //it's already transposed (column-major) so the order is v * p
-                vp = glViewMatrix_L * glProjectionMatrix;
+                //vp = glViewMatrix_L * glProjectionMatrix;
+                getOVRVPMatrix(0, ref vp);
 
             }
             else
             {
                 //it's already transposed (column-major) so the order is v * p
                 vp = glViewMatrix_R * glProjectionMatrix_R;
+                getOVRVPMatrix(1, ref vp);
 
             }
-
+            
             GL.Enable(EnableCap.DepthTest);
             // glControllerPose pass as model since model matrix is identity matrix
             controller_cube_m.draw(ref controller_cube_g, ref glControllerPose, ref vp);

@@ -174,6 +174,11 @@ namespace SparrowHawk
             if (e.KeyChar == 'D' || e.KeyChar == 'd')
                 mRenderer.ovrvision_controller.setDefaultMatrixHC();
 
+            if (e.KeyChar == 'S' || e.KeyChar == 's')
+            {
+                mRenderer.switchAR();
+            }
+
         }
 
 
