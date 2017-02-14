@@ -19,7 +19,9 @@ namespace SparrowHawk.Interaction
         }
         protected override void onClickViveTouchpad(ref VREvent_t vrEvent)
         {
-            Util.WriteLine(ref mScene.rhinoDoc, "Clicked the Vive touchpad");
+            float r, theta;
+            getViveTouchpadPoint(vrEvent.trackedDeviceIndex, out r, out theta);
+            Util.WriteLine(ref mScene.rhinoDoc, "Clicked the Vive touchpad at r = " + r + ", theta = " + theta + ".");
         }
         protected override void onClickViveGrip(ref VREvent_t vrEvent)
         {
