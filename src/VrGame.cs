@@ -155,14 +155,9 @@ namespace SparrowHawk
             mHMD.GetRecommendedRenderTargetSize(ref mRenderWidth, ref mRenderHeight);
 
 
-            Geometry.Geometry g = new Geometry.Geometry();
-            g.mGeometry = new float[] { -1f, 0f, 0f, 1f, 0f, 0f, 0f, 1f, 0f };
-            // g.mGeometry = new float[] { -1f, -1f, 1f, 1f, -1f, 1f, 1f, 1f, 1f };
-            //g.mGeometry = new float[] { -100f, 0f, -100f, 100f, 0f, -100f, 0f, 0f, 100f };
-            //g.mNormals = new float[] { -1f, -1f, 0f, 1f, -1f, 0f, 0f, 1f, 0f };
-            g.mGeometryIndices = new int[] { 0, 1, 2 };
-            g.mNumPrimitives = 1;
-            g.primitiveType = BeginMode.Triangles;
+            
+            
+            Geometry.Geometry g = new Geometry.Geometry("C:/workspace/Kestrel/resources/meshes/bunny.obj");
 
             //Material.Material m = new Material.SingleColorMaterial(mDoc,1f,1f,1f,1f);
             Material.Material m = new Material.SingleColorMaterial(mDoc,1,0,1,1);

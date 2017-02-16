@@ -96,12 +96,11 @@
     <None Include="Shaders\RGBNormal.vert" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\ext\ObjLoader\source\CjClutter.ObjLoader.Loader\CjClutter.ObjLoader.Loader.csproj">
-      <Project>{1fd37682-98d6-442f-8e15-646247c690dc}</Project>
-      <Name>CjClutter.ObjLoader.Loader</Name>
+    <ProjectReference Include="..\ext\ObjParser\ObjParser\ObjParser.csproj">
+      <Project>{04aa9b94-b460-4e73-baf0-0154494bfe82}</Project>
+      <Name>ObjParser</Name>
     </ProjectReference>
   </ItemGroup>
-  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

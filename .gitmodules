@@ -10,3 +10,6 @@
 [submodule "ext/ObjLoader"]
 	path = ext/ObjLoader
 	url = https://github.com/chrisjansson/ObjLoader.git
+[submodule "ext/ObjParser"]
+	path = ext/ObjParser
+	url = https://github.com/stefangordon/ObjParser.git
