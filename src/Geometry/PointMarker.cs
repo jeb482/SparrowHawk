@@ -7,7 +7,7 @@ using OpenTK;
 namespace SparrowHawk.Geometry
 {
 
-    class PointMarker : Geometry  
+    public class PointMarker : Geometry  
     {
         private const float l = .01f;
         private const float sqrt3 = 1.73205080757f;

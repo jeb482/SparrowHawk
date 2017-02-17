@@ -16,9 +16,15 @@ namespace SparrowHawk
         Rhino.RhinoDoc mDoc;
         String mStrDriver = "No Driver";
 	    String mStrDisplay = "No Display";
+        String mTitleBase;
         uint mRenderWidth = 1280;
         uint mRenderHeight = 720;
+        
         TrackedDevicePose_t[] renderPoseArray, gamePoseArray;
+        DateTime mLastFrameTime;
+
+        int mFrameCount;
+        double frameRateTimer = 1;
 
 
         public VrGame(ref Rhino.RhinoDoc doc)
@@ -93,8 +99,23 @@ namespace SparrowHawk
         protected void handleInteractions()
         {
             if (mScene.mInteractionStack.Count == 0)
-                mScene.mInteractionStack.Push(new Interaction.MarkingMenu(ref mScene));
+                mScene.mInteractionStack.Push(new Interaction.PickPoint(ref mScene));
             mScene.mInteractionStack.Peek().handleInput();
+        }
+
+        protected override void OnUpdateFrame(FrameEventArgs e)
+        {
+            base.OnUpdateFrame(e);
+            if (mFrameCount >= 30)
+            {
+                this.Title = mTitleBase + " - " + 1 / ((TimeSpan)(System.DateTime.Now - mLastFrameTime)).TotalSeconds + "fps.";
+                
+                mFrameCount = 0;
+            } 
+            mFrameCount += 1;
+            mLastFrameTime = DateTime.Now;
+
+
         }
 
         protected override void OnRenderFrame(FrameEventArgs e)
@@ -102,6 +123,11 @@ namespace SparrowHawk
             base.OnRenderFrame(e);
             MakeCurrent();
             updateMatrixPose();
+
+            handleInteractions();
+            mRenderer.renderFrame();
+
+
 
             handleInteractions();
             mRenderer.renderFrame();
@@ -144,8 +170,8 @@ namespace SparrowHawk
             // Window Setup Info
             mStrDriver = Util.GetTrackedDeviceString(ref mHMD, OpenVR.k_unTrackedDeviceIndex_Hmd, ETrackedDeviceProperty.Prop_TrackingSystemName_String);
             mStrDisplay = Util.GetTrackedDeviceString(ref mHMD, OpenVR.k_unTrackedDeviceIndex_Hmd, ETrackedDeviceProperty.Prop_SerialNumber_String);
-            Title = "SparrowHawk - " + mStrDriver + " " + mStrDisplay;
-
+            mTitleBase = "SparrowHawk - " + mStrDriver + " " + mStrDisplay;
+            Title = mTitleBase;
 
 
             MakeCurrent();
