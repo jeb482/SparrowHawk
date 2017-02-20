@@ -34,7 +34,7 @@ namespace SparrowHawk
                 Util.WriteLine(ref mDoc, "Initialization complete!");
 
             Util.WriteLine(ref mDoc, "Directory: " + System.IO.Directory.GetCurrentDirectory());
-            Run();  
+            //Run();  
 
         }
 

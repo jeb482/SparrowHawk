@@ -68,6 +68,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="SparrowHawkEventListeners.cs" />
     <Compile Include="COvrvision.cs" />
     <Compile Include="Geometry\Polyline.cs" />
     <Compile Include="Geometry\PointMarker.cs" />
