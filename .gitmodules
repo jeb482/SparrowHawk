@@ -1,15 +1,12 @@
 [submodule "ext/openvr"]
 	path = ext/openvr
 	url = https://github.com/ValveSoftware/openvr.git
-[submodule "STLdotNET"]
-	path = STLdotNET
-	url = https://github.com/QuantumConcepts/STLdotNET.git
 [submodule "ext/STLdotNet"]
 	path = ext/STLdotNet
 	url = https://github.com/QuantumConcepts/STLdotNET.git
-[submodule "ext/ObjLoader"]
-	path = ext/ObjLoader
-	url = https://github.com/chrisjansson/ObjLoader.git
 [submodule "ext/ObjParser"]
 	path = ext/ObjParser
 	url = https://github.com/stefangordon/ObjParser.git
+[submodule "ext/mathnet-numerics"]
+	path = ext/mathnet-numerics
+	url = https://github.com/mathnet/mathnet-numerics.git
