@@ -16,7 +16,7 @@ namespace SparrowHawk
         public Material.Material material;
         public Matrix4 transform = new Matrix4(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1);
 
-        
+
         public SceneNode(string _name, ref Geometry.Geometry g, ref Material.Material m)
         {
             name = _name;
@@ -32,14 +32,14 @@ namespace SparrowHawk
         }
 
         public void render(ref Matrix4 vp, Matrix4 model) {
+            model *= transform;
             if (geometry != null && material != null)
             {
-                model *= transform;
                 material.draw(ref geometry, ref model, ref vp);
             }
             foreach (SceneNode n in children)
             {
-                 n.render(ref vp, model);
+                n.render(ref vp, model);
             }
         }
 
@@ -80,20 +80,29 @@ namespace SparrowHawk
 
         // Camera data
         public Matrix4 mHMDPose;
-        public Matrix4[] m_rmat4DevicePose = new Matrix4[OpenVR.k_unMaxTrackedDeviceCount];
 
         // tracked devices
+        public Valve.VR.CVRSystem mHMD;
         public Valve.VR.TrackedDevicePose_t[] mTrackedDevices = new Valve.VR.TrackedDevicePose_t[Valve.VR.OpenVR.k_unMaxTrackedDeviceCount];
+        public Matrix4[] mDevicePose = new Matrix4[Valve.VR.OpenVR.k_unMaxTrackedDeviceCount];
+        public char[] mDeviceClassChar = new char[Valve.VR.OpenVR.k_unMaxTrackedDeviceCount];
+        public int leftControllerIdx = -1;
+        public int rightControllerIdx = -1;
 
         // For rhino positioning
         public Rhino.RhinoDoc rhinoDoc;
         public Matrix4 robotToPlatform = new Matrix4(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1);
-        public Matrix4 platformRotation = new Matrix4(1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1);
+        public Matrix4 platformRotation = new Matrix4(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1);
         public Matrix4 vrToRobot = new Matrix4(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1);
 
-        public Scene(ref Rhino.RhinoDoc doc)
+        // Interactions
+        public Stack<Interaction.Interaction> mInteractionStack = new Stack<Interaction.Interaction>();
+        public bool isOculus = false;
+
+        public Scene(ref Rhino.RhinoDoc doc, ref Valve.VR.CVRSystem hmd)
         {   
             rhinoDoc = doc;
+            mHMD = hmd;
         }
 
         public void render(ref Matrix4 vp)

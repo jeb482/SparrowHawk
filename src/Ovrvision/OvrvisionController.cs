@@ -487,7 +487,7 @@ namespace SparrowHawk.Ovrvision
                         continue;
 
 
-                    Matrix4 mControllerPose = mScene.m_rmat4DevicePose[nDevice];
+                    Matrix4 mControllerPose = mScene.mDevicePose[nDevice];
                     center = mControllerPose * new Vector4(0, 0, 0, 1);
                     Util.WriteLine(ref mScene.rhinoDoc, center.ToString());
                 }
@@ -618,10 +618,11 @@ namespace SparrowHawk.Ovrvision
                 {
                     drawCubeCV(0);
                 }
-
-                fs_quad_m_L.updateTexture(Ovrvision.imageDataLeft_Mat.DataPointer);
-                GL.Disable(EnableCap.DepthTest);
-                fs_quad_m_L.draw(ref fs_quad_g, ref model, ref vp);
+                if (Ovrvision.imageDataLeft_Mat != null){
+                    fs_quad_m_L.updateTexture(Ovrvision.imageDataLeft_Mat.DataPointer);
+                    GL.Disable(EnableCap.DepthTest);
+                    fs_quad_m_L.draw(ref fs_quad_g, ref model, ref vp);
+                }
 
             }
             else
@@ -631,10 +632,12 @@ namespace SparrowHawk.Ovrvision
                 {
                     drawCubeCV(1);
                 }
-
-                fs_quad_m_R.updateTexture(Ovrvision.imageDataRight_Mat.DataPointer);
-                GL.Disable(EnableCap.DepthTest);
-                fs_quad_m_R.draw(ref fs_quad_g, ref model, ref vp);
+                if (Ovrvision.imageDataLeft_Mat != null)
+                {
+                    fs_quad_m_R.updateTexture(Ovrvision.imageDataRight_Mat.DataPointer);
+                    GL.Disable(EnableCap.DepthTest);
+                    fs_quad_m_R.draw(ref fs_quad_g, ref model, ref vp);
+                }
 
             }
 
@@ -698,7 +701,7 @@ namespace SparrowHawk.Ovrvision
                     continue;
 
 
-                Matrix4 mControllerPose = mScene.m_rmat4DevicePose[nDevice];
+                Matrix4 mControllerPose = mScene.mDevicePose[nDevice];
                 Matrix4.Transpose(ref mControllerPose, out glControllerPose);
 
             }
