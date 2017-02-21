@@ -34,7 +34,7 @@ namespace SparrowHawk.Interaction
         {
             if (vrEvent.eventType == (uint) EVREventType.VREvent_ButtonPress)
             {
-                Util.WriteLine(ref mScene.rhinoDoc, "Pressed a button");
+                Rhino.RhinoApp.WriteLine("Pressed a button");
                 switch (vrEvent.data.controller.button)
                 {
                     case (uint) EVRButtonId.k_EButton_SteamVR_Trigger:

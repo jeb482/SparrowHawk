@@ -35,9 +35,9 @@ namespace SparrowHawk
         {
             // Launch the "Game"
             // TODO: Launch only if not running.
+            SparrowHawkEventListeners.Instance.Enable(true);
             RhinoApp.WriteLine("The {0} command will initialize VR.", EnglishName);
-            VrGame SparrowHawkGame = new VrGame(ref doc);
-            Thread windowThread = new Thread(() => SparrowHawkGame.Run());
+            Thread windowThread = new Thread(() => { VrGame SparrowHawkGame = new VrGame(ref doc); SparrowHawkGame.Run(); });
             windowThread.Start();
             return Result.Success;
         }

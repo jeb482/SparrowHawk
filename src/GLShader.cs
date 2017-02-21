@@ -66,7 +66,7 @@ namespace SparrowHawk
             // if status !+ glTrue, let us know. 
 
             if (status == 0)
-                Util.WriteLine(ref mDoc, "Linker Error: " + GL.GetProgramInfoLog(mProgramShader));
+                Rhino.RhinoApp.WriteLine("Linker Error: " + GL.GetProgramInfoLog(mProgramShader));
 
             isInitialized = true;
             return true;
@@ -88,11 +88,11 @@ namespace SparrowHawk
 
             if (status[0] != 1)
             {
-                Util.WriteLine(ref mDoc, "Error while compiling shader " + name + ".");
+                Rhino.RhinoApp.WriteLine("Error while compiling shader " + name + ".");
                 if (type == ShaderType.VertexShader)
-                    Util.WriteLine(ref mDoc, "Error in vertex shader.");
+                    Rhino.RhinoApp.WriteLine("Error in vertex shader.");
                 else if (type == ShaderType.FragmentShader)
-                    Util.WriteLine(ref mDoc, "Error in fragment shader.");
+                    Rhino.RhinoApp.WriteLine("Error in fragment shader.");
             }
 
             return id;
@@ -108,7 +108,7 @@ namespace SparrowHawk
         {
             int id = GL.GetAttribLocation(mProgramShader, name);
             if (id == -1 && warn)
-                Util.WriteLine(ref mDoc, mName + ": warning could not find attrib " + name);
+                Rhino.RhinoApp.WriteLine(mName + ": warning could not find attrib " + name);
             return id;
         }
 
@@ -116,7 +116,7 @@ namespace SparrowHawk
         {
             int id = GL.GetUniformLocation(mProgramShader, name);
             if (id == -1 && warn)
-                Util.WriteLine(ref mDoc, mName + ": warning could not find uniform " + name);
+                Rhino.RhinoApp.WriteLine(mName + ": warning could not find uniform " + name);
             return id;
         }
 

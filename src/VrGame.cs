@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using OpenTK;
 using OpenTK.Graphics.OpenGL4;
 using Valve.VR;
@@ -16,19 +17,31 @@ namespace SparrowHawk
         Rhino.RhinoDoc mDoc;
         String mStrDriver = "No Driver";
 	    String mStrDisplay = "No Display";
+        String mTitleBase;
         uint mRenderWidth = 1280;
         uint mRenderHeight = 720;
+
+
         TrackedDevicePose_t[] renderPoseArray, gamePoseArray;
+        DateTime mLastFrameTime;
+
+        int mFrameCount;
+        double frameRateTimer = 1;
+
+        // Callibration
+        List<Vector3> robotCallibrationPoints = new List<Vector3>();
+        List<Vector3> vrCallibrationPoints = new List<Vector3>();
+
 
 
         public VrGame(ref Rhino.RhinoDoc doc)
         {
             mDoc = doc;
             if (init())
-                Util.WriteLine(ref mDoc, "Initialization complete!");
+                Rhino.RhinoApp.WriteLine("Initialization complete!");
 
-            Util.WriteLine(ref mDoc, "Directory: " + System.IO.Directory.GetCurrentDirectory());
-            Run();  
+            Rhino.RhinoApp.WriteLine("Directory: " + System.IO.Directory.GetCurrentDirectory());
+            //Run();  
 
         }
 
@@ -96,8 +109,44 @@ namespace SparrowHawk
         protected void handleInteractions()
         {
             if (mScene.mInteractionStack.Count == 0)
-                mScene.mInteractionStack.Push(new Interaction.MarkingMenu(ref mScene));
+                mScene.mInteractionStack.Push(new Interaction.PickPoint(ref mScene));
             mScene.mInteractionStack.Peek().handleInput();
+        }
+
+        protected override void OnUpdateFrame(FrameEventArgs e)
+        {
+            base.OnUpdateFrame(e);
+            if (mFrameCount >= 30)
+            {
+                this.Title = mTitleBase + " - " + 1 / ((TimeSpan)(System.DateTime.Now - mLastFrameTime)).TotalSeconds + "fps.";
+                
+                mFrameCount = 0;
+            } 
+            mFrameCount += 1;
+            mLastFrameTime = DateTime.Now;
+        }
+
+        // TODO: Only works for oculus
+        protected void handleSignals()
+        {
+            SparrowHawkSignal s = SparrowHawkEventListeners.Instance.getOneSignal();
+            if (s == null)
+                return;
+            switch (s.type)
+            {
+                case SparrowHawkSignal.ESparrowHawkSigalType.InitType:
+                    if (s.data.Length >= 3)
+                    {
+                        Vector3 robotPoint = new Vector3(s.data[0], s.data[1], s.data[2]);
+                        // Do displacement to robotPoint
+                        robotCallibrationPoints.Add(robotPoint);
+                        if (mScene.leftControllerIdx < 0)
+                            break;
+                        Vector3 vrPoint = Util.getTranslationVector3(mScene.mDevicePose[mScene.leftControllerIdx]);
+                        vrCallibrationPoints.Add(vrPoint);
+                    }
+                    break;
+            }
         }
 
         protected override void OnRenderFrame(FrameEventArgs e)
@@ -105,11 +154,9 @@ namespace SparrowHawk
             base.OnRenderFrame(e);
             MakeCurrent();
             updateMatrixPose();
-
+            handleSignals();
             handleInteractions();
             mRenderer.renderFrame();
-            //string A = (mScene.mHMDPose * new Vector4(0, 0, 0, 1)).ToString();
-            //Util.WriteLine(ref mDoc, A);
             SwapBuffers();
             GL.ClearColor(0, 0, 0, 1);
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
@@ -150,10 +197,10 @@ namespace SparrowHawk
             bool can = OpenVR.Compositor.CanRenderScene();
             
             if (eError == EVRInitError.None)
-                Util.WriteLine(ref mDoc, "Booted VR System");
+                Rhino.RhinoApp.WriteLine("Booted VR System");
             else
             {
-                Util.WriteLine(ref mDoc, "Failed to boot");
+                Rhino.RhinoApp.WriteLine("Failed to boot");
                 return false;
             }
 
@@ -165,8 +212,8 @@ namespace SparrowHawk
             // Window Setup Info
             mStrDriver = Util.GetTrackedDeviceString(ref mHMD, OpenVR.k_unTrackedDeviceIndex_Hmd, ETrackedDeviceProperty.Prop_TrackingSystemName_String);
             mStrDisplay = Util.GetTrackedDeviceString(ref mHMD, OpenVR.k_unTrackedDeviceIndex_Hmd, ETrackedDeviceProperty.Prop_SerialNumber_String);
-            Title = "SparrowHawk - " + mStrDriver + " " + mStrDisplay;
-
+            mTitleBase = "SparrowHawk - " + mStrDriver + " " + mStrDisplay;
+            Title = mTitleBase;
 
 
             MakeCurrent();
@@ -176,14 +223,9 @@ namespace SparrowHawk
             mHMD.GetRecommendedRenderTargetSize(ref mRenderWidth, ref mRenderHeight);
 
 
-            Geometry.Geometry g = new Geometry.Geometry();
-            g.mGeometry = new float[] { -1f, 0f, 0f, 1f, 0f, 0f, 0f, 1f, 0f };
-            // g.mGeometry = new float[] { -1f, -1f, 1f, 1f, -1f, 1f, 1f, 1f, 1f };
-            //g.mGeometry = new float[] { -100f, 0f, -100f, 100f, 0f, -100f, 0f, 0f, 100f };
-            //g.mNormals = new float[] { -1f, -1f, 0f, 1f, -1f, 0f, 0f, 1f, 0f };
-            g.mGeometryIndices = new int[] { 0, 1, 2 };
-            g.mNumPrimitives = 1;
-            g.primitiveType = BeginMode.Triangles;
+            
+            
+            Geometry.Geometry g = new Geometry.Geometry("C:/workspace/Kestrel/resources/meshes/bunny.obj");
 
             //Material.Material m = new Material.SingleColorMaterial(mDoc,1f,1f,1f,1f);
             Material.Material m = new Material.SingleColorMaterial(mDoc,1,0,1,1);
@@ -270,8 +312,8 @@ namespace SparrowHawk
 
             if ( error != EVRRenderModelError.None)
             {
-                    Util.WriteLine(ref mDoc,"Unable to load render model " + modelName + " -- " + OpenVR.RenderModels.GetRenderModelErrorNameFromEnum(error));
-                    return null;
+                Rhino.RhinoApp.WriteLine("Unable to load render model " + modelName + " -- " + OpenVR.RenderModels.GetRenderModelErrorNameFromEnum(error));
+                return null;
             }
 
 

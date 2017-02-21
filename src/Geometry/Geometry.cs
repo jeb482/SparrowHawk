@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using ObjLoader.Loader;
+//using ObjLoader.Loader;
 using OpenTK;
 
 
@@ -19,9 +19,9 @@ namespace SparrowHawk.Geometry
 
         public OpenTK.Graphics.OpenGL4.BeginMode primitiveType;
 
-        public Geometry(string filename, OpenTK.Graphics.Color4 color)
+        public Geometry(string filename)
         {
-            LoadObjFile(filename, color);
+            LoadObjFile(filename);
         }
 
         public Geometry(IntPtr pRenderModel, out int nTexId)
@@ -73,44 +73,38 @@ namespace SparrowHawk.Geometry
 
         public Geometry()
         {
+
         }
 
 
         // I'm doing this with too many loops but whatever.
         // Also I'm shattering the ability to put multiple meshes in one file.
-        void LoadObjFile(string filename, OpenTK.Graphics.Color4 color)
+        void LoadObjFile(string filename)
         {
-            var factory = new ObjLoader.Loader.Loaders.ObjLoaderFactory();
-            var objLoader = factory.Create();
-            var fileStream = new System.IO.FileStream(filename, System.IO.FileMode.Open);
-            var data = objLoader.Load(fileStream);
-            
-            // THis doesnt work anyway. Thanks CJ loser.
+            ObjParser.Obj obj = new ObjParser.Obj();
+            obj.LoadObj(filename);
+            mGeometry = new float[3 * obj.VertexList.Count];
+            mGeometryIndices = new int[3 * obj.FaceList.Count];
 
-            //foreach (var v in data.Vertices)
-            //{
-            //    mGeometry.Add(v.X); mGeometry.Add(v.Y); mGeometry.Add(v.Z);
-            //    mColors.Add(color.R); mColors.Add(color.G); mColors.Add(color.B); mColors.Add(color.A);
-            //}
+            int i = 0;
+            foreach (var v in obj.VertexList)
+            {
+                mGeometry[3 * i + 0] = (float)v.X;
+                mGeometry[3 * i + 1] = (float)v.Y;
+                mGeometry[3 * i + 2] = (float)v.Z;
+                i++;
+            }
+            i = 0;
+            foreach (var f in obj.FaceList)
+            {
+                mGeometryIndices[3 * i + 0] = f.VertexIndexList[0] - 1;
+                mGeometryIndices[3 * i + 1] = f.VertexIndexList[1] - 1;
+                mGeometryIndices[3 * i + 2] = f.VertexIndexList[2] - 1;
+                i++;
+            }
 
-            //foreach (var n in data.Normals)
-            //{
-            //    mNormals.Add(n.X); mNormals.Add(n.Y); mNormals.Add(n.Z);
-            //}
-
-            //foreach (var uv in data.Textures)
-            //{
-            //    mUvs.Add(uv.X); mUvs.Add(uv.Y);
-            //}
-
-            //for (int i = 0; i < data.Vertices.Count; i++)
-            //{
-            //    mGeometryIndices.Add(i);
-            //}
-
-            //// TODO: Add flat shade code;
-
-            //mNumPrimitives = mGeometryIndices.Count / 3;
+            mNumPrimitives = obj.FaceList.Count;
+            primitiveType = OpenTK.Graphics.OpenGL4.BeginMode.Triangles;
         }
 
         // TODO: RayTracer
