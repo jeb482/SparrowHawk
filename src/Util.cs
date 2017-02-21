@@ -48,12 +48,13 @@ namespace SparrowHawk
                                       M.m4, M.m5, M.m6, M.m7,
                                       M.m8, M.m9, M.m10, M.m11,
                                          0, 0, 0, 1);
-
             return output;
+        }
 
-
-
-
+        public static OpenTK.Vector3 getTranslationVector3(OpenTK.Matrix4 M)
+        {
+            OpenTK.Vector4 output = M * new OpenTK.Vector4(0, 0, 0, 1);
+            return new OpenTK.Vector3(output.X, output.Y, output.Z);
         }
     }
 }

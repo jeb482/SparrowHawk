@@ -15,38 +15,38 @@ namespace SparrowHawk.Interaction
 
         protected override void onClickViveTrigger(ref VREvent_t vrEvent)
         {
-            Util.WriteLine(ref mScene.rhinoDoc, "Pulled the Vive trigger");
+            Rhino.RhinoApp.WriteLine("Pulled the Vive trigger");
         }
         protected override void onClickViveTouchpad(ref VREvent_t vrEvent)
         {
             float r, theta;
             getViveTouchpadPoint(vrEvent.trackedDeviceIndex, out r, out theta);
-            Util.WriteLine(ref mScene.rhinoDoc, "Clicked the Vive touchpad at r = " + r + ", theta = " + theta + ".");
+            Rhino.RhinoApp.WriteLine("Clicked the Vive touchpad at r = " + r + ", theta = " + theta + ".");
         }
         protected override void onClickViveGrip(ref VREvent_t vrEvent)
         {
-            Util.WriteLine(ref mScene.rhinoDoc, "Grabbed the Vive grip");
+            Rhino.RhinoApp.WriteLine("Grabbed the Vive grip");
         }
         protected override void onClickViveAppMenu(ref VREvent_t vrEvent)
         {
-            Util.WriteLine(ref mScene.rhinoDoc, "Pressed the Vive application menu button");
+            Rhino.RhinoApp.WriteLine("Pressed the Vive application menu button");
         }
 
         protected override void onReleaseViveTrigger(ref VREvent_t vrEvent)
         {
-            Util.WriteLine(ref mScene.rhinoDoc, "Released the Vive trigger");
+            Rhino.RhinoApp.WriteLine("Released the Vive trigger");
         }
         protected override void onReleaseViveTouchpad(ref VREvent_t vrEvent)
         {
-            Util.WriteLine(ref mScene.rhinoDoc, "Released the Vive touchpad");
+            Rhino.RhinoApp.WriteLine("Released the Vive touchpad");
         }
         protected override void onReleaseViveGrip(ref VREvent_t vrEvent)
         {
-            Util.WriteLine(ref mScene.rhinoDoc, "Released the Vive grip");
+            Rhino.RhinoApp.WriteLine("Released the Vive grip");
         }
         protected override void onReleaseViveAppMenu(ref VREvent_t vrEvent)
         {
-            Util.WriteLine(ref mScene.rhinoDoc, "Released the Vive application menu button");
+            Rhino.RhinoApp.WriteLine("Released the Vive application menu button");
         }
 
     }
