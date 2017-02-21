@@ -137,13 +137,23 @@ namespace SparrowHawk
                 case SparrowHawkSignal.ESparrowHawkSigalType.InitType:
                     if (s.data.Length >= 3)
                     {
-                        Vector3 robotPoint = new Vector3(s.data[0], s.data[1], s.data[2]);
-                        // Do displacement to robotPoint
+                        Vector3 robotPoint = new Vector3(s.data[0] - 8, s.data[1], s.data[2] - 240)/1000;
                         robotCallibrationPoints.Add(robotPoint);
                         if (mScene.leftControllerIdx < 0)
                             break;
                         Vector3 vrPoint = Util.getTranslationVector3(mScene.mDevicePose[mScene.leftControllerIdx]);
                         vrCallibrationPoints.Add(vrPoint);
+                        Util.MarkPoint(ref mScene.staticGeometry, vrPoint, new OpenTK.Graphics.Color4(1, 1, 0, 1));
+                        if (robotCallibrationPoints.Count == 10)
+                        {
+                            Util.solveForAffineTransform(vrCallibrationPoints, robotCallibrationPoints, ref mScene.vrToRobot);
+                        }
+                        foreach (Vector3 v in robotCallibrationPoints)
+                        {
+                            Vector4 v4 = new Vector4(v.X, v.Y, v.Z, 1);
+                            v4 = mScene.vrToRobot.Inverted() * v4;
+                            Util.MarkPoint(ref mScene.staticGeometry, new Vector3(v4.X, v4.Y, v4.Z), new OpenTK.Graphics.Color4(0, 1, 0, 1));
+                        }
                     }
                     break;
             }
@@ -228,13 +238,13 @@ namespace SparrowHawk
             Geometry.Geometry g = new Geometry.Geometry("C:/workspace/Kestrel/resources/meshes/bunny.obj");
 
             //Material.Material m = new Material.SingleColorMaterial(mDoc,1f,1f,1f,1f);
-            Material.Material m = new Material.SingleColorMaterial(mDoc,1,0,1,1);
+            Material.Material m = new Material.SingleColorMaterial(1,0,1,1);
             SceneNode cube = new SceneNode("Triangle", ref g, ref m);
             cube.transform = new Matrix4(1, 0, 0, 0, 0, 1, 0, 1, 0, 0, 1, 0, 0, 0, 0, 1);
             mScene.staticGeometry.add(ref cube);
 
             g = new Geometry.PointMarker(new Vector3(0, 1, 0));
-            m = new Material.SingleColorMaterial(mDoc, 1, 1, 1, 1);
+            m = new Material.SingleColorMaterial(1, 1, 1, 1);
             SceneNode point = new SceneNode("Point 1", ref g, ref m);
             mScene.staticGeometry.add(ref point);
             point.transform = new Matrix4(1, 0, 0, 0, 0, 1, 0, 1, 0, 0, 1, 0, 0, 0, 0, 1);
@@ -243,13 +253,13 @@ namespace SparrowHawk
 
             // Left
             g = new Geometry.PointMarker(new Vector3(0, 0, 0));
-            m = new Material.SingleColorMaterial(mDoc, 1, 0, 0, 1);
+            m = new Material.SingleColorMaterial(1, 0, 0, 1);
             point = new SceneNode("Left Cursor", ref g, ref m);
             mScene.leftControllerNode.add(ref point);
             point.transform = new Matrix4(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1);
 
             g = new Geometry.PointMarker(new Vector3(0, 0, 0));
-            m = new Material.SingleColorMaterial(mDoc, 0, 0, 1, 1);
+            m = new Material.SingleColorMaterial(0, 0, 1, 1);
             point = new SceneNode("Right Cursor", ref g, ref m);
             mScene.rightControllerNode.add(ref point);
             point.transform = new Matrix4(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1);

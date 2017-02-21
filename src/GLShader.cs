@@ -34,9 +34,8 @@ namespace SparrowHawk
         SortedDictionary<string, GLBuffer> mBufferObjects;
         Rhino.RhinoDoc mDoc = null;
 
-        public GLShader(Rhino.RhinoDoc doc)
+        public GLShader()
         {
-            mDoc = doc;
             mBufferObjects = new SortedDictionary<string, GLBuffer>();
         }
 

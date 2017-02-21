@@ -120,16 +120,16 @@ namespace SparrowHawk
                 normalized[2, 1] = MVec[9,0];
                 normalized[2, 2] = MVec[10,0];
                 // TODO: If this doesn't work out, try out the built-in Grahm-Schmidt method.
-                normalized = normalized.QR().Q;
+                normalized = normalized.GramSchmidt().Q;
                 MVec[0,0] = normalized[0, 0];
                 MVec[1,0] = normalized[0, 1];
-                MVec[2,0] = normalized[0, 3];
+                MVec[2,0] = normalized[0, 2];
                 MVec[4,0] = normalized[1, 0];
                 MVec[5,0] = normalized[1, 1];
-                MVec[6,0] = normalized[1, 3];
+                MVec[6,0] = normalized[1, 2];
                 MVec[8,0] = normalized[2, 0];
                 MVec[9,0] = normalized[2, 1];
-                MVec[10,0] = normalized[2, 3];
+                MVec[10,0] = normalized[2, 2];
             }
 
             for (i = 0; i < 3; i++)
@@ -138,6 +138,45 @@ namespace SparrowHawk
             M[3, 0] = 0; M[3, 1] = 0; M[3, 2] = 0; M[3, 3] = 1;
 
             return true;
+        }
+
+        public static void TestAffineSolve()
+        {
+            OpenTK.Matrix4 M = new OpenTK.Matrix4();
+            //float norm;
+
+            // Test the identity with no translation
+            List<OpenTK.Vector3> xs = new List<OpenTK.Vector3>();
+            List<OpenTK.Vector3> bs = new List<OpenTK.Vector3>();
+            xs.Add(new OpenTK.Vector3(1, 0, 0)); xs.Add(new OpenTK.Vector3(0, 1, 0)); xs.Add(new OpenTK.Vector3(0, 0, 1)); xs.Add(new OpenTK.Vector3(2, 2, 2));
+            bs.Add(new OpenTK.Vector3(1, 0, 0)); bs.Add(new OpenTK.Vector3(0, 1, 0)); bs.Add(new OpenTK.Vector3(0, 0, 1)); bs.Add(new OpenTK.Vector3(2, 2, 2));
+            solveForAffineTransform(xs, bs, ref M, false);
+            // Normalized
+            solveForAffineTransform(xs, bs, ref M, true);
+
+            // Identity with a translation
+            xs.Clear(); bs.Clear();
+            xs.Add(new OpenTK.Vector3(1, 0, 0)); xs.Add(new OpenTK.Vector3(0, 1, 0)); xs.Add(new OpenTK.Vector3(0, 0, 1)); xs.Add(new OpenTK.Vector3(2, 2, 2));
+            bs.Add(new OpenTK.Vector3(0, -1, -1)); bs.Add(new OpenTK.Vector3(-1, 0, -1)); bs.Add(new OpenTK.Vector3(-1, -1, 0)); bs.Add(new OpenTK.Vector3(1, 1, 1));
+            // Normalized
+            solveForAffineTransform(xs, bs, ref M, false);
+            solveForAffineTransform(xs, bs, ref M, true);
+
+            // Rotation 
+            xs.Clear(); bs.Clear();
+            xs.Add(new OpenTK.Vector3(1, 0, 0)); xs.Add(new OpenTK.Vector3(0, 1, 0)); xs.Add(new OpenTK.Vector3(0, 0, 1)); xs.Add(new OpenTK.Vector3(2, 2, 2));
+            bs.Add(new OpenTK.Vector3(0,1,0)); bs.Add(new OpenTK.Vector3(-1, 0, 0)); bs.Add(new OpenTK.Vector3(0, 0, 1)); bs.Add(new OpenTK.Vector3(-2, 2, 2));
+            solveForAffineTransform(xs, bs, ref M, false);
+            solveForAffineTransform(xs, bs, ref M, true);
+        }
+
+        public static void MarkPoint(ref SceneNode node, OpenTK.Vector3 p, OpenTK.Graphics.Color4 color)
+        {
+            Geometry.Geometry g = new Geometry.PointMarker(p);
+            Material.Material m = new Material.SingleColorMaterial(color.R, color.G, color.B, color.A);
+            SceneNode child = new SceneNode("Point", ref g, ref m);
+            child.transform = new OpenTK.Matrix4(1, 0, 0, p.X, 0, 1, 0, p.Y, 0, 0, 1, p.Z, 0, 0, 0, 1);
+            node.add(ref child);
         }
     }
 }

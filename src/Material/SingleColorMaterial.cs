@@ -12,13 +12,11 @@ namespace SparrowHawk.Material
     class SingleColorMaterial : Material
     {
         OpenTK.Graphics.Color4 mColor;
-        Rhino.RhinoDoc mDoc;
 
-        public SingleColorMaterial(Rhino.RhinoDoc doc, float r, float g, float b, float a)
+        public SingleColorMaterial(float r, float g, float b, float a)
         {
-            mDoc = doc;
             mColor = new OpenTK.Graphics.Color4(r, g, b, a);
-            mShader = new GLShader(doc);
+            mShader = new GLShader();
             mShader.init("SingleColorMaterial", ShaderSource.SingleColorVertShader, ShaderSource.SingleColorFragShader);
             
 

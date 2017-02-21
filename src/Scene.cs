@@ -91,7 +91,10 @@ namespace SparrowHawk
 
         // For rhino positioning
         public Rhino.RhinoDoc rhinoDoc;
-        public Matrix4 robotToPlatform = new Matrix4(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1);
+        public Matrix4 robotToPlatform = new Matrix4(1,  0,  0, 0,
+                                                     0, -1,  0, 0,
+                                                     0,  0, -1, 0, 
+                                                     0,  0,  0, 1);
         public Matrix4 platformRotation = new Matrix4(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1);
         public Matrix4 vrToRobot = new Matrix4(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1);
 

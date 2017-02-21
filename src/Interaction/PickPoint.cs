@@ -24,7 +24,7 @@ namespace SparrowHawk.Interaction
 
             // Add a Point Rep object to the mScene
             Geometry.Geometry point = new Geometry.PointMarker(new Vector3());
-            Material.Material material = new Material.SingleColorMaterial(mScene.rhinoDoc, 0f, .5f, 1f, 1f);
+            Material.Material material = new Material.SingleColorMaterial(0f, .5f, 1f, 1f);
             SceneNode sceneNode = new SceneNode("a", ref point, ref material);
             
             sceneNode.transform = M;
