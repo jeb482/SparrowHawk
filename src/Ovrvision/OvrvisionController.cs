@@ -190,7 +190,7 @@ namespace SparrowHawk.Ovrvision
             }
             else
             {
-                Util.WriteLine(ref mScene.rhinoDoc,"State: Open Error.");
+                Rhino.RhinoApp.WriteLine("State: Open Error.");
             }
 
 
@@ -354,8 +354,8 @@ namespace SparrowHawk.Ovrvision
                     mHeadtoCam_L = tempViewMatrix * glmVRtoMarker * mHeadInvert;
                     calib_status = 2;
 
-                    Util.WriteLine(ref mScene.rhinoDoc, "left eye calibrated");
-                    Util.WriteLine(ref mScene.rhinoDoc, mHeadtoCam_L.ToString());
+                    Rhino.RhinoApp.WriteLine("left eye calibrated");
+                    Rhino.RhinoApp.WriteLine(mHeadtoCam_L.ToString());
                 }
                 //Util.WriteLine(ref mScene.rhinoDoc, glViewMatrix.ToString());
 
@@ -371,8 +371,8 @@ namespace SparrowHawk.Ovrvision
                     Matrix4.Invert(ref mScene.mHMDPose, out mHeadInvert);
                     mHeadtoCam_R = tempViewMatrix * glmVRtoMarker * mHeadInvert;
                     calib_status = 3;
-                    Util.WriteLine(ref mScene.rhinoDoc, "right eye calibrated");
-                    Util.WriteLine(ref mScene.rhinoDoc, mHeadtoCam_R.ToString());
+                    Rhino.RhinoApp.WriteLine("right eye calibrated");
+                    Rhino.RhinoApp.WriteLine(mHeadtoCam_R.ToString());
 
                 }
                 //debug
@@ -466,7 +466,7 @@ namespace SparrowHawk.Ovrvision
            );
             calib_status = 3;
 
-            Util.WriteLine(ref mScene.rhinoDoc, "set default calibration matrix");
+            Rhino.RhinoApp.WriteLine("set default calibration matrix");
         }
 
         public void getMatrixHeadtoCamera()
@@ -489,7 +489,7 @@ namespace SparrowHawk.Ovrvision
 
                     Matrix4 mControllerPose = mScene.mDevicePose[nDevice];
                     center = mControllerPose * new Vector4(0, 0, 0, 1);
-                    Util.WriteLine(ref mScene.rhinoDoc, center.ToString());
+                    Rhino.RhinoApp.WriteLine(center.ToString());
                 }
 
                 vr_points.Add(new MCvPoint3D32f(center.X, center.Y, center.Z));
@@ -517,8 +517,8 @@ namespace SparrowHawk.Ovrvision
                 );
 
                 calib_status = 1;
-                Util.WriteLine(ref mScene.rhinoDoc, "VRtoMarker matrix");
-                Util.WriteLine(ref mScene.rhinoDoc, glmVRtoMarker.ToString());
+                Rhino.RhinoApp.WriteLine("VRtoMarker matrix");
+                Rhino.RhinoApp.WriteLine(glmVRtoMarker.ToString());
 
                 vr_points.Clear();
                 marker_points.Clear();
@@ -744,7 +744,7 @@ namespace SparrowHawk.Ovrvision
             new_point = ProjectionMatrix_RowMajor * ViewMatrix_RowMajor * ModelMatrix_RowMajor * point;
             new_point /= new_point.W;
 
-            Util.WriteLine(ref mScene.rhinoDoc, new_point.ToString());
+            Rhino.RhinoApp.WriteLine(new_point.ToString());
         }
     }
 }

@@ -50,6 +50,7 @@
     <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
     <CodeAnalysisIgnoreBuiltInRules>false</CodeAnalysisIgnoreBuiltInRules>
     <WarningLevel>2</WarningLevel>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="Emgu.CV.UI">
@@ -81,7 +82,6 @@
     <Compile Include="Ovrvision\COvrvision.cs" />
     <Compile Include="Geometry\CubeGeometry.cs" />
     <Compile Include="SparrowHawkEventListeners.cs" />
-    <Compile Include="COvrvision.cs" />
     <Compile Include="Geometry\Polyline.cs" />
     <Compile Include="Geometry\PointMarker.cs" />
     <Compile Include="Geometry\Geometry.cs" />

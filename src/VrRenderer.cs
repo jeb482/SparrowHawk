@@ -142,9 +142,9 @@ namespace SparrowHawk
         {
             enableAR = !enableAR;
             if (enableAR)
-                Util.WriteLine(ref mScene.rhinoDoc, "enable AR mode");
+                Rhino.RhinoApp.WriteLine("enable AR mode");
             else
-                Util.WriteLine(ref mScene.rhinoDoc, "disable AR mode");
+                Rhino.RhinoApp.WriteLine("disable AR mode");
         }
 
         public void RenderScene(Valve.VR.EVREye eye)
