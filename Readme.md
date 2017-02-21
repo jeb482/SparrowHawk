@@ -14,17 +14,17 @@ Checklist for SparrowHawk
 - [x] Rhino Plugin (Brep & Rhino Plugin)
 - [x] Rhino-VR communication
 - [x] OpenVr (OpenVr from VisualizerVr)
-- [ ] Control loop (VisualizerVr)
+- [X] Control loop (VisualizerVr)
 - [x] OpenGl (glad from Nanogui)
 - [x] Windowing system (GLFW from Nanogui)
 - [x] Scene tree structure (Scene)
 - [x] GLShader framework (Nanogui)
-- [ ] OVRVision Camera (VisualizerVr)
+- [X] OVRVision Camera (VisualizerVr)
 - [ ] Encoder (VisualizerVr and Encoder)
-- [ ] Mesh, line, curve framework (Geometry and VisualizerVr)
+- [X] Mesh, line, curve framework (Geometry and VisualizerVr)
 - [ ] Ray Tracing (Scene and Geometry)
-- [ ] Interaction framework (Interaction and VisualizerVr)
-- [ ] Materials (Material)
+- [X] Interaction framework (Interaction and VisualizerVr)
+- [X] Materials (Material)
 - [x] Vector Math Library (Eigen from Nanogui)
 
 
@@ -32,3 +32,5 @@ Setup notes
 ===========
 * Before running or debugging the plugin, make sure to get the .dll from
 openvr/bin/win64/openvr.dll and put it in the SparrowHawk bin directory.
+
+* Use NuGet Package Manager to set up MathNet.Numerics.
