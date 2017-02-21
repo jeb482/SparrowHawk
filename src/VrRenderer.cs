@@ -5,6 +5,16 @@ using System.Text;
 
 using OpenTK.Graphics.OpenGL4;
 using OpenTK;
+using System.Drawing;
+using System.Drawing.Imaging;
+using Emgu.CV;
+using Emgu.CV.Util;
+using Emgu.CV.CvEnum;
+using Emgu.CV.Structure;
+using System.Threading;
+using System.Runtime.InteropServices;
+using Valve.VR;
+using SparrowHawk.Ovrvision;
 
 namespace SparrowHawk
 {
@@ -31,6 +41,8 @@ namespace SparrowHawk
         FramebufferDesc rightEyeDesc;
         Valve.VR.CVRSystem mHMD;
         Scene mScene;
+        public OvrvisionController ovrvision_controller;
+        private bool enableAR = true;
 
         public VrRenderer(ref Valve.VR.CVRSystem HMD, ref Scene scene, uint mRenderWidth, uint mRenderHeight)
         {
@@ -40,6 +52,13 @@ namespace SparrowHawk
             SetupDistortion();
             vrRenderWidth = mRenderWidth;
             vrRenderHeight = mRenderHeight;
+
+            //ovrvision
+            if (enableAR)
+            {
+                ovrvision_controller = new OvrvisionController(ref mHMD, ref mScene);
+                ovrvision_controller.initOVrvision();
+            }
         }
 
         /**
@@ -70,7 +89,7 @@ namespace SparrowHawk
             GL.BindTexture(TextureTarget.Texture2D, framebufferDesc.resolveTextureId);
             GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Linear);
             GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMaxLevel, 0);
-            GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgba8, width, height, 0, PixelFormat.Rgba, PixelType.UnsignedByte, new IntPtr()); // Hoping this is a nullptr
+            GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgba8, width, height, 0, OpenTK.Graphics.OpenGL4.PixelFormat.Rgba, PixelType.UnsignedByte, new IntPtr()); // Hoping this is a nullptr
             GL.FramebufferTexture2D(FramebufferTarget.Framebuffer, FramebufferAttachment.ColorAttachment0, TextureTarget.Texture2D, framebufferDesc.resolveTextureId, 0);
 
             FramebufferErrorCode status = GL.CheckFramebufferStatus(FramebufferTarget.Framebuffer);
@@ -114,37 +133,79 @@ namespace SparrowHawk
         }
 
 
-
-
         // TODO: Generate Shaders
         void generateShaders()
         {
         }
 
-
+        public void switchAR()
+        {
+            enableAR = !enableAR;
+            if (enableAR)
+                Util.WriteLine(ref mScene.rhinoDoc, "enable AR mode");
+            else
+                Util.WriteLine(ref mScene.rhinoDoc, "disable AR mode");
+        }
 
         public void RenderScene(Valve.VR.EVREye eye)
         {
-            GL.ClearColor(0,0,0,1);
+            // Clear the screen to white
+            GL.ClearColor(1.0f, 1.0f, 1.0f, 1.0f);
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
-            mHMD.GetEyeToHeadTransform(eye);
-            Matrix4 vp;
-            switch (eye)
-            {
-                case Valve.VR.EVREye.Eye_Left:
-                    vp = mEyeProjLeft * mEyePosLeft * mScene.mHMDPose;
-                    break;
-                default:
-                    vp = mEyeProjRight * mEyePosRight* mScene.mHMDPose;
-                    break;
-            }
-            vp.Transpose();
-            mScene.render(ref vp);
-            
-        }
 
-        // TODO: CreateShaderProgram
-        // TODO: specifyScreenVertexAttributes
+            // use ovrvision camera
+            if (enableAR)
+            {
+                ovrvision_controller.updateCamera(eye);
+                Matrix4 vp = new Matrix4();
+                switch (eye)
+                {
+                    case Valve.VR.EVREye.Eye_Left:
+                        if (ovrvision_controller.foundMarker_L)
+                        {
+                            ovrvision_controller.drawCubeGL(0);
+                        }
+                        ovrvision_controller.drawController(0);
+
+                        ovrvision_controller.getOVRVPMatrix(0, ref vp);
+                        //Util.WriteLine(ref mScene.rhinoDoc, vp.ToString());
+                        break;
+                    default:
+                        if (ovrvision_controller.foundMarker_R)
+                        {
+                            ovrvision_controller.drawCubeGL(1);
+
+                        }
+                        ovrvision_controller.drawController(1);
+
+                        ovrvision_controller.getOVRVPMatrix(1, ref vp);
+                        break;
+                }
+                //already transpose
+                //vp.Transpose();
+                //mScene.render(ref vp);
+            }
+            else
+            {
+
+                mHMD.GetEyeToHeadTransform(eye);
+
+                Matrix4 vp;
+                switch (eye)
+                {
+                    case Valve.VR.EVREye.Eye_Left:
+                        //Util.WriteLine(ref mScene.rhinoDoc, mScene.mHMDPose.ToString());
+                        vp = mEyeProjLeft * mEyePosLeft * mScene.mHMDPose;
+                        break;
+                    default:
+                        vp = mEyeProjRight * mEyePosRight * mScene.mHMDPose;
+                        break;
+                }
+                vp.Transpose();
+                mScene.render(ref vp);
+            }
+
+        }
 
 
         protected void RenderStereoTargets()
@@ -154,7 +215,18 @@ namespace SparrowHawk
 
             // Left Eye. Notably the original openvr code has some lame code duplication here.
             GL.BindFramebuffer(FramebufferTarget.Framebuffer, leftEyeDesc.renderFramebufferId);
-            GL.Viewport(0, 0, (int) vrRenderWidth, (int) vrRenderHeight);
+
+            if (enableAR)
+            {
+                int ox = ((int)vrRenderWidth - ovrvision_controller.camWidth) / 2;
+                int oy = ((int)vrRenderHeight - ovrvision_controller.camHeight) / 2;
+                //ox+100 to deal with blur issue
+                GL.Viewport(ox + 100, oy, ovrvision_controller.camWidth, ovrvision_controller.camHeight);
+            }else
+            {
+                GL.Viewport(0, 0, (int)vrRenderWidth, (int)vrRenderHeight);
+            }
+            
             RenderScene(Valve.VR.EVREye.Eye_Left);
             GL.BindFramebuffer(FramebufferTarget.Framebuffer, 0);
             GL.Disable(EnableCap.Multisample);
@@ -168,7 +240,16 @@ namespace SparrowHawk
 
             // Right Eye.
             GL.BindFramebuffer(FramebufferTarget.Framebuffer, rightEyeDesc.renderFramebufferId);
-            GL.Viewport(0, 0, (int)vrRenderWidth, (int)vrRenderHeight);
+            if (enableAR)
+            {
+                int ox = ((int)vrRenderWidth - ovrvision_controller.camWidth) / 2;
+                int oy = ((int)vrRenderHeight - ovrvision_controller.camHeight) / 2;
+                //ox-100 to deal with the blur issue
+                GL.Viewport(ox - 100, oy, ovrvision_controller.camWidth, ovrvision_controller.camHeight);
+            }else
+            {
+                GL.Viewport(0, 0, (int)vrRenderWidth, (int)vrRenderHeight);
+            }  
             RenderScene(Valve.VR.EVREye.Eye_Right);
             GL.BindFramebuffer(FramebufferTarget.Framebuffer, 0);
             GL.Disable(EnableCap.Multisample);

@@ -56,11 +56,13 @@ namespace SparrowHawk
                 return;
 
             OpenVR.Compositor.WaitGetPoses(mScene.mTrackedDevices, gamePoseArray);
+
             for (uint i = 0; i < mScene.mTrackedDevices.Length; i++)
             {
                 var device = gamePoseArray[i];
                 if (device.bPoseIsValid)
                 {
+                    // TODO: Store it
                     mScene.mDevicePose[i] = Util.steamVRMatrixToMatrix4(mScene.mTrackedDevices[i].mDeviceToAbsoluteTracking);
                     mHMD.GetTrackedDeviceClass(i);
                     if (mScene.mDeviceClassChar[i] == 0)
@@ -87,6 +89,7 @@ namespace SparrowHawk
                         }
                     }                  
                 }
+  
             }
 
             if (gamePoseArray[OpenVR.k_unTrackedDeviceIndex_Hmd].bPoseIsValid)
@@ -166,6 +169,24 @@ namespace SparrowHawk
             base.Dispose(manual);
         }
 
+        /*
+        void FindOrLoadRenderModel(string modelName)
+        {
+            RenderModel_t model;
+            EVRRenderModelError error;
+            IntPtr pRenderModel = new IntPtr();
+
+            error = OpenVR.RenderModels.LoadRenderModel_Async(modelName, ref pRenderModel);
+        }
+
+        protected Geometry.Geometry SetupRenderModelForTrackedDevice(uint trackedDeviceIndex)
+        {
+            if (trackedDeviceIndex >= OpenVR.k_unMaxTrackedDeviceCount)
+                return null;
+            FindOrLoadRenderModel();
+
+        }
+        */
         public bool init()
         {
             // Set up HMD
@@ -234,7 +255,6 @@ namespace SparrowHawk
             point.transform = new Matrix4(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1);
 
 
-
             // build shaders? Maybe in renderer!
             // setup texture maps is commented out.
 
@@ -249,11 +269,25 @@ namespace SparrowHawk
             return true;
         }
 
+        //add key event handler
 
-  
+        protected override void OnKeyPress(OpenTK.KeyPressEventArgs e)
+        {
+            if (e.KeyChar == 'C' || e.KeyChar == 'c')
+                mRenderer.ovrvision_controller.getMatrixHeadtoCamera();
+
+            if (e.KeyChar == 'D' || e.KeyChar == 'd')
+                mRenderer.ovrvision_controller.setDefaultMatrixHC();
+
+            if (e.KeyChar == 'S' || e.KeyChar == 's')
+            {
+                mRenderer.switchAR();
+            }
+
+        }
 
 
-       // public void runMainLoop()
+      // public void runMainLoop()
       //  {
       // /     // Not sure if this is right. How do we close it?
       // /     while (true)
@@ -300,8 +334,6 @@ namespace SparrowHawk
 
             //    }
             //}
-
-
 
             return null;
       }

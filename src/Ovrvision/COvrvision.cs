@@ -19,14 +19,23 @@ using System.Runtime.InteropServices;
 using System.Threading;
 using System.Drawing;
 using System.Drawing.Imaging;
+using Emgu.CV;
+using Emgu.CV.CvEnum;
 
-namespace SparrowHawk
+namespace SparrowHawk.Ovrvision
 {
     public class COvrvision
     {
         //Ovrvision Dll import
         //ovrvision_csharp.cpp
         ////////////// Main Ovrvision System //////////////
+        //custom
+        [DllImport("ovrvision", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
+        static extern void ovChangeFocal(float len);
+        //[DllImport("ovrvision", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
+        //static extern float[] ovGetCameraMatrix(System.IntPtr matrix_array, int type);
+        [DllImport("ovrvision", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
+        static extern IntPtr ovGetCameraMatrix(int type);
         [DllImport("ovrvision", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
         static extern int ovOpen(int locationID, float arMeter, int type);
         [DllImport("ovrvision", CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
@@ -167,6 +176,9 @@ namespace SparrowHawk
         //property
         public Bitmap imageDataLeft;
         public Bitmap imageDataRight;
+        //for opencv
+        public Mat imageDataLeft_Mat;
+        public Mat imageDataRight_Mat;
 
         public int imageSizeW, imageSizeH;
 
@@ -184,6 +196,23 @@ namespace SparrowHawk
             ovRelease();
         }
 
+        //custom fuctions
+        public void ChangeFocal(float len)
+        {
+            ovChangeFocal(len);
+        }
+
+        /*
+        public float[] GetCameraMatrix(System.IntPtr matrix_array, int type )
+        {
+            return ovGetCameraMatrix(matrix_array, type);
+        }*/
+
+        public IntPtr GetCameraMatrix(int type)
+        {
+            return ovGetCameraMatrix(type);
+        }
+
         //Open Ovrvision
         public bool Open(int opentype)
         {
@@ -199,6 +228,9 @@ namespace SparrowHawk
                 //Create bitmap
                 imageDataLeft = new Bitmap(imageSizeW, imageSizeH, PixelFormat.Format24bppRgb);
                 imageDataRight = new Bitmap(imageSizeW, imageSizeH, PixelFormat.Format24bppRgb);
+
+                imageDataLeft_Mat = new Mat();
+                imageDataRight_Mat = new Mat();
 
                 camStatus = true;
             }
@@ -230,6 +262,14 @@ namespace SparrowHawk
             //get image data
             ovGetCamImageBGR(dataLeft.Scan0, OV_CAMEYE_LEFT);
 
+            //get cvMat data
+            // data = scan0 is a pointer to our memory block.
+            IntPtr data = dataLeft.Scan0;
+            // step = stride = amount of bytes for a single line of the image
+            int step = dataLeft.Stride;
+            // So you can try to get you Mat instance like this:
+            imageDataLeft_Mat = new Mat(dataLeft.Height, dataLeft.Width, DepthType.Cv8U, 3, data, step);
+
             imageDataLeft.UnlockBits(dataLeft);
         }
 
@@ -244,6 +284,12 @@ namespace SparrowHawk
 
             //get image data
             ovGetCamImageBGR(dataRight.Scan0, OV_CAMEYE_RIGHT);
+            // data = scan0 is a pointer to our memory block.
+            IntPtr data = dataRight.Scan0;
+            // step = stride = amount of bytes for a single line of the image
+            int step = dataRight.Stride;
+            // So you can try to get you Mat instance like this:
+            imageDataRight_Mat = new Mat(dataRight.Height, dataRight.Width, DepthType.Cv8U, 3, data, step);
 
             imageDataRight.UnlockBits(dataRight);
         }

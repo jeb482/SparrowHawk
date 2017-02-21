@@ -125,6 +125,7 @@ namespace SparrowHawk
             int attribID = 0;
             if (name != "indices")
             {
+                attribID = attrib(name,false);
                 if (attribID < 0)
                     return;
             }

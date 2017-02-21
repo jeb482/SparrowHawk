@@ -52,6 +52,15 @@
     <WarningLevel>2</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="Emgu.CV.UI">
+      <HintPath>..\..\..\Emgu\emgucv-windesktop 3.1.0.2504\bin\Emgu.CV.UI.dll</HintPath>
+    </Reference>
+    <Reference Include="Emgu.CV.UI.GL">
+      <HintPath>..\..\..\Emgu\emgucv-windesktop 3.1.0.2504\bin\Emgu.CV.UI.GL.dll</HintPath>
+    </Reference>
+    <Reference Include="Emgu.CV.World">
+      <HintPath>..\..\..\Emgu\emgucv-windesktop 3.1.0.2504\bin\Emgu.CV.World.dll</HintPath>
+    </Reference>
     <Reference Include="OpenTK, Version=2.0.0.0, Culture=neutral, PublicKeyToken=bad199fe84eb3df4, processorArchitecture=MSIL">
       <HintPath>..\packages\OpenTK.2.0.0\lib\net20\OpenTK.dll</HintPath>
       <Private>True</Private>
@@ -66,8 +75,11 @@
       <HintPath>c:\Program Files\Rhinoceros 5 (64-bit)\System\rhinocommon.dll</HintPath>
       <Private>False</Private>
     </Reference>
+    <Reference Include="System.XML" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Ovrvision\COvrvision.cs" />
+    <Compile Include="Geometry\CubeGeometry.cs" />
     <Compile Include="SparrowHawkEventListeners.cs" />
     <Compile Include="COvrvision.cs" />
     <Compile Include="Geometry\Polyline.cs" />
@@ -82,7 +94,10 @@
     <Compile Include="Material\RGBNormalMaterial.cs" />
     <Compile Include="Material\ShaderSource.cs" />
     <Compile Include="Material\SingleColorMaterial.cs" />
+    <Compile Include="Material\TextureMaterial.cs" />
+    <Compile Include="Ovrvision\MatExtension.cs" />
     <Compile Include="openvr_api.cs" />
+    <Compile Include="Ovrvision\OvrvisionController.cs" />
     <Compile Include="Scene.cs" />
     <Compile Include="SparrowHawkCommand.cs" />
     <Compile Include="SparrowHawkPlugIn.cs" />
