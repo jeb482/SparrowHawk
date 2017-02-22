@@ -170,11 +170,11 @@ namespace SparrowHawk
             solveForAffineTransform(xs, bs, ref M, true);
         }
 
-        public static void MarkPoint(ref SceneNode node, OpenTK.Vector3 p, OpenTK.Graphics.Color4 color)
+        public static void MarkPoint(ref SceneNode node, OpenTK.Vector3 p, float r, float g, float b)
         {
-            Geometry.Geometry g = new Geometry.PointMarker(p);
-            Material.Material m = new Material.SingleColorMaterial(color.R, color.G, color.B, color.A);
-            SceneNode child = new SceneNode("Point", ref g, ref m);
+            Geometry.Geometry geo = new Geometry.PointMarker(p);
+            Material.Material m = new Material.SingleColorMaterial(r, g, b, 1);
+            SceneNode child = new SceneNode("Point", ref geo, ref m);
             child.transform = new OpenTK.Matrix4(1, 0, 0, p.X, 0, 1, 0, p.Y, 0, 0, 1, p.Z, 0, 0, 0, 1);
             node.add(ref child);
         }

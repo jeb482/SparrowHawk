@@ -75,7 +75,7 @@ namespace SparrowHawk
                                 if (name.ToLower().Contains("left"))
                                     mScene.leftControllerIdx = (int)i;
                                 else if (name.ToLower().Contains("right"))
-                                    mScene.leftControllerIdx = (int)i;
+                                    mScene.rightControllerIdx = (int)i;
                                 else if (mScene.leftControllerIdx < 0)
                                     mScene.leftControllerIdx = (int) i;
                                 else if (mScene.rightControllerIdx < 0)
@@ -109,7 +109,7 @@ namespace SparrowHawk
         protected void handleInteractions()
         {
             if (mScene.mInteractionStack.Count == 0)
-                mScene.mInteractionStack.Push(new Interaction.PickPoint(ref mScene));
+                mScene.mInteractionStack.Push(new Interaction.CreateCylinder(ref mScene));
             mScene.mInteractionStack.Peek().handleInput();
         }
 
@@ -143,16 +143,16 @@ namespace SparrowHawk
                             break;
                         Vector3 vrPoint = Util.getTranslationVector3(mScene.mDevicePose[mScene.leftControllerIdx]);
                         vrCallibrationPoints.Add(vrPoint);
-                        Util.MarkPoint(ref mScene.staticGeometry, vrPoint, new OpenTK.Graphics.Color4(1, 1, 0, 1));
+                        Util.MarkPoint(ref mScene.staticGeometry, vrPoint, 1, 1, 0);
                         if (robotCallibrationPoints.Count == 5)
                         {
                             Util.solveForAffineTransform(vrCallibrationPoints, robotCallibrationPoints, ref mScene.vrToRobot);
-                        }
-                        foreach (Vector3 v in robotCallibrationPoints)
-                        {
-                            Vector4 v4 = new Vector4(v.X, v.Y, v.Z, 1);
-                            v4 = mScene.vrToRobot.Inverted() * v4;
-                            Util.MarkPoint(ref mScene.staticGeometry, new Vector3(v4.X, v4.Y, v4.Z), new OpenTK.Graphics.Color4(0, 1, 0, 1));
+                            foreach (Vector3 v in robotCallibrationPoints)
+                            {
+                                Vector4 v4 = new Vector4(v.X, v.Y, v.Z, 1);
+                                v4 = mScene.vrToRobot.Inverted() * v4;
+                                Util.MarkPoint(ref mScene.staticGeometry, new Vector3(v4.X, v4.Y, v4.Z), 0, 1, 0);
+                            }
                         }
                     }
                     break;
