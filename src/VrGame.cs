@@ -346,16 +346,19 @@ namespace SparrowHawk
 
             if (e.KeyChar == 'S' || e.KeyChar == 's')
             {
-                mRenderer.switchAR();
+                Rhino.RhinoApp.WriteLine("keypress test");
+                //mRenderer.switchAR();
             }
             //rhino extrude and curve testing
             if (e.KeyChar == 'R' || e.KeyChar == 'r')
             {
-                Vector3 pos = Util.getTranslationVector3(mScene.mDevicePose[mScene.leftControllerIdx]);
-                // -y_rhino = z_gl, z_rhino = y_gl
-                curvePoints.Add(new Point3d(pos.X, -pos.Z, pos.Y));
+                foreach(OpenTK.Vector3 point in ((Geometry.GeometryStroke)(stroke_i.target)).mPoints){
+                    // -y_rhino = z_gl, z_rhino = y_gl
+                    curvePoints.Add(new Point3d(point.X, -point.Z, point.Y));
+                }
+
                 //Rhino curve and extrude test
-                if (curvePoints.Count > 1)
+                if (curvePoints.Count > 2)
                 {
                     Rhino.Geometry.Curve curve = Rhino.Geometry.Curve.CreateInterpolatedCurve(curvePoints.ToArray(), 3);
                     Rhino.Geometry.BrepFace face = brep.Faces[5];
