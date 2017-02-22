@@ -104,12 +104,14 @@ namespace SparrowHawk
                 mScene.rightControllerNode.transform = mScene.mDevicePose[mScene.rightControllerIdx];
         }
 
+        Interaction.Stroke stroke_i;
         protected void setupInteraction()
         {
             if (mScene.mInteractionStack.Count == 0)
             {
                 //mScene.mInteractionStack.Push(new Interaction.CreateCylinder(ref mScene));
-                mScene.mInteractionStack.Push(new Interaction.Stroke(ref mScene));
+                stroke_i = new Interaction.Stroke(ref mScene);
+                mScene.mInteractionStack.Push(stroke_i);
             }
         }
 
@@ -121,12 +123,13 @@ namespace SparrowHawk
                 mScene.mInteractionStack.Push(new Interaction.CreateCylinder(ref mScene));
             }*/
             //mScene.mInteractionStack.Peek().handleInput();
+            /*
             foreach (Interaction.Interaction i in mScene.mInteractionStack)
             {
-                i.handleInput();
-                ((Interaction.Stroke)i).draw(true, mScene.leftControllerIdx);
-                
-            }
+                i.handleInput();          
+            }*/
+            stroke_i.handleInput();
+            stroke_i.draw(true, mScene.leftControllerIdx);
 
         }
 

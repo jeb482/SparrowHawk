@@ -15,9 +15,9 @@ namespace SparrowHawk.Interaction
         };
 
         private State currentState;
-        private Geometry.Geometry target;
+        public Geometry.Geometry target;
         uint primaryDeviceIndex;
-        bool startDrawing = false;
+
         Material.Material stroke_m;
 
         public Stroke(ref Scene s)
