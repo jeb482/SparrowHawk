@@ -183,7 +183,7 @@ namespace SparrowHawk
                 }
                 //already transpose
                 //vp.Transpose();
-                //mScene.render(ref vp);
+                mScene.render(ref vp);
             }
             else
             {

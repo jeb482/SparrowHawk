@@ -27,7 +27,49 @@ namespace SparrowHawk.Interaction
 
         protected void oculusInput(ref VREvent_t vrEvent)
         {
-
+            if (vrEvent.eventType == (uint)EVREventType.VREvent_ButtonPress)
+            {
+                Rhino.RhinoApp.WriteLine("Pressed a button");
+                switch (vrEvent.data.controller.button)
+                {
+                    case (uint)Util.OculusButtonId.k_EButton_Oculus_AX:
+                        onClickOculusAX(ref vrEvent);
+                        break;
+                    case (uint)Util.OculusButtonId.k_EButton_Oculus_BY:
+                        onClickOculusBY(ref vrEvent);
+                        break;
+                    case (uint)Util.OculusButtonId.k_EButton_Oculus_Grip:
+                        onClickOculusGrip(ref vrEvent);
+                        break;
+                    case (uint)Util.OculusButtonId.k_EButton_Oculus_Stick:
+                        onClickOculusStick(ref vrEvent);
+                        break;
+                    case (uint)Util.OculusButtonId.k_EButton_Oculus_Trigger:
+                        onClickOculusTrigger(ref vrEvent);
+                        break;
+                }
+            }
+            else if (vrEvent.eventType == (uint)EVREventType.VREvent_ButtonUnpress)
+            {
+                switch (vrEvent.data.controller.button)
+                {
+                    case (uint)Util.OculusButtonId.k_EButton_Oculus_AX:
+                        onReleaseOculusAX(ref vrEvent);
+                        break;
+                    case (uint)Util.OculusButtonId.k_EButton_Oculus_BY:
+                        onReleaseOculusBY(ref vrEvent);
+                        break;
+                    case (uint)Util.OculusButtonId.k_EButton_Oculus_Grip:
+                        onReleaseOculusGrip(ref vrEvent);
+                        break;
+                    case (uint)Util.OculusButtonId.k_EButton_Oculus_Stick:
+                        onReleaseOculusStick(ref vrEvent);
+                        break;
+                    case (uint)Util.OculusButtonId.k_EButton_Oculus_Trigger:
+                        onReleaseOculusTrigger(ref vrEvent);
+                        break;
+                }
+            }
         }
 
         protected void viveInput(ref VREvent_t vrEvent)
@@ -79,6 +121,16 @@ namespace SparrowHawk.Interaction
         protected virtual void onReleaseViveTouchpad(ref VREvent_t vrEvent) { }
         protected virtual void onReleaseViveGrip(ref VREvent_t vrEvent) { }
         protected virtual void onReleaseViveAppMenu(ref VREvent_t vrEvent) { }
+        protected virtual void onClickOculusTrigger(ref VREvent_t vrEvent) { }
+        protected virtual void onClickOculusStick(ref VREvent_t vrEvent) { }
+        protected virtual void onClickOculusGrip(ref VREvent_t vrEvent) { }
+        protected virtual void onClickOculusAX(ref VREvent_t vrEvent) { }
+        protected virtual void onClickOculusBY(ref VREvent_t vrEvent) { }
+        protected virtual void onReleaseOculusTrigger(ref VREvent_t vrEvent) { }
+        protected virtual void onReleaseOculusStick(ref VREvent_t vrEvent) { }
+        protected virtual void onReleaseOculusGrip(ref VREvent_t vrEvent) { }
+        protected virtual void onReleaseOculusAX(ref VREvent_t vrEvent) { }
+        protected virtual void onReleaseOculusBY(ref VREvent_t vrEvent) { }
 
         /// <summary>
         /// Gives the r-theta parameterization of the point on the touchpad that

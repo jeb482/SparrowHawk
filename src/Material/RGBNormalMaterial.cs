@@ -18,7 +18,7 @@ namespace SparrowHawk.Material
         public RGBNormalMaterial(float alpha, Rhino.RhinoDoc doc)
         {
             // Init Shader?
-            mShader = new GLShader(doc);
+            mShader = new GLShader();
             mShader.init("RGBNormal", ShaderSource.RGBNormalVertShader, ShaderSource.RGBNormalFragShader);
             mAlpha = alpha;
 

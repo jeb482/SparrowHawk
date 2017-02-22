@@ -19,7 +19,7 @@ namespace SparrowHawk.Material
         public TextureMaterial(Rhino.RhinoDoc doc, string path, bool flip_y = false)
         {
             mDoc = doc;
-            mShader = new GLShader(doc);
+            mShader = new GLShader();
             mShader.init("TextureMaterial", ShaderSource.TextureVertShader, ShaderSource.TextureFragShader);
             mShader.bind();
 
@@ -58,7 +58,7 @@ namespace SparrowHawk.Material
             texHeight = height;
 
             mDoc = doc;
-            mShader = new GLShader(doc);
+            mShader = new GLShader();
             mShader.init("TextureMaterial", ShaderSource.TextureVertShader, ShaderSource.TextureFragShader);
             mShader.bind();
 

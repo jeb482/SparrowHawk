@@ -144,7 +144,7 @@ namespace SparrowHawk
                         Vector3 vrPoint = Util.getTranslationVector3(mScene.mDevicePose[mScene.leftControllerIdx]);
                         vrCallibrationPoints.Add(vrPoint);
                         Util.MarkPoint(ref mScene.staticGeometry, vrPoint, new OpenTK.Graphics.Color4(1, 1, 0, 1));
-                        if (robotCallibrationPoints.Count == 10)
+                        if (robotCallibrationPoints.Count == 5)
                         {
                             Util.solveForAffineTransform(vrCallibrationPoints, robotCallibrationPoints, ref mScene.vrToRobot);
                         }

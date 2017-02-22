@@ -14,7 +14,7 @@ namespace SparrowHawk.Material
         public NaiveMaterial(Rhino.RhinoDoc doc)
         {
             mDoc = doc;
-            mShader = new GLShader(doc);
+            mShader = new GLShader();
             mShader.init("DumbShader", ShaderSource.NaiveVertexShader, ShaderSource.NaiveVertexShader);
         }
 

@@ -79,7 +79,7 @@ namespace SparrowHawk
 
             switch (substrings[0])
             {
-                case "init":
+                case "init:":
                     RhinoApp.WriteLine("Initted");
                     SparrowHawkSignal s = new SparrowHawkSignal(SparrowHawkSignal.ESparrowHawkSigalType.InitType, new float[substrings.Length - 1]);
                     for (int i = 1; i < substrings.Length; i++)

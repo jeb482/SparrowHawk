@@ -178,5 +178,37 @@ namespace SparrowHawk
             child.transform = new OpenTK.Matrix4(1, 0, 0, p.X, 0, 1, 0, p.Y, 0, 0, 1, p.Z, 0, 0, 0, 1);
             node.add(ref child);
         }
-    }
+
+        public static OpenTK.Vector3 vrToPlatformVector(ref Scene scene, OpenTK.Vector3 v) 
+        {
+            v = OpenTK.Vector3.TransformVector(v, scene.vrToRobot);
+            v = OpenTK.Vector3.TransformVector(v, scene.robotToPlatform);
+            v *= 1000;
+            return v;
+        }
+
+        public static OpenTK.Vector3 vrToPlatformPoint(ref Scene scene, OpenTK.Vector3 p)
+        {
+            p = OpenTK.Vector3.TransformPosition(p, scene.vrToRobot);
+            p = OpenTK.Vector3.TransformPosition(p, scene.robotToPlatform);
+            p *= 1000;
+            return p;
+        }
+
+        public static Rhino.Geometry.Vector3f openTkToRhinoVector(OpenTK.Vector3 v)
+        {
+            return new Rhino.Geometry.Vector3f(v.X, v.Y, v.Z);
+        }
+
+        public static Rhino.Geometry.Point3f openTkToRhinoPoint(OpenTK.Vector3 p)
+        {
+            return new Rhino.Geometry.Point3f(p.X, p.Y, p.Z);
+        }
+
+        public enum OculusButtonId
+        {
+            k_EButton_Oculus_Trigger = 33, k_EButton_Oculus_Stick = 32, k_EButton_Oculus_BY = 1, k_EButton_Oculus_AX = 7,
+            k_EButton_Oculus_Grip = 34
+        };
+        }
 }
