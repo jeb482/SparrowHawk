@@ -17,13 +17,16 @@ namespace SparrowHawk.Interaction
         private State currentState;
         private Geometry.Geometry target;
         uint primaryDeviceIndex;
+        bool startDrawing = false;
+        Material.Material stroke_m;
 
         public Stroke(ref Scene s)
         {
             mScene = s;
             target = new Geometry.GeometryStroke();
             activate();
-           
+            stroke_m = new Material.SingleColorMaterial(1, 0, 0, 1);
+
         }
 
         public void activate()
@@ -37,7 +40,7 @@ namespace SparrowHawk.Interaction
 
         }
 
-        public void draw(bool inFront, uint trackedDeviceIndex)
+        public void draw(bool inFront, int trackedDeviceIndex)
         {
             
             if (currentState != State.PAINT)
@@ -45,24 +48,31 @@ namespace SparrowHawk.Interaction
                 return;
             }
 
+
             Vector3 pos = Util.getTranslationVector3(mScene.mDevicePose[trackedDeviceIndex]);
             ((Geometry.GeometryStroke)target).addPoint(pos);
+            //SceneNode stroke = new SceneNode("Stroke", ref target, ref stroke_m);
+            //mScene.staticGeometry.add(ref stroke);
+            
+        }
+
+        protected override void onClickOculusTrigger(ref VREvent_t vrEvent)
+        {
+            Rhino.RhinoApp.WriteLine("oculus button click event test");
         }
 
         protected override void onClickOculusGrip(ref VREvent_t vrEvent)
         {
             Rhino.RhinoApp.WriteLine("oculus grip click event test");
+            primaryDeviceIndex = vrEvent.trackedDeviceIndex;
             if (currentState == State.READY)
-            {
-                primaryDeviceIndex = vrEvent.trackedDeviceIndex;
-                target = new Geometry.GeometryStroke();
-                Material.Material stroke_m = new Material.SingleColorMaterial(0, 1, 0, 1);
+            {             
+                target = new Geometry.GeometryStroke();            
                 SceneNode stroke = new SceneNode("Stroke", ref target, ref stroke_m);
                 mScene.staticGeometry.add(ref stroke);
                 currentState = State.PAINT;
             }
-            draw(true, primaryDeviceIndex);
-
+            
         }
 
         protected override void onReleaseOculusGrip(ref VREvent_t vrEvent)

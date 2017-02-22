@@ -124,6 +124,8 @@ namespace SparrowHawk
             foreach (Interaction.Interaction i in mScene.mInteractionStack)
             {
                 i.handleInput();
+                ((Interaction.Stroke)i).draw(true, mScene.leftControllerIdx);
+                
             }
 
         }
@@ -290,7 +292,7 @@ namespace SparrowHawk
             const double radius = 0.25;
             Rhino.Geometry.Circle circle = new Rhino.Geometry.Circle(plane, radius);
             Rhino.Geometry.Cylinder cylinder = new Rhino.Geometry.Cylinder(circle, zaxis.Length);
-            Rhino.Geometry.Brep brep = cylinder.ToBrep(true, true);
+            brep = cylinder.ToBrep(true, true);
             Mesh base_mesh = new Mesh();
             if (brep != null)
             {
@@ -323,12 +325,14 @@ namespace SparrowHawk
             // TODO: Setup Distortion
             // TODO: Setup DeviceModels
             // TODO: Setup Interactions
+            setupInteraction();
 
             return true;
         }
 
         //add key event handler
         List<Point3d> curvePoints = new List<Point3d>();
+        Rhino.Geometry.Brep brep;
         protected override void OnKeyPress(OpenTK.KeyPressEventArgs e)
         {
             if (e.KeyChar == 'C' || e.KeyChar == 'c')
@@ -344,24 +348,14 @@ namespace SparrowHawk
             //rhino extrude and curve testing
             if (e.KeyChar == 'R' || e.KeyChar == 'r')
             {
-                Vector3 pos = Util.getTranslationVector3(mScene.mDevicePose[mScene.rightControllerIdx]);
+                Vector3 pos = Util.getTranslationVector3(mScene.mDevicePose[mScene.leftControllerIdx]);
                 // -y_rhino = z_gl, z_rhino = y_gl
                 curvePoints.Add(new Point3d(pos.X, -pos.Z, pos.Y));
                 //Rhino curve and extrude test
                 if (curvePoints.Count > 1)
                 {
                     Rhino.Geometry.Curve curve = Rhino.Geometry.Curve.CreateInterpolatedCurve(curvePoints.ToArray(), 3);
-
-                    Rhino.Geometry.Point3d center_point = new Rhino.Geometry.Point3d(0, 0, 0);
-                    Rhino.Geometry.Point3d height_point = new Rhino.Geometry.Point3d(0, 0, 0.5);
-                    Rhino.Geometry.Vector3d zaxis = height_point - center_point;
-                    Rhino.Geometry.Plane plane = new Rhino.Geometry.Plane(center_point, zaxis);
-                    const double radius = 0.25;
-                    Rhino.Geometry.Circle circle = new Rhino.Geometry.Circle(plane, radius);
-                    Rhino.Geometry.Cylinder cylinder = new Rhino.Geometry.Cylinder(circle, zaxis.Length);
-                    Rhino.Geometry.Brep brep = cylinder.ToBrep(true, true);
-
-                    Rhino.Geometry.BrepFace face = brep.Faces[0];
+                    Rhino.Geometry.BrepFace face = brep.Faces[5];
                     Rhino.Geometry.Brep brep2 = face.CreateExtrusion(curve, true);
                     mDoc.Objects.AddBrep(brep2);
                     mDoc.Views.Redraw();

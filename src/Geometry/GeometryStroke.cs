@@ -29,8 +29,11 @@ namespace SparrowHawk.Geometry
             vertices_array.Add(p.Y);
             vertices_array.Add(p.Z);
 
-            indices_array.Add(2* mNumPoints);
-            indices_array.Add(2 * mNumPoints + 1);
+            if (mPoints.Count >= 2)
+            {
+                indices_array.Add(mNumPoints-2);
+                indices_array.Add(mNumPoints-1);
+            }
 
             mNumPoints++;
 
