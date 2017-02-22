@@ -3,8 +3,7 @@ using System.Collections.Generic;
 using OpenTK;
 using OpenTK.Graphics.OpenGL4;
 using Valve.VR;
-
-
+using Rhino.Geometry;
 
 namespace SparrowHawk
 {
@@ -105,12 +104,28 @@ namespace SparrowHawk
                 mScene.rightControllerNode.transform = mScene.mDevicePose[mScene.rightControllerIdx];
         }
 
+        protected void setupInteraction()
+        {
+            if (mScene.mInteractionStack.Count == 0)
+            {
+                //mScene.mInteractionStack.Push(new Interaction.CreateCylinder(ref mScene));
+                mScene.mInteractionStack.Push(new Interaction.Stroke(ref mScene));
+            }
+        }
 
         protected void handleInteractions()
         {
+            /*
             if (mScene.mInteractionStack.Count == 0)
+            {
                 mScene.mInteractionStack.Push(new Interaction.CreateCylinder(ref mScene));
-            mScene.mInteractionStack.Peek().handleInput();
+            }*/
+            //mScene.mInteractionStack.Peek().handleInput();
+            foreach (Interaction.Interaction i in mScene.mInteractionStack)
+            {
+                i.handleInput();
+            }
+
         }
 
         protected override void OnUpdateFrame(FrameEventArgs e)
@@ -249,8 +264,6 @@ namespace SparrowHawk
             mScene.staticGeometry.add(ref point);
             point.transform = new Matrix4(1, 0, 0, 0, 0, 1, 0, 1, 0, 0, 1, 0, 0, 0, 0, 1);
 
-            mRenderer = new VrRenderer(ref mHMD, ref mScene, mRenderWidth, mRenderHeight);
-
             // Left
             g = new Geometry.PointMarker(new Vector3(0, 0, 0));
             m = new Material.SingleColorMaterial(1, 0, 0, 1);
@@ -264,6 +277,41 @@ namespace SparrowHawk
             mScene.rightControllerNode.add(ref point);
             point.transform = new Matrix4(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1);
 
+
+            //Rhino brep and mesh rendering testing
+            //Mesh base_mesh = Mesh.CreateFromSphere(new Sphere(Point3d.Origin, 0.5), 20, 20);
+            //Mesh base_mesh = Mesh.CreateFromCylinder(new Cylinder(new Circle(Point3d.Origin, 0.25),0.5), 20, 20);
+
+            //instead of creating mesh directly, we create the brep first.
+            Rhino.Geometry.Point3d center_point = new Rhino.Geometry.Point3d(0, 0, 0);
+            Rhino.Geometry.Point3d height_point = new Rhino.Geometry.Point3d(0, 0, 0.5);
+            Rhino.Geometry.Vector3d zaxis = height_point - center_point;
+            Rhino.Geometry.Plane plane = new Rhino.Geometry.Plane(center_point, zaxis);
+            const double radius = 0.25;
+            Rhino.Geometry.Circle circle = new Rhino.Geometry.Circle(plane, radius);
+            Rhino.Geometry.Cylinder cylinder = new Rhino.Geometry.Cylinder(circle, zaxis.Length);
+            Rhino.Geometry.Brep brep = cylinder.ToBrep(true, true);
+            Mesh base_mesh = new Mesh();
+            if (brep != null)
+            {
+                Mesh[] meshes = Mesh.CreateFromBrep(brep, MeshingParameters.Default);
+
+                foreach (Mesh mesh in meshes)
+                    base_mesh.Append(mesh);
+
+                mDoc.Objects.AddMesh(base_mesh);
+                mDoc.Views.Redraw();
+            }
+
+            //mDoc.Objects.AddMesh(((Geometry.RhinoMesh)rhinoMesh).triMesh);
+            //mDoc.Views.Redraw();
+
+            Geometry.Geometry rhinoMesh = new Geometry.RhinoMesh(ref base_mesh);
+            Material.Material rhinoMseh_m = new Material.SingleColorMaterial(0, 1, 0, 1);
+            SceneNode rhinoCylinder = new SceneNode("RhinoCylinder", ref rhinoMesh, ref rhinoMseh_m);
+            mScene.staticGeometry.add(ref rhinoCylinder);
+
+            mRenderer = new VrRenderer(ref mHMD, ref mScene, mRenderWidth, mRenderHeight);
 
             // build shaders? Maybe in renderer!
             // setup texture maps is commented out.
@@ -280,7 +328,7 @@ namespace SparrowHawk
         }
 
         //add key event handler
-
+        List<Point3d> curvePoints = new List<Point3d>();
         protected override void OnKeyPress(OpenTK.KeyPressEventArgs e)
         {
             if (e.KeyChar == 'C' || e.KeyChar == 'c')
@@ -292,6 +340,34 @@ namespace SparrowHawk
             if (e.KeyChar == 'S' || e.KeyChar == 's')
             {
                 mRenderer.switchAR();
+            }
+            //rhino extrude and curve testing
+            if (e.KeyChar == 'R' || e.KeyChar == 'r')
+            {
+                Vector3 pos = Util.getTranslationVector3(mScene.mDevicePose[mScene.rightControllerIdx]);
+                // -y_rhino = z_gl, z_rhino = y_gl
+                curvePoints.Add(new Point3d(pos.X, -pos.Z, pos.Y));
+                //Rhino curve and extrude test
+                if (curvePoints.Count > 1)
+                {
+                    Rhino.Geometry.Curve curve = Rhino.Geometry.Curve.CreateInterpolatedCurve(curvePoints.ToArray(), 3);
+
+                    Rhino.Geometry.Point3d center_point = new Rhino.Geometry.Point3d(0, 0, 0);
+                    Rhino.Geometry.Point3d height_point = new Rhino.Geometry.Point3d(0, 0, 0.5);
+                    Rhino.Geometry.Vector3d zaxis = height_point - center_point;
+                    Rhino.Geometry.Plane plane = new Rhino.Geometry.Plane(center_point, zaxis);
+                    const double radius = 0.25;
+                    Rhino.Geometry.Circle circle = new Rhino.Geometry.Circle(plane, radius);
+                    Rhino.Geometry.Cylinder cylinder = new Rhino.Geometry.Cylinder(circle, zaxis.Length);
+                    Rhino.Geometry.Brep brep = cylinder.ToBrep(true, true);
+
+                    Rhino.Geometry.BrepFace face = brep.Faces[0];
+                    Rhino.Geometry.Brep brep2 = face.CreateExtrusion(curve, true);
+                    mDoc.Objects.AddBrep(brep2);
+                    mDoc.Views.Redraw();
+                }
+
+
             }
 
         }
