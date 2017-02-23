@@ -46,6 +46,7 @@ namespace SparrowHawk.Interaction
                 mPoints.Add(origin2);
             }
 
+            Rhino.RhinoApp.WriteLine("RegisterPoint: " + origin2.ToString());
 
             // Add a Point Rep object to the mScene
             Geometry.Geometry point = new Geometry.PointMarker(new Vector3());

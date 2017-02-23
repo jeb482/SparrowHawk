@@ -11,6 +11,7 @@ namespace SparrowHawk.Interaction
         State mState;
         OpenTK.Vector3 origin;
         OpenTK.Vector3 orientation;
+        OpenTK.Vector3 radius_point;
         float radius;
         uint mPrimaryDevice;
 
@@ -26,9 +27,10 @@ namespace SparrowHawk.Interaction
         {
             if (orientation.Length < .000001)
                 return;
-            Rhino.Geometry.Point3d center_point = Util.openTkToRhinoPoint(origin);
-            Rhino.Geometry.Vector3d zaxis = Util.openTkToRhinoVector(orientation);//*1000);
+            Rhino.Geometry.Point3d center_point = Util.openTkToRhinoPoint(Util.vrToPlatformPoint(ref mScene,origin));
+            Rhino.Geometry.Vector3d zaxis = Util.openTkToRhinoVector(Util.vrToPlatformVector(ref mScene,orientation));//*1000);
             Rhino.Geometry.Plane plane = new Rhino.Geometry.Plane(center_point, zaxis);
+
             Rhino.Geometry.Circle circle = new Rhino.Geometry.Circle(plane, radius);// *1000);
             Rhino.Geometry.Cylinder cylinder = new Rhino.Geometry.Cylinder(circle, zaxis.Length);
             Rhino.Geometry.Brep brep = cylinder.ToBrep(true, true);
@@ -65,9 +67,14 @@ namespace SparrowHawk.Interaction
                 case State.PickRadius:
                     if (mPrimaryDevice != trackedDeviceIndex)
                         return;
-                    OpenTK.Vector3 radial = Util.getTranslationVector3(mScene.mDevicePose[trackedDeviceIndex]);
+                    OpenTK.Vector3 radial = Util.getTranslationVector3(mScene.mDevicePose[trackedDeviceIndex]);                  
                     radial -= OpenTK.Vector3.Dot(orientation, radial) * orientation;
+                    radial = Util.vrToPlatformVector(ref mScene, radial);
                     radius = radial.Length;
+                    //rhino test
+                    OpenTK.Vector3 r = Util.vrToPlatformPoint(ref mScene, Util.getTranslationVector3(mScene.mDevicePose[trackedDeviceIndex]));
+                    OpenTK.Vector3 o = Util.vrToPlatformPoint(ref mScene, origin);
+                    radius = (float)Math.Sqrt(Math.Pow((r.X - o.X), 2) + Math.Pow((r.Y - o.Y), 2) + Math.Pow((r.Z - o.Z), 2));
                     buildCyl();
                     mState = State.PickOrigin;
                     break;

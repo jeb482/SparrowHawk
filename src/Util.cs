@@ -183,7 +183,7 @@ namespace SparrowHawk
         {
             v = Util.transformVec(scene.vrToRobot, v);
             v = Util.transformVec(scene.robotToPlatform, v);
-            v *= 1000;
+            //v *= 1000;
             return v;
         }
 
@@ -191,7 +191,7 @@ namespace SparrowHawk
         {
             p = Util.transformPoint(scene.vrToRobot, p);
             p = Util.transformPoint(scene.robotToPlatform, p);
-            p *= 1000;
+            //p *= 1000;
             return p;
         }
 
