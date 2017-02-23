@@ -31,6 +31,8 @@ namespace SparrowHawk
         List<Vector3> robotCallibrationPoints = new List<Vector3>();
         List<Vector3> vrCallibrationPoints = new List<Vector3>();
 
+        bool manualCallibration = true;
+
 
 
         public VrGame(ref Rhino.RhinoDoc doc)
@@ -41,6 +43,19 @@ namespace SparrowHawk
 
             Rhino.RhinoApp.WriteLine("Directory: " + System.IO.Directory.GetCurrentDirectory());
             //Run();  
+
+            // Manual callibration
+            if (manualCallibration)
+            {
+                robotCallibrationPoints.Add(new Vector3(0, 0, 0));
+                robotCallibrationPoints.Add(new Vector3(231.1f, 0, 0));
+                robotCallibrationPoints.Add(new Vector3(0, 231.1f, 0));
+                robotCallibrationPoints.Add(new Vector3(0, 0, 231.1f));
+
+
+                mScene.mInteractionStack.Pop();
+                mScene.mInteractionStack.Push(new Interaction.PickPoint(ref mScene, ref vrCallibrationPoints));
+            }
 
         }
 
@@ -117,19 +132,28 @@ namespace SparrowHawk
 
         protected void handleInteractions()
         {
-            /*
+            
             if (mScene.mInteractionStack.Count == 0)
             {
                 mScene.mInteractionStack.Push(new Interaction.CreateCylinder(ref mScene));
-            }*/
-            //mScene.mInteractionStack.Peek().handleInput();
+            }
+            mScene.mInteractionStack.Peek().handleInput();
+
+            if (manualCallibration && vrCallibrationPoints.Count == 4)
+            {
+                manualCallibration = false; // HACK to not reset my cylinder forever.
+                Util.solveForAffineTransform(vrCallibrationPoints, robotCallibrationPoints, ref mScene.vrToRobot);
+                mScene.mInteractionStack.Pop();
+                mScene.mInteractionStack.Push(new Interaction.CreateCylinder(ref mScene));
+            }
+            
             /*
             foreach (Interaction.Interaction i in mScene.mInteractionStack)
             {
                 i.handleInput();          
             }*/
-            stroke_i.handleInput();
-            stroke_i.draw(true, mScene.leftControllerIdx);
+            //stroke_i.handleInput();
+            //stroke_i.draw(true, mScene.leftControllerIdx);
 
         }
 
@@ -188,10 +212,10 @@ namespace SparrowHawk
             handleInteractions();
             mRenderer.renderFrame();
             SwapBuffers();
-            GL.ClearColor(0, 0, 0, 1);
-            GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
-            GL.Finish();
-            GL.Flush();
+            //GL.ClearColor(0, 0, 0, 1);
+            //GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
+            //GL.Finish();
+            //GL.Flush();
         }
 
         protected override void Dispose(bool manual)

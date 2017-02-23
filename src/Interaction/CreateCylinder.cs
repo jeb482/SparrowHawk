@@ -24,11 +24,26 @@ namespace SparrowHawk.Interaction
 
         protected void buildCyl()
         {
-            var normal = Util.openTkToRhinoVector(Util.vrToPlatformVector(ref mScene, orientation).Normalized());
-            var circle = new Rhino.Geometry.Circle(new Rhino.Geometry.Plane(Util.openTkToRhinoPoint(Util.vrToPlatformPoint(ref mScene, origin)), normal), radius);
-            var cyl = new Rhino.Geometry.Cylinder(circle, orientation.Length * 1000);
-            var brep = cyl.ToBrep(true, true);
-            mScene.rhinoDoc.Objects.AddBrep(brep);
+            if (orientation.Length < .000001)
+                return;
+            Rhino.Geometry.Point3d center_point = Util.openTkToRhinoPoint(origin);
+            Rhino.Geometry.Vector3d zaxis = Util.openTkToRhinoVector(orientation);//*1000);
+            Rhino.Geometry.Plane plane = new Rhino.Geometry.Plane(center_point, zaxis);
+            Rhino.Geometry.Circle circle = new Rhino.Geometry.Circle(plane, radius);// *1000);
+            Rhino.Geometry.Cylinder cylinder = new Rhino.Geometry.Cylinder(circle, zaxis.Length);
+            Rhino.Geometry.Brep brep = cylinder.ToBrep(true, true);
+            if (brep == null)
+                RhinoApp.WriteLine("Couldn't do the cylinder, Jim.");
+            mScene.rhinoDoc.Objects.Add(brep);
+            mScene.rhinoDoc.Views.Redraw();
+
+            //var normal = Util.openTkToRhinoVector(Util.vrToPlatformVector(ref mScene, orientation).Normalized());
+            //var circle = new Rhino.Geometry.Circle(new Rhino.Geometry.Plane(Util.openTkToRhinoPoint(Util.vrToPlatformPoint(ref mScene, origin)), normal), radius*1000);
+            //var cyl = new Rhino.Geometry.Cylinder(circle, orientation.Length * 1000);
+            //var brep = cyl.ToBrep(true, true);
+            //mScene.rhinoDoc.Objects.AddBrep(brep);
+            //mScene.rhinoDoc.Views.Redraw();
+
         }
 
         protected void advanceState(uint trackedDeviceIndex)

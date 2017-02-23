@@ -181,16 +181,16 @@ namespace SparrowHawk
 
         public static OpenTK.Vector3 vrToPlatformVector(ref Scene scene, OpenTK.Vector3 v) 
         {
-            v = OpenTK.Vector3.TransformVector(v, scene.vrToRobot);
-            v = OpenTK.Vector3.TransformVector(v, scene.robotToPlatform);
+            v = Util.transformVec(scene.vrToRobot, v);
+            v = Util.transformVec(scene.robotToPlatform, v);
             v *= 1000;
             return v;
         }
 
         public static OpenTK.Vector3 vrToPlatformPoint(ref Scene scene, OpenTK.Vector3 p)
         {
-            p = OpenTK.Vector3.TransformPosition(p, scene.vrToRobot);
-            p = OpenTK.Vector3.TransformPosition(p, scene.robotToPlatform);
+            p = Util.transformPoint(scene.vrToRobot, p);
+            p = Util.transformPoint(scene.robotToPlatform, p);
             p *= 1000;
             return p;
         }
@@ -205,10 +205,26 @@ namespace SparrowHawk
             return new Rhino.Geometry.Point3f(p.X, p.Y, p.Z);
         }
 
+        public static OpenTK.Vector3 transformPoint(OpenTK.Matrix4 M, OpenTK.Vector3 p)
+        {
+            OpenTK.Vector4 homogenousPoint = new OpenTK.Vector4(p.X, p.Y, p.Z, 1);
+            homogenousPoint = M * homogenousPoint;
+            return new OpenTK.Vector3(homogenousPoint.X, homogenousPoint.Y, homogenousPoint.Z);
+        }
+
+        public static OpenTK.Vector3 transformVec(OpenTK.Matrix4 M, OpenTK.Vector3 p)
+        {
+            OpenTK.Vector4 homogenousVec = new OpenTK.Vector4(p.X, p.Y, p.Z, 0);
+            homogenousVec = M * homogenousVec;
+            return new OpenTK.Vector3(homogenousVec.X, homogenousVec.Y, homogenousVec.Z);
+        }
+
         public enum OculusButtonId
         {
             k_EButton_Oculus_Trigger = 33, k_EButton_Oculus_Stick = 32, k_EButton_Oculus_BY = 1, k_EButton_Oculus_AX = 7,
             k_EButton_Oculus_Grip = 34
         };
+
+
         }
 }

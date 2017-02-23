@@ -150,7 +150,7 @@ namespace SparrowHawk
         public void RenderScene(Valve.VR.EVREye eye)
         {
             // Clear the screen to white
-            GL.ClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+            GL.ClearColor(.1f, 0f, .1f, 1.0f);
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
 
             // use ovrvision camera
@@ -284,6 +284,8 @@ namespace SparrowHawk
                 // DrawControllers
                 RenderStereoTargets();
                 //RenderDistortion();
+                GL.Finish();
+                GL.Flush();
 
                 Valve.VR.Texture_t leftEyeTexture, rightEyeTexture;
                 leftEyeTexture.handle = new IntPtr(leftEyeDesc.resolveTextureId);
