@@ -22,33 +22,33 @@ namespace SparrowHawk.Geometry
 
         public void addPoint(OpenTK.Vector3 p)
         {
-            
+
             mPoints.Add(p);
 
             vertices_array.Add(p.X);
             vertices_array.Add(p.Y);
             vertices_array.Add(p.Z);
 
+            mNumPoints++;
+            mGeometry = vertices_array.ToArray();
+            mNumPrimitives = mNumPoints - 1;
+
             if (mPoints.Count >= 2)
             {
-                indices_array.Add(mNumPoints-2);
-                indices_array.Add(mNumPoints-1);
+                indices_array.Add(mNumPoints - 2);
+                indices_array.Add(mNumPoints - 1);
+                mGeometryIndices = indices_array.ToArray();
             }
-
-            mNumPoints++;
-
-            mGeometry = vertices_array.ToArray();
-            mGeometryIndices = indices_array.ToArray();
-            mNumPrimitives = mNumPoints - 1;
 
         }
 
         public void truncate(int n)
         {
-            if(n > mNumPoints)
+            if (n > mNumPoints)
             {
                 Rhino.RhinoApp.WriteLine("no enough points");
-            }else
+            }
+            else
             {
                 mNumPoints = mNumPoints - n;
                 vertices_array.RemoveRange(vertices_array.Count - mNumPoints * 3, mNumPoints * 3);
@@ -58,7 +58,7 @@ namespace SparrowHawk.Geometry
                 mGeometryIndices = indices_array.ToArray();
                 mNumPrimitives = mNumPoints - 1;
             }
-            
+
         }
 
 

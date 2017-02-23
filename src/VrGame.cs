@@ -125,14 +125,14 @@ namespace SparrowHawk
             if (mScene.mInteractionStack.Count == 0)
             {
                 //mScene.mInteractionStack.Push(new Interaction.CreateCylinder(ref mScene));
-                stroke_i = new Interaction.Stroke(ref mScene);
+                stroke_i = new Interaction.Stroke(ref mScene,ref brep);
                 mScene.mInteractionStack.Push(stroke_i);
             }
         }
 
         protected void handleInteractions()
         {
-            
+            /*
             if (mScene.mInteractionStack.Count == 0)
             {
                 mScene.mInteractionStack.Push(new Interaction.CreateCylinder(ref mScene));
@@ -145,16 +145,16 @@ namespace SparrowHawk
                 Util.solveForAffineTransform(vrCallibrationPoints, robotCallibrationPoints, ref mScene.vrToRobot);
                 mScene.mInteractionStack.Pop();
                 mScene.mInteractionStack.Push(new Interaction.CreateCylinder(ref mScene));
-            }
+            }*/
             
             /*
             foreach (Interaction.Interaction i in mScene.mInteractionStack)
             {
                 i.handleInput();          
             }*/
-            //stroke_i.handleInput();
-            //stroke_i.draw(true, mScene.leftControllerIdx);
-
+            stroke_i.handleInput();
+            stroke_i.draw(true, mScene.leftControllerIdx);
+            //stroke_i.drawMesh(ref brep, ref mDoc, mScene.leftControllerIdx);
         }
 
         protected override void OnUpdateFrame(FrameEventArgs e)
@@ -319,7 +319,13 @@ namespace SparrowHawk
             const double radius = 0.25;
             Rhino.Geometry.Circle circle = new Rhino.Geometry.Circle(plane, radius);
             Rhino.Geometry.Cylinder cylinder = new Rhino.Geometry.Cylinder(circle, zaxis.Length);
-            brep = cylinder.ToBrep(true, true);
+            //brep = cylinder.ToBrep(true, true);
+
+            //create a one-face brep for testing extrusion
+            brep = Brep.CreateFromCornerPoints(new Point3d(0.0, 0.0, 0.2), new Point3d(0.0, 0.1, 0.2), new Point3d(0.1, 0.0, 0.2), mDoc.ModelAbsoluteTolerance);
+            //brep = cylinder.ToBrep(true, true);
+            Rhino.Geometry.BrepFace face = brep.Faces[0];
+
             Mesh base_mesh = new Mesh();
             if (brep != null)
             {

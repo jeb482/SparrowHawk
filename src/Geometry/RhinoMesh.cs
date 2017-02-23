@@ -11,10 +11,31 @@ namespace SparrowHawk.Geometry
 
         public Mesh triMesh;
 
+        public RhinoMesh()
+        {
+            mNumPrimitives = 0;
+            primitiveType = OpenTK.Graphics.OpenGL4.BeginMode.Triangles;
+        }
+
         public RhinoMesh(ref Mesh mesh)
         {
             triMesh = Triangulate(mesh);
+            initMeshGeometry(ref triMesh);
+        }
 
+        public void setMesh(ref Mesh mesh)
+        {
+            triMesh = Triangulate(mesh);
+            initMeshGeometry(ref triMesh);
+        }
+
+        public void getTriMesh(ref Mesh mesh)
+        {
+            mesh = triMesh;
+        }
+
+        private void initMeshGeometry(ref Mesh triMesh)
+        {
             //get faces from mesh
             List<MeshFace> faces = new List<MeshFace>();
             List<int> indices_array = new List<int>();
@@ -25,7 +46,8 @@ namespace SparrowHawk.Geometry
                 if (face.IsQuad)
                 {
                     Rhino.RhinoApp.WriteLine("Triangulate error.");
-                }else
+                }
+                else
                 {
                     indices_array.Add(face.A);
                     indices_array.Add(face.B);
@@ -53,12 +75,6 @@ namespace SparrowHawk.Geometry
 
             mNumPrimitives = mGeometryIndices.Length / 3;
             primitiveType = OpenTK.Graphics.OpenGL4.BeginMode.Triangles;
-
-        }
-
-        public void getTriMesh(ref Mesh mesh)
-        {
-            mesh = triMesh;
         }
 
         //Triangulate for mesh data from Rhino
