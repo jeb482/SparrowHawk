@@ -53,6 +53,7 @@ namespace SparrowHawk
             //Run();  
 
             // Manual callibration
+            /*
             if (manualCallibration)
             {
                 robotCallibrationPoints.Add(new Vector3(0, 0, 0));
@@ -78,6 +79,7 @@ namespace SparrowHawk
                 //               mScene.mInteractionStack.Pop();
                 mScene.mInteractionStack.Push(new Interaction.PickPoint(ref mScene, ref vrCallibrationPoints));
             }
+            */
 
         }
 
@@ -141,33 +143,39 @@ namespace SparrowHawk
                 mScene.rightControllerNode.transform = mScene.mDevicePose[mScene.rightControllerIdx];
         }
 
-        Interaction.Stroke stroke_i;
-        protected void setupInteraction()
-        {
-            if (mScene.mInteractionStack.Count == 0)
-            {
-                //mScene.mInteractionStack.Push(new Interaction.CreateCylinder(ref mScene));
-                //stroke_i = new Interaction.Stroke(ref mScene, ref brep);
-                //mScene.mInteractionStack.Push(stroke_i);
-            }
-        }
-
         protected void handleInteractions()
         {
 
+            //default interaction
             if (mScene.mInteractionStack.Count == 0)
             {
-                mScene.mInteractionStack.Push(new Interaction.CreateCylinder(ref mScene));
+                //mScene.mInteractionStack.Push(new Interaction.CreateCylinder(ref mScene));
+                mScene.mInteractionStack.Push(new Interaction.Stroke(ref mScene));
             }
-            mScene.mInteractionStack.Peek().handleInput();
+            Interaction.Interaction current_i = mScene.mInteractionStack.Peek();
+            current_i.handleInput();
+            //TODO: if we can detect the hold event, then we can move this to eventHandler
+            if (current_i.GetType() == typeof(Interaction.Closedcurve))
+            {
+                ((Interaction.Closedcurve)current_i).draw(true, mScene.leftControllerIdx);
 
+            }
+            else if (current_i.GetType() == typeof(Interaction.Stroke))
+            {
+                ((Interaction.Stroke)current_i).draw(true, mScene.leftControllerIdx);
+            }
+            else if (current_i.GetType() == typeof(Interaction.Sweep))
+            {
+                ((Interaction.Sweep)current_i).draw(true, mScene.leftControllerIdx);
+            }
+
+            /*
             if (manualCallibration && vrCallibrationPoints.Count == 8)
             {
                 manualCallibration = false; // HACK to not reset my cylinder forever.
                 //Util.solveForAffineTransform(vrCallibrationPoints, robotCallibrationPoints, ref mScene.vrToRobot);
 
-                //using opencv by Eric
-                
+                //using opencv by Eric                
                 foreach (Vector3 p in vrCallibrationPoints)
                 {
                     vrCallibrationPoints_cv.Add(new MCvPoint3D32f(p.X, p.Y, p.Z));
@@ -183,16 +191,9 @@ namespace SparrowHawk
 
                 mScene.mInteractionStack.Pop();
                 mScene.mInteractionStack.Push(new Interaction.CreateCylinder(ref mScene));
-            }
+            }*/
 
 
-            foreach (Interaction.Interaction i in mScene.mInteractionStack)
-            {
-                i.handleInput();          
-            }
-            //stroke_i.handleInput();
-            //stroke_i.draw(true, mScene.leftControllerIdx);
-            //stroke_i.drawMesh(ref brep, ref mDoc, mScene.leftControllerIdx);
         }
 
         protected override void OnUpdateFrame(FrameEventArgs e)
@@ -350,6 +351,7 @@ namespace SparrowHawk
             //Mesh base_mesh = Mesh.CreateFromCylinder(new Cylinder(new Circle(Point3d.Origin, 0.25),0.5), 20, 20);
 
             //instead of creating mesh directly, we create the brep first.
+            /*
             Rhino.Geometry.Point3d center_point = new Rhino.Geometry.Point3d(0, 0, 0);
             Rhino.Geometry.Point3d height_point = new Rhino.Geometry.Point3d(0, 0, 0.5);
             Rhino.Geometry.Vector3d zaxis = height_point - center_point;
@@ -358,9 +360,24 @@ namespace SparrowHawk
             Rhino.Geometry.Circle circle = new Rhino.Geometry.Circle(plane, radius);
             Rhino.Geometry.Cylinder cylinder = new Rhino.Geometry.Cylinder(circle, zaxis.Length);
             //brep = cylinder.ToBrep(true, true);
-
+            */
             //create a one-face brep for testing extrusion
-            brep = Brep.CreateFromCornerPoints(new Point3d(0.0, 0.0, 0.2), new Point3d(0.0, 0.1, 0.2), new Point3d(0.1, 0.0, 0.2), mDoc.ModelAbsoluteTolerance);
+            //brep = Brep.CreateFromCornerPoints(new Point3d(0.0, 0.0, 0.2), new Point3d(0.0, 0.1, 0.2), new Point3d(0.1, 0.0, 0.2), mDoc.ModelAbsoluteTolerance);
+            
+            //rhino extrusion test
+            Rhino.Collections.Point3dList points = new Rhino.Collections.Point3dList(5);
+            points.Add(0.0, 0.0, 0.2);
+            points.Add(0.0, 0.1, 0.2);
+            points.Add(0.1, 0.1, 0.2);
+            points.Add(0.1, 0.0, 0.2);
+            Rhino.Geometry.NurbsCurve nc = Rhino.Geometry.NurbsCurve.Create(true, 3, points);
+            //Rhino.Geometry.Curve nc = Curve.CreateInterpolatedCurve(points,3);
+            //nc.SetEndPoint(nc.PointAtStart);
+
+            //create surface from curve extruve CreateExtrusion => create brep from surface
+            Surface s_extrude = Surface.CreateExtrusion(nc, new Rhino.Geometry.Vector3d(0, 0, 0.15));
+            brep = Brep.CreateFromSurface(s_extrude);
+     
             //brep = cylinder.ToBrep(true, true);
             Rhino.Geometry.BrepFace face = brep.Faces[0];
 
@@ -396,7 +413,6 @@ namespace SparrowHawk
             // TODO: Setup Distortion
             // TODO: Setup DeviceModels
             // TODO: Setup Interactions
-            setupInteraction();
 
             return true;
         }
@@ -414,28 +430,20 @@ namespace SparrowHawk
 
             if (e.KeyChar == 'S' || e.KeyChar == 's')
             {
-                Rhino.RhinoApp.WriteLine("keypress test");
-                //mRenderer.switchAR();
+                Interaction.Interaction i = mScene.mInteractionStack.Peek();
+                if (i.GetType() == typeof(Interaction.Closedcurve))
+                {
+                    Rhino.Geometry.NurbsCurve curve = ((Interaction.Closedcurve)i).closedCurve;
+                    mScene.mInteractionStack.Pop();
+                    mScene.mInteractionStack.Push(new Interaction.Sweep(ref mScene, ref curve));
+                }
             }
+
             //rhino extrude and curve testing
             if (e.KeyChar == 'R' || e.KeyChar == 'r')
             {
-                foreach(OpenTK.Vector3 point in ((Geometry.GeometryStroke)(stroke_i.target)).mPoints){
-                    // -y_rhino = z_gl, z_rhino = y_gl
-                    curvePoints.Add(new Point3d(point.X, -point.Z, point.Y));
-                }
-
-                //Rhino curve and extrude test
-                if (curvePoints.Count > 2)
-                {
-                    Rhino.Geometry.Curve curve = Rhino.Geometry.Curve.CreateInterpolatedCurve(curvePoints.ToArray(), 3);
-                    Rhino.Geometry.BrepFace face = brep.Faces[5];
-                    Rhino.Geometry.Brep brep2 = face.CreateExtrusion(curve, true);
-                    mDoc.Objects.AddBrep(brep2);
-                    mDoc.Views.Redraw();
-                }
-
-
+                mScene.mInteractionStack.Pop();
+                mScene.mInteractionStack.Push(new Interaction.Closedcurve(ref mScene));
             }
 
         }

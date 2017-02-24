@@ -8,7 +8,7 @@ using Valve.VR;
 
 namespace SparrowHawk.Interaction
 {
-    class Stroke : Interaction
+    class Closedcurve : Interaction
     {
         public enum State
         {
@@ -22,26 +22,15 @@ namespace SparrowHawk.Interaction
 
         Material.Material stroke_m;
         Material.Material mesh_m;
-        Rhino.Geometry.Brep brep;
+        public Rhino.Geometry.NurbsCurve closedCurve;
 
-        public Stroke(ref Scene s)
+        public Closedcurve(ref Scene s)
         {
             mScene = s;
             target = new Geometry.GeometryStroke();
             activate();
             stroke_m = new Material.LineMaterial(1, 0, 0, 1);
             mesh_m = new Material.SingleColorMaterial(0, 1, 0, 1);
-        }
-
-        public Stroke(ref Scene s, ref Rhino.Geometry.Brep brepObj)
-        {
-            mScene = s;
-            target = new Geometry.GeometryStroke();
-            activate();
-            stroke_m = new Material.LineMaterial(1, 0, 0, 1);
-            mesh_m = new Material.SingleColorMaterial(0, 1, 0, 1);
-
-            brep = brepObj;
         }
 
         public void activate()
@@ -74,6 +63,62 @@ namespace SparrowHawk.Interaction
 
         }
 
+
+        List<Point3d> curvePoints = new List<Point3d>();
+        public void renderMesh()
+        {
+
+            //reduce the points in the curve first
+            List<Vector3> mPoints = ((Geometry.GeometryStroke)(target)).mPoints;
+            List<Vector3> reducePoints = new List<Vector3>();
+            float pointReductionTubeWidth = 0.004f;
+            reducePoints = DouglasPeucker(ref mPoints, 0, mPoints.Count - 1, pointReductionTubeWidth);
+            Rhino.RhinoApp.WriteLine("reduce points from" + mPoints.Count + " to " + curvePoints.Count);
+
+            foreach (OpenTK.Vector3 point in reducePoints)
+            {
+                // -y_rhino = z_gl, z_rhino = y_gl
+                curvePoints.Add(new Point3d(point.X, -point.Z, point.Y));
+            }
+
+            //Rhino curve and extrude test
+            if (curvePoints.Count >= 2)
+            {
+                //Rhino closed curve through NURBS curve
+                closedCurve = Rhino.Geometry.NurbsCurve.Create(true, 3, curvePoints.ToArray());
+                //Rhino.Geometry.Curve nc = Curve.CreateInterpolatedCurve(curvePoints.ToArray(), 3);
+                //nc.SetEndPoint(nc.PointAtStart);
+
+                // TODO: find the right plane that we should project
+                Plane proj_plane = new Plane();
+                Plane.FitPlaneToPoints(curvePoints.ToArray(), out proj_plane);
+                Curve proj_curve = Curve.ProjectToPlane(closedCurve, proj_plane);
+
+                Brep[] shapes = Brep.CreatePlanarBreps(proj_curve);
+                Brep curve_s = shapes[0];
+            
+                Mesh base_mesh = new Mesh();
+                if (curve_s != null)
+                {
+                    Mesh[] meshes = Mesh.CreateFromBrep(curve_s, MeshingParameters.Default);
+
+                    foreach (Mesh mesh in meshes)
+                        base_mesh.Append(mesh);
+
+                    mScene.rhinoDoc.Objects.AddMesh(base_mesh);
+                    mScene.rhinoDoc.Views.Redraw();
+                }
+
+                meshStroke_g = new Geometry.RhinoMesh();
+                ((Geometry.RhinoMesh)meshStroke_g).setMesh(ref base_mesh);
+                SceneNode strokeMesh = new SceneNode("MeshStroke", ref meshStroke_g, ref mesh_m);
+                mScene.staticGeometry.add(ref strokeMesh);
+                
+
+            }
+        }
+
+        
         protected override void onClickOculusTrigger(ref VREvent_t vrEvent)
         {
             Rhino.RhinoApp.WriteLine("oculus button click event test");
@@ -100,7 +145,7 @@ namespace SparrowHawk.Interaction
             if (currentState == State.PAINT)
             {
                 //target = new Geometry.GeometryStroke();
-                //renderMesh();
+                renderMesh();
                 currentState = State.READY;
 
             }
