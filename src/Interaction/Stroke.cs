@@ -10,52 +10,32 @@ namespace SparrowHawk.Interaction
 {
     class Stroke : Interaction
     {
-        public enum State
+        protected enum State
         {
             READY = 0, PAINT = 1
         };
 
-        private State currentState;
-        public Geometry.Geometry target;
-        public Geometry.Geometry meshStroke_g;
-        uint primaryDeviceIndex;
+        protected State currentState;
+        protected Geometry.Geometry stroke_g;
+        protected Material.Material stroke_m;
+        protected uint primaryDeviceIndex;
+        protected Guid strokeId;
+        protected List<Vector3> reducePoints = new List<Vector3>();
 
-        Material.Material stroke_m;
-        Material.Material mesh_m;
-        Rhino.Geometry.Brep brep;
+        public Stroke()
+        {
+
+        }
 
         public Stroke(ref Scene s)
         {
             mScene = s;
-            target = new Geometry.GeometryStroke();
-            activate();
+            stroke_g = new Geometry.GeometryStroke();
             stroke_m = new Material.LineMaterial(1, 0, 0, 1);
-            mesh_m = new Material.SingleColorMaterial(0, 1, 0, 1);
-        }
-
-        public Stroke(ref Scene s, ref Rhino.Geometry.Brep brepObj)
-        {
-            mScene = s;
-            target = new Geometry.GeometryStroke();
-            activate();
-            stroke_m = new Material.LineMaterial(1, 0, 0, 1);
-            mesh_m = new Material.SingleColorMaterial(0, 1, 0, 1);
-
-            brep = brepObj;
-        }
-
-        public void activate()
-        {
             currentState = State.READY;
         }
 
-        public void deactivate()
-        {
-            currentState = State.READY;
-
-        }
-
-        public void draw(bool inFront, int trackedDeviceIndex)
+        public virtual void draw(bool inFront, int trackedDeviceIndex)
         {
 
             if (currentState != State.PAINT)
@@ -64,118 +44,15 @@ namespace SparrowHawk.Interaction
             }
 
             Vector3 pos = Util.getTranslationVector3(mScene.mDevicePose[trackedDeviceIndex]);
-            ((Geometry.GeometryStroke)target).addPoint(pos);
+            ((Geometry.GeometryStroke)stroke_g).addPoint(pos);
 
-            if (((Geometry.GeometryStroke)target).mNumPrimitives == 1)
+            if (((Geometry.GeometryStroke)stroke_g).mNumPrimitives == 1)
             {
-                SceneNode stroke = new SceneNode("Stroke", ref target, ref stroke_m);
+                SceneNode stroke = new SceneNode("Stroke", ref stroke_g, ref stroke_m);
                 mScene.staticGeometry.add(ref stroke);
+                strokeId = stroke.guid;
             }
 
-        }
-
-
-        List<Point3d> curvePoints = new List<Point3d>();
-        public void renderMesh()
-        {
-
-            //reduce the points in the curve first
-            List<Vector3> mPoints = ((Geometry.GeometryStroke)(target)).mPoints;
-            List<Vector3> reducePoints = new List<Vector3>();
-            float pointReductionTubeWidth = 0.004f;
-            reducePoints = DouglasPeucker(ref mPoints, 0, mPoints.Count - 1, pointReductionTubeWidth);
-            Rhino.RhinoApp.WriteLine("reduce points from" + mPoints.Count + " to " + curvePoints.Count);
-
-            foreach (OpenTK.Vector3 point in reducePoints)
-            {
-                // -y_rhino = z_gl, z_rhino = y_gl
-                curvePoints.Add(new Point3d(point.X, -point.Z, point.Y));
-            }
-
-            /*
-            foreach (OpenTK.Vector3 point in ((Geometry.GeometryStroke)(target)).mPoints)
-            {
-                // -y_rhino = z_gl, z_rhino = y_gl
-                curvePoints.Add(new Point3d(point.X, -point.Z, point.Y));
-            }*/
-
-
-            //Rhino curve and extrude test
-            if (curvePoints.Count >= 2)
-            {
-                //Rhino mesh test
-                Rhino.Geometry.Curve curve = Rhino.Geometry.Curve.CreateInterpolatedCurve(curvePoints.ToArray(), 3);
-                Rhino.Geometry.BrepFace face = brep.Faces[0];
-                Rhino.Geometry.Brep brep2 = face.CreateExtrusion(curve, true);
-                //testing some Rhino function
-                //Rhino.Geometry.Brep brep2 = Rhino.Geometry.Brep.CreatePipe(curve, 0.1, false, PipeCapMode.Flat, true, mScene.rhinoDoc.ModelAbsoluteTolerance, mScene.rhinoDoc.ModelAngleToleranceRadians)[0];
-                //Rhino.Geometry.Brep brep2 = Extrusion.Create(curve, 0.1, true).ToBrep(); //error because the curve is not planar?
-
-                Mesh base_mesh = new Mesh();
-                if (brep != null)
-                {
-                    Mesh[] meshes = Mesh.CreateFromBrep(brep2, MeshingParameters.Default);
-
-                    foreach (Mesh mesh in meshes)
-                        base_mesh.Append(mesh);
-
-                    mScene.rhinoDoc.Objects.AddMesh(base_mesh);
-                    mScene.rhinoDoc.Views.Redraw();
-                }
-
-                meshStroke_g = new Geometry.RhinoMesh();
-                ((Geometry.RhinoMesh)meshStroke_g).setMesh(ref base_mesh);
-                SceneNode strokeMesh = new SceneNode("MeshStroke", ref meshStroke_g, ref mesh_m);
-                mScene.staticGeometry.add(ref strokeMesh);
-
-            }
-        }
-
-        //TODO- it's too slow and the framerate drop. Optimize?
-        public void drawMesh(ref Rhino.Geometry.Brep brep, ref Rhino.RhinoDoc mDoc, int trackedDeviceIndex)
-        {
-            //Rhino mesh testing
-            if (currentState != State.PAINT)
-            {
-                return;
-            }
-
-            Vector3 point = Util.getTranslationVector3(mScene.mDevicePose[trackedDeviceIndex]);
-            curvePoints.Add(new Point3d(point.X, -point.Z, point.Y));
-
-            if (curvePoints.Count >= 2)
-            {
-                //Rhino mesh test
-                Rhino.Geometry.Curve curve = Rhino.Geometry.Curve.CreateInterpolatedCurve(curvePoints.ToArray(), 3);
-                Rhino.Geometry.BrepFace face = brep.Faces[0];
-                Rhino.Geometry.Brep brep2 = face.CreateExtrusion(curve, true);
-
-                Mesh base_mesh = new Mesh();
-                if (brep != null)
-                {
-                    Mesh[] meshes = Mesh.CreateFromBrep(brep2, MeshingParameters.Default);
-
-                    foreach (Mesh mesh in meshes)
-                        base_mesh.Append(mesh);
-
-                    mDoc.Objects.AddMesh(base_mesh);
-                    mDoc.Views.Redraw();
-                }
-
-                if (curvePoints.Count == 2)
-                {
-                    meshStroke_g = new Geometry.RhinoMesh();
-                    SceneNode strokeMesh = new SceneNode("MeshStroke", ref meshStroke_g, ref mesh_m);
-                    mScene.staticGeometry.add(ref strokeMesh);
-                }
-
-                ((Geometry.RhinoMesh)meshStroke_g).setMesh(ref base_mesh);
-            }
-        }
-
-        protected override void onClickOculusTrigger(ref VREvent_t vrEvent)
-        {
-            Rhino.RhinoApp.WriteLine("oculus button click event test");
         }
 
         protected override void onClickOculusGrip(ref VREvent_t vrEvent)
@@ -184,11 +61,8 @@ namespace SparrowHawk.Interaction
             primaryDeviceIndex = vrEvent.trackedDeviceIndex;
             if (currentState == State.READY)
             {
-                target = new Geometry.GeometryStroke();
-                //SceneNode stroke = new SceneNode("Stroke", ref target, ref stroke_m);
-                //mScene.staticGeometry.add(ref stroke);
+                stroke_g = new Geometry.GeometryStroke();
                 currentState = State.PAINT;
-
             }
 
         }
@@ -198,11 +72,15 @@ namespace SparrowHawk.Interaction
             Rhino.RhinoApp.WriteLine("oculus grip release event test");
             if (currentState == State.PAINT)
             {
-                //target = new Geometry.GeometryStroke();
-                renderMesh();
                 currentState = State.READY;
-
             }
+        }
+
+        public void simplifyCurve(ref List<Vector3> curvePoints)
+        {
+            float pointReductionTubeWidth = 0.004f;
+            reducePoints = DouglasPeucker(ref curvePoints, 0, curvePoints.Count - 1, pointReductionTubeWidth);
+            Rhino.RhinoApp.WriteLine("reduce points from" + curvePoints.Count + " to " + curvePoints.Count);
         }
 
         //Quick test about Douglas-Peucker for rhino points, return point3d with rhino coordinate system
@@ -242,7 +120,7 @@ namespace SparrowHawk.Interaction
             }
             else
             {
-                return new List<Vector3>(new Vector3[] { points[startIndex],points[lastIndex]});
+                return new List<Vector3>(new Vector3[] { points[startIndex], points[lastIndex] });
             }
         }
 
@@ -257,9 +135,9 @@ namespace SparrowHawk.Interaction
             Vector3 u = new Vector3(end.X - start.X, end.Y - start.Y, end.Z - start.Z);
             Vector3 pq = new Vector3(point.X - start.X, point.Y - start.Y, point.Z - start.Z);
 
-            return  Vector3.Cross(pq, u).Length / u.Length;
+            return Vector3.Cross(pq, u).Length / u.Length;
 
-          
+
         }
 
     }

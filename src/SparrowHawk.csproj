@@ -66,6 +66,10 @@
       <HintPath>..\packages\MathNet.Numerics.3.17.0\lib\net40\MathNet.Numerics.dll</HintPath>
       <Private>True</Private>
     </Reference>
+    <Reference Include="ObjParser, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>bin\AppDebug64\ObjParser.dll</HintPath>
+    </Reference>
     <Reference Include="OpenTK, Version=2.0.0.0, Culture=neutral, PublicKeyToken=bad199fe84eb3df4, processorArchitecture=MSIL">
       <HintPath>..\packages\OpenTK.2.0.0\lib\net20\OpenTK.dll</HintPath>
       <Private>True</Private>
@@ -85,8 +89,14 @@
   <ItemGroup>
     <Compile Include="Geometry\GeometryStroke.cs" />
     <Compile Include="Geometry\RhinoMesh.cs" />
+    <Compile Include="Interaction\ClosedCurve.cs" />
     <Compile Include="Interaction\CreateCylinder.cs" />
+    <Compile Include="Interaction\Delete.cs" />
+    <Compile Include="Interaction\Grip.cs" />
+    <Compile Include="Interaction\Loft.cs" />
+    <Compile Include="Interaction\Selection.cs" />
     <Compile Include="Interaction\Stroke.cs" />
+    <Compile Include="Interaction\Sweep.cs" />
     <Compile Include="Material\LineMaterial.cs" />
     <Compile Include="Ovrvision\COvrvision.cs" />
     <Compile Include="Geometry\CubeGeometry.cs" />
@@ -122,12 +132,6 @@
     <None Include="packages.config" />
     <None Include="Shaders\RGBNormal.frag" />
     <None Include="Shaders\RGBNormal.vert" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\ext\ObjParser\ObjParser\ObjParser.csproj">
-      <Project>{04aa9b94-b460-4e73-baf0-0154494bfe82}</Project>
-      <Name>ObjParser</Name>
-    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

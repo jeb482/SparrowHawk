@@ -4,12 +4,14 @@ using System.Linq;
 using System.Text;
 using OpenTK;
 using Valve.VR;
+using Rhino.Geometry;
 
 namespace SparrowHawk
 {
     public class SceneNode
     {
         public string name;
+        public Guid guid;
         public SceneNode parent = null;
         public List<SceneNode> children = new List<SceneNode>();
         public Geometry.Geometry geometry;
@@ -22,6 +24,7 @@ namespace SparrowHawk
             name = _name;
             geometry = g;
             material = m;
+            guid = Guid.NewGuid();
         }
 
         public SceneNode(string _name)
@@ -29,10 +32,13 @@ namespace SparrowHawk
             name = _name;
             geometry = null;
             material = null;
+            guid = Guid.NewGuid();
         }
 
         public void render(ref Matrix4 vp, Matrix4 model) {
-            model *= transform;
+
+            model *= transform;         
+
             if (geometry != null && material != null)
             {
                 material.draw(ref geometry, ref model, ref vp);
@@ -71,12 +77,15 @@ namespace SparrowHawk
 
     public class Scene
     {
+
         // For renderring
         public bool useOvrVision;
         public SceneNode staticGeometry = new SceneNode("Static Scene");
         public SceneNode tableGeometry = new SceneNode("Encoder-Affected Geometry");
         public SceneNode leftControllerNode = new SceneNode("Right Controller Node");
         public SceneNode rightControllerNode = new SceneNode("Left Controller Node");
+        public Dictionary<Guid, SceneNode> brepToSceneNodeDic = new Dictionary<Guid, SceneNode>();
+        public Dictionary<Guid, Rhino.DocObjects.RhinoObject> SceneNodeToBrepDic = new Dictionary<Guid, Rhino.DocObjects.RhinoObject>();
 
         // Camera data
         public Matrix4 mHMDPose;

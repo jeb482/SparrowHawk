@@ -202,6 +202,7 @@ namespace SparrowHawk
                         break;
                 }
                 vp.Transpose();
+                GL.Enable(EnableCap.DepthTest);
                 mScene.render(ref vp);
             }
 
