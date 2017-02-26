@@ -226,5 +226,61 @@ namespace SparrowHawk
         };
 
 
+        //Quick test about Douglas-Peucker for rhino points, return point3d with rhino coordinate system
+        public static List<OpenTK.Vector3> DouglasPeucker(ref List<OpenTK.Vector3> points, int startIndex, int lastIndex, float epsilon)
+        {
+            float dmax = 0f;
+            int index = startIndex;
+
+            for (int i = index + 1; i < lastIndex; ++i)
+            {
+                float d = PointLineDistance(points[i], points[startIndex], points[lastIndex]);
+                if (d > dmax)
+                {
+                    index = i;
+                    dmax = d;
+                }
+            }
+
+            if (dmax > epsilon)
+            {
+                List<OpenTK.Vector3> res1 = DouglasPeucker(ref points, startIndex, index, epsilon);
+                List<OpenTK.Vector3> res2 = DouglasPeucker(ref points, index, lastIndex, epsilon);
+
+                //watch out the coordinate system
+                List<OpenTK.Vector3> finalRes = new List<OpenTK.Vector3>();
+                for (int i = 0; i < res1.Count - 1; ++i)
+                {
+                    finalRes.Add(res1[i]);
+                }
+
+                for (int i = 0; i < res2.Count; ++i)
+                {
+                    finalRes.Add(res2[i]);
+                }
+
+                return finalRes;
+            }
+            else
+            {
+                return new List<OpenTK.Vector3>(new OpenTK.Vector3[] { points[startIndex], points[lastIndex] });
+            }
         }
+
+        public static float PointLineDistance(OpenTK.Vector3 point, OpenTK.Vector3 start, OpenTK.Vector3 end)
+        {
+
+            if (start == end)
+            {
+                return (float)Math.Sqrt(Math.Pow(point.X - start.X, 2) + Math.Pow(point.Y - start.Y, 2) + Math.Pow(point.Z - start.Z, 2));
+            }
+
+            OpenTK.Vector3 u = new OpenTK.Vector3(end.X - start.X, end.Y - start.Y, end.Z - start.Z);
+            OpenTK.Vector3 pq = new OpenTK.Vector3(point.X - start.X, point.Y - start.Y, point.Z - start.Z);
+
+            return OpenTK.Vector3.Cross(pq, u).Length / u.Length;
+        }
+
+
+    }
 }

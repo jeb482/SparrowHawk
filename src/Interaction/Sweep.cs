@@ -29,7 +29,7 @@ namespace SparrowHawk.Interaction
             mScene = s;
             target = new Geometry.GeometryStroke();
             activate();
-            stroke_m = new Material.LineMaterial(1, 0, 0, 1);
+            stroke_m = new Material.SingleColorMaterial(1, 0, 0, 1);
             mesh_m = new Material.SingleColorMaterial(0, 1, 0, 1);
         }
 
@@ -38,7 +38,7 @@ namespace SparrowHawk.Interaction
             mScene = s;
             target = new Geometry.GeometryStroke();
             activate();
-            stroke_m = new Material.LineMaterial(1, 0, 0, 1);
+            stroke_m = new Material.SingleColorMaterial(1, 0, 0, 1);
             mesh_m = new Material.SingleColorMaterial(0, 1, 0, 1);
 
             closedCurve = curve;

@@ -132,8 +132,6 @@ namespace SparrowHawk
 
             if (gamePoseArray[OpenVR.k_unTrackedDeviceIndex_Hmd].bPoseIsValid)
             {
-                Matrix4 view_tmp = Util.steamVRMatrixToMatrix4(gamePoseArray[OpenVR.k_unTrackedDeviceIndex_Hmd].mDeviceToAbsoluteTracking);
-                Matrix4 view_tmp_inv = view_tmp.Inverted();
                 mScene.mHMDPose = Util.steamVRMatrixToMatrix4(gamePoseArray[OpenVR.k_unTrackedDeviceIndex_Hmd].mDeviceToAbsoluteTracking).Inverted();
             }
 
@@ -152,22 +150,24 @@ namespace SparrowHawk
                 //mScene.mInteractionStack.Push(new Interaction.CreateCylinder(ref mScene));
                 mScene.mInteractionStack.Push(new Interaction.Stroke(ref mScene));
             }
+
             Interaction.Interaction current_i = mScene.mInteractionStack.Peek();
             current_i.handleInput();
+            
             //TODO: if we can detect the hold event, then we can move this to eventHandler
-            if (current_i.GetType() == typeof(Interaction.Closedcurve))
-            {
-                ((Interaction.Closedcurve)current_i).draw(true, mScene.leftControllerIdx);
-
-            }
-            else if (current_i.GetType() == typeof(Interaction.Stroke))
-            {
-                ((Interaction.Stroke)current_i).draw(true, mScene.leftControllerIdx);
-            }
-            else if (current_i.GetType() == typeof(Interaction.Sweep))
-            {
-                ((Interaction.Sweep)current_i).draw(true, mScene.leftControllerIdx);
-            }
+            //if (current_i.GetType() == typeof(Interaction.Closedcurve))
+            //{
+            //    ((Interaction.Closedcurve)current_i).draw(true, mScene.leftControllerIdx);
+            //
+            //}
+            //else if (current_i.GetType() == typeof(Interaction.Stroke))
+            //{
+            //    ((Interaction.Stroke)current_i).draw(true, mScene.leftControllerIdx);
+            //}
+            //else if (current_i.GetType() == typeof(Interaction.Sweep))
+            //{
+             //   ((Interaction.Sweep)current_i).draw(true, mScene.leftControllerIdx);
+            }//
 
             /*
             if (manualCallibration && vrCallibrationPoints.Count == 8)
@@ -251,10 +251,6 @@ namespace SparrowHawk
             handleInteractions();
             mRenderer.renderFrame();
             SwapBuffers();
-            //GL.ClearColor(0, 0, 0, 1);
-            //GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
-            //GL.Finish();
-            //GL.Flush();
         }
 
         protected override void Dispose(bool manual)

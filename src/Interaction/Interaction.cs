@@ -113,6 +113,16 @@ namespace SparrowHawk.Interaction
             }
         }
 
+
+        /// <summary>
+        /// Called every frame while this interaction is in the interaction stack.
+        /// If it is at the top of the stack, isTop will evaluate to true. 
+        /// Otherwise, isTop will evaluate to false. This allows us to 
+        /// </summary>
+        /// <param name="isTop"> True iff this is the top interaction in the stack.</param>
+        public virtual void draw(bool isTop) {}
+
+
         protected virtual void onClickViveTrigger(ref VREvent_t vrEvent) {}
         protected virtual void onClickViveTouchpad(ref VREvent_t vrEvent) { }
         protected virtual void onClickViveGrip(ref VREvent_t vrEvent) { }
@@ -131,6 +141,8 @@ namespace SparrowHawk.Interaction
         protected virtual void onReleaseOculusGrip(ref VREvent_t vrEvent) { }
         protected virtual void onReleaseOculusAX(ref VREvent_t vrEvent) { }
         protected virtual void onReleaseOculusBY(ref VREvent_t vrEvent) { }
+
+
 
         /// <summary>
         /// Gives the r-theta parameterization of the point on the touchpad that
