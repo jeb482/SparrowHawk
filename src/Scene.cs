@@ -10,6 +10,7 @@ namespace SparrowHawk
     public class SceneNode
     {
         public string name;
+        public Guid guid;
         public SceneNode parent = null;
         public List<SceneNode> children = new List<SceneNode>();
         public Geometry.Geometry geometry;
@@ -22,6 +23,7 @@ namespace SparrowHawk
             name = _name;
             geometry = g;
             material = m;
+            guid = Guid.NewGuid();
         }
 
         public SceneNode(string _name)
@@ -29,6 +31,7 @@ namespace SparrowHawk
             name = _name;
             geometry = null;
             material = null;
+            guid = Guid.NewGuid();
         }
 
         public void render(ref Matrix4 vp, Matrix4 model) {
@@ -77,6 +80,8 @@ namespace SparrowHawk
         public SceneNode tableGeometry = new SceneNode("Encoder-Affected Geometry");
         public SceneNode leftControllerNode = new SceneNode("Right Controller Node");
         public SceneNode rightControllerNode = new SceneNode("Left Controller Node");
+        public Dictionary<Guid, SceneNode> brepToSceneNodeDic = new Dictionary<Guid, SceneNode>();
+        public Dictionary<Guid, Rhino.DocObjects.RhinoObject> SceneNodeToBrepDic = new Dictionary<Guid, Rhino.DocObjects.RhinoObject>();
 
         // Camera data
         public Matrix4 mHMDPose;

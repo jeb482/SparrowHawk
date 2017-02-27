@@ -42,7 +42,7 @@ namespace SparrowHawk
         Valve.VR.CVRSystem mHMD;
         Scene mScene;
         public OvrvisionController ovrvision_controller;
-        private bool enableAR = false;
+        private bool enableAR = true;
 
         public VrRenderer(ref Valve.VR.CVRSystem HMD, ref Scene scene, uint mRenderWidth, uint mRenderHeight)
         {
@@ -165,7 +165,7 @@ namespace SparrowHawk
                         {
                             ovrvision_controller.drawCubeGL(0);
                         }
-                        ovrvision_controller.drawController(0);
+                        //ovrvision_controller.drawController(0);
 
                         ovrvision_controller.getOVRVPMatrix(0, ref vp);
                         //Util.WriteLine(ref mScene.rhinoDoc, vp.ToString());
@@ -176,7 +176,7 @@ namespace SparrowHawk
                             ovrvision_controller.drawCubeGL(1);
 
                         }
-                        ovrvision_controller.drawController(1);
+                       // ovrvision_controller.drawController(1);
 
                         ovrvision_controller.getOVRVPMatrix(1, ref vp);
                         break;
