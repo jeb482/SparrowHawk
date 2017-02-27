@@ -1,4 +1,5 @@
 ﻿using OpenTK;
+using Rhino.Geometry;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -11,79 +12,105 @@ namespace SparrowHawk.Interaction
     {
         public enum State
         {
-            READY = 0, PAINT = 1
+            Ready = 0, Paint = 1
         };
 
-        private State currentState;
-        public Geometry.Geometry target;
-        uint primaryDeviceIndex;
+        private State mCurrentState;
+        public Geometry.Geometry mTarget;
+        uint mPrimaryDeviceIndex;
 
         Material.Material stroke_m;
+        Material.Material mesh_m;
+        Rhino.Geometry.Brep brep;
 
+        // Pops this interaction of the stack after releasing stroke if true.
+        bool mPopAfterStroke = false;
+
+        /// <summary>
+        /// Default stroke interaction.
+        /// </summary>
+        /// <param name="s">The scene</param>
         public Stroke(ref Scene s)
         {
             mScene = s;
-            target = new Geometry.GeometryStroke();
-            activate();
+            mCurrentState = State.Ready;
+            mTarget = new Geometry.GeometryStroke();
             stroke_m = new Material.SingleColorMaterial(1, 0, 0, 1);
-
+            mesh_m = new Material.SingleColorMaterial(0, 1, 0, 1);
         }
 
-        public void activate()
+        public Stroke(ref Scene s, ref Rhino.Geometry.Brep brepObj)
         {
-            currentState = State.READY;
+            mScene = s;
+            mCurrentState = State.Ready;
+            mTarget = new Geometry.GeometryStroke();
+            stroke_m = new Material.SingleColorMaterial(1, 0, 0, 1);
+            mesh_m = new Material.SingleColorMaterial(0, 1, 0, 1);
+
+            brep = brepObj;
         }
 
-        public void deactivate()
+        /// <summary>
+        /// Creates a stroke in order to populate an existent piece of geometry. 
+        /// The interaction will be popped of the stack (and therefore disappear)
+        /// after a stroke is completed. Can start in either state, but releasing
+        /// the grip is the only thing that will complete the stroke.
+        /// </summary>
+        /// <param name="s"></param>
+        /// <param name="target">The geometry to populate. NOTE: This should be a 
+        /// GeometryStroke but C# will not allow this because of type safety.</param>
+        /// <param name="currentState">The starting state. Probably == State.Paint</param>
+        /// <param name="devIndex">The controller index responsible for this interaction.</param>
+        public Stroke(ref Scene s, ref Geometry.Geometry target, State currentState, uint devIndex)
         {
-            currentState = State.READY;
-
+            mScene = s;
+            mTarget = target;
+            mCurrentState = currentState;
+            mPrimaryDeviceIndex = devIndex;
+            mPopAfterStroke = true;
         }
+
 
         public void draw(bool inFront, int trackedDeviceIndex)
         {
-            
-            if (currentState != State.PAINT)
-            {
+            if (mCurrentState != State.Paint) 
                 return;
-            }
-
-
+         
             Vector3 pos = Util.getTranslationVector3(mScene.mDevicePose[trackedDeviceIndex]);
-            ((Geometry.GeometryStroke)target).addPoint(pos);
-            //SceneNode stroke = new SceneNode("Stroke", ref target, ref stroke_m);
-            //mScene.staticGeometry.add(ref stroke);
-            
-        }
-
-        protected override void onClickOculusTrigger(ref VREvent_t vrEvent)
-        {
-            Rhino.RhinoApp.WriteLine("oculus button click event test");
+            ((Geometry.GeometryStroke)mTarget).addPoint(pos);
         }
 
         protected override void onClickOculusGrip(ref VREvent_t vrEvent)
         {
-            Rhino.RhinoApp.WriteLine("oculus grip click event test");
-            primaryDeviceIndex = vrEvent.trackedDeviceIndex;
-            if (currentState == State.READY)
-            {             
-                target = new Geometry.GeometryStroke();            
-                SceneNode stroke = new SceneNode("Stroke", ref target, ref stroke_m);
-                mScene.staticGeometry.add(ref stroke);
-                currentState = State.PAINT;
+            if (mCurrentState == State.Ready)
+            {
+                // Make a new stroke if you don't already have to work with.
+                if (mTarget == null)
+                {
+                    mTarget = new Geometry.GeometryStroke();
+                    Material.Material m = new Material.SingleColorMaterial(.7f, .7f, .7f, 1);
+                    SceneNode stroke = new SceneNode("Stroke", ref mTarget, ref m);
+                    mScene.tableGeometry.add(ref stroke);
+                }
+                // Switch into draw mode.
+                mPrimaryDeviceIndex = vrEvent.trackedDeviceIndex;
+                mCurrentState = State.Paint;
             }
-            
         }
+
 
         protected override void onReleaseOculusGrip(ref VREvent_t vrEvent)
         {
-            Rhino.RhinoApp.WriteLine("oculus grip release event test");
-            if (currentState == State.PAINT)
+            if (mCurrentState == State.Paint)
             {
-                target = new Geometry.GeometryStroke();
-                currentState = State.READY;
+                if (mPopAfterStroke)
+                {
+                    mScene.mInteractionStack.Pop();
+                    return;
+                }
+                mTarget = null;
+                mCurrentState = State.Ready;
             }
         }
-
     }
 }
