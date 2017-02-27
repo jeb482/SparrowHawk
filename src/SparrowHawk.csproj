@@ -85,6 +85,8 @@
   <ItemGroup>
     <Compile Include="Geometry\GeometryStroke.cs" />
     <Compile Include="Geometry\RhinoMesh.cs" />
+    <Compile Include="Interaction\Class1.cs" />
+    <Compile Include="Interaction\CreateCircle.cs" />
     <Compile Include="Interaction\CreateCylinder.cs" />
     <Compile Include="Interaction\Stroke.cs" />
     <Compile Include="Material\LineMaterial.cs" />
