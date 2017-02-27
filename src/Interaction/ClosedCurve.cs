@@ -15,35 +15,47 @@ namespace SparrowHawk.Interaction
             Ready = 0, Paint = 1
         };
 
-        private State currentState;
-        public Geometry.Geometry target;
-        public Geometry.Geometry meshStroke_g;
+        private State mCurrentState;
+        public Geometry.Geometry mStrokeGeometry;
+        public Geometry.Geometry mMeshGeometry;
         uint primaryDeviceIndex;
+        List<Point3d> curvePoints = new List<Point3d>();
 
-        Material.Material stroke_m;
-        Material.Material mesh_m;
+        Material.Material strokeMaterial;
+        Material.Material meshMaterial;
         public Rhino.Geometry.NurbsCurve closedCurve;
 
         public Closedcurve(ref Scene s)
         {
             mScene = s;
-            currentState = State.Ready;
-            stroke_m = new Material.SingleColorMaterial(1, 0, 0, 1);
-            mesh_m = new Material.SingleColorMaterial(0, 1, 0, 1);
+            mCurrentState = State.Ready;
+            strokeMaterial = new Material.SingleColorMaterial(1, 0, 0, 1);
+            meshMaterial = new Material.SingleColorMaterial(0, 1, 0, 1);
         }
 
-    
-        override public void draw(bool inFront)
+        protected override void onClickOculusGrip(ref VREvent_t vrEvent)
         {
+            if (mCurrentState == State.Ready)
+                mStrokeGeometry = new Geometry.GeometryStroke();
+                SceneNode node = new SceneNode("Closed curve stroke", ref mStrokeGeometry, ref strokeMaterial);
+                mScene.mInteractionStack.Push(new Stroke(ref mScene, ref mStrokeGeometry, Stroke.State.Paint, vrEvent.trackedDeviceIndex));
+                mCurrentState = State.Paint;
         }
 
+        protected override void onReleaseOculusGrip(ref VREvent_t vrEvent)
+        {
+            if (mCurrentState == State.Paint)
+            {
+                renderMesh();
+                mCurrentState = State.Ready;
+            }
+        }
 
-        List<Point3d> curvePoints = new List<Point3d>();
         public void renderMesh()
         {
 
             //reduce the points in the curve first
-            List<Vector3> mPoints = ((Geometry.GeometryStroke)(target)).mPoints;
+            List<Vector3> mPoints = ((Geometry.GeometryStroke)(mStrokeGeometry)).mPoints;
             List<Vector3> reducePoints = new List<Vector3>();
             float pointReductionTubeWidth = 0.004f;
             reducePoints = Util.DouglasPeucker(ref mPoints, 0, mPoints.Count - 1, pointReductionTubeWidth);
@@ -70,7 +82,7 @@ namespace SparrowHawk.Interaction
 
                 Brep[] shapes = Brep.CreatePlanarBreps(proj_curve);
                 Brep curve_s = shapes[0];
-            
+
                 Mesh base_mesh = new Mesh();
                 if (curve_s != null)
                 {
@@ -83,35 +95,13 @@ namespace SparrowHawk.Interaction
                     mScene.rhinoDoc.Views.Redraw();
                 }
 
-                meshStroke_g = new Geometry.RhinoMesh();
-                ((Geometry.RhinoMesh)meshStroke_g).setMesh(ref base_mesh);
-                SceneNode strokeMesh = new SceneNode("MeshStroke", ref meshStroke_g, ref mesh_m);
+                mMeshGeometry = new Geometry.RhinoMesh();
+                ((Geometry.RhinoMesh)mMeshGeometry).setMesh(ref base_mesh);
+                SceneNode strokeMesh = new SceneNode("MeshStroke", ref mMeshGeometry, ref meshMaterial);
                 mScene.tableGeometry.add(ref strokeMesh);
-                
-
             }
         }
 
-        
 
-        protected override void onClickOculusGrip(ref VREvent_t vrEvent)
-        {
-            if (currentState == State.Ready)
-                target = new Geometry.GeometryStroke();
-                SceneNode node = new SceneNode("Closed curve stroke", ref target, ref stroke_m);
-                mScene.mInteractionStack.Push(new Stroke(ref mScene, ref target, Stroke.State.Paint, vrEvent.trackedDeviceIndex));
-                currentState = State.Paint;
-        }
-
-        protected override void onReleaseOculusGrip(ref VREvent_t vrEvent)
-        {
-            if (currentState == State.Paint)
-            {
-                renderMesh();
-                currentState = State.Ready;
-            }
-        }
-
-   
     }
 }

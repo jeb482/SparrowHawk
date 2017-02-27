@@ -65,7 +65,38 @@ namespace SparrowHawk
             return new OpenTK.Vector3(output.X, output.Y, output.Z);
         }
 
+        //using opencv by Eric                
+        // TODO remove redundant processing at *
+        public static void solveForAffineTransformOpenCV(List<OpenTK.Vector3> xs, List<OpenTK.Vector3> bs, ref OpenTK.Matrix4 M)
+        {
+            if (xs.Count < 4)
+                return;
+
+            List<Emgu.CV.Structure.MCvPoint3D32f> OpenCvXs = new List<Emgu.CV.Structure.MCvPoint3D32f>();
+            List<Emgu.CV.Structure.MCvPoint3D32f> OpenCvBs = new List<Emgu.CV.Structure.MCvPoint3D32f>();
+
+            //* STAR can replace with OpenTK to array
+            foreach (OpenTK.Vector3 x in xs)
+                OpenCvXs.Add(new Emgu.CV.Structure.MCvPoint3D32f(x.X, x.Y, x.Z));
+
+            foreach (OpenTK.Vector3 b in bs)
+                OpenCvBs.Add(new Emgu.CV.Structure.MCvPoint3D32f(b.X, b.Y, b.Z));
+
+            byte[] inliers;
+            Emgu.CV.Matrix<double> OpenCvM;
+            Emgu.CV.CvInvoke.EstimateAffine3D(OpenCvXs.ToArray(), OpenCvBs.ToArray(), out OpenCvM, out inliers, 3, 0.99);
+
+            M = new OpenTK.Matrix4(
+                (float)OpenCvM[1, 0], (float)OpenCvM[1, 1], (float)OpenCvM[1, 2], (float)OpenCvM[1, 3],
+                (float)OpenCvM[2, 0], (float)OpenCvM[2, 1], (float)OpenCvM[2, 2], (float)OpenCvM[2, 3],
+                (float)OpenCvM[0, 0], (float)OpenCvM[0, 1], (float)OpenCvM[0, 2], (float)OpenCvM[0, 3],
+                0, 0, 0, 1
+            );
+        }
+
+
         /// <summary>
+        /// WARNING: Non-functional
         /// Find the matrix M that gives the best mapping Mx_i = b_i for all pairs
         /// of vectors (x_i, b_i).
         /// </summary>

@@ -89,7 +89,6 @@
     <Compile Include="Interaction\CreateCylinder.cs" />
     <Compile Include="Interaction\Stroke.cs" />
     <Compile Include="Interaction\Sweep.cs" />
-    <Compile Include="Material\LineMaterial.cs" />
     <Compile Include="Ovrvision\COvrvision.cs" />
     <Compile Include="Geometry\CubeGeometry.cs" />
     <Compile Include="SparrowHawkEventListeners.cs" />

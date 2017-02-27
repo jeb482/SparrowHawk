@@ -39,7 +39,7 @@ namespace SparrowHawk
         Matrix4 glmVRtoMarker;
         byte[] inliers;
 
-        bool manualCallibration = true;
+        bool manualCallibration = false;
 
 
 
@@ -53,17 +53,17 @@ namespace SparrowHawk
             //Run();  
 
             // Manual callibration
-            /*
+            
             if (manualCallibration)
             {
-                robotCallibrationPoints.Add(new Vector3(0, 0, 0));
-                robotCallibrationPoints.Add(new Vector3(0, 95.0f, 0));
-                robotCallibrationPoints.Add(new Vector3(95.0f, 95.0f, 0));
-                robotCallibrationPoints.Add(new Vector3(95.0f, 0, 0));
-                robotCallibrationPoints.Add(new Vector3(0, 0, 95.0f));
-                robotCallibrationPoints.Add(new Vector3(0, 95.0f, 95.0f));
-                robotCallibrationPoints.Add(new Vector3(95.0f, 95.0f, 95.0f));
-                robotCallibrationPoints.Add(new Vector3(95.0f, 0, 95.0f));
+                //robotCallibrationPoints.Add(new Vector3(0, 0, 0));
+                //robotCallibrationPoints.Add(new Vector3(0, 95.0f, 0));
+                //robotCallibrationPoints.Add(new Vector3(95.0f, 95.0f, 0));
+                //robotCallibrationPoints.Add(new Vector3(95.0f, 0, 0));
+                //robotCallibrationPoints.Add(new Vector3(0, 0, 95.0f));
+                //robotCallibrationPoints.Add(new Vector3(0, 95.0f, 95.0f));
+                //robotCallibrationPoints.Add(new Vector3(95.0f, 95.0f, 95.0f));
+                //robotCallibrationPoints.Add(new Vector3(95.0f, 0, 95.0f));
 
                 //using opencv by eric
                 robotCallibrationPoints_cv.Add(new MCvPoint3D32f(0, 0, 0));
@@ -79,7 +79,7 @@ namespace SparrowHawk
                 //               mScene.mInteractionStack.Pop();
                 mScene.mInteractionStack.Push(new Interaction.PickPoint(ref mScene, ref vrCallibrationPoints));
             }
-            */
+            
 
         }
 
@@ -147,8 +147,8 @@ namespace SparrowHawk
             //default interaction
             if (mScene.mInteractionStack.Count == 0)
             {
-                //mScene.mInteractionStack.Push(new Interaction.CreateCylinder(ref mScene));
-                mScene.mInteractionStack.Push(new Interaction.Stroke(ref mScene));
+                mScene.mInteractionStack.Push(new Interaction.CreateCylinder(ref mScene));
+                //mScene.mInteractionStack.Push(new Interaction.Stroke(ref mScene));
             }
 
             Interaction.Interaction current_i = mScene.mInteractionStack.Peek();
@@ -167,9 +167,9 @@ namespace SparrowHawk
             //else if (current_i.GetType() == typeof(Interaction.Sweep))
             //{
              //   ((Interaction.Sweep)current_i).draw(true, mScene.leftControllerIdx);
-            }//
+            //}//
 
-            /*
+            
             if (manualCallibration && vrCallibrationPoints.Count == 8)
             {
                 manualCallibration = false; // HACK to not reset my cylinder forever.
@@ -191,7 +191,7 @@ namespace SparrowHawk
 
                 mScene.mInteractionStack.Pop();
                 mScene.mInteractionStack.Push(new Interaction.CreateCylinder(ref mScene));
-            }*/
+            }
 
 
         }
@@ -229,7 +229,7 @@ namespace SparrowHawk
                         Util.MarkPoint(ref mScene.staticGeometry, vrPoint, 1, 1, 0);
                         if (robotCallibrationPoints.Count == 5)
                         {
-                            Util.solveForAffineTransform(vrCallibrationPoints, robotCallibrationPoints, ref mScene.vrToRobot, false);
+                            Util.solveForAffineTransformOpenCV(vrCallibrationPoints, robotCallibrationPoints, ref mScene.vrToRobot);
                             foreach (Vector3 v in robotCallibrationPoints)
                             {
                                 Vector4 v4 = new Vector4(v.X, v.Y, v.Z, 1);
