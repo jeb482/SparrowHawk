@@ -220,14 +220,14 @@ namespace SparrowHawk
                 case SparrowHawkSignal.ESparrowHawkSigalType.InitType:
                     if (s.data.Length >= 3)
                     {
-                        Vector3 robotPoint = new Vector3(s.data[0] - 8, s.data[1], s.data[2] - 240)/1000;
+                        Vector3 robotPoint = new Vector3(s.data[0] - 8, s.data[1], s.data[2] - 240);
                         robotCallibrationPoints.Add(robotPoint);
                         if (mScene.leftControllerIdx < 0)
                             break;
                         Vector3 vrPoint = Util.getTranslationVector3(mScene.mDevicePose[mScene.leftControllerIdx]);
                         vrCallibrationPoints.Add(vrPoint);
                         Util.MarkPoint(ref mScene.staticGeometry, vrPoint, 1, 1, 0);
-                        if (robotCallibrationPoints.Count == 5)
+                        if (robotCallibrationPoints.Count >= 8)
                         {
                             Util.solveForAffineTransformOpenCV(vrCallibrationPoints, robotCallibrationPoints, ref mScene.vrToRobot);
                             foreach (Vector3 v in robotCallibrationPoints)
