@@ -68,7 +68,7 @@ namespace SparrowHawk.Interaction
                     if (mPrimaryDevice != trackedDeviceIndex)
                         return;
                     OpenTK.Vector3 radial = Util.getTranslationVector3(mScene.mDevicePose[trackedDeviceIndex]);                  
-                    radial -= OpenTK.Vector3.Dot(orientation, radial) * orientation;
+                    radial -= OpenTK.Vector3.Dot(orientation.Normalized(), radial) * orientation.Normalized();
                     radial = Util.vrToPlatformVector(ref mScene, radial);
                     radius = radial.Length;
                     //rhino test
