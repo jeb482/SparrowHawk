@@ -165,7 +165,7 @@ namespace SparrowHawk
                         {
                             ovrvision_controller.drawCubeGL(0);
                         }
-                        ovrvision_controller.drawController(0);
+                        //ovrvision_controller.drawController(0);
 
                         ovrvision_controller.getOVRVPMatrix(0, ref vp);
                         //Util.WriteLine(ref mScene.rhinoDoc, vp.ToString());
@@ -176,7 +176,7 @@ namespace SparrowHawk
                             ovrvision_controller.drawCubeGL(1);
 
                         }
-                        ovrvision_controller.drawController(1);
+                       // ovrvision_controller.drawController(1);
 
                         ovrvision_controller.getOVRVPMatrix(1, ref vp);
                         break;
@@ -279,7 +279,8 @@ namespace SparrowHawk
         {
             if (mHMD != null)
             {
-
+                GL.DepthFunc(DepthFunction.Less);
+                GL.Enable(EnableCap.DepthTest);
                 setupCameras();
                 // DrawControllers
                 RenderStereoTargets();

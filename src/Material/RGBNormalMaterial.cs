@@ -30,7 +30,7 @@ namespace SparrowHawk.Material
             Matrix4 modelIT = model.Inverted();
             modelIT.Transpose();
 
-            GL.Enable(EnableCap.Blend);
+           // GL.Enable(EnableCap.Blend);
             mShader.uploadAttrib<int>("indices", g.mGeometryIndices.Length, 3, 4, VertexAttribPointerType.UnsignedInt, false, ref g.mGeometryIndices, 0);
             mShader.uploadAttrib<float>("position", g.mGeometry.Count(), 3, 4, VertexAttribPointerType.Float, false, ref g.mGeometry, 0);
             mShader.uploadAttrib<float>("normal", g.mNormals.Count(), 3, 4, VertexAttribPointerType.Float, false, ref g.mNormals, 0);

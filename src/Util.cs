@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Rhino.Geometry;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -312,6 +313,7 @@ namespace SparrowHawk
             return OpenTK.Vector3.Cross(pq, u).Length / u.Length;
         }
 
+
         public static OpenTK.Vector3 calculateFaceNormal(float v0x, float v0y, float v0z, float v1x, float v1y, float v1z, float v2x, float v2y, float v2z)
         {
             OpenTK.Vector3 p = new OpenTK.Vector3(v1x - v0x, v1y - v0y, v1z - v0z);
@@ -322,6 +324,59 @@ namespace SparrowHawk
         public static OpenTK.Vector3 calculateFaceNormal(OpenTK.Vector3 v0, OpenTK.Vector3 v1, OpenTK.Vector3 v2)
         {
             return OpenTK.Vector3.Cross(v1 - v0, v2 - v0).Normalized();
+        }
+
+        //Interaction Utility Functions by Eric
+        public static OpenTK.Matrix4 mRhinoToGL = new OpenTK.Matrix4(1, 0, 0, 0,
+                                                              0, 0, 1, 0,
+                                                              0, -1, 0, 0,
+                                                              0, 0, 0, 1);
+
+        public static OpenTK.Matrix4 mGLToRhino = new OpenTK.Matrix4(1, 0, 0, 0,
+                                                              0, 0, -1, 0,
+                                                              0, 1, 0, 0,
+                                                              0, 0, 0, 1);
+
+        public static void addSceneNode(ref Scene mScene, Brep brep, ref Material.Material mesh_m)
+        {
+            Mesh base_mesh = new Mesh();
+            if (brep != null)
+            {
+                Mesh[] meshes = Mesh.CreateFromBrep(brep, MeshingParameters.Default);
+
+                foreach (Mesh mesh in meshes)
+                    base_mesh.Append(mesh);
+
+                Guid guid = mScene.rhinoDoc.Objects.AddBrep(brep);
+                mScene.rhinoDoc.Views.Redraw();
+
+                Geometry.Geometry meshStroke_g = new Geometry.RhinoMesh();
+                ((Geometry.RhinoMesh)meshStroke_g).setMesh(ref base_mesh);
+                SceneNode ccMeshSN = new SceneNode("BrepMesh", ref meshStroke_g, ref mesh_m);
+                mScene.staticGeometry.add(ref ccMeshSN);
+
+                //add reference SceneNode to brep and vice versa
+                mScene.brepToSceneNodeDic.Add(guid, ccMeshSN);
+                mScene.SceneNodeToBrepDic.Add(ccMeshSN.guid, mScene.rhinoDoc.Objects.Find(guid));
+            }
+        }
+
+        public static void removeSceneNode(ref Scene mScene, Guid guid)
+        {
+            SceneNode deleteSN = mScene.brepToSceneNodeDic[guid];
+            mScene.brepToSceneNodeDic.Remove(guid);
+            mScene.SceneNodeToBrepDic.Remove(deleteSN.guid);
+
+            mScene.rhinoDoc.Objects.Delete(guid, true);
+            foreach (SceneNode sn in mScene.staticGeometry.children)
+            {
+                if (sn.guid == deleteSN.guid)
+                {
+                    mScene.staticGeometry.children.Remove(sn);
+                    break;
+                }
+            }
+
         }
 
 

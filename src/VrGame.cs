@@ -153,23 +153,11 @@ namespace SparrowHawk
 
             Interaction.Interaction current_i = mScene.mInteractionStack.Peek();
             current_i.handleInput();
-            
-            //TODO: if we can detect the hold event, then we can move this to eventHandler
-            //if (current_i.GetType() == typeof(Interaction.Closedcurve))
-            //{
-            //    ((Interaction.Closedcurve)current_i).draw(true, mScene.leftControllerIdx);
-            //
-            //}
-            //else if (current_i.GetType() == typeof(Interaction.Stroke))
-            //{
-            //    ((Interaction.Stroke)current_i).draw(true, mScene.leftControllerIdx);
-            //}
-            //else if (current_i.GetType() == typeof(Interaction.Sweep))
-            //{
-             //   ((Interaction.Sweep)current_i).draw(true, mScene.leftControllerIdx);
-            //}//
+            current_i.draw(true);
 
-            
+
+
+
             if (manualCallibration && vrCallibrationPoints.Count == 8)
             {
                 manualCallibration = false; // HACK to not reset my cylinder forever.
@@ -341,26 +329,7 @@ namespace SparrowHawk
             point = new SceneNode("Right Cursor", ref g, ref m);
             mScene.rightControllerNode.add(ref point);
             point.transform = new Matrix4(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1);
-
-
-            //Rhino brep and mesh rendering testing
-            //Mesh base_mesh = Mesh.CreateFromSphere(new Sphere(Point3d.Origin, 0.5), 20, 20);
-            //Mesh base_mesh = Mesh.CreateFromCylinder(new Cylinder(new Circle(Point3d.Origin, 0.25),0.5), 20, 20);
-
-            //instead of creating mesh directly, we create the brep first.
-            /*
-            Rhino.Geometry.Point3d center_point = new Rhino.Geometry.Point3d(0, 0, 0);
-            Rhino.Geometry.Point3d height_point = new Rhino.Geometry.Point3d(0, 0, 0.5);
-            Rhino.Geometry.Vector3d zaxis = height_point - center_point;
-            Rhino.Geometry.Plane plane = new Rhino.Geometry.Plane(center_point, zaxis);
-            const double radius = 0.25;
-            Rhino.Geometry.Circle circle = new Rhino.Geometry.Circle(plane, radius);
-            Rhino.Geometry.Cylinder cylinder = new Rhino.Geometry.Cylinder(circle, zaxis.Length);
-            //brep = cylinder.ToBrep(true, true);
-            */
-            //create a one-face brep for testing extrusion
-            //brep = Brep.CreateFromCornerPoints(new Point3d(0.0, 0.0, 0.2), new Point3d(0.0, 0.1, 0.2), new Point3d(0.1, 0.0, 0.2), mDoc.ModelAbsoluteTolerance);
-            
+ 
             //rhino extrusion test
             Rhino.Collections.Point3dList points = new Rhino.Collections.Point3dList(5);
             points.Add(0.0, 0.0, 0.2);
@@ -374,29 +343,13 @@ namespace SparrowHawk
             //create surface from curve extruve CreateExtrusion => create brep from surface
             Surface s_extrude = Surface.CreateExtrusion(nc, new Rhino.Geometry.Vector3d(0, 0, 0.15));
             brep = Brep.CreateFromSurface(s_extrude);
-     
-            //brep = cylinder.ToBrep(true, true);
-            Rhino.Geometry.BrepFace face = brep.Faces[0];
 
-            Mesh base_mesh = new Mesh();
             if (brep != null)
             {
-                Mesh[] meshes = Mesh.CreateFromBrep(brep, MeshingParameters.Default);
 
-                foreach (Mesh mesh in meshes)
-                    base_mesh.Append(mesh);
-
-                mDoc.Objects.AddMesh(base_mesh);
-                mDoc.Views.Redraw();
+                Material.Material rhinoMseh_m = new Material.SingleColorMaterial(0, 1, 0, 1);
+                Util.addSceneNode(ref mScene, brep, ref rhinoMseh_m);
             }
-
-            //mDoc.Objects.AddMesh(((Geometry.RhinoMesh)rhinoMesh).triMesh);
-            //mDoc.Views.Redraw();
-
-            Geometry.Geometry rhinoMesh = new Geometry.RhinoMesh(ref base_mesh);
-            Material.Material rhinoMseh_m = new Material.SingleColorMaterial(0, 1, 0, 1);
-            SceneNode rhinoCylinder = new SceneNode("RhinoCylinder", ref rhinoMesh, ref rhinoMseh_m);
-            mScene.staticGeometry.add(ref rhinoCylinder);
 
             mRenderer = new VrRenderer(ref mHMD, ref mScene, mRenderWidth, mRenderHeight);
 
@@ -427,13 +380,9 @@ namespace SparrowHawk
 
             if (e.KeyChar == 'S' || e.KeyChar == 's')
             {
-                Interaction.Interaction i = mScene.mInteractionStack.Peek();
-                if (i.GetType() == typeof(Interaction.Closedcurve))
-                {
-                    Rhino.Geometry.NurbsCurve curve = ((Interaction.Closedcurve)i).closedCurve;
-                    mScene.mInteractionStack.Pop();
-                    mScene.mInteractionStack.Push(new Interaction.Sweep(ref mScene, ref curve));
-                }
+                // i.GetType() == typeof(Interaction.Closedcurve) if we want to combine closedcurve and sweep as an interaction
+                mScene.mInteractionStack.Pop();
+                mScene.mInteractionStack.Push(new Interaction.Sweep(ref mScene));
             }
 
             //rhino extrude and curve testing
@@ -441,6 +390,30 @@ namespace SparrowHawk
             {
                 mScene.mInteractionStack.Pop();
                 mScene.mInteractionStack.Push(new Interaction.Closedcurve(ref mScene));
+            }
+
+            if (e.KeyChar == 'G' || e.KeyChar == 'g')
+            {
+                mScene.mInteractionStack.Pop();
+                mScene.mInteractionStack.Push(new Interaction.Grip(ref mScene));
+            }
+
+            if (e.KeyChar == 'L' || e.KeyChar == 'l')
+            {
+                mScene.mInteractionStack.Pop();
+                mScene.mInteractionStack.Push(new Interaction.Loft(ref mScene));
+            }
+
+            if (e.KeyChar == 'B' || e.KeyChar == 'b')
+            {
+                mScene.mInteractionStack.Pop();
+                mScene.mInteractionStack.Push(new Interaction.Delete(ref mScene));
+            }
+
+            if (e.KeyChar == 'M' || e.KeyChar == 'm')
+            {
+                mScene.mInteractionStack.Pop();
+                mScene.mInteractionStack.Push(new Interaction.Stroke(ref mScene));
             }
 
         }
