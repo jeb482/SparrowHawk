@@ -37,23 +37,24 @@ namespace SparrowHawk.Interaction
         {
             // Find and record position of controller
             Matrix4 M = mScene.mDevicePose[deviceIndex];
-            Vector4 origin = M * new Vector4(0, 0, 0, 1);
-            Vector3 origin2 = Util.transformPoint(M, new Vector3(0, 0, 0));
-            Vector4 rando = M * new Vector4(1, 2, 3, 0);
-            Vector3 rando2 = Util.transformVec(M, new Vector3(1, 2, 3));
+            Vector3 origin = Util.transformPoint(M, new Vector3(0, 0, 0));
+            
+
+            
             if (mPoints != null)
             {
-                mPoints.Add(origin2);
+                mPoints.Add(origin);
             }
 
-            Rhino.RhinoApp.WriteLine("RegisterPoint: " + origin2.ToString());
+            Rhino.RhinoApp.WriteLine("RegisterPoint: " + origin.ToString());
 
             // Add a Point Rep object to the mScene
             Geometry.Geometry point = new Geometry.PointMarker(new Vector3());
             Material.Material material = new Material.SingleColorMaterial(0f, .5f, 1f, 1f);
             SceneNode sceneNode = new SceneNode("point", ref point, ref material);
-
             sceneNode.transform = M;
+
+
             mScene.tableGeometry.add(ref sceneNode);
         }
 
