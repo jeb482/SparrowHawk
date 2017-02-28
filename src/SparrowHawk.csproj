@@ -85,12 +85,12 @@
   <ItemGroup>
     <Compile Include="Geometry\GeometryStroke.cs" />
     <Compile Include="Geometry\RhinoMesh.cs" />
-    <Compile Include="Interaction\Class1.cs" />
     <Compile Include="Interaction\CreateCircle.cs" />
     <Compile Include="Interaction\ClosedCurve.cs" />
     <Compile Include="Interaction\CreateCylinder.cs" />
     <Compile Include="Interaction\Stroke.cs" />
     <Compile Include="Interaction\Sweep.cs" />
+    <Compile Include="Material\LambertianMaterial.cs" />
     <Compile Include="Ovrvision\COvrvision.cs" />
     <Compile Include="Geometry\CubeGeometry.cs" />
     <Compile Include="SparrowHawkEventListeners.cs" />

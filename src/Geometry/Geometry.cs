@@ -83,28 +83,57 @@ namespace SparrowHawk.Geometry
         {
             ObjParser.Obj obj = new ObjParser.Obj();
             obj.LoadObj(filename);
-            mGeometry = new float[3 * obj.VertexList.Count];
+            mGeometry = new float[3*3*obj.FaceList.Count];
             mGeometryIndices = new int[3 * obj.FaceList.Count];
+            mNormals = new float[3*3*obj.FaceList.Count];
 
-            int i = 0;
-            foreach (var v in obj.VertexList)
-            {
-                mGeometry[3 * i + 0] = (float)v.X;
-                mGeometry[3 * i + 1] = (float)v.Y;
-                mGeometry[3 * i + 2] = (float)v.Z;
-                i++;
-            }
-            i = 0;
-            foreach (var f in obj.FaceList)
-            {
-                mGeometryIndices[3 * i + 0] = f.VertexIndexList[0] - 1;
-                mGeometryIndices[3 * i + 1] = f.VertexIndexList[1] - 1;
-                mGeometryIndices[3 * i + 2] = f.VertexIndexList[2] - 1;
-                i++;
-            }
+            // This is the smart indexed way, but I need flat shading right now.
+            //int i = 0;
+            //foreach (var v in obj.VertexList)
+            //{
+            //    mGeometry[3 * i + 0] = (float)v.X;
+            //    mGeometry[3 * i + 1] = (float)v.Y;
+            //    mGeometry[3 * i + 2] = (float)v.Z;
+            //    i++;
+            //}
+            //i = 0;
+            //foreach (var f in obj.FaceList)
+            //{
+            //    mGeometryIndices[3 * i + 0] = f.VertexIndexList[0] - 1;
+            //    mGeometryIndices[3 * i + 1] = f.VertexIndexList[1] - 1;
+            //    mGeometryIndices[3 * i + 2] = f.VertexIndexList[2] - 1;
+            //    i++;
+            //}
 
             mNumPrimitives = obj.FaceList.Count;
             primitiveType = OpenTK.Graphics.OpenGL4.BeginMode.Triangles;
+            int i = 0;
+            Vector3[] normalCreators = new Vector3[3];
+            Vector3 n;
+            foreach (var f in obj.FaceList)
+            {
+                for (int v = 0; v < 3; v++)
+                {
+                    normalCreators[v] = new Vector3((float)obj.VertexList.ElementAt(f.VertexIndexList[v] -1 ).X, (float)obj.VertexList.ElementAt(f.VertexIndexList[v]-1).Y, (float)obj.VertexList.ElementAt(f.VertexIndexList[v]-1).Z);
+                    mGeometry[9 * i + 3 * v + 0] = (float)obj.VertexList.ElementAt(f.VertexIndexList[v]-1).X;
+                    mGeometry[9 * i + 3 * v + 1] = (float)obj.VertexList.ElementAt(f.VertexIndexList[v]-1).Y;
+                    mGeometry[9 * i + 3 * v + 2] = (float)obj.VertexList.ElementAt(f.VertexIndexList[v]-1).Z;
+                }
+                n = Util.calculateFaceNormal(normalCreators[0], normalCreators[1], normalCreators[2]);
+                for (int j = 0; j < 3; j++)
+                {
+                    mNormals[9 * i + 3 * j + 0] = n.X;
+                    mNormals[9 * i + 3 * j + 1] = n.Y;
+                    mNormals[9 * i + 3 * j + 2] = n.Z;
+                }
+                i++;
+            }
+
+            for (i = 0; i < mGeometryIndices.Length; i++)
+            {
+                mGeometryIndices[i] = i;
+            }
+
         }
 
         // TODO: RayTracer

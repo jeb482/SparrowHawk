@@ -312,6 +312,18 @@ namespace SparrowHawk
             return OpenTK.Vector3.Cross(pq, u).Length / u.Length;
         }
 
+        public static OpenTK.Vector3 calculateFaceNormal(float v0x, float v0y, float v0z, float v1x, float v1y, float v1z, float v2x, float v2y, float v2z)
+        {
+            OpenTK.Vector3 p = new OpenTK.Vector3(v1x - v0x, v1y - v0y, v1z - v0z);
+            OpenTK.Vector3 q = new OpenTK.Vector3(v2x - v0x, v2y - v0y, v2z - v0z);
+            return OpenTK.Vector3.Cross(p, q).Normalized();
+        }
+
+        public static OpenTK.Vector3 calculateFaceNormal(OpenTK.Vector3 v0, OpenTK.Vector3 v1, OpenTK.Vector3 v2)
+        {
+            return OpenTK.Vector3.Cross(v1 - v0, v2 - v0).Normalized();
+        }
+
 
     }
 }
