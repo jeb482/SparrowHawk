@@ -93,6 +93,7 @@ namespace SparrowHawk.Interaction
             if (currentState == State.READY)
             {
                 stroke_g = new Geometry.GeometryStroke();
+                reducePoints = new List<Vector3>();
                 currentState = State.PAINT;
             }
 

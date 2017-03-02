@@ -89,7 +89,6 @@
     <Compile Include="Interaction\Grip.cs" />
     <Compile Include="Interaction\Loft.cs" />
     <Compile Include="Interaction\Selection.cs" />
-    <Compile Include="Interaction\Class1.cs" />
     <Compile Include="Interaction\CreateCircle.cs" />
     <Compile Include="Interaction\ClosedCurve.cs" />
     <Compile Include="Interaction\CreateCylinder.cs" />

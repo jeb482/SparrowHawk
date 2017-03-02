@@ -79,25 +79,28 @@ namespace SparrowHawk.Interaction
                 }
 
                 //Loft
-                Brep[] loftBreps = Brep.CreateFromLoft(loftcurves, Point3d.Unset, Point3d.Unset, LoftType.Tight, false);
-                Brep brep = new Brep();
-                foreach (Brep bp in loftBreps)
+                if (loftcurves.Count > 1)
                 {
-                    brep.Append(bp);
-                }
-
-                Mesh base_mesh = new Mesh();
-                if (brep != null)
-                {
-
-                    Util.addSceneNode(ref mScene, brep, ref mesh_m);
-
-                    //remove the shape surfaces of the loft
-                    foreach (Guid id in loftObjsUID)
+                    Brep[] loftBreps = Brep.CreateFromLoft(loftcurves, Point3d.Unset, Point3d.Unset, LoftType.Tight, false);
+                    Brep brep = new Brep();
+                    foreach (Brep bp in loftBreps)
                     {
-                        Util.removeSceneNode(ref mScene, id);
+                        brep.Append(bp);
                     }
-                    mScene.rhinoDoc.Views.Redraw();
+
+                    Mesh base_mesh = new Mesh();
+                    if (brep != null)
+                    {
+
+                        Util.addSceneNode(ref mScene, brep, ref mesh_m);
+
+                        //remove the shape surfaces of the loft
+                        foreach (Guid id in loftObjsUID)
+                        {
+                            Util.removeSceneNode(ref mScene, id);
+                        }
+                        mScene.rhinoDoc.Views.Redraw();
+                    }
                 }
 
             }
@@ -106,6 +109,9 @@ namespace SparrowHawk.Interaction
 
         protected override void onClickOculusGrip(ref VREvent_t vrEvent)
         {
+            curvePoints = new List<Point3d>();
+            loftcurves = new List<Curve>();
+            loftObjsUID = new List<Guid>();
             base.onClickOculusGrip(ref vrEvent);
 
         }

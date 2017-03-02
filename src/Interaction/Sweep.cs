@@ -94,6 +94,7 @@ namespace SparrowHawk.Interaction
 
         protected override void onClickOculusGrip(ref VREvent_t vrEvent)
         {
+            curvePoints = new List<Point3d>();
             base.onClickOculusGrip(ref vrEvent);
 
         }
