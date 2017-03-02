@@ -72,7 +72,10 @@ namespace SparrowHawk.Interaction
                     {
                         if (overlap_curves.Length > 0 || inter_points.Length > 0)
                         {
-                            loftcurves.Add(((Brep)rhObj.Geometry).Curves3D.ElementAt(0));
+                            //testing open/close curve
+                            Curve loftcurve = ((Brep)rhObj.Geometry).Curves3D.ElementAt(0);
+                            loftcurve.SetEndPoint(loftcurve.PointAtStart);
+                            loftcurves.Add(loftcurve);
                             loftObjsUID.Add(rhObj.Id);
                         }
                     }
@@ -81,6 +84,15 @@ namespace SparrowHawk.Interaction
                 //Loft
                 if (loftcurves.Count > 1)
                 {
+                    //check the direction of the curves
+                    for(int i =0; i < loftcurves.Count-1; i++)
+                    {
+                        if(!Curve.DoDirectionsMatch(loftcurves.ElementAt(i), loftcurves.ElementAt(i + 1)))
+                        {
+                            loftcurves.ElementAt(i + 1).Reverse();
+                        }
+                    }
+
                     Brep[] loftBreps = Brep.CreateFromLoft(loftcurves, Point3d.Unset, Point3d.Unset, LoftType.Tight, false);
                     Brep brep = new Brep();
                     foreach (Brep bp in loftBreps)
