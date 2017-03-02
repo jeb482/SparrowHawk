@@ -32,6 +32,8 @@ namespace SparrowHawk
         // Callibration
         List<Vector3> robotCallibrationPoints = new List<Vector3>();
         List<Vector3> vrCallibrationPoints = new List<Vector3>();
+        //Testing controller origins
+        List<Vector3> controllerP = new List<Vector3>();
         //using opencv by Eric
         List<MCvPoint3D32f> robotCallibrationPoints_cv = new List<MCvPoint3D32f>();
         List<MCvPoint3D32f> vrCallibrationPoints_cv = new List<MCvPoint3D32f>();
@@ -179,6 +181,18 @@ namespace SparrowHawk
 
                 mScene.mInteractionStack.Pop();
                 mScene.mInteractionStack.Push(new Interaction.CreateCylinder(ref mScene));
+            }
+
+            //testing controller origins
+            if (controllerP.Count == 2)
+            {
+                Vector3 p1 = controllerP[0];
+                Vector3 p2 = controllerP[1];
+                Rhino.RhinoApp.WriteLine("P1: " + p1.ToString());
+                Rhino.RhinoApp.WriteLine("P2: " + p2.ToString());
+                Rhino.RhinoApp.WriteLine("Distance: " + ((p1 - p2).Length).ToString());
+                Rhino.RhinoApp.WriteLine("Vector: " + (p1-p2).ToString());
+                controllerP.Clear();
             }
 
 
@@ -439,6 +453,14 @@ namespace SparrowHawk
             {
                 calibrationTest();
             }
+
+            if (e.KeyChar == 'P' || e.KeyChar == 'p')
+            {
+                mScene.mInteractionStack.Pop();
+                controllerP = new List<Vector3>();
+                mScene.mInteractionStack.Push(new Interaction.PickPoint(ref mScene, ref controllerP));
+            }
+
 
         }
 
