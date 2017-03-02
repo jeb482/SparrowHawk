@@ -122,6 +122,16 @@ namespace SparrowHawk.Interaction
         /// <param name="isTop"> True iff this is the top interaction in the stack.</param>
         public virtual void draw(bool isTop) {}
 
+        /// <summary>
+        /// Gets called whenever this interaction is placed on the 
+        /// top of the stack.
+        /// </summary>
+        public virtual void activate() {}
+
+        /// <summary>
+        /// Gets called when this interaction is removed from the stack.
+        /// </summary>
+        public virtual void deactivate() {}
 
         protected virtual void onClickViveTrigger(ref VREvent_t vrEvent) {}
         protected virtual void onClickViveTouchpad(ref VREvent_t vrEvent) { }

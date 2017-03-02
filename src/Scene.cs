@@ -104,8 +104,34 @@ namespace SparrowHawk
         public Matrix4 vrToRobot = new Matrix4(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1);
 
         // Interactions
-        public Stack<Interaction.Interaction> mInteractionStack = new Stack<Interaction.Interaction>();
+        private Stack<Interaction.Interaction> mInteractionStack = new Stack<Interaction.Interaction>();
         public bool isOculus = false;
+
+
+        public Interaction.Interaction popInteraction()
+        {
+            Interaction.Interaction i = mInteractionStack.Pop();
+            if (i == null)
+                return i;
+            i.deactivate();
+            return i;
+        }
+
+        public Interaction.Interaction peekInteraction()
+        {
+            return mInteractionStack.Peek();
+        }
+
+        public void pushInteraction(Interaction.Interaction i)
+        {
+            i.activate();
+            mInteractionStack.Push(i);
+        }
+
+        public bool interactionStackEmpty()
+        {
+            return (mInteractionStack.Count == 0);
+        }
 
         public Scene(ref Rhino.RhinoDoc doc, ref Valve.VR.CVRSystem hmd)
         {   

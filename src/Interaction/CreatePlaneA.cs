@@ -26,13 +26,19 @@ namespace SparrowHawk.Interaction
                 case State.Ready:
                     Matrix4 M = mScene.mDevicePose[vrEvent.trackedDeviceIndex];
                     Vector3 origin = Util.transformPoint(M, new Vector3(0, 0, -0.12f));
-                    Vector3 norm = Util.transformVec(M, new Vector3(0, 0, 1));
+                    Vector3 normal = Util.transformVec(M, new Vector3(0, 0, 1));
 
-                    Geometry.Geometry planeRep = new Geometry.PlaneRep();
-                    Material.Material m = new Material.SingleColorMaterial(1, .8f, .8f, 1);
-                    SceneNode n = new SceneNode("Plane", ref planeRep, ref m);
-                    n.transform = new Matrix4();
-                    mScene.staticGeometry.add(ref n);
+                    //Geometry.Geometry planeRep = new Geometry.PlaneRep();
+                    //Material.Material m = new Material.SingleColorMaterial(1, .8f, .8f, 1);
+                    //SceneNode n = new SceneNode("Plane", ref planeRep, ref m);
+                    //n.transform = M;
+                    //mScene.staticGeometry.add(ref n);
+                    Rhino.Geometry.Plane rhinoPlane = new Rhino.Geometry.Plane(Util.openTkToRhinoPoint(origin), Util.openTkToRhinoVector(normal));
+                    //Rhino.Geometry.Brep(rhinoPlane);
+                    //mScene.rhinoDoc.Objects.Add(rhinoPlane)
+                    // TODO: We can't see it yet!
+
+                    mState = State.PlaneCreated;
                     break;
 
                 case State.PlaneCreated:
@@ -41,8 +47,7 @@ namespace SparrowHawk.Interaction
 
                 case State.PlaneSelected:
                     // Drag the thangs.
-
-
+                    break;
             }
 
 

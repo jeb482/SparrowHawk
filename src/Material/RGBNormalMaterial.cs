@@ -33,7 +33,9 @@ namespace SparrowHawk.Material
            // GL.Enable(EnableCap.Blend);
             mShader.uploadAttrib<int>("indices", g.mGeometryIndices.Length, 3, 4, VertexAttribPointerType.UnsignedInt, false, ref g.mGeometryIndices, 0);
             mShader.uploadAttrib<float>("position", g.mGeometry.Count(), 3, 4, VertexAttribPointerType.Float, false, ref g.mGeometry, 0);
-            mShader.uploadAttrib<float>("normal", g.mNormals.Count(), 3, 4, VertexAttribPointerType.Float, false, ref g.mNormals, 0);
+
+            if (g.mNormals != null)
+                mShader.uploadAttrib<float>("normal", g.mNormals.Count(), 3, 4, VertexAttribPointerType.Float, false, ref g.mNormals, 0);
             GL.Uniform1(mShader.uniform("alpha"), mAlpha);
             GL.ProgramUniformMatrix4(mShader.mProgramShader ,mShader.uniform("viewProjTransform"), false, ref vp);
             GL.ProgramUniformMatrix4(mShader.mProgramShader, mShader.uniform("modelTransform"), true, ref model);

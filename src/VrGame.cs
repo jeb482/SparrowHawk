@@ -77,7 +77,7 @@ namespace SparrowHawk
 
 
                 //               mScene.mInteractionStack.Pop();
-                mScene.mInteractionStack.Push(new Interaction.PickPoint(ref mScene, ref vrCallibrationPoints));
+                mScene.pushInteraction(new Interaction.PickPoint(ref mScene, ref vrCallibrationPoints));
             }
             
 
@@ -145,13 +145,13 @@ namespace SparrowHawk
         {
 
             //default interaction
-            if (mScene.mInteractionStack.Count == 0)
+            if (mScene.interactionStackEmpty())
             {
-                mScene.mInteractionStack.Push(new Interaction.CreateCylinder(ref mScene));
+                mScene.pushInteraction(new Interaction.CreateCylinder(ref mScene));
                 //mScene.mInteractionStack.Push(new Interaction.Stroke(ref mScene));
             }
 
-            Interaction.Interaction current_i = mScene.mInteractionStack.Peek();
+            Interaction.Interaction current_i = mScene.peekInteraction();
             current_i.handleInput();
             current_i.draw(true);
 
@@ -177,8 +177,8 @@ namespace SparrowHawk
                     0, 0, 0, 1
                 );
 
-                mScene.mInteractionStack.Pop();
-                mScene.mInteractionStack.Push(new Interaction.CreateCylinder(ref mScene));
+                mScene.popInteraction();
+                mScene.pushInteraction(new Interaction.CreateCylinder(ref mScene));
             }
 
 
@@ -347,7 +347,7 @@ namespace SparrowHawk
             if (brep != null)
             {
 
-                Material.Material rhinoMseh_m = new Material.SingleColorMaterial(0, 1, 0, 1);
+                Material.Material rhinoMseh_m = new Material.RGBNormalMaterial(1);
                 Util.addSceneNode(ref mScene, brep, ref rhinoMseh_m);
             }
 
@@ -381,39 +381,39 @@ namespace SparrowHawk
             if (e.KeyChar == 'S' || e.KeyChar == 's')
             {
                 // i.GetType() == typeof(Interaction.Closedcurve) if we want to combine closedcurve and sweep as an interaction
-                mScene.mInteractionStack.Pop();
-                mScene.mInteractionStack.Push(new Interaction.Sweep(ref mScene));
+                mScene.popInteraction();
+                mScene.pushInteraction(new Interaction.Sweep(ref mScene));
             }
 
             //rhino extrude and curve testing
             if (e.KeyChar == 'R' || e.KeyChar == 'r')
             {
-                mScene.mInteractionStack.Pop();
-                mScene.mInteractionStack.Push(new Interaction.Closedcurve(ref mScene));
+                mScene.popInteraction();
+                mScene.pushInteraction(new Interaction.Closedcurve(ref mScene));
             }
 
             if (e.KeyChar == 'G' || e.KeyChar == 'g')
             {
-                mScene.mInteractionStack.Pop();
-                mScene.mInteractionStack.Push(new Interaction.Grip(ref mScene));
+                mScene.popInteraction();
+                mScene.pushInteraction(new Interaction.Grip(ref mScene));
             }
 
             if (e.KeyChar == 'L' || e.KeyChar == 'l')
             {
-                mScene.mInteractionStack.Pop();
-                mScene.mInteractionStack.Push(new Interaction.Loft(ref mScene));
+                mScene.popInteraction();
+                mScene.pushInteraction(new Interaction.Loft(ref mScene));
             }
 
             if (e.KeyChar == 'B' || e.KeyChar == 'b')
             {
-                mScene.mInteractionStack.Pop();
-                mScene.mInteractionStack.Push(new Interaction.Delete(ref mScene));
+                mScene.popInteraction();
+                mScene.pushInteraction(new Interaction.Delete(ref mScene));
             }
 
             if (e.KeyChar == 'M' || e.KeyChar == 'm')
             {
-                mScene.mInteractionStack.Pop();
-                mScene.mInteractionStack.Push(new Interaction.Stroke(ref mScene));
+                mScene.popInteraction();
+                mScene.pushInteraction(new Interaction.Stroke(ref mScene));
             }
 
         }

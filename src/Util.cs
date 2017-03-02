@@ -326,6 +326,44 @@ namespace SparrowHawk
             return OpenTK.Vector3.Cross(v1 - v0, v2 - v0).Normalized();
         }
 
+        /// <summary>
+        /// Adds normals to the mesh appropriate for flat shading. 
+        /// Note: depending on the mesh, this may increase the number of 
+        /// vertices by a factor of three!
+        /// Must be a triangulated mesh
+        /// </summary>
+        /// <param name="mesh"></param>
+        /// <returns></returns>
+        public static Geometry.Geometry addNormalsToMesh(Geometry.Geometry mesh)
+        {
+            if (mesh.primitiveType != OpenTK.Graphics.OpenGL4.BeginMode.Triangles)
+                return null;
+
+            Geometry.Geometry newMesh = new Geometry.Geometry();
+
+            newMesh.mNumPrimitives = mesh.mNumPrimitives;
+            newMesh.primitiveType = OpenTK.Graphics.OpenGL4.BeginMode.Triangles;
+            mesh.mGeometry = new float[3 * 3 * mesh.mNumPrimitives];
+            mesh.mGeometryIndices = new int[3 * mesh.mNumPrimitives];
+            mesh.mNormals = new float[3 * 3 * mesh.mNumPrimitives];
+
+            OpenTK.Vector3[] faceVertices = new OpenTK.Vector3[3];
+            //for (int f = 0; f < mesh.mNumPrimitives; f++)
+            //{
+            //    for (int v = 0; v < 3; v++)
+            //    {
+            //        newMesh.mGeometry[9 * f + 3 * v + 0] = newMesh.mGeometry[9 * mesh.mGeometryIndices[3 * (3 * f + v)] + 0];
+            //        newMesh.mGeometry[9 * f + 3 * v + 1] = newMesh.mGeometry[9 * mesh.mGeometryIndices[3 * (3 * f + v)] + 0];
+            //        newMesh.mGeometry[9 * f + 3 * v + 2] = newMesh.mGeometry[9 * mesh.mGeometryIndices[3 * (3 * f + v)] + 0];
+            //        faceVertices[v] = new OpenTK.Vector3(newMesh.mGeometry[9 * f + 3 * v + 0],
+            //    }                                                       newMesh.mGeometry[9 * f + 3 * v + 1] ,
+            //}                                                           newMesh.mGeometry[9 * f + 3 * v + 2]);
+
+
+            return newMesh;
+        }
+
+
         //Interaction Utility Functions by Eric
         public static OpenTK.Matrix4 mRhinoToGL = new OpenTK.Matrix4(1, 0, 0, 0,
                                                               0, 0, 1, 0,
