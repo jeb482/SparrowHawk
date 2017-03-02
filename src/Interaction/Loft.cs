@@ -89,7 +89,8 @@ namespace SparrowHawk.Interaction
                     }
 
                     Mesh base_mesh = new Mesh();
-                    if (brep != null)
+                    // TODO: fix the issue that sometimes the brep is empty. Check the directions of open curves or the seams of closed curves. 
+                    if (brep != null && brep.Edges.Count != 0)
                     {
 
                         Util.addSceneNode(ref mScene, brep, ref mesh_m);
