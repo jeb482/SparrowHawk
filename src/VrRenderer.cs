@@ -279,7 +279,8 @@ namespace SparrowHawk
         {
             if (mHMD != null)
             {
-
+                GL.DepthFunc(DepthFunction.Less);
+                GL.Enable(EnableCap.DepthTest);
                 setupCameras();
                 // DrawControllers
                 RenderStereoTargets();

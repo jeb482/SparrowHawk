@@ -107,12 +107,13 @@ public static string RGBNormalVertShader
 = @"#version 330 core
 uniform mat4 viewProjTransform;
 uniform mat4 modelTransform;
+uniform mat4 modelInvTrans;
 in vec3 position;
 in vec3 normal;
 smooth out vec3 fnormal;
 void main()
 {
-	fnormal = normal;
+	fnormal = (modelInvTrans*vec4(normal,0)).xyz;
 	gl_Position = viewProjTransform * (modelTransform*vec4(position, 1.0));
 }";
 
