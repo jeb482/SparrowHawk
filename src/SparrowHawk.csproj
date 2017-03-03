@@ -84,7 +84,9 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Geometry\GeometryStroke.cs" />
+    <Compile Include="Geometry\PlaneRep.cs" />
     <Compile Include="Geometry\RhinoMesh.cs" />
+    <Compile Include="Interaction\CreatePlaneA.cs" />
     <Compile Include="Interaction\Delete.cs" />
     <Compile Include="Interaction\Grip.cs" />
     <Compile Include="Interaction\Loft.cs" />

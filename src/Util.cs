@@ -343,21 +343,30 @@ namespace SparrowHawk
 
             newMesh.mNumPrimitives = mesh.mNumPrimitives;
             newMesh.primitiveType = OpenTK.Graphics.OpenGL4.BeginMode.Triangles;
-            mesh.mGeometry = new float[3 * 3 * mesh.mNumPrimitives];
-            mesh.mGeometryIndices = new int[3 * mesh.mNumPrimitives];
-            mesh.mNormals = new float[3 * 3 * mesh.mNumPrimitives];
+            newMesh.mGeometry = new float[3 * 3 * mesh.mNumPrimitives];
+            newMesh.mGeometryIndices = new int[3 * mesh.mNumPrimitives];
+            newMesh.mNormals = new float[3 * 3 * mesh.mNumPrimitives];
 
             OpenTK.Vector3[] faceVertices = new OpenTK.Vector3[3];
-            //for (int f = 0; f < mesh.mNumPrimitives; f++)
-            //{
-            //    for (int v = 0; v < 3; v++)
-            //    {
-            //        newMesh.mGeometry[9 * f + 3 * v + 0] = newMesh.mGeometry[9 * mesh.mGeometryIndices[3 * (3 * f + v)] + 0];
-            //        newMesh.mGeometry[9 * f + 3 * v + 1] = newMesh.mGeometry[9 * mesh.mGeometryIndices[3 * (3 * f + v)] + 0];
-            //        newMesh.mGeometry[9 * f + 3 * v + 2] = newMesh.mGeometry[9 * mesh.mGeometryIndices[3 * (3 * f + v)] + 0];
-            //        faceVertices[v] = new OpenTK.Vector3(newMesh.mGeometry[9 * f + 3 * v + 0],
-            //    }                                                       newMesh.mGeometry[9 * f + 3 * v + 1] ,
-            //}                                                           newMesh.mGeometry[9 * f + 3 * v + 2]);
+            for (int f = 0; f < mesh.mNumPrimitives; f++)
+            {
+                for (int v = 0; v < 3; v++)
+                {
+                    newMesh.mGeometry[9 * f + 3 * v + 0] = mesh.mGeometry[3*mesh.mGeometryIndices[3 * f + v] + 0];
+                    newMesh.mGeometry[9 * f + 3 * v + 1] = mesh.mGeometry[3*mesh.mGeometryIndices[3 * f + v] + 1];
+                    newMesh.mGeometry[9 * f + 3 * v + 2] = mesh.mGeometry[3*mesh.mGeometryIndices[3 * f + v] + 2];
+                    faceVertices[v] = new OpenTK.Vector3(newMesh.mGeometry[9 * f + 3 * v + 0], newMesh.mGeometry[9 * f + 3 * v + 1], newMesh.mGeometry[9 * f + 3 * v + 2]);
+                }
+                OpenTK.Vector3 n = Util.calculateFaceNormal(faceVertices[0], faceVertices[1], faceVertices[2]);
+                for (int v = 0; v < 3; v++) {
+                    newMesh.mNormals[9 * f + 3 * v + 0] = n.X;
+                    newMesh.mNormals[9 * f + 3 * v + 1] = n.Y;
+                    newMesh.mNormals[9 * f + 3 * v + 2] = n.Z;
+                }      
+            }
+
+            for (int i = 0; i < newMesh.mGeometryIndices.Count(); i++)
+                newMesh.mGeometryIndices[i] = i;
 
 
             return newMesh;
@@ -389,9 +398,12 @@ namespace SparrowHawk
                 mScene.rhinoDoc.Views.Redraw();
 
                 Geometry.Geometry meshStroke_g = new Geometry.RhinoMesh();
+                
                 ((Geometry.RhinoMesh)meshStroke_g).setMesh(ref base_mesh);
+                
                 SceneNode ccMeshSN = new SceneNode("BrepMesh", ref meshStroke_g, ref mesh_m);
                 mScene.staticGeometry.add(ref ccMeshSN);
+              
 
                 //add reference SceneNode to brep and vice versa
                 mScene.brepToSceneNodeDic.Add(guid, ccMeshSN);

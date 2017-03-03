@@ -147,7 +147,8 @@ namespace SparrowHawk
             //default interaction
             if (mScene.interactionStackEmpty())
             {
-                mScene.pushInteraction(new Interaction.CreateCylinder(ref mScene));
+                mScene.pushInteraction(new Interaction.CreatePlaneA(ref mScene));
+                //mScene.pushInteraction(new Interaction.CreateCylinder(ref mScene));
                 //mScene.mInteractionStack.Push(new Interaction.Stroke(ref mScene));
             }
 
@@ -346,7 +347,6 @@ namespace SparrowHawk
 
             if (brep != null)
             {
-
                 Material.Material rhinoMseh_m = new Material.RGBNormalMaterial(1);
                 Util.addSceneNode(ref mScene, brep, ref rhinoMseh_m);
             }
