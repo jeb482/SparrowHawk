@@ -430,6 +430,46 @@ namespace SparrowHawk
 
         }
 
+        /// <summary>
+        /// Finds the homogenous 3d point x (with x_4 = 1) to minimize the least squares
+        /// error of M_1x - M_2x = 1; Assumes that each M_i is affine4x4.
+        /// </summary>
+        /// <param name="matrices"></param>
+        /// <returns></returns>
+        public static OpenTK.Vector3 solveForOffsetVector(List<OpenTK.Matrix4> matrices)
+        {
+            OpenTK.Vector3 x = new OpenTK.Vector3();
+            var A = MathNet.Numerics.LinearAlgebra.CreateMatrix.Dense<float>(matrices.Count*(matrices.Count - 1), 3);
+            var B = MathNet.Numerics.LinearAlgebra.CreateMatrix.Dense<float>(matrices.Count * (matrices.Count - 1), 1);
+            int row = 0;
+            for (int i = 0; i < matrices.Count; i++)
+                for (int j = 0; j < i; j++)
+                {
+                    A.SetRow(row, new float[] {matrices.ElementAt(i).M11 - matrices.ElementAt(j).M11,
+                                               matrices.ElementAt(i).M12 - matrices.ElementAt(j).M12,
+                                               matrices.ElementAt(i).M13 - matrices.ElementAt(j).M13});
+
+                    A.SetRow(row+1, new float[] {matrices.ElementAt(i).M21 - matrices.ElementAt(j).M21,
+                                                 matrices.ElementAt(i).M22 - matrices.ElementAt(j).M22,
+                                                 matrices.ElementAt(i).M23 - matrices.ElementAt(j).M23});
+
+                    A.SetRow(row+2, new float[] {matrices.ElementAt(i).M31 - matrices.ElementAt(j).M31,
+                                                 matrices.ElementAt(i).M32 - matrices.ElementAt(j).M32, 
+                                                 matrices.ElementAt(i).M33 - matrices.ElementAt(j).M33});
+
+                    B.SetRow(row, new float[] { matrices.ElementAt(j).M14 - matrices.ElementAt(i).M14 });
+                    B.SetRow(row+1, new float[] { matrices.ElementAt(j).M24 - matrices.ElementAt(i).M24 });
+                    B.SetRow(row+2, new float[] { matrices.ElementAt(j).M34 - matrices.ElementAt(i).M34 });
+                    row += 3;
+                }
+            var qr = A.QR();
+            var matX = qr.R.Solve(qr.Q * B);
+            x.X = matX[0, 0];
+            x.Y = matX[1, 0];
+            x.Z = matX[2, 0];
+            return x;
+        }
+
 
     }
 }
