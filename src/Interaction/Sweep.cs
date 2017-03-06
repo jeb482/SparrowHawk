@@ -24,7 +24,7 @@ namespace SparrowHawk.Interaction
             mScene = s;
             stroke_g = new Geometry.GeometryStroke();
             stroke_m = new Material.SingleColorMaterial(1, 0, 0, 1);
-            mesh_m = new Material.SingleColorMaterial(0, 1, 0, 1);
+            mesh_m = new Material.RGBNormalMaterial(1);
             currentState = State.READY;
 
         }

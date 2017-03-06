@@ -35,7 +35,7 @@ namespace SparrowHawk
         }
 
         public void render(ref Matrix4 vp, Matrix4 model) {
-            model = transform * model;
+            model = model * transform;
             if (geometry != null && material != null)
             {
                 material.draw(ref geometry, ref model, ref vp);

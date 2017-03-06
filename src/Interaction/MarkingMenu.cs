@@ -46,8 +46,8 @@ namespace SparrowHawk.Interaction
             Material.Material m = new Material.TextureMaterial(mScene.rhinoDoc, "C:\\workspace\\SparrowHawk\\src\\resources\\mmenu1.png");
             mSceneNode = new SceneNode("MarkingMenu", ref g, ref m);
             mSceneNode.transform = new OpenTK.Matrix4(1, 0,  0, 0,
-                                                          0, 0,  1, 0,
-                                                          0,-1,  0, 0,
+                                                          0, 0,  -1, 0,
+                                                          0, 1,  0, 0,
                                                           0, 0,  0, 1);
             mScene.leftControllerNode.add(ref mSceneNode);
         }
@@ -75,7 +75,8 @@ namespace SparrowHawk.Interaction
         private void launchInteraction(float r, float theta)
         {
             uint numInteractions = 8;
-            int interactionNumber = ((int) Math.Floor(numInteractions * r / (2 * Math.PI)));
+            int interactionNumber = ((int) Math.Floor(numInteractions * theta / (2 * Math.PI)));
+            if (interactionNumber < 0) interactionNumber += (int) numInteractions;
             mScene.popInteraction();
             Rhino.RhinoApp.WriteLine("Selected Interaction " + interactionNumber);
             switch (interactionNumber)

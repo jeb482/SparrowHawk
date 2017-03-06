@@ -457,9 +457,9 @@ namespace SparrowHawk
 
             if (e.KeyChar == 'P' || e.KeyChar == 'p')
             {
-                mScene.mInteractionStack.Pop();
+                mScene.popInteraction();
                 controllerP = new List<Vector3>();
-                mScene.mInteractionStack.Push(new Interaction.PickPoint(ref mScene, ref controllerP));
+                mScene.pushInteraction(new Interaction.PickPoint(ref mScene, ref controllerP));
             }
 
 
