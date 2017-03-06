@@ -147,7 +147,8 @@ namespace SparrowHawk
             //default interaction
             if (mScene.interactionStackEmpty())
             {
-                mScene.pushInteraction(new Interaction.CreatePlaneA(ref mScene));
+                mScene.pushInteraction(new Interaction.MarkingMenu(ref mScene));
+                // mScene.pushInteraction(new Interaction.CreatePlaneA(ref mScene));
                 //mScene.pushInteraction(new Interaction.CreateCylinder(ref mScene));
                 //mScene.mInteractionStack.Push(new Interaction.Stroke(ref mScene));
             }

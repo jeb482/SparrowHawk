@@ -86,6 +86,7 @@ namespace SparrowHawk.Geometry
             mGeometry = new float[3*3*obj.FaceList.Count];
             mGeometryIndices = new int[3 * obj.FaceList.Count];
             mNormals = new float[3*3*obj.FaceList.Count];
+            mUvs = new float[2*3*obj.FaceList.Count];
 
             // This is the smart indexed way, but I need flat shading right now.
             //int i = 0;
@@ -114,10 +115,10 @@ namespace SparrowHawk.Geometry
             {
                 for (int v = 0; v < 3; v++)
                 {
-                    normalCreators[v] = new Vector3((float)obj.VertexList.ElementAt(f.VertexIndexList[v] -1 ).X, (float)obj.VertexList.ElementAt(f.VertexIndexList[v]-1).Y, (float)obj.VertexList.ElementAt(f.VertexIndexList[v]-1).Z);
-                    mGeometry[9 * i + 3 * v + 0] = (float)obj.VertexList.ElementAt(f.VertexIndexList[v]-1).X;
-                    mGeometry[9 * i + 3 * v + 1] = (float)obj.VertexList.ElementAt(f.VertexIndexList[v]-1).Y;
-                    mGeometry[9 * i + 3 * v + 2] = (float)obj.VertexList.ElementAt(f.VertexIndexList[v]-1).Z;
+                    normalCreators[v] = new Vector3((float)obj.VertexList.ElementAt(f.VertexIndexList[v] - 1).X, (float)obj.VertexList.ElementAt(f.VertexIndexList[v] - 1).Y, (float)obj.VertexList.ElementAt(f.VertexIndexList[v] - 1).Z);
+                    mGeometry[9 * i + 3 * v + 0] = (float)obj.VertexList.ElementAt(f.VertexIndexList[v] - 1).X;
+                    mGeometry[9 * i + 3 * v + 1] = (float)obj.VertexList.ElementAt(f.VertexIndexList[v] - 1).Y;
+                    mGeometry[9 * i + 3 * v + 2] = (float)obj.VertexList.ElementAt(f.VertexIndexList[v] - 1).Z;
                 }
                 n = Util.calculateFaceNormal(normalCreators[0], normalCreators[1], normalCreators[2]);
                 for (int j = 0; j < 3; j++)
@@ -125,6 +126,15 @@ namespace SparrowHawk.Geometry
                     mNormals[9 * i + 3 * j + 0] = n.X;
                     mNormals[9 * i + 3 * j + 1] = n.Y;
                     mNormals[9 * i + 3 * j + 2] = n.Z;
+                }
+
+                if (obj.TextureList.Count > 0)
+                {
+                    for (int j = 0; j < 3; j++)
+                    {
+                        mUvs[6 * i + 2 * j + 0] = (float)obj.TextureList[f.TextureVertexIndexList.ElementAt(j)-1].X;
+                        mUvs[6 * i + 2 * j + 1] = (float)obj.TextureList[f.TextureVertexIndexList.ElementAt(j)-1].Y;
+                    }
                 }
                 i++;
             }
