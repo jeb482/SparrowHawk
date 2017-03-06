@@ -386,6 +386,7 @@ namespace SparrowHawk
 
         public static void addSceneNode(ref Scene mScene, Brep brep, ref Material.Material mesh_m)
         {
+            //TODO: detect the # of faces
             Mesh base_mesh = new Mesh();
             if (brep != null)
             {

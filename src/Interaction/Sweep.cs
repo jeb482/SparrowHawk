@@ -74,6 +74,8 @@ namespace SparrowHawk.Interaction
                         if (overlap_curves.Length > 0 || inter_points.Length > 0)
                         {
                             closedCurve = ((Brep)rhObj.Geometry).Curves3D.ElementAt(0);
+                            //testing open/close curve
+                            closedCurve.SetEndPoint(closedCurve.PointAtStart);
 
                             Brep[] breps = Brep.CreateFromSweep(rail, closedCurve, false, mScene.rhinoDoc.ModelAbsoluteTolerance);
                             Brep brep = breps[0];
@@ -94,6 +96,7 @@ namespace SparrowHawk.Interaction
 
         protected override void onClickOculusGrip(ref VREvent_t vrEvent)
         {
+            curvePoints = new List<Point3d>();
             base.onClickOculusGrip(ref vrEvent);
 
         }

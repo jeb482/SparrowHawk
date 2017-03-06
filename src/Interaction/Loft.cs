@@ -72,32 +72,48 @@ namespace SparrowHawk.Interaction
                     {
                         if (overlap_curves.Length > 0 || inter_points.Length > 0)
                         {
-                            loftcurves.Add(((Brep)rhObj.Geometry).Curves3D.ElementAt(0));
+                            //testing open/close curve
+                            Curve loftcurve = ((Brep)rhObj.Geometry).Curves3D.ElementAt(0);
+                            loftcurve.SetEndPoint(loftcurve.PointAtStart);
+                            loftcurves.Add(loftcurve);
                             loftObjsUID.Add(rhObj.Id);
                         }
                     }
                 }
 
                 //Loft
-                Brep[] loftBreps = Brep.CreateFromLoft(loftcurves, Point3d.Unset, Point3d.Unset, LoftType.Tight, false);
-                Brep brep = new Brep();
-                foreach (Brep bp in loftBreps)
+                if (loftcurves.Count > 1)
                 {
-                    brep.Append(bp);
-                }
-
-                Mesh base_mesh = new Mesh();
-                if (brep != null)
-                {
-
-                    Util.addSceneNode(ref mScene, brep, ref mesh_m);
-
-                    //remove the shape surfaces of the loft
-                    foreach (Guid id in loftObjsUID)
+                    //check the direction of the curves
+                    for(int i =0; i < loftcurves.Count-1; i++)
                     {
-                        Util.removeSceneNode(ref mScene, id);
+                        if(!Curve.DoDirectionsMatch(loftcurves.ElementAt(i), loftcurves.ElementAt(i + 1)))
+                        {
+                            loftcurves.ElementAt(i + 1).Reverse();
+                        }
                     }
-                    mScene.rhinoDoc.Views.Redraw();
+
+                    Brep[] loftBreps = Brep.CreateFromLoft(loftcurves, Point3d.Unset, Point3d.Unset, LoftType.Tight, false);
+                    Brep brep = new Brep();
+                    foreach (Brep bp in loftBreps)
+                    {
+                        brep.Append(bp);
+                    }
+
+                    Mesh base_mesh = new Mesh();
+                    // TODO: fix the issue that sometimes the brep is empty. Check the directions of open curves or the seams of closed curves. 
+                    if (brep != null && brep.Edges.Count != 0)
+                    {
+
+                        Util.addSceneNode(ref mScene, brep, ref mesh_m);
+
+                        //remove the shape surfaces of the loft
+                        foreach (Guid id in loftObjsUID)
+                        {
+                            Util.removeSceneNode(ref mScene, id);
+                        }
+                        mScene.rhinoDoc.Views.Redraw();
+                    }
                 }
 
             }
@@ -106,6 +122,9 @@ namespace SparrowHawk.Interaction
 
         protected override void onClickOculusGrip(ref VREvent_t vrEvent)
         {
+            curvePoints = new List<Point3d>();
+            loftcurves = new List<Curve>();
+            loftObjsUID = new List<Guid>();
             base.onClickOculusGrip(ref vrEvent);
 
         }

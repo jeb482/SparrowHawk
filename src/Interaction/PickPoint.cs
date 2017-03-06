@@ -37,10 +37,9 @@ namespace SparrowHawk.Interaction
         {
             // Find and record position of controller
             Matrix4 M = mScene.mDevicePose[deviceIndex];
-            Vector3 origin = Util.transformPoint(M, new Vector3(0, 0, 0));
-            
 
-            
+            Vector3 origin = Util.transformPoint(M, new Vector3(0, 0, 0));
+ 
             if (mPoints != null)
             {
                 mPoints.Add(origin);

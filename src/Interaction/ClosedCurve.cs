@@ -46,7 +46,7 @@ namespace SparrowHawk.Interaction
             }
 
             //Rhino CreateInterpolatedCurve and CreatePlanarBreps
-            if (curvePoints.Count >= 2)
+            if (curvePoints.Count >= 8)
             {
                 //Rhino closed curve through NURBS curve
                 closedCurve = Rhino.Geometry.NurbsCurve.Create(true, 3, curvePoints.ToArray());
@@ -56,7 +56,8 @@ namespace SparrowHawk.Interaction
                 Plane proj_plane = new Plane();
                 Plane.FitPlaneToPoints(curvePoints.ToArray(), out proj_plane);
                 Curve proj_curve = Curve.ProjectToPlane(closedCurve, proj_plane);
-
+                
+                //TODO: make sure the proj_curve is on the same plane ? or it's beacuse not enough points
                 Brep[] shapes = Brep.CreatePlanarBreps(proj_curve);
                 Brep curve_s = shapes[0];
                 closedCurveBrep = curve_s;
@@ -69,7 +70,9 @@ namespace SparrowHawk.Interaction
 
         protected override void onClickOculusGrip(ref VREvent_t vrEvent)
         {
+            curvePoints = new List<Point3d>();
             base.onClickOculusGrip(ref vrEvent);
+
 
         }
 
