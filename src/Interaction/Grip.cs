@@ -32,7 +32,7 @@ namespace SparrowHawk.Interaction
             {
                 return;
             }
-            selectedSN.transform = mScene.mDevicePose[primaryDeviceIndex] * mVRtocontroller * currentTransform;
+            selectedSN.parentToChild = mScene.mDevicePose[primaryDeviceIndex] * mVRtocontroller * currentTransform;
 
         }
 
@@ -42,7 +42,7 @@ namespace SparrowHawk.Interaction
 
             if (currentState == State.SELECTION)
             {
-                currentTransform = selectedSN.transform;
+                currentTransform = selectedSN.parentToChild;
                 mVRtocontroller = mScene.mDevicePose[primaryDeviceIndex].Inverted();
             }
         }
@@ -54,7 +54,7 @@ namespace SparrowHawk.Interaction
             {
 
                 //Watchout!! since the bug of transformation, we need to remove currentTransform first here
-                OpenTK.Matrix4 transMRhino = Util.mGLToRhino * (selectedSN.transform * currentTransform.Inverted()) * Util.mRhinoToGL;
+                OpenTK.Matrix4 transMRhino = Util.mGLToRhino * (selectedSN.parentToChild * currentTransform.Inverted()) * Util.mRhinoToGL;
                 Transform transM = new Transform();
                 for (int row = 0; row < 4; row++)
                 {
@@ -97,7 +97,7 @@ namespace SparrowHawk.Interaction
                 v.Z = vertex_array[i + 2];
                 v.W = 1.0f;
 
-                new_v = selectedSN.transform * v;
+                new_v = selectedSN.parentToChild * v;
                 vertex_array[i] = new_v.X;
                 vertex_array[i + 1] = new_v.Y;
                 vertex_array[i + 2] = new_v.Z;

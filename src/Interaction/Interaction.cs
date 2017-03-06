@@ -136,13 +136,13 @@ namespace SparrowHawk.Interaction
         protected virtual void onClickViveTrigger(ref VREvent_t vrEvent) {}
         protected virtual void onClickViveTouchpad(ref VREvent_t vrEvent) { }
         protected virtual void onClickViveGrip(ref VREvent_t vrEvent) { }
-        protected virtual void onClickViveAppMenu(ref VREvent_t vrEvent) { }
+        protected virtual void onClickViveAppMenu(ref VREvent_t vrEvent) { mScene.pushInteraction(new MarkingMenu(ref mScene)); }
         protected virtual void onReleaseViveTrigger(ref VREvent_t vrEvent) { }
         protected virtual void onReleaseViveTouchpad(ref VREvent_t vrEvent) { }
         protected virtual void onReleaseViveGrip(ref VREvent_t vrEvent) { }
         protected virtual void onReleaseViveAppMenu(ref VREvent_t vrEvent) { }
         protected virtual void onClickOculusTrigger(ref VREvent_t vrEvent) { }
-        protected virtual void onClickOculusStick(ref VREvent_t vrEvent) { }
+        protected virtual void onClickOculusStick(ref VREvent_t vrEvent) { mScene.pushInteraction(new MarkingMenu(ref mScene));}
         protected virtual void onClickOculusGrip(ref VREvent_t vrEvent) { }
         protected virtual void onClickOculusAX(ref VREvent_t vrEvent) { }
         protected virtual void onClickOculusBY(ref VREvent_t vrEvent) { }

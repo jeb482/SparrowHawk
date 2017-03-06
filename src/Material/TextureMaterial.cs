@@ -85,10 +85,10 @@ namespace SparrowHawk.Material
             e = GL.GetError();
             mShader.uploadAttrib<float>("uvs", g.mUvs.Count(), 2, 4, VertexAttribPointerType.Float, false, ref g.mUvs, 0);
             e = GL.GetError();
-            GL.UniformMatrix4(mShader.uniform("modelTransform"), false, ref model);
+            GL.UniformMatrix4(mShader.uniform("modelTransform"), true, ref model);
             e = GL.GetError();
             GL.UniformMatrix4(mShader.uniform("viewProjTransform"), false, ref vp);
-            GL.UniformMatrix4(mShader.uniform("viewProjTransform"), false, ref vp);
+            //GL.UniformMatrix4(mShader.uniform("viewProjTransform"), false, ref vp);
             GL.Uniform1(mShader.uniform("tex"), 0);
             
             //for debugging
