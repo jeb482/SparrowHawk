@@ -136,9 +136,9 @@ namespace SparrowHawk
             }
 
             if (mScene.leftControllerIdx > 0)
-                mScene.leftControllerNode.parentToChild = mScene.mDevicePose[mScene.leftControllerIdx];
+                mScene.leftControllerNode.transform = mScene.mDevicePose[mScene.leftControllerIdx];
             if (mScene.rightControllerIdx > 0)
-                mScene.rightControllerNode.parentToChild = mScene.mDevicePose[mScene.rightControllerIdx];
+                mScene.rightControllerNode.transform = mScene.mDevicePose[mScene.rightControllerIdx];
         }
 
         protected void handleInteractions()
@@ -310,27 +310,27 @@ namespace SparrowHawk
             Material.Material m = new Material.RGBNormalMaterial(1);
             //Material.Material m = new Material.SingleColorMaterial(1, 0, 1, 1);
             SceneNode cube = new SceneNode("Triangle", ref g, ref m);
-            cube.parentToChild = new Matrix4(1, 0, 0, 0, 0, 1, 0, 1, 0, 0, 1, 0, 0, 0, 0, 1);
+            cube.transform = new Matrix4(1, 0, 0, 0, 0, 1, 0, 1, 0, 0, 1, 0, 0, 0, 0, 1);
             mScene.staticGeometry.add(ref cube);
 
             g = new Geometry.PointMarker(new Vector3(0, 1, 0));
             m = new Material.SingleColorMaterial(1, 1, 1, 1);
             SceneNode point = new SceneNode("Point 1", ref g, ref m);
             mScene.staticGeometry.add(ref point);
-            point.parentToChild = new Matrix4(1, 0, 0, 0, 0, 1, 0, 1, 0, 0, 1, 0, 0, 0, 0, 1);
+            point.transform = new Matrix4(1, 0, 0, 0, 0, 1, 0, 1, 0, 0, 1, 0, 0, 0, 0, 1);
 
             // Left
             g = new Geometry.PointMarker(new Vector3(0, 0, 0));
             m = new Material.SingleColorMaterial(1, 0, 0, 1);
             point = new SceneNode("Left Cursor", ref g, ref m);
             mScene.leftControllerNode.add(ref point);
-            point.parentToChild = new Matrix4(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1);
+            point.transform = new Matrix4(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1);
 
             g = new Geometry.PointMarker(new Vector3(0, 0, 0));
             m = new Material.SingleColorMaterial(0, 0, 1, 1);
             point = new SceneNode("Right Cursor", ref g, ref m);
             mScene.rightControllerNode.add(ref point);
-            point.parentToChild = new Matrix4(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1);
+            point.transform = new Matrix4(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1);
  
             //rhino extrusion test
             Rhino.Collections.Point3dList points = new Rhino.Collections.Point3dList(5);

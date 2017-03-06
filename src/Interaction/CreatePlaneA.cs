@@ -44,7 +44,7 @@ namespace SparrowHawk.Interaction
                     Geometry.Geometry planeRep = new Geometry.PlaneRep();
                     Material.Material m = new Material.SingleColorMaterial(1, .8f, .8f, 1);
                     planeNode = new SceneNode("Plane", ref planeRep, ref m);
-                    planeNode.parentToChild = new Matrix4(1, 0, 0, 0,
+                    planeNode.transform = new Matrix4(1, 0, 0, 0,
                                               0, 1, 0, 0,
                                               0, 0, 1, -0.12f,
                                               0, 0, 0, 1);
@@ -73,7 +73,7 @@ namespace SparrowHawk.Interaction
                     //
                     planeNode.parent.remove(ref planeNode);
                     mScene.staticGeometry.add(ref planeNode);
-                    planeNode.parentToChild = accumulatedTransform;
+                    planeNode.transform = accumulatedTransform;
 
                     // Build in rhino
                     Rhino.Geometry.Plane rhinoPlane = new Rhino.Geometry.Plane(Util.openTkToRhinoPoint(origin), Util.openTkToRhinoVector(normal));

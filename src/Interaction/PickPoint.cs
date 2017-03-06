@@ -52,7 +52,7 @@ namespace SparrowHawk.Interaction
             Geometry.Geometry point = new Geometry.PointMarker(new Vector3());
             Material.Material material = new Material.SingleColorMaterial(0f, .5f, 1f, 1f);
             SceneNode sceneNode = new SceneNode("point", ref point, ref material);
-            sceneNode.parentToChild = M;
+            sceneNode.transform = M;
 
 
             mScene.tableGeometry.add(ref sceneNode);

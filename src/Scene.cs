@@ -15,7 +15,7 @@ namespace SparrowHawk
         public List<SceneNode> children = new List<SceneNode>();
         public Geometry.Geometry geometry;
         public Material.Material material;
-        public Matrix4 parentToChild = new Matrix4(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1);
+        public Matrix4 transform = new Matrix4(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1);
 
 
         public SceneNode(string _name, ref Geometry.Geometry g, ref Material.Material m)
@@ -35,7 +35,7 @@ namespace SparrowHawk
         }
 
         public void render(ref Matrix4 vp, Matrix4 model) {
-            model = parentToChild * model;
+            model = transform * model;
             if (geometry != null && material != null)
             {
                 material.draw(ref geometry, ref model, ref vp);
@@ -49,8 +49,8 @@ namespace SparrowHawk
         public Matrix4 accumulateTransform()
         {
             if (parent == null)
-                return parentToChild;
-            return parent.accumulateTransform() * parentToChild;
+                return transform;
+            return parent.accumulateTransform() * transform;
         }
 
         // TODO: Actually implement raycasting!

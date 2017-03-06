@@ -45,7 +45,10 @@ namespace SparrowHawk.Interaction
             //Material.Material m = new Material.RGBNormalMaterial(1);
             Material.Material m = new Material.TextureMaterial(mScene.rhinoDoc, "C:\\workspace\\SparrowHawk\\src\\resources\\mmenu1.png");
             mSceneNode = new SceneNode("MarkingMenu", ref g, ref m);
-            mSceneNode.parentToChild = new OpenTK.Matrix4(1,0,0,0,0, 1f, 0, 0, 0,0, 1f, 0,0,0,0,1);
+            mSceneNode.transform = new OpenTK.Matrix4(1, 0,  0, 0,
+                                                          0, 0,  1, 0,
+                                                          0,-1,  0, 0,
+                                                          0, 0,  0, 1);
             mScene.leftControllerNode.add(ref mSceneNode);
         }
 
