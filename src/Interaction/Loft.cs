@@ -87,10 +87,27 @@ namespace SparrowHawk.Interaction
                     //check the direction of the curves
                     for(int i =0; i < loftcurves.Count-1; i++)
                     {
-                        if(!Curve.DoDirectionsMatch(loftcurves.ElementAt(i), loftcurves.ElementAt(i + 1)))
+                        double t = 0;
+
+
+                        if(!Curve.DoDirectionsMatch(loftcurves.ElementAt(i), loftcurves.ElementAt(i + 1)) )
                         {
+                            //whether curve is open or closed
                             loftcurves.ElementAt(i + 1).Reverse();
+                            
                         }
+
+                        if (i == 0)
+                        {
+                            loftcurves.ElementAt(i).ClosestPoint(loftcurves.ElementAt(i).PointAtStart, out t);
+                            loftcurves.ElementAt(i).ChangeClosedCurveSeam(t);
+                        }
+                      
+                        loftcurves.ElementAt(i + 1).ClosestPoint(loftcurves.ElementAt(i).PointAtStart, out t);
+                        loftcurves.ElementAt(i + 1).ChangeClosedCurveSeam(t);
+                        //loftcurves.ElementAt(i + 1).SetStartPoint(loftcurves.ElementAt(i + 1).PointAt(t));
+
+
                     }
 
                     Brep[] loftBreps = Brep.CreateFromLoft(loftcurves, Point3d.Unset, Point3d.Unset, LoftType.Tight, false);
@@ -122,9 +139,9 @@ namespace SparrowHawk.Interaction
 
         protected override void onClickOculusGrip(ref VREvent_t vrEvent)
         {
-            curvePoints = new List<Point3d>();
-            loftcurves = new List<Curve>();
-            loftObjsUID = new List<Guid>();
+            curvePoints.Clear();
+            loftcurves.Clear();
+            loftObjsUID.Clear();
             base.onClickOculusGrip(ref vrEvent);
 
         }
