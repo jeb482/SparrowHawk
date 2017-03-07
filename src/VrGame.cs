@@ -473,10 +473,14 @@ namespace SparrowHawk
             if (e.KeyChar == 'A' || e.KeyChar == 'a')
             {
                 mScene.popInteraction();
-                controllerP = new List<Vector3>();
                 mScene.pushInteraction(new Interaction.Align(ref mScene));
             }
 
+            if (e.KeyChar == 'W' || e.KeyChar == 'w')
+            {
+                mScene.popInteraction();
+                mScene.pushInteraction(new Interaction.CreateCircle(ref mScene));
+            }
 
 
         }
