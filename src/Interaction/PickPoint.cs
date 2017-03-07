@@ -10,19 +10,27 @@ namespace SparrowHawk.Interaction
     class PickPoint : Interaction
     {
         List<Vector3> mPoints;
+        List<Matrix4> mPoses;
         public PickPoint(ref Scene s)
         {
             mScene = s;
             mPoints = null;
+            mPoses = null;
         }
 
         public PickPoint(ref Scene s, ref List<Vector3> points)
         {
             mScene = s;
             mPoints = points;
-            
+            mPoses = null;
         }
 
+        public PickPoint(ref Scene s, ref List<Matrix4> poses)
+        {
+            mScene = s;
+            mPoints = null;
+            mPoses = poses;
+        }
         protected override void onClickViveTrigger(ref VREvent_t vrEvent)
         {
             registerPositon(vrEvent.trackedDeviceIndex);
@@ -43,6 +51,11 @@ namespace SparrowHawk.Interaction
             if (mPoints != null)
             {
                 mPoints.Add(origin);
+            }
+
+            if (mPoses != null)
+            {
+                mPoses.Add(M);
             }
 
             Rhino.RhinoApp.WriteLine("RegisterPoint: " + origin.ToString());

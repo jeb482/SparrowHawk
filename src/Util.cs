@@ -334,42 +334,39 @@ namespace SparrowHawk
         /// </summary>
         /// <param name="mesh"></param>
         /// <returns></returns>
-        public static Geometry.Geometry addNormalsToMesh(Geometry.Geometry mesh)
+        public static void addNormalsToMesh(Geometry.Geometry mesh)
         {
             if (mesh.primitiveType != OpenTK.Graphics.OpenGL4.BeginMode.Triangles)
-                return null;
-
-            Geometry.Geometry newMesh = new Geometry.Geometry();
-
-            newMesh.mNumPrimitives = mesh.mNumPrimitives;
-            newMesh.primitiveType = OpenTK.Graphics.OpenGL4.BeginMode.Triangles;
-            newMesh.mGeometry = new float[3 * 3 * mesh.mNumPrimitives];
-            newMesh.mGeometryIndices = new int[3 * mesh.mNumPrimitives];
-            newMesh.mNormals = new float[3 * 3 * mesh.mNumPrimitives];
+                return;
+       
+            float [] mGeometry = new float[3 * 3 * mesh.mNumPrimitives];
+            int[] mGeometryIndices = new int[3 * mesh.mNumPrimitives];
+            float[] mNormals = new float[3 * 3 * mesh.mNumPrimitives];
 
             OpenTK.Vector3[] faceVertices = new OpenTK.Vector3[3];
             for (int f = 0; f < mesh.mNumPrimitives; f++)
             {
                 for (int v = 0; v < 3; v++)
                 {
-                    newMesh.mGeometry[9 * f + 3 * v + 0] = mesh.mGeometry[3*mesh.mGeometryIndices[3 * f + v] + 0];
-                    newMesh.mGeometry[9 * f + 3 * v + 1] = mesh.mGeometry[3*mesh.mGeometryIndices[3 * f + v] + 1];
-                    newMesh.mGeometry[9 * f + 3 * v + 2] = mesh.mGeometry[3*mesh.mGeometryIndices[3 * f + v] + 2];
-                    faceVertices[v] = new OpenTK.Vector3(newMesh.mGeometry[9 * f + 3 * v + 0], newMesh.mGeometry[9 * f + 3 * v + 1], newMesh.mGeometry[9 * f + 3 * v + 2]);
+                    mGeometry[9 * f + 3 * v + 0] = mesh.mGeometry[3*mesh.mGeometryIndices[3 * f + v] + 0];
+                    mGeometry[9 * f + 3 * v + 1] = mesh.mGeometry[3*mesh.mGeometryIndices[3 * f + v] + 1];
+                    mGeometry[9 * f + 3 * v + 2] = mesh.mGeometry[3*mesh.mGeometryIndices[3 * f + v] + 2];
+                    faceVertices[v] = new OpenTK.Vector3(mGeometry[9 * f + 3 * v + 0], mGeometry[9 * f + 3 * v + 1], mGeometry[9 * f + 3 * v + 2]);
                 }
                 OpenTK.Vector3 n = Util.calculateFaceNormal(faceVertices[0], faceVertices[1], faceVertices[2]);
                 for (int v = 0; v < 3; v++) {
-                    newMesh.mNormals[9 * f + 3 * v + 0] = n.X;
-                    newMesh.mNormals[9 * f + 3 * v + 1] = n.Y;
-                    newMesh.mNormals[9 * f + 3 * v + 2] = n.Z;
+                    mNormals[9 * f + 3 * v + 0] = n.X;
+                    mNormals[9 * f + 3 * v + 1] = n.Y;
+                    mNormals[9 * f + 3 * v + 2] = n.Z;
                 }      
             }
 
-            for (int i = 0; i < newMesh.mGeometryIndices.Count(); i++)
-                newMesh.mGeometryIndices[i] = i;
-
-
-            return newMesh;
+            for (int i = 0; i < mGeometryIndices.Count(); i++)
+                mGeometryIndices[i] = i;
+            
+            mesh.mGeometry = mGeometry;
+            mesh.mGeometryIndices = mGeometryIndices;
+            mesh.mNormals = mNormals;
         }
 
 
@@ -439,8 +436,8 @@ namespace SparrowHawk
         public static OpenTK.Vector3 solveForOffsetVector(List<OpenTK.Matrix4> matrices)
         {
             OpenTK.Vector3 x = new OpenTK.Vector3();
-            var A = MathNet.Numerics.LinearAlgebra.CreateMatrix.Dense<float>(matrices.Count*(matrices.Count - 1), 3);
-            var B = MathNet.Numerics.LinearAlgebra.CreateMatrix.Dense<float>(matrices.Count * (matrices.Count - 1), 1);
+            var A = MathNet.Numerics.LinearAlgebra.CreateMatrix.Dense<float>(matrices.Count*(matrices.Count), 3);
+            var B = MathNet.Numerics.LinearAlgebra.CreateMatrix.Dense<float>(matrices.Count * (matrices.Count), 1);
             int row = 0;
             for (int i = 0; i < matrices.Count; i++)
                 for (int j = 0; j < i; j++)

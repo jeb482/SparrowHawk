@@ -37,6 +37,7 @@ namespace SparrowHawk
         //using opencv by Eric
         List<MCvPoint3D32f> robotCallibrationPoints_cv = new List<MCvPoint3D32f>();
         List<MCvPoint3D32f> vrCallibrationPoints_cv = new List<MCvPoint3D32f>();
+        List<OpenTK.Matrix4> controllerPoses = new List<OpenTK.Matrix4>();
         Matrix<double> mVRtoRobot;
         Matrix4 glmVRtoMarker;
         byte[] inliers;
@@ -149,6 +150,7 @@ namespace SparrowHawk
             //default interaction
             if (mScene.interactionStackEmpty())
             {
+                //mScene.pushInteraction(new Interaction.PickPoint(ref mScene, ref controllerPoses));
                 mScene.pushInteraction(new Interaction.MarkingMenu(ref mScene));
                 // mScene.pushInteraction(new Interaction.CreatePlaneA(ref mScene));
                 //mScene.pushInteraction(new Interaction.CreateCylinder(ref mScene));
@@ -158,6 +160,12 @@ namespace SparrowHawk
             Interaction.Interaction current_i = mScene.peekInteraction();
             current_i.handleInput();
             current_i.draw(true);
+
+            if (controllerPoses.Count >= 4)
+            {
+                Vector3 x = Util.solveForOffsetVector(controllerPoses);
+                Rhino.RhinoApp.WriteLine("Controller offset: " + x);
+            }
 
 
 
@@ -461,6 +469,14 @@ namespace SparrowHawk
                 controllerP = new List<Vector3>();
                 mScene.pushInteraction(new Interaction.PickPoint(ref mScene, ref controllerP));
             }
+
+            if (e.KeyChar == 'A' || e.KeyChar == 'a')
+            {
+                mScene.popInteraction();
+                controllerP = new List<Vector3>();
+                mScene.pushInteraction(new Interaction.Align(ref mScene));
+            }
+
 
 
         }

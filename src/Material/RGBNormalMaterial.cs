@@ -34,7 +34,7 @@ namespace SparrowHawk.Material
             mShader.uploadAttrib<int>("indices", g.mGeometryIndices.Length, 3, 4, VertexAttribPointerType.UnsignedInt, false, ref g.mGeometryIndices, 0);
             mShader.uploadAttrib<float>("position", g.mGeometry.Count(), 3, 4, VertexAttribPointerType.Float, false, ref g.mGeometry, 0);
             if (g.mNormals == null)
-                g = Util.addNormalsToMesh(g); // TODO: I literally hate this, but it was easier than patching Eric's code.
+                Util.addNormalsToMesh(g); // TODO: I literally hate this, but it was easier than patching Eric's code.
             if (g.mNormals != null)
                 mShader.uploadAttrib<float>("normal", g.mNormals.Count(), 3, 4, VertexAttribPointerType.Float, false, ref g.mNormals, 0);
             GL.Uniform1(mShader.uniform("alpha"), mAlpha);

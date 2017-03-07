@@ -34,8 +34,7 @@ namespace SparrowHawk.Interaction
             {
                 float r, theta;
                 getViveTouchpadPoint((uint) mScene.leftControllerIdx, out r, out theta);
-                if (r > 0.1)
-                    launchInteraction(r, theta);
+                if (r > 0.1)                    launchInteraction(r, theta);
             }
         }
 
