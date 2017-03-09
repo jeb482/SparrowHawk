@@ -93,6 +93,8 @@ namespace SparrowHawk
         public char[] mDeviceClassChar = new char[Valve.VR.OpenVR.k_unMaxTrackedDeviceCount];
         public int leftControllerIdx = -1;
         public int rightControllerIdx = -1;
+        public Matrix4 mLeftControllerOffset = Util.createTranslationMatrix(0.0006068f, -.02383642f, -0.00026948f);
+        public Matrix4 mRightControllerOffset = Util.createTranslationMatrix(-0.0006068f, -.02383642f, -0.00026948f);
 
         // For rhino positioning
         public Rhino.RhinoDoc rhinoDoc;

@@ -139,9 +139,9 @@ namespace SparrowHawk
             }
 
             if (mScene.leftControllerIdx > 0)
-                mScene.leftControllerNode.transform = mScene.mDevicePose[mScene.leftControllerIdx];
+                mScene.leftControllerNode.transform = mScene.mDevicePose[mScene.leftControllerIdx] * mScene.mLeftControllerOffset;
             if (mScene.rightControllerIdx > 0)
-                mScene.rightControllerNode.transform = mScene.mDevicePose[mScene.rightControllerIdx];
+                mScene.rightControllerNode.transform = mScene.mDevicePose[mScene.rightControllerIdx] * mScene.mRightControllerOffset;
         }
 
         protected void handleInteractions()
@@ -150,8 +150,8 @@ namespace SparrowHawk
             //default interaction
             if (mScene.interactionStackEmpty())
             {
-                //mScene.pushInteraction(new Interaction.PickPoint(ref mScene, ref controllerPoses));
-                mScene.pushInteraction(new Interaction.MarkingMenu(ref mScene));
+                mScene.pushInteraction(new Interaction.PickPoint(ref mScene, ref controllerPoses));
+                //mScene.pushInteraction(new Interaction.MarkingMenu(ref mScene));
                 // mScene.pushInteraction(new Interaction.CreatePlaneA(ref mScene));
                 //mScene.pushInteraction(new Interaction.CreateCylinder(ref mScene));
                 //mScene.mInteractionStack.Push(new Interaction.Stroke(ref mScene));

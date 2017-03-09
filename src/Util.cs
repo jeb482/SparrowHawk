@@ -439,34 +439,37 @@ namespace SparrowHawk
             var A = MathNet.Numerics.LinearAlgebra.CreateMatrix.Dense<float>(matrices.Count*(matrices.Count), 3);
             var B = MathNet.Numerics.LinearAlgebra.CreateMatrix.Dense<float>(matrices.Count * (matrices.Count), 1);
             int row = 0;
-            for (int i = 0; i < matrices.Count; i++)
-                for (int j = 0; j < i; j++)
+            for (int i = 0; i < matrices.Count-1; i++)
                 {
-                    A.SetRow(row, new float[] {matrices.ElementAt(i).M11 - matrices.ElementAt(j).M11,
-                                               matrices.ElementAt(i).M12 - matrices.ElementAt(j).M12,
-                                               matrices.ElementAt(i).M13 - matrices.ElementAt(j).M13});
+                    A.SetRow(row, new float[] {matrices.ElementAt(i).M11 - matrices.ElementAt(i+1).M11,
+                                               matrices.ElementAt(i).M12 - matrices.ElementAt(i+1).M12,
+                                               matrices.ElementAt(i).M13 - matrices.ElementAt(i+1).M13});
 
-                    A.SetRow(row+1, new float[] {matrices.ElementAt(i).M21 - matrices.ElementAt(j).M21,
-                                                 matrices.ElementAt(i).M22 - matrices.ElementAt(j).M22,
-                                                 matrices.ElementAt(i).M23 - matrices.ElementAt(j).M23});
+                    A.SetRow(row+1, new float[] {matrices.ElementAt(i).M21 - matrices.ElementAt(i+1).M21,
+                                                 matrices.ElementAt(i).M22 - matrices.ElementAt(i+1).M22,
+                                                 matrices.ElementAt(i).M23 - matrices.ElementAt(i+1).M23});
 
-                    A.SetRow(row+2, new float[] {matrices.ElementAt(i).M31 - matrices.ElementAt(j).M31,
-                                                 matrices.ElementAt(i).M32 - matrices.ElementAt(j).M32, 
-                                                 matrices.ElementAt(i).M33 - matrices.ElementAt(j).M33});
+                    A.SetRow(row+2, new float[] {matrices.ElementAt(i).M31 - matrices.ElementAt(i+1).M31,
+                                                 matrices.ElementAt(i).M32 - matrices.ElementAt(i+1).M32, 
+                                                 matrices.ElementAt(i).M33 - matrices.ElementAt(i+1).M33});
 
-                    B.SetRow(row, new float[] { matrices.ElementAt(j).M14 - matrices.ElementAt(i).M14 });
-                    B.SetRow(row+1, new float[] { matrices.ElementAt(j).M24 - matrices.ElementAt(i).M24 });
-                    B.SetRow(row+2, new float[] { matrices.ElementAt(j).M34 - matrices.ElementAt(i).M34 });
+                    B.SetRow(row, new float[] { matrices.ElementAt(i+1).M14 - matrices.ElementAt(i).M14 });
+                    B.SetRow(row+1, new float[] { matrices.ElementAt(i+1).M24 - matrices.ElementAt(i).M24 });
+                    B.SetRow(row+2, new float[] { matrices.ElementAt(i+1).M34 - matrices.ElementAt(i).M34 });
                     row += 3;
                 }
             var qr = A.QR();
-            var matX = qr.R.Solve(qr.Q * B);
+            var matX = qr.R.Solve(qr.Q.Transpose() * B);
             x.X = matX[0, 0];
             x.Y = matX[1, 0];
             x.Z = matX[2, 0];
             return x;
         }
 
+        public static OpenTK.Matrix4 createTranslationMatrix(float x, float y, float z)
+        {
+            return new OpenTK.Matrix4(1, 0, 0, x, 0, 1, 0, y, 0, 0, 1, z, 0, 0, 0, 1);
+        }
 
     }
 }
