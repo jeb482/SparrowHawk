@@ -150,10 +150,10 @@ namespace SparrowHawk
             //default interaction
             if (mScene.interactionStackEmpty())
             {
-                mScene.pushInteraction(new Interaction.PickPoint(ref mScene, ref controllerPoses));
+                //mScene.pushInteraction(new Interaction.PickPoint(ref mScene, ref controllerPoses));
                 //mScene.pushInteraction(new Interaction.MarkingMenu(ref mScene));
                 // mScene.pushInteraction(new Interaction.CreatePlaneA(ref mScene));
-                //mScene.pushInteraction(new Interaction.CreateCylinder(ref mScene));
+                mScene.pushInteraction(new Interaction.CreateCylinder(ref mScene));
                 //mScene.mInteractionStack.Push(new Interaction.Stroke(ref mScene));
             }
 
@@ -231,10 +231,12 @@ namespace SparrowHawk
             {
                 case SparrowHawkSignal.ESparrowHawkSigalType.InitType:
                     if (s.data.Length >= 3)
-                    {
+                    {                     
                         //Vector3 robotPoint = new Vector3(s.data[0] - 8, s.data[1], s.data[2] - 240);
                         Vector3 robotPoint = new Vector3(s.data[0], s.data[1], s.data[2]);
+                        robotPoint /= 1000;
                         robotCallibrationPoints.Add(robotPoint);
+                        Rhino.RhinoApp.WriteLine("add robotPoint: " + robotPoint.ToString());
                         if (mScene.leftControllerIdx < 0)
                             break;
                         /*
@@ -259,10 +261,12 @@ namespace SparrowHawk
 
         private void calibrationTest()
         {
-            Vector3 vrPoint = Util.getTranslationVector3(mScene.mDevicePose[mScene.leftControllerIdx]);
+  
+            Vector3 vrPoint = Util.getTranslationVector3(Util.getControllerTipPosition(ref mScene, true));
             vrCallibrationPoints.Add(vrPoint);
+            Rhino.RhinoApp.WriteLine("add vrCallibrationPoints: " + vrPoint.ToString());
             Util.MarkPoint(ref mScene.staticGeometry, vrPoint, 1, 1, 0);
-            if (robotCallibrationPoints.Count >= 8)
+            if (vrCallibrationPoints.Count == 8)
             {
                 Util.solveForAffineTransformOpenCV(vrCallibrationPoints, robotCallibrationPoints, ref mScene.vrToRobot);
                 foreach (Vector3 v in robotCallibrationPoints)
@@ -270,7 +274,11 @@ namespace SparrowHawk
                     Vector4 v4 = new Vector4(v.X, v.Y, v.Z, 1);
                     v4 = mScene.vrToRobot.Inverted() * v4;
                     Util.MarkPoint(ref mScene.staticGeometry, new Vector3(v4.X, v4.Y, v4.Z), 0, 1, 0);
+                   
                 }
+                Rhino.RhinoApp.WriteLine(mScene.vrToRobot.ToString());
+                robotCallibrationPoints.Clear();
+                vrCallibrationPoints.Clear();
             }
         }
 
@@ -480,6 +488,12 @@ namespace SparrowHawk
             {
                 mScene.popInteraction();
                 mScene.pushInteraction(new Interaction.CreateCircle(ref mScene));
+            }
+
+            if (e.KeyChar == 'O' || e.KeyChar == 'o')
+            {
+                mScene.popInteraction();
+                mScene.pushInteraction(new Interaction.CreateCylinder(ref mScene));
             }
 
 

@@ -227,6 +227,14 @@ namespace SparrowHawk
             return p;
         }
 
+        public static OpenTK.Vector3 platformToVR(ref Scene scene, OpenTK.Vector3 p)
+        {
+            p = Util.transformPoint(scene.robotToPlatform.Inverted(), p);
+            p = Util.transformPoint(scene.vrToRobot.Inverted(), p);
+            //p *= 1000;
+            return p;
+        }
+
         public static Rhino.Geometry.Vector3f openTkToRhinoVector(OpenTK.Vector3 v)
         {
             return new Rhino.Geometry.Vector3f(v.X, v.Y, v.Z);
@@ -380,6 +388,11 @@ namespace SparrowHawk
                                                               0, 0, -1, 0,
                                                               0, 1, 0, 0,
                                                               0, 0, 0, 1);
+        //x_robot = -z_gl, y_robot = X_gl, Z_robot = -Y_gl
+        public static OpenTK.Matrix4 mRobotToGL = new OpenTK.Matrix4(0, 1, 0, 0,
+                                                             0, 0, -1, 0,
+                                                             -1, 0, 0, 0,
+                                                             0, 0, 0, 1);
 
         public static void addSceneNode(ref Scene mScene, Brep brep, ref Material.Material mesh_m)
         {
@@ -395,13 +408,14 @@ namespace SparrowHawk
                 Guid guid = mScene.rhinoDoc.Objects.AddBrep(brep);
                 mScene.rhinoDoc.Views.Redraw();
 
-                Geometry.Geometry meshStroke_g = new Geometry.RhinoMesh();
+                Geometry.Geometry meshStroke_g = new Geometry.RhinoMesh(ref mScene);
                 
                 ((Geometry.RhinoMesh)meshStroke_g).setMesh(ref base_mesh);
                 
-                SceneNode ccMeshSN = new SceneNode("BrepMesh", ref meshStroke_g, ref mesh_m);
+                SceneNode ccMeshSN = new SceneNode("BrepMesh", ref meshStroke_g, ref mesh_m);            
                 mScene.staticGeometry.add(ref ccMeshSN);
-              
+                
+                
 
                 //add reference SceneNode to brep and vice versa
                 mScene.brepToSceneNodeDic.Add(guid, ccMeshSN);
@@ -469,6 +483,15 @@ namespace SparrowHawk
         public static OpenTK.Matrix4 createTranslationMatrix(float x, float y, float z)
         {
             return new OpenTK.Matrix4(1, 0, 0, x, 0, 1, 0, y, 0, 0, 1, z, 0, 0, 0, 1);
+        }
+
+        public static OpenTK.Matrix4 getControllerTipPosition(ref Scene scene, bool left)
+        {
+            if (left)
+            {
+                return scene.mDevicePose[scene.leftControllerIdx] * scene.mLeftControllerOffset;
+            }
+            return scene.mDevicePose[scene.rightControllerIdx] * scene.mRightControllerOffset;
         }
 
     }

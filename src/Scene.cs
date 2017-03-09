@@ -103,7 +103,13 @@ namespace SparrowHawk
                                                      0,  0, -1, 0, 
                                                      0,  0,  0, 1);
         public Matrix4 platformRotation = new Matrix4(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1);
-        public Matrix4 vrToRobot = new Matrix4(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1);
+        //public Matrix4 vrToRobot = new Matrix4(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1);
+//(-1.004264, 0.01445435, -0.07111868, -0.05827864)
+//(0.08518852, -0.02587833, -1.022716, 0.1467833)
+//(-0.01968208, -1.006881, 0.01732827, 0.9705337)
+//(0, 0, 0, 1)
+        public Matrix4 vrToRobot = new Matrix4(-1.004264f, 0.01445435f, -0.07111868f, -0.05827864f, 0.08518852f, -0.02587833f, -1.022716f, 0.1467833f,
+                                                - 0.01968208f, -1.006881f, 0.01732827f, 0.9705337f, 0, 0, 0, 1);
 
         // Interactions
         private Stack<Interaction.Interaction> mInteractionStack = new Stack<Interaction.Interaction>();
