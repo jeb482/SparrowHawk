@@ -31,7 +31,7 @@ namespace SparrowHawk.Interaction
             Rhino.Geometry.Point3d center_point = Util.openTkToRhinoPoint(Util.vrToPlatformPoint(ref mScene,origin));
             Rhino.Geometry.Vector3d zaxis = Util.openTkToRhinoVector(Util.vrToPlatformVector(ref mScene,orientation));
             //Rhino.Geometry.Plane plane = new Rhino.Geometry.Plane(center_point, zaxis);
-            Rhino.Geometry.Plane plane = new Rhino.Geometry.Plane(center_point, new Rhino.Geometry.Vector3d(0,0,1));
+            Rhino.Geometry.Plane plane = new Rhino.Geometry.Plane(center_point, Util.openTkToRhinoVector(Util.vrToPlatformVector(ref mScene, new OpenTK.Vector3(0, 1, 0))));
             Rhino.Geometry.Circle circle = new Rhino.Geometry.Circle(plane, radius);
             Rhino.Geometry.Cylinder cylinder = new Rhino.Geometry.Cylinder(circle, zaxis.Length);
             Rhino.Geometry.Brep brep = cylinder.ToBrep(true, true);
