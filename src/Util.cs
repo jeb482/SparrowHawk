@@ -243,6 +243,23 @@ namespace SparrowHawk
             return p;
         }
 
+        public static OpenTK.Matrix4 platformToVR(ref Scene scene)
+        {
+
+            OpenTK.Matrix4 m = OpenTK.Matrix4.CreateScale(0.001f);
+            if (scene.vrToRobot.Equals(OpenTK.Matrix4.Identity))
+            {
+                m = Util.mRhinoToGL * m;
+            }
+            else
+            {
+                m = scene.vrToRobot.Inverted() * scene.robotToPlatform.Inverted() * m;
+            }
+
+
+            return m;
+        }
+
         public static OpenTK.Vector3 platformToVRPoint(ref Scene scene, OpenTK.Vector3 p)
         {
             p /= 1000;

@@ -54,7 +54,8 @@ namespace SparrowHawk.Interaction
             {
 
                 //Watchout!! since the bug of transformation, we need to remove currentTransform first here
-                OpenTK.Matrix4 transMRhino = Util.mGLToRhino * (selectedSN.transform * currentTransform.Inverted()) * Util.mRhinoToGL;
+                //OpenTK.Matrix4 transMRhino = Util.mGLToRhino * (selectedSN.transform * currentTransform.Inverted()) * Util.mRhinoToGL;
+                OpenTK.Matrix4 transMRhino = Util.platformToVR(ref mScene).Inverted() * (selectedSN.transform * currentTransform.Inverted()) * Util.platformToVR(ref mScene);
                 Transform transM = new Transform();
                 for (int row = 0; row < 4; row++)
                 {

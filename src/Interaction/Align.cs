@@ -69,7 +69,8 @@ namespace SparrowHawk.Interaction
                 sceneNodes[0].transform = transToTarget * rotM * transToOrigin * currentTransform;
 
                 //Watchout!! since the bug of transformation, we need to remove currentTransform first here
-                OpenTK.Matrix4 transMRhino = Util.mGLToRhino * (sceneNodes[0].transform * currentTransform.Inverted()) * Util.mRhinoToGL;
+                //OpenTK.Matrix4 transMRhino = Util.mGLToRhino * (sceneNodes[0].transform * currentTransform.Inverted()) * Util.mRhinoToGL;
+                OpenTK.Matrix4 transMRhino = Util.platformToVR(ref mScene).Inverted() * (sceneNodes[0].transform * currentTransform.Inverted()) * Util.platformToVR(ref mScene);
                 Transform transM = new Transform();
                 for (int row = 0; row < 4; row++)
                 {
@@ -114,10 +115,13 @@ namespace SparrowHawk.Interaction
                 //Ray3d ray = new Ray3d(new Point3d(controller_p.X, -controller_p.Z, controller_p.Y), new Vector3d(direction.X, -direction.Z, direction.Y));
 
                 //TOOD-use Utli function
-                Point3d controller_p = Util.openTkToRhinoPoint(Util.vrToPlatformPoint(ref mScene, new OpenTK.Vector3(0, 0, 0)));
-                Point3d controller_pZ = Util.openTkToRhinoPoint(Util.vrToPlatformPoint(ref mScene, new OpenTK.Vector3(0, 0, -1000)));
-                Vector3d direction = new Vector3d(controller_pZ.X - controller_p.X, controller_pZ.Y - controller_p.Y, controller_pZ.Z - controller_p.Z);
-                Ray3d ray = new Ray3d(controller_p, direction);
+                //TOOD-use Utli function
+                OpenTK.Vector4 controller_p = Util.getControllerTipPosition(ref mScene, primaryDeviceIndex == mScene.leftControllerIdx) * new OpenTK.Vector4(0, 0, 0, 1);
+                OpenTK.Vector4 controller_pZ = Util.getControllerTipPosition(ref mScene, primaryDeviceIndex == mScene.leftControllerIdx) * new OpenTK.Vector4(0, 0, -1, 1);
+                Point3d controller_pRhino = Util.openTkToRhinoPoint(Util.vrToPlatformPoint(ref mScene, new OpenTK.Vector3(controller_p.X, controller_p.Y, controller_p.Z)));
+                Point3d controller_pZRhin = Util.openTkToRhinoPoint(Util.vrToPlatformPoint(ref mScene, new OpenTK.Vector3(controller_pZ.X, controller_pZ.Y, controller_pZ.Z)));
+                Vector3d direction = new Vector3d(controller_pZRhin.X - controller_pRhino.X, controller_pZRhin.Y - controller_pRhino.Y, controller_pZRhin.Z - controller_pRhino.Z);
+                Ray3d ray = new Ray3d(controller_pRhino, direction);
 
                 Rhino.DocObjects.ObjectEnumeratorSettings settings = new Rhino.DocObjects.ObjectEnumeratorSettings();
                 settings.ObjectTypeFilter = Rhino.DocObjects.ObjectType.Brep;

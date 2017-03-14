@@ -44,17 +44,21 @@ namespace SparrowHawk.Interaction
                 //Ray3d ray = new Ray3d(new Point3d(controller_p.X, -controller_p.Z, controller_p.Y), new Vector3d(direction.X, -direction.Z, direction.Y));
 
                 //TOOD-use Utli function
-                Point3d controller_p = Util.openTkToRhinoPoint(Util.vrToPlatformPoint(ref mScene, new OpenTK.Vector3(0, 0, 0)));
-                Point3d controller_pZ = Util.openTkToRhinoPoint(Util.vrToPlatformPoint(ref mScene, new OpenTK.Vector3(0, 0, -1)));
-                Vector3d direction = new Vector3d(controller_pZ.X - controller_p.X, controller_pZ.Y - controller_p.Y, controller_pZ.Z - controller_p.Z);
-                Ray3d ray = new Ray3d(controller_p, direction);
+                OpenTK.Vector4 controller_p = Util.getControllerTipPosition(ref mScene, primaryDeviceIndex == mScene.leftControllerIdx) * new OpenTK.Vector4(0, 0, 0, 1);
+                OpenTK.Vector4 controller_pZ = Util.getControllerTipPosition(ref mScene, primaryDeviceIndex == mScene.leftControllerIdx) * new OpenTK.Vector4(0, 0, -1, 1);
+                Point3d controller_pRhino = Util.openTkToRhinoPoint(Util.vrToPlatformPoint(ref mScene, new OpenTK.Vector3(controller_p.X, controller_p.Y, controller_p.Z)));
+                Point3d controller_pZRhin = Util.openTkToRhinoPoint(Util.vrToPlatformPoint(ref mScene, new OpenTK.Vector3(controller_pZ.X, controller_pZ.Y, controller_pZ.Z)));
+
+                Vector3d direction = new Vector3d(controller_pZRhin.X - controller_pRhino.X, controller_pZRhin.Y - controller_pRhino.Y, controller_pZRhin.Z - controller_pRhino.Z);
+                Ray3d ray = new Ray3d(controller_pRhino, direction);
 
                 Rhino.DocObjects.ObjectEnumeratorSettings settings = new Rhino.DocObjects.ObjectEnumeratorSettings();
                 settings.ObjectTypeFilter = Rhino.DocObjects.ObjectType.Brep;
                 foreach (Rhino.DocObjects.RhinoObject rhObj in mScene.rhinoDoc.Objects.GetObjectList(settings))
                 {
                     //grip selection
-                    if (rhObj.Geometry.GetBoundingBox(false).Contains(controller_p))
+                    //if (rhObj.Geometry.GetBoundingBox(false).Contains(controller_p))
+                    if (rhObj.Geometry.GetBoundingBox(false).Contains(new Point3d(controller_p.X, -controller_p.Z, controller_p.Y)))
                     {
                         selectedSN = mScene.brepToSceneNodeDic[rhObj.Id];
                         selectedRhObj = rhObj;
