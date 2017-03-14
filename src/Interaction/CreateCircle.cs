@@ -36,10 +36,9 @@ namespace SparrowHawk.Interaction
         protected void buildCircle()
         {
 
-            //Rhino.Geometry.Point3d center_point = Util.openTkToRhinoPoint(Util.vrToPlatformPoint(ref mScene, origin));
-            Rhino.Geometry.Point3d center_point = Util.openTkToRhinoPoint(Util.transformPoint(Util.mGLToRhino, origin));
+            Rhino.Geometry.Point3d center_point = Util.openTkToRhinoPoint(Util.vrToPlatformPoint(ref mScene, origin));
+            //xy plane as default plane
             Rhino.Geometry.Plane plane = new Rhino.Geometry.Plane(center_point, new Rhino.Geometry.Vector3d(0,0,1));
-
             Rhino.Geometry.Circle circle = new Rhino.Geometry.Circle(plane, radius);// *1000);
             circleCurve = circle.ToNurbsCurve();
             Brep[] shapes = Brep.CreatePlanarBreps(circleCurve);
@@ -56,19 +55,16 @@ namespace SparrowHawk.Interaction
             switch (mState)
             {
                 case State.PickOrigin:
-                    origin = Util.getTranslationVector3(mScene.mDevicePose[trackedDeviceIndex]);
+                    origin = Util.getTranslationVector3(Util.getControllerTipPosition(ref mScene, trackedDeviceIndex == mScene.leftControllerIdx));
                     mState = State.PickRadius;
                     mPrimaryDevice = trackedDeviceIndex;
                     break;
                 case State.PickRadius:
                     if (mPrimaryDevice != trackedDeviceIndex)
                         return;
-                    //TODO: change to platform
-                    //OpenTK.Vector3 r = Util.vrToPlatformPoint(ref mScene, Util.getTranslationVector3(mScene.mDevicePose[trackedDeviceIndex]));
-                    //OpenTK.Vector3 o = Util.vrToPlatformPoint(ref mScene, origin);
-                    OpenTK.Vector3 r = Util.transformPoint(Util.mGLToRhino, Util.getTranslationVector3(mScene.mDevicePose[trackedDeviceIndex]));
-                    OpenTK.Vector3 o = Util.transformPoint(Util.mGLToRhino, origin);
 
+                    OpenTK.Vector3 r = Util.vrToPlatformPoint(ref mScene, Util.getTranslationVector3(Util.getControllerTipPosition(ref mScene, trackedDeviceIndex == mScene.leftControllerIdx)));
+                    OpenTK.Vector3 o = Util.vrToPlatformPoint(ref mScene, origin);
                     radius = (float)Math.Sqrt(Math.Pow((r.X - o.X), 2) + Math.Pow((r.Y - o.Y), 2) + Math.Pow((r.Z - o.Z), 2));
                     buildCircle();
                     mState = State.PickOrigin;

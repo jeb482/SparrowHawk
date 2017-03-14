@@ -32,7 +32,7 @@ namespace SparrowHawk.Interaction
             {
                 return;
             }
-            selectedSN.transform = mScene.mDevicePose[primaryDeviceIndex] * mVRtocontroller * currentTransform;
+            selectedSN.transform = Util.getControllerTipPosition(ref mScene, primaryDeviceIndex == mScene.leftControllerIdx) * mVRtocontroller * currentTransform;
 
         }
 
@@ -43,7 +43,7 @@ namespace SparrowHawk.Interaction
             if (currentState == State.SELECTION)
             {
                 currentTransform = selectedSN.transform;
-                mVRtocontroller = mScene.mDevicePose[primaryDeviceIndex].Inverted();
+                mVRtocontroller = Util.getControllerTipPosition(ref mScene, primaryDeviceIndex == mScene.leftControllerIdx).Inverted();
             }
         }
 

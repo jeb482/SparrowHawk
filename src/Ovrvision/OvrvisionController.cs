@@ -475,6 +475,7 @@ namespace SparrowHawk.Ovrvision
             if (vr_points.Count < 8)
             {
                 // find the pose of the controllers
+                /*
                 for (uint nDevice = OpenVR.k_unTrackedDeviceIndex_Hmd + 1; nDevice < OpenVR.k_unMaxTrackedDeviceCount; ++nDevice)
                 {
                     if (!mHMD.IsTrackedDeviceConnected(nDevice))
@@ -491,7 +492,12 @@ namespace SparrowHawk.Ovrvision
                     center = mControllerPose * new Vector4(0, 0, 0, 1);
                     Rhino.RhinoApp.WriteLine(center.ToString());
                 }
-
+                */
+                //only use left controller for the calibration
+                Matrix4 mControllerPose = mScene.leftControllerNode.transform;
+                center = mControllerPose * new Vector4(0, 0, 0, 1);
+                Rhino.RhinoApp.WriteLine(center.ToString());
+                
                 vr_points.Add(new MCvPoint3D32f(center.X, center.Y, center.Z));
                 calib_status = 0;
             }
@@ -689,6 +695,7 @@ namespace SparrowHawk.Ovrvision
             //testing drawing at the controller position, mEyeProjLeft * mEyePosLeft * mScene.mHMDPose * mControllerPose;
             // find the pose of the controllers
             Matrix4 glControllerPose = new Matrix4();
+            /*
             for (uint nDevice = OpenVR.k_unTrackedDeviceIndex_Hmd + 1; nDevice < OpenVR.k_unMaxTrackedDeviceCount; ++nDevice)
             {
                 if (!mHMD.IsTrackedDeviceConnected(nDevice))
@@ -705,6 +712,9 @@ namespace SparrowHawk.Ovrvision
                 Matrix4.Transpose(ref mControllerPose, out glControllerPose);
 
             }
+            */
+            Matrix4 mControllerPose = mScene.leftControllerNode.transform;
+            Matrix4.Transpose(ref mControllerPose, out glControllerPose);
 
             Matrix4 vp = new Matrix4();          
             if (eye == 0)

@@ -74,7 +74,8 @@ namespace SparrowHawk.Interaction
                 return;
             }
 
-            Vector3 pos = Util.getTranslationVector3(mScene.mDevicePose[primaryDeviceIndex]);
+            //Vector3 pos = Util.getTranslationVector3(mScene.mDevicePose[primaryDeviceIndex]);
+            Vector3 pos = Util.getTranslationVector3(Util.getControllerTipPosition(ref mScene, primaryDeviceIndex == mScene.leftControllerIdx));
             ((Geometry.GeometryStroke)stroke_g).addPoint(pos);
 
             if (((Geometry.GeometryStroke)stroke_g).mNumPrimitives == 1)

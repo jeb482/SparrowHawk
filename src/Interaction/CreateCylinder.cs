@@ -27,26 +27,19 @@ namespace SparrowHawk.Interaction
         {
             if (orientation.Length < .000001)
                 return;
+            //vrToPlatformPoint did the unit conversion as well
             Rhino.Geometry.Point3d center_point = Util.openTkToRhinoPoint(Util.vrToPlatformPoint(ref mScene,origin));
-            center_point *= 1000;
-            Rhino.Geometry.Vector3d zaxis = Util.openTkToRhinoVector(Util.vrToPlatformVector(ref mScene,orientation));//*1000);
+            Rhino.Geometry.Vector3d zaxis = Util.openTkToRhinoVector(Util.vrToPlatformVector(ref mScene,orientation));
             //Rhino.Geometry.Plane plane = new Rhino.Geometry.Plane(center_point, zaxis);
             Rhino.Geometry.Plane plane = new Rhino.Geometry.Plane(center_point, new Rhino.Geometry.Vector3d(0,0,1));
-
-            Rhino.Geometry.Circle circle = new Rhino.Geometry.Circle(plane, radius*1000);// *1000);
-            Rhino.Geometry.Cylinder cylinder = new Rhino.Geometry.Cylinder(circle, zaxis.Length*1000);
+            Rhino.Geometry.Circle circle = new Rhino.Geometry.Circle(plane, radius);
+            Rhino.Geometry.Cylinder cylinder = new Rhino.Geometry.Cylinder(circle, zaxis.Length);
             Rhino.Geometry.Brep brep = cylinder.ToBrep(true, true);
-
+            
             //render in VR
             Material.Material mesh_m = new Material.RGBNormalMaterial(1);
-            Util.addSceneNode(ref mScene, brep, ref mesh_m);
+            Util.addSceneNodePrint(ref mScene, brep, ref mesh_m);
 
-            //var normal = Util.openTkToRhinoVector(Util.vrToPlatformVector(ref mScene, orientation).Normalized());
-            //var circle = new Rhino.Geometry.Circle(new Rhino.Geometry.Plane(Util.openTkToRhinoPoint(Util.vrToPlatformPoint(ref mScene, origin)), normal), radius*1000);
-            //var cyl = new Rhino.Geometry.Cylinder(circle, orientation.Length * 1000);
-            //var brep = cyl.ToBrep(true, true);
-            //mScene.rhinoDoc.Objects.AddBrep(brep);
-            //mScene.rhinoDoc.Views.Redraw();
 
         }
 

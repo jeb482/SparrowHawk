@@ -108,10 +108,16 @@ namespace SparrowHawk.Interaction
             primaryDeviceIndex = vrEvent.trackedDeviceIndex;
             if (currentState == State.READY)
             {
-                OpenTK.Vector4 controller_p = mScene.mDevicePose[primaryDeviceIndex] * new OpenTK.Vector4(0, 0, 0, 1);
-                OpenTK.Vector4 controller_pZ = mScene.mDevicePose[primaryDeviceIndex] * new OpenTK.Vector4(0, 0, -1000, 1);
-                OpenTK.Vector3 direction = new OpenTK.Vector3(controller_pZ.X - controller_p.X, controller_pZ.Y - controller_p.Y, controller_pZ.Z - controller_p.Z); // -y_rhino = z_gl, z_rhino = y_gl
-                Ray3d ray = new Ray3d(new Point3d(controller_p.X, -controller_p.Z, controller_p.Y), new Vector3d(direction.X, -direction.Z, direction.Y));
+                //OpenTK.Vector4 controller_p = Util.getControllerTipPosition(ref mScene, primaryDeviceIndex == mScene.leftControllerIdx) * new OpenTK.Vector4(0, 0, 0, 1);
+                //OpenTK.Vector4 controller_pZ = Util.getControllerTipPosition(ref mScene, primaryDeviceIndex == mScene.leftControllerIdx) * new OpenTK.Vector4(0, 0, -1000, 1);
+                //OpenTK.Vector3 direction = new OpenTK.Vector3(controller_pZ.X - controller_p.X, controller_pZ.Y - controller_p.Y, controller_pZ.Z - controller_p.Z); // -y_rhino = z_gl, z_rhino = y_gl
+                //Ray3d ray = new Ray3d(new Point3d(controller_p.X, -controller_p.Z, controller_p.Y), new Vector3d(direction.X, -direction.Z, direction.Y));
+
+                //TOOD-use Utli function
+                Point3d controller_p = Util.openTkToRhinoPoint(Util.vrToPlatformPoint(ref mScene, new OpenTK.Vector3(0, 0, 0)));
+                Point3d controller_pZ = Util.openTkToRhinoPoint(Util.vrToPlatformPoint(ref mScene, new OpenTK.Vector3(0, 0, -1000)));
+                Vector3d direction = new Vector3d(controller_pZ.X - controller_p.X, controller_pZ.Y - controller_p.Y, controller_pZ.Z - controller_p.Z);
+                Ray3d ray = new Ray3d(controller_p, direction);
 
                 Rhino.DocObjects.ObjectEnumeratorSettings settings = new Rhino.DocObjects.ObjectEnumeratorSettings();
                 settings.ObjectTypeFilter = Rhino.DocObjects.ObjectType.Brep;
@@ -132,11 +138,11 @@ namespace SparrowHawk.Interaction
                             if (((Brep)rhObj.Geometry).Faces[0].OrientationIsReversed)
                                 normal.Reverse();
 
-                            OpenTK.Vector3 normalV = Util.transformVec(Util.mRhinoToGL, new OpenTK.Vector3((float)normal.X, (float)normal.Y, (float)normal.Z));
+                            //OpenTK.Vector3 normalV = Util.transformVec(Util.mRhinoToGL, new OpenTK.Vector3((float)normal.X, (float)normal.Y, (float)normal.Z));
+                            OpenTK.Vector3 normalV = Util.platformToVRVec(ref mScene, new OpenTK.Vector3((float)normal.X, (float)normal.Y, (float)normal.Z));
                             normalV.Normalize();
                             vectors.Add(normalV);
-
-                            OpenTK.Vector3 snapP = Util.transformPoint(Util.mRhinoToGL, new OpenTK.Vector3((float)rayIntersections[0].X, (float)rayIntersections[0].Y, (float)rayIntersections[0].Z));
+                            OpenTK.Vector3 snapP = Util.platformToVRPoint(ref mScene, new OpenTK.Vector3((float)rayIntersections[0].X, (float)rayIntersections[0].Y, (float)rayIntersections[0].Z));
 
                             snapPoints.Add(snapP);
                             Rhino.RhinoApp.WriteLine(string.Format("Surface normal at uv({0:f},{1:f}) = ({2:f},{3:f},{4:f})", u, v, normal.X, normal.Y, normal.Z));

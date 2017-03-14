@@ -31,6 +31,7 @@ namespace SparrowHawk
 
         // Callibration
         List<Vector3> robotCallibrationPoints = new List<Vector3>();
+        List<Vector3> robotCallibrationPointsTest = new List<Vector3>();
         List<Vector3> vrCallibrationPoints = new List<Vector3>();
         //Testing controller origins
         List<Vector3> controllerP = new List<Vector3>();
@@ -239,21 +240,8 @@ namespace SparrowHawk
                         Rhino.RhinoApp.WriteLine("add robotPoint: " + robotPoint.ToString());
                         if (mScene.leftControllerIdx < 0)
                             break;
-                        /*
-                        Vector3 vrPoint = Util.getTranslationVector3(mScene.mDevicePose[mScene.leftControllerIdx]);
-                        vrCallibrationPoints.Add(vrPoint);
-                        Util.MarkPoint(ref mScene.staticGeometry, vrPoint, 1, 1, 0);
-                        if (robotCallibrationPoints.Count >= 8)
-                        {
-                            Util.solveForAffineTransformOpenCV(vrCallibrationPoints, robotCallibrationPoints, ref mScene.vrToRobot);
-                            foreach (Vector3 v in robotCallibrationPoints)
-                            {
-                                Vector4 v4 = new Vector4(v.X, v.Y, v.Z, 1);
-                                v4 = mScene.vrToRobot.Inverted() * v4;
-                                Util.MarkPoint(ref mScene.staticGeometry, new Vector3(v4.X, v4.Y, v4.Z), 0, 1, 0);
-                            }
-                        }
-                        */
+                        //adding vrCallibrationPoints by pressing v
+                        //calibrationTest();
                     }
                     break;
             }
@@ -266,8 +254,13 @@ namespace SparrowHawk
             vrCallibrationPoints.Add(vrPoint);
             Rhino.RhinoApp.WriteLine("add vrCallibrationPoints: " + vrPoint.ToString());
             Util.MarkPoint(ref mScene.staticGeometry, vrPoint, 1, 1, 0);
-            if (vrCallibrationPoints.Count == 8)
+            if (vrCallibrationPoints.Count == 11)
             {
+                //ADD 3 POINTS ON THE XY-PLANE
+                robotCallibrationPoints.Add(new Vector3(0, 0, 0));
+                robotCallibrationPoints.Add(new Vector3(0, 30, 0));
+                robotCallibrationPoints.Add(new Vector3(-50, 0, 0));
+
                 Util.solveForAffineTransformOpenCV(vrCallibrationPoints, robotCallibrationPoints, ref mScene.vrToRobot);
                 foreach (Vector3 v in robotCallibrationPoints)
                 {
@@ -279,6 +272,7 @@ namespace SparrowHawk
                 Rhino.RhinoApp.WriteLine(mScene.vrToRobot.ToString());
                 robotCallibrationPoints.Clear();
                 vrCallibrationPoints.Clear();
+
             }
         }
 
@@ -370,11 +364,13 @@ namespace SparrowHawk
             point.transform = new Matrix4(1, 0, 0, 0, 0, 1, 0, 1, 0, 0, 1, 0, 0, 0, 0, 1);
 
             // Left
+            //g = new Geometry.Geometry("C:/workspace/Kestrel/resources/meshes/bunny.obj");
+            //m = new Material.RGBNormalMaterial(1);
             g = new Geometry.PointMarker(new Vector3(0, 0, 0));
             m = new Material.SingleColorMaterial(1, 0, 0, 1);
             point = new SceneNode("Left Cursor", ref g, ref m);
             mScene.leftControllerNode.add(ref point);
-            point.transform = new Matrix4(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1);
+            point.transform = new Matrix4(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1);//mScene.mLeftControllerOffset;
 
             g = new Geometry.PointMarker(new Vector3(0, 0, 0));
             m = new Material.SingleColorMaterial(0, 0, 1, 1);
@@ -384,16 +380,16 @@ namespace SparrowHawk
  
             //rhino extrusion test
             Rhino.Collections.Point3dList points = new Rhino.Collections.Point3dList(5);
-            points.Add(0.0, 0.0, 0.2);
-            points.Add(0.0, 0.1, 0.2);
-            points.Add(0.1, 0.1, 0.2);
-            points.Add(0.1, 0.0, 0.2);
+            points.Add(0.0, 0.0, 200);
+            points.Add(0.0, 100, 200);
+            points.Add(100, 100, 200);
+            points.Add(100, 0.0, 200);
             Rhino.Geometry.NurbsCurve nc = Rhino.Geometry.NurbsCurve.Create(true, 3, points);
             //Rhino.Geometry.Curve nc = Curve.CreateInterpolatedCurve(points,3);
             //nc.SetEndPoint(nc.PointAtStart);
 
             //create surface from curve extruve CreateExtrusion => create brep from surface
-            Surface s_extrude = Surface.CreateExtrusion(nc, new Rhino.Geometry.Vector3d(0, 0, 0.15));
+            Surface s_extrude = Surface.CreateExtrusion(nc, new Rhino.Geometry.Vector3d(0, 0, 150));
             brep = Brep.CreateFromSurface(s_extrude);
 
             if (brep != null)
@@ -403,6 +399,19 @@ namespace SparrowHawk
             }
 
             mRenderer = new VrRenderer(ref mHMD, ref mScene, mRenderWidth, mRenderHeight);
+
+            //use other 8 points for calibrartion
+            robotCallibrationPointsTest.Add(new Vector3(22, 15, -100)/1000);
+            robotCallibrationPointsTest.Add(new Vector3(-10, 40, -153) / 1000);
+            robotCallibrationPointsTest.Add(new Vector3(25, -25, -181) / 1000);
+
+            foreach (Vector3 v in robotCallibrationPointsTest)
+            {
+                Vector4 v4 = new Vector4(v.X, v.Y, v.Z, 1);
+                v4 = mScene.vrToRobot.Inverted() * v4;
+                Util.MarkPoint(ref mScene.staticGeometry, new Vector3(v4.X, v4.Y, v4.Z), 1, 1, 1);
+            }
+            robotCallibrationPointsTest.Clear();
 
             // build shaders? Maybe in renderer!
             // setup texture maps is commented out.

@@ -108,8 +108,11 @@ namespace SparrowHawk
 //(0.08518852, -0.02587833, -1.022716, 0.1467833)
 //(-0.01968208, -1.006881, 0.01732827, 0.9705337)
 //(0, 0, 0, 1)
-        public Matrix4 vrToRobot = new Matrix4(-1.004264f, 0.01445435f, -0.07111868f, -0.05827864f, 0.08518852f, -0.02587833f, -1.022716f, 0.1467833f,
-                                                - 0.01968208f, -1.006881f, 0.01732827f, 0.9705337f, 0, 0, 0, 1);
+        public Matrix4 vrToRobot = new Matrix4(-0.9990701f, 0.006876953f, -0.07309226f, -0.04859478f, 
+            0.08270106f, -0.01857151f, -1.019712f, 0.1354493f,
+            -0.01934806f, -1.014283f, 0.02113567f, 0.9779887f,
+            0,0,0,1
+            );
 
         // Interactions
         private Stack<Interaction.Interaction> mInteractionStack = new Stack<Interaction.Interaction>();

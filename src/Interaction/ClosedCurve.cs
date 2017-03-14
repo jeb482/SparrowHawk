@@ -40,9 +40,10 @@ namespace SparrowHawk.Interaction
 
             foreach (OpenTK.Vector3 point in reducePoints)
             {
-                // -y_rhino = z_gl, z_rhino = y_gl
-                OpenTK.Vector3 p = Util.transformPoint(Util.mGLToRhino, point);
-                curvePoints.Add(new Point3d(p.X, p.Y, p.Z));
+                // -y_rhino = z_gl, z_rhino = y_gl and unit conversion
+                // OpenTK.Vector3 p = Util.transformPoint(Util.mGLToRhino, point*1000);              
+                //curvePoints.Add(new Point3d(p.X, p.Y, p.Z));
+                curvePoints.Add(Util.openTkToRhinoPoint(Util.vrToPlatformPoint(ref mScene, point)));
             }
 
             //Rhino CreateInterpolatedCurve and CreatePlanarBreps

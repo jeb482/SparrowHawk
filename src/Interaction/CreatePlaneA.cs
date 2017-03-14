@@ -38,7 +38,7 @@ namespace SparrowHawk.Interaction
             {
                 case State.Ready:
                     // Create the plane in front of the controller
-                    Matrix4 M = mScene.mDevicePose[vrEvent.trackedDeviceIndex];
+                    Matrix4 M = Util.getControllerTipPosition(ref mScene, vrEvent.trackedDeviceIndex == mScene.leftControllerIdx);
                     origin = Util.transformPoint(M, new Vector3(0, 0, -0.12f));
                     normal = Util.transformVec(M, new Vector3(0, 0, 1));
                     Geometry.Geometry planeRep = new Geometry.PlaneRep();

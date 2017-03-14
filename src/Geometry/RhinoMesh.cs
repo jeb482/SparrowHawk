@@ -78,36 +78,23 @@ namespace SparrowHawk.Geometry
             List<Point3d> vertices = new List<Point3d>();
             List<float> vertices_array = new List<float>();
             OpenTK.Matrix4 transToOrigin = new OpenTK.Matrix4();
+
+            // visualize the origin of the platform for debugging
             if (!mScene.vrToRobot.Equals(OpenTK.Matrix4.Identity))
             {
-                //OpenTK.Vector3 robotO = Util.transformPoint(mScene.vrToRobot.Inverted(), new OpenTK.Vector3(0, 0, 0));
-                //robotO = Util.transformPoint(Util.mRobotToGL, robotO);
-                //OpenTK.Matrix4.CreateTranslation(robotO.X, robotO.Y, robotO.Z, out transToOrigin);
-                //transToOrigin.Transpose();
-                OpenTK.Vector3 robotO = Util.platformToVR(ref mScene, new OpenTK.Vector3(0, 0, 0));
+                OpenTK.Vector3 robotO = Util.platformToVRPoint(ref mScene, new OpenTK.Vector3(0, 0, 0));
                 Util.MarkPoint(ref mScene.staticGeometry, robotO, 0, 1, 0);
             }
+
 
             foreach (Point3d vertex in triMesh.Vertices)
             {
                 vertices.Add(vertex);
-                //TODO: use Util
-                OpenTK.Vector3 p = new OpenTK.Vector3((float)vertex.X/1000, (float)vertex.Y/1000, (float)vertex.Z/1000);
-                if (mScene.vrToRobot.Equals(OpenTK.Matrix4.Identity)){
-                    //p = Util.transformPoint(Util.mRhinoToGL, p);
-                    vertices_array.Add((float)vertex.X);
-                    // -y_rhino = z_gl, z_rhino = y_gl
-                    vertices_array.Add((float)vertex.Z);
-                    vertices_array.Add(-(float)vertex.Y);
-                }
-                else
-                {
-                    p = Util.platformToVR(ref mScene, p);
-                    vertices_array.Add((float)p.X);
-                    vertices_array.Add((float)p.Y);
-                    vertices_array.Add((float)p.Z);
-
-                }             
+                OpenTK.Vector3 p = Util.platformToVRPoint(ref mScene, new OpenTK.Vector3((float)vertex.X, (float)vertex.Y, (float)vertex.Z));
+                vertices_array.Add(p.X);
+                vertices_array.Add(p.Y);
+                vertices_array.Add(p.Z);
+            
             }
 
             mGeometry = vertices_array.ToArray();
