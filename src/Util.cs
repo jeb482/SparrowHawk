@@ -585,6 +585,23 @@ namespace SparrowHawk
             }
             return scene.mDevicePose[scene.rightControllerIdx] * scene.mRightControllerOffset;
         }
-
+		
+        /// <summary>
+        /// Returns the integer associated with the dominant axis about which the rotation moves.
+        /// Chooses Z in the two degenerate cases.
+        /// x = 0
+        /// y = 1
+        /// z = 2
+        /// </summary>
+        /// <param name="M">The affine matrix with some rotational componenet to analyse.</param>
+        /// <returns></returns>
+		public static int getDominantRotationAxis(OpenTK.Matrix4 M) {
+            OpenTK.Quaternion R = M.ExtractRotation();
+            if (Math.Abs(R.X) > Math.Abs(R.Y) && Math.Abs(R.X) > Math.Abs(R.Z))
+                return 0;
+            else if (Math.Abs(R.Y) > Math.Abs(R.Z))
+                return 1;
+            return 2;
+		}
     }
 }

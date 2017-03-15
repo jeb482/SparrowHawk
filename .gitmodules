@@ -6,7 +6,7 @@
 	url = https://github.com/QuantumConcepts/STLdotNET.git
 [submodule "ext/ObjParser"]
 	path = ext/ObjParser
-	url = https://github.com/stefangordon/ObjParser.git
+	url = https://github.com/stefangordon/ObjParser
 [submodule "ext/mathnet-numerics"]
 	path = ext/mathnet-numerics
 	url = https://github.com/mathnet/mathnet-numerics.git
