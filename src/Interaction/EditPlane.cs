@@ -56,9 +56,10 @@ namespace SparrowHawk.Interaction
             OpenTK.Matrix4 localRotM = OpenTK.Matrix4.CreateFromAxisAngle(new OpenTK.Vector3(0, 0, 1), thetaZ);
             localRotM.Transpose();
 
-            //rotM rotate around VR coordinate not local coordinate
-            //TODO- need to move it back to the origin first then do the transformation, since it's not the create in the origin 
-            //Calculate the translation matrix by translate the snap point.
+            //Check the formula - create a plane class with origin and axis data, keep traking the data.     M_ControllerPose * M_VR-Controller = M_L-VR * M_L
+            //Calculate the M_L-VR by checking the origin position of the xy-plane (from platformToVR)
+            //M_L * M_L-VR is the new M_L-VR that we need.
+            //calculate the domonant axis and translation in M_L-VR  
             selectedSN.transform = translationM;
 
         }
