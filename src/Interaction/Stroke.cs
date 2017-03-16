@@ -1,4 +1,5 @@
 ﻿using OpenTK;
+using Rhino.DocObjects;
 using Rhino.Geometry;
 using System;
 using System.Collections.Generic;
@@ -24,6 +25,12 @@ namespace SparrowHawk.Interaction
         // Pops this interaction of the stack after releasing stroke if true.
         bool mPopAfterStroke = false;
 
+        public bool onPlane = false;
+        protected SceneNode targetPSN;
+        protected RhinoObject targetPRhObj;
+        protected SceneNode drawPoint;
+        protected OpenTK.Vector3 projectP;
+
         public Stroke()
         {
 
@@ -35,6 +42,27 @@ namespace SparrowHawk.Interaction
             stroke_g = new Geometry.GeometryStroke();
             stroke_m = new Material.SingleColorMaterial(1, 0, 0, 1);
             currentState = State.READY;
+        }
+        public Stroke(ref Scene s, bool drawOnP)
+        {
+            mScene = s;
+            stroke_g = new Geometry.GeometryStroke();
+            stroke_m = new Material.SingleColorMaterial(1, 0, 0, 1);
+            currentState = State.READY;
+            onPlane = drawOnP;
+
+            if (onPlane)
+            {
+                Geometry.Geometry geo = new Geometry.PointMarker(new OpenTK.Vector3(0, 0, 0));
+                Material.Material m = new Material.SingleColorMaterial(250 / 255, 128 / 255, 128 / 255, 1);
+                drawPoint = new SceneNode("Point", ref geo, ref m);
+                drawPoint.transform = new OpenTK.Matrix4(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1);
+                mScene.staticGeometry.add(ref drawPoint);
+
+                //TODO-support both controllers
+                primaryDeviceIndex = (uint)mScene.leftControllerIdx;
+            }
+
         }
 
         public Stroke(ref Scene s, uint devIndex)
@@ -69,13 +97,62 @@ namespace SparrowHawk.Interaction
         public override void draw(bool isTop)
         {
 
+            //visualize the point on the plane
+            if (onPlane && isTop)
+            {
+                //ray casting to the pre-defind planes
+                OpenTK.Vector4 controller_p = Util.getControllerTipPosition(ref mScene, primaryDeviceIndex == mScene.leftControllerIdx) * new OpenTK.Vector4(0, 0, 0, 1);
+                OpenTK.Vector4 controller_pZ = Util.getControllerTipPosition(ref mScene, primaryDeviceIndex == mScene.leftControllerIdx) * new OpenTK.Vector4(0, 0, -1, 1);
+                Point3d controller_pRhino = Util.openTkToRhinoPoint(Util.vrToPlatformPoint(ref mScene, new OpenTK.Vector3(controller_p.X, controller_p.Y, controller_p.Z)));
+                Point3d controller_pZRhin = Util.openTkToRhinoPoint(Util.vrToPlatformPoint(ref mScene, new OpenTK.Vector3(controller_pZ.X, controller_pZ.Y, controller_pZ.Z)));
+
+                Rhino.Geometry.Vector3d direction = new Rhino.Geometry.Vector3d(controller_pZRhin.X - controller_pRhino.X, controller_pZRhin.Y - controller_pRhino.Y, controller_pZRhin.Z - controller_pRhino.Z);
+                Ray3d ray = new Ray3d(controller_pRhino, direction);
+
+                Rhino.DocObjects.ObjectEnumeratorSettings settings = new Rhino.DocObjects.ObjectEnumeratorSettings();
+                settings.ObjectTypeFilter = Rhino.DocObjects.ObjectType.Brep;
+                //settings.NameFilter = "plane";
+                foreach (Rhino.DocObjects.RhinoObject rhObj in mScene.rhinoDoc.Objects.GetObjectList(settings))
+                {
+                    List<GeometryBase> geometries = new List<GeometryBase>();
+                    geometries.Add(rhObj.Geometry);
+                    //must be a brep or surface, not mesh
+                    Point3d[] rayIntersections = Rhino.Geometry.Intersect.Intersection.RayShoot(ray, geometries, 1);
+                    if (rayIntersections != null)
+                    {
+                        projectP = Util.platformToVRPoint(ref mScene, new OpenTK.Vector3((float)rayIntersections[0].X, (float)rayIntersections[0].Y, (float)rayIntersections[0].Z));
+                        OpenTK.Matrix4 t = OpenTK.Matrix4.CreateTranslation(projectP);
+                        t.Transpose();
+                        drawPoint.transform = t;
+                        targetPSN = mScene.brepToSceneNodeDic[rhObj.Id];
+                        targetPRhObj = rhObj;
+                        break;
+                    }
+                    else
+                    {
+                        //make markerpoint invisible
+                        OpenTK.Matrix4 t = OpenTK.Matrix4.CreateTranslation(new OpenTK.Vector3(100,100,100));
+                        t.Transpose();
+                        drawPoint.transform = t;
+                    }
+                }
+            }
+
             if (currentState != State.PAINT || !isTop)
             {
                 return;
             }
 
-            //Vector3 pos = Util.getTranslationVector3(mScene.mDevicePose[primaryDeviceIndex]);
-            Vector3 pos = Util.getTranslationVector3(Util.getControllerTipPosition(ref mScene, primaryDeviceIndex == mScene.leftControllerIdx));
+            Vector3 pos = new Vector3();
+            if (onPlane)
+            {
+                pos = projectP;
+            }
+            else
+            {
+                pos = Util.getTranslationVector3(Util.getControllerTipPosition(ref mScene, primaryDeviceIndex == mScene.leftControllerIdx));
+            }
+
             ((Geometry.GeometryStroke)stroke_g).addPoint(pos);
 
             if (((Geometry.GeometryStroke)stroke_g).mNumPrimitives == 1)

@@ -38,12 +38,7 @@ namespace SparrowHawk.Interaction
             primaryDeviceIndex = vrEvent.trackedDeviceIndex;
             if (currentState == State.READY)
             {
-                //OpenTK.Vector4 controller_p = Util.getControllerTipPosition(ref mScene, primaryDeviceIndex == mScene.leftControllerIdx) * new OpenTK.Vector4(0, 0, 0, 1);
-                //OpenTK.Vector4 controller_pZ = Util.getControllerTipPosition(ref mScene, primaryDeviceIndex == mScene.leftControllerIdx) * new OpenTK.Vector4(0, 0, -1000, 1);
-                //OpenTK.Vector3 direction = new OpenTK.Vector3(controller_pZ.X - controller_p.X, controller_pZ.Y - controller_p.Y, controller_pZ.Z - controller_p.Z); // -y_rhino = z_gl, z_rhino = y_gl
-                //Ray3d ray = new Ray3d(new Point3d(controller_p.X, -controller_p.Z, controller_p.Y), new Vector3d(direction.X, -direction.Z, direction.Y));
 
-                //TOOD-use Utli function
                 OpenTK.Vector4 controller_p = Util.getControllerTipPosition(ref mScene, primaryDeviceIndex == mScene.leftControllerIdx) * new OpenTK.Vector4(0, 0, 0, 1);
                 OpenTK.Vector4 controller_pZ = Util.getControllerTipPosition(ref mScene, primaryDeviceIndex == mScene.leftControllerIdx) * new OpenTK.Vector4(0, 0, -1, 1);
                 Point3d controller_pRhino = Util.openTkToRhinoPoint(Util.vrToPlatformPoint(ref mScene, new OpenTK.Vector3(controller_p.X, controller_p.Y, controller_p.Z)));
@@ -56,6 +51,8 @@ namespace SparrowHawk.Interaction
                 settings.ObjectTypeFilter = Rhino.DocObjects.ObjectType.Brep;
                 foreach (Rhino.DocObjects.RhinoObject rhObj in mScene.rhinoDoc.Objects.GetObjectList(settings))
                 {
+                    //if (rhObj.Attributes.Name == "plane")
+                    //continue;
                     //grip selection
                     //if (rhObj.Geometry.GetBoundingBox(false).Contains(controller_p))
                     if (rhObj.Geometry.GetBoundingBox(false).Contains(new Point3d(controller_p.X, -controller_p.Z, controller_p.Y)))

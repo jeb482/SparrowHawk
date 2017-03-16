@@ -69,6 +69,8 @@ namespace SparrowHawk.Interaction
                 settings.ObjectTypeFilter = Rhino.DocObjects.ObjectType.Brep;
                 foreach (Rhino.DocObjects.RhinoObject rhObj in mScene.rhinoDoc.Objects.GetObjectList(settings))
                 {
+                    if (rhObj.Attributes.Name == "plane")
+                        continue;
                     if (Intersection.CurveBrep(rail, rhObj.Geometry as Brep, mScene.rhinoDoc.ModelAbsoluteTolerance, out overlap_curves, out inter_points))
                     {
                         if (overlap_curves.Length > 0 || inter_points.Length > 0)
@@ -86,16 +88,16 @@ namespace SparrowHawk.Interaction
                 if (loftcurves.Count > 1)
                 {
                     //check the direction of the curves
-                    for(int i =0; i < loftcurves.Count-1; i++)
+                    for (int i = 0; i < loftcurves.Count - 1; i++)
                     {
                         double t = 0;
 
 
-                        if(!Curve.DoDirectionsMatch(loftcurves.ElementAt(i), loftcurves.ElementAt(i + 1)) )
+                        if (!Curve.DoDirectionsMatch(loftcurves.ElementAt(i), loftcurves.ElementAt(i + 1)))
                         {
                             //whether curve is open or closed
                             loftcurves.ElementAt(i + 1).Reverse();
-                            
+
                         }
 
                         if (i == 0)
@@ -103,7 +105,7 @@ namespace SparrowHawk.Interaction
                             loftcurves.ElementAt(i).ClosestPoint(loftcurves.ElementAt(i).PointAtStart, out t);
                             loftcurves.ElementAt(i).ChangeClosedCurveSeam(t);
                         }
-                      
+
                         loftcurves.ElementAt(i + 1).ClosestPoint(loftcurves.ElementAt(i).PointAtStart, out t);
                         loftcurves.ElementAt(i + 1).ChangeClosedCurveSeam(t);
                         //loftcurves.ElementAt(i + 1).SetStartPoint(loftcurves.ElementAt(i + 1).PointAt(t));

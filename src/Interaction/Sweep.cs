@@ -70,6 +70,9 @@ namespace SparrowHawk.Interaction
                 settings.ObjectTypeFilter = Rhino.DocObjects.ObjectType.Brep;
                 foreach (Rhino.DocObjects.RhinoObject rhObj in mScene.rhinoDoc.Objects.GetObjectList(settings))
                 {
+                    if (rhObj.Attributes.Name == "plane")
+                        continue;
+
                     if (Intersection.CurveBrep(rail, rhObj.Geometry as Brep, mScene.rhinoDoc.ModelAbsoluteTolerance, out overlap_curves, out inter_points))
                     {
                         if (overlap_curves.Length > 0 || inter_points.Length > 0)

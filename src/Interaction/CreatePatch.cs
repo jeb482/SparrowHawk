@@ -9,15 +9,17 @@ using Valve.VR;
 
 namespace SparrowHawk.Interaction
 {
-    class Closedcurve : Stroke
+    class CreatePatch : Stroke
     {
 
         private Material.Material mesh_m;
-        private Rhino.Geometry.NurbsCurve closedCurve;
+        private Rhino.Geometry.NurbsCurve curve;
         private Rhino.Geometry.Brep closedCurveBrep;
         List<Point3d> curvePoints = new List<Point3d>();
+        List<NurbsCurve> curvelist = new List<NurbsCurve>();
+        List<Guid> curveGuids = new List<Guid>();
 
-        public Closedcurve(ref Scene s)
+        public CreatePatch(ref Scene s)
         {
             mScene = s;
             stroke_g = new Geometry.GeometryStroke();
@@ -27,7 +29,7 @@ namespace SparrowHawk.Interaction
 
         }
 
-        public Closedcurve(ref Scene s, bool drawOnP)
+        public CreatePatch(ref Scene s, bool drawOnP)
         {
             mScene = s;
             stroke_g = new Geometry.GeometryStroke();
@@ -54,10 +56,32 @@ namespace SparrowHawk.Interaction
         public override void draw(bool inTop)
         {
             base.draw(inTop);
+
         }
 
+        public void renderPatch()
+        {
+            Brep patchSurface = Brep.CreatePatch(curvelist, 4, 4, mScene.rhinoDoc.ModelAbsoluteTolerance);
 
-        public void renderPlanarShape()
+            Util.addSceneNode(ref mScene, patchSurface, ref mesh_m);
+            mScene.rhinoDoc.Views.Redraw();
+
+            foreach (Guid id in curveGuids)
+            {
+                foreach (SceneNode sn in mScene.staticGeometry.children)
+                {
+                    if (sn.guid == id)
+                    {
+                        mScene.staticGeometry.children.Remove(sn);
+                        break;
+                    }
+                }
+            }
+
+            curvelist.Clear();
+        }
+
+        public void renderCurve()
         {
             //reduce the points in the curve first
             simplifyCurve(ref ((Geometry.GeometryStroke)(stroke_g)).mPoints);
@@ -71,24 +95,10 @@ namespace SparrowHawk.Interaction
             }
 
             //Rhino CreateInterpolatedCurve and CreatePlanarBreps
-            if (curvePoints.Count >= 8)
+            if (curvePoints.Count >= 2)
             {
-                //Rhino closed curve through NURBS curve
-                closedCurve = Rhino.Geometry.NurbsCurve.Create(true, 3, curvePoints.ToArray());
-                //Rhino.Geometry.Curve nc = Curve.CreateInterpolatedCurve(curvePoints.ToArray(), 3);
-                //nc.SetEndPoint(nc.PointAtStart);
-
-                Plane proj_plane = new Plane();
-                Plane.FitPlaneToPoints(curvePoints.ToArray(), out proj_plane);
-                Curve proj_curve = Curve.ProjectToPlane(closedCurve, proj_plane);
-
-                //TODO: make sure the proj_curve is on the same plane ? or it's beacuse not enough points
-                Brep[] shapes = Brep.CreatePlanarBreps(proj_curve);
-                Brep curve_s = shapes[0];
-                closedCurveBrep = curve_s;
-
-                Util.addSceneNode(ref mScene, curve_s, ref mesh_m);
-                mScene.rhinoDoc.Views.Redraw();
+                curve = Rhino.Geometry.NurbsCurve.Create(true, 3, curvePoints.ToArray());
+                curvelist.Add(curve);
 
             }
         }
@@ -107,6 +117,7 @@ namespace SparrowHawk.Interaction
             if (currentState == State.PAINT)
             {
                 //clear the stroke
+                /*
                 foreach (SceneNode sn in mScene.staticGeometry.children)
                 {
                     if (sn.guid == strokeId)
@@ -114,10 +125,15 @@ namespace SparrowHawk.Interaction
                         mScene.staticGeometry.children.Remove(sn);
                         break;
                     }
-                }
+                }*/
 
-                renderPlanarShape();
-                currentState = State.READY;
+                curveGuids.Add(strokeId);
+                renderCurve();
+                if (curvelist.Count == 8)
+                {
+                    renderPatch();
+                }
+                currentState = State.READY;           
             }
         }
 
