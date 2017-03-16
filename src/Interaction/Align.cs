@@ -46,7 +46,7 @@ namespace SparrowHawk.Interaction
                 //OpenTK.Matrix4 transMatrix = new OpenTK.Matrix4();
                 //OpenTK.Matrix4.CreateTranslation(transV.X, transV.Y, transV.Z, out transMatrix);
                 //transMatrix.Transpose();
-              
+
                 OpenTK.Matrix4 transToOrigin = new OpenTK.Matrix4();
                 OpenTK.Matrix4.CreateTranslation(-snapPoints[0].X, -snapPoints[0].Y, -snapPoints[0].Z, out transToOrigin);
                 transToOrigin.Transpose();

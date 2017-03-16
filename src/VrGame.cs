@@ -254,14 +254,15 @@ namespace SparrowHawk
             vrCallibrationPoints.Add(vrPoint);
             Rhino.RhinoApp.WriteLine("add vrCallibrationPoints: " + vrPoint.ToString());
             Util.MarkPoint(ref mScene.staticGeometry, vrPoint, 1, 1, 0);
-            if (vrCallibrationPoints.Count == 11)
-            {
-                //ADD 3 POINTS ON THE XY-PLANE
-                robotCallibrationPoints.Add(new Vector3(0, 0, 0));
-                robotCallibrationPoints.Add(new Vector3(0, 30, 0));
-                robotCallibrationPoints.Add(new Vector3(-50, 0, 0));
+            if (vrCallibrationPoints.Count == 8) { 
+            //if (vrCallibrationPoints.Count == 11)
+            //{
+            //    //ADD 3 POINTS ON THE XY-PLANE
+            //    robotCallibrationPoints.Add(new Vector3(0, 0, 0));
+            //    robotCallibrationPoints.Add(new Vector3(0, 30, 0));
+            //    robotCallibrationPoints.Add(new Vector3(-50, 0, 0));
 
-                Util.solveForAffineTransformOpenCV(vrCallibrationPoints, robotCallibrationPoints, ref mScene.vrToRobot);
+            Util.solveForAffineTransformOpenCV(vrCallibrationPoints, robotCallibrationPoints, ref mScene.vrToRobot);
                 foreach (Vector3 v in robotCallibrationPoints)
                 {
                     Vector4 v4 = new Vector4(v.X, v.Y, v.Z, 1);
@@ -398,6 +399,26 @@ namespace SparrowHawk
                 Util.addSceneNode(ref mScene, brep, ref rhinoMseh_m);
             }
 
+            //TODO-add a xy-plane in rhino (xz plane in VR)
+            Rhino.Geometry.Vector3d normal = new Rhino.Geometry.Vector3d(0, 0, 1);
+            Plane plane = new Plane(new Point3d(0, 0, 0), normal);
+
+            //PlaneSurface plane_surface = new PlaneSurface(plane,
+            //  new Interval(0, corner_lt.DistanceTo(corner_rt)),
+            //  new Interval(0, corner_lb.DistanceTo(corner_lt)));
+
+            PlaneSurface plane_surface = new PlaneSurface(plane,
+              new Interval(-150, 150),
+              new Interval(-150, 150));
+
+            Brep xy_plane = Brep.CreateFromSurface(plane_surface);
+
+            if (brep != null)
+            {
+                Material.Material rhinoMseh_m = new Material.SingleColorMaterial(0, 1, 0, 0.5f);
+                Util.addSceneNode(ref mScene, xy_plane, ref rhinoMseh_m, "plane");
+            }
+
             mRenderer = new VrRenderer(ref mHMD, ref mScene, mRenderWidth, mRenderHeight);
 
             //use other 8 points for calibrartion
@@ -458,6 +479,12 @@ namespace SparrowHawk
                 mScene.pushInteraction(new Interaction.Grip(ref mScene));
             }
 
+            if (e.KeyChar == 'H' || e.KeyChar == 'h')
+            {
+                mScene.popInteraction();
+                mScene.pushInteraction(new Interaction.EditPlane(ref mScene));
+            }
+
             if (e.KeyChar == 'L' || e.KeyChar == 'l')
             {
                 mScene.popInteraction();
@@ -505,21 +532,40 @@ namespace SparrowHawk
                 mScene.pushInteraction(new Interaction.CreateCylinder(ref mScene));
             }
 
+            if (e.KeyChar == 'Q' || e.KeyChar == 'q')
+            {
+                mScene.popInteraction();
+                mScene.pushInteraction(new Interaction.CreateCircle(ref mScene, true));
+            }
+
+            if (e.KeyChar == 'Z' || e.KeyChar == 'z')
+            {
+                mScene.popInteraction();
+                mScene.pushInteraction(new Interaction.Closedcurve(ref mScene, true));
+            }
+
+            if (e.KeyChar == 'X' || e.KeyChar == 'x')
+            {
+                mScene.popInteraction();
+                mScene.pushInteraction(new Interaction.CreatePatch(ref mScene));
+            }
+
+
 
         }
 
 
-      // public void runMainLoop()
-      //  {
-      // /     // Not sure if this is right. How do we close it?
-      // /     while (true)
-      //      {
-      //          mRenderer.renderFrame();
-      //      }
-      //  }
-        
+        // public void runMainLoop()
+        //  {
+        // /     // Not sure if this is right. How do we close it?
+        // /     while (true)
+        //      {
+        //          mRenderer.renderFrame();
+        //      }
+        //  }
 
-     Geometry.Geometry FindOrLoadRenderModel(string modelName)
+
+        Geometry.Geometry FindOrLoadRenderModel(string modelName)
       {
           RenderModel_t model;
           EVRRenderModelError error;

@@ -515,6 +515,39 @@ namespace SparrowHawk
             }
         }
 
+        public static void addSceneNode(ref Scene mScene, Brep brep, ref Material.Material mesh_m, string name)
+        {
+            //TODO: detect the # of faces
+            Mesh base_mesh = new Mesh();
+            if (brep != null)
+            {
+                Mesh[] meshes = Mesh.CreateFromBrep(brep, MeshingParameters.Default);
+
+                foreach (Mesh mesh in meshes)
+                    base_mesh.Append(mesh);
+                Rhino.DocObjects.ObjectAttributes attr = new Rhino.DocObjects.ObjectAttributes();
+                attr.Name = name;
+                Guid guid = mScene.rhinoDoc.Objects.AddBrep(brep, attr);
+                //add name attribute for printing
+                //mScene.rhinoDoc.Objects.Find(guid).Attributes.Name = "a" + guid.ToString();
+                //mScene.rhinoDoc.Objects.Find(guid).CommitChanges();
+                mScene.rhinoDoc.Views.Redraw();
+
+                Geometry.Geometry meshStroke_g = new Geometry.RhinoMesh(ref mScene);
+
+                ((Geometry.RhinoMesh)meshStroke_g).setMesh(ref base_mesh);
+
+                SceneNode ccMeshSN = new SceneNode("BrepMesh", ref meshStroke_g, ref mesh_m);
+                mScene.staticGeometry.add(ref ccMeshSN);
+
+
+
+                //add reference SceneNode to brep and vice versa
+                mScene.brepToSceneNodeDic.Add(guid, ccMeshSN);
+                mScene.SceneNodeToBrepDic.Add(ccMeshSN.guid, mScene.rhinoDoc.Objects.Find(guid));
+            }
+        }
+
         public static void removeSceneNode(ref Scene mScene, Guid guid)
         {
             SceneNode deleteSN = mScene.brepToSceneNodeDic[guid];
@@ -531,6 +564,28 @@ namespace SparrowHawk
                 }
             }
 
+        }
+
+        public static OpenTK.Matrix4 getCoordinateTransM(OpenTK.Vector3 startO, OpenTK.Vector3 targetO, OpenTK.Vector3 normal1, OpenTK.Vector3 normal2)
+        {
+            //translation
+            OpenTK.Matrix4 transToOrigin = new OpenTK.Matrix4();
+            OpenTK.Matrix4.CreateTranslation(-startO.X, -startO.Y, -startO.Z, out transToOrigin);
+            transToOrigin.Transpose();
+
+            OpenTK.Matrix4 transToTarget = new OpenTK.Matrix4();
+            OpenTK.Matrix4.CreateTranslation(targetO.X, targetO.Y, targetO.Z, out transToTarget);
+            transToTarget.Transpose();
+
+            //rotation
+            OpenTK.Vector3 rotation_axis = OpenTK.Vector3.Cross(normal1, normal2);
+            rotation_axis.Normalize();
+            float rotation_angles = OpenTK.Vector3.CalculateAngle(normal1, normal2);
+            OpenTK.Matrix4 rotM = new OpenTK.Matrix4();
+            OpenTK.Matrix4.CreateFromAxisAngle(rotation_axis, rotation_angles, out rotM);
+            rotM.Transpose();
+
+            return transToTarget * rotM * transToOrigin;
         }
 
         /// <summary>

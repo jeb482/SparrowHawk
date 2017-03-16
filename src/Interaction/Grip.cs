@@ -32,6 +32,7 @@ namespace SparrowHawk.Interaction
             {
                 return;
             }
+            //controller pose map from controller coordinate system to VR world system. In order to use pose matrix, we first transform the select object to controller coordinate system.
             selectedSN.transform = Util.getControllerTipPosition(ref mScene, primaryDeviceIndex == mScene.leftControllerIdx) * mVRtocontroller * currentTransform;
 
         }

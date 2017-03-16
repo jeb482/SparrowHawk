@@ -93,8 +93,8 @@ namespace SparrowHawk
         public char[] mDeviceClassChar = new char[Valve.VR.OpenVR.k_unMaxTrackedDeviceCount];
         public int leftControllerIdx = -1;
         public int rightControllerIdx = -1;
-        public Matrix4 mLeftControllerOffset = Util.createTranslationMatrix(0.0006068f, -.02383642f, -0.00026948f);
-        public Matrix4 mRightControllerOffset = Util.createTranslationMatrix(-0.0006068f, -.02383642f, -0.00026948f);
+        public Matrix4 mLeftControllerOffset = Util.createTranslationMatrix(0.00134759f, -0.02559454f, -0.005455005f);//Util.createTranslationMatrix(0,0,0);//Util.createTranslationMatrix(0.0006068f, -.02383642f, -0.00026948f);
+        public Matrix4 mRightControllerOffset = Util.createTranslationMatrix(0, 0, 0);//Util.createTranslationMatrix(-0.0006068f, -.02383642f, -0.00026948f);
 
         // For rhino positioning
         public Rhino.RhinoDoc rhinoDoc;
@@ -109,13 +109,13 @@ namespace SparrowHawk
         //(-0.01968208, -1.006881, 0.01732827, 0.9705337)
         //(0, 0, 0, 1)
 
-        public Matrix4 vrToRobot = OpenTK.Matrix4.Identity;
+        //public Matrix4 vrToRobot = OpenTK.Matrix4.Identity;
 
-        //public Matrix4 vrToRobot = new Matrix4(-0.9990701f, 0.006876953f, -0.07309226f, -0.04859478f, 
-        //    0.08270106f, -0.01857151f, -1.019712f, 0.1354493f,
-        //    -0.01934806f, -1.014283f, 0.02113567f, 0.9779887f,
-        //    0,0,0,1
-        //    );
+        public Matrix4 vrToRobot = new Matrix4(-0.9917692f, 0.01860419f, -0.0861549f, -0.06067098f,
+           0.09522644f, 0.0138046f, -1.016119f, 0.09168084f,
+           -0.02148988f, -1.012937f, 0.01351126f, 0.9823756f,
+            0,0,0,1
+            );
 
         // Interactions
         private Stack<Interaction.Interaction> mInteractionStack = new Stack<Interaction.Interaction>();
