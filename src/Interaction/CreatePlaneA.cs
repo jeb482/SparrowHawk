@@ -56,9 +56,9 @@ namespace SparrowHawk.Interaction
                     {
                         mScene.rightControllerNode.add(ref planeNode);
                     }
-                        
 
-                    //mScene.staticGeometry.add(ref n);
+
+                    //mScene.tableGeometry.add(ref n);
                     //Rhino.Geometry.Brep(rhinoPlane);
                     //mScene.rhinoDoc.Objects.Add(rhinoPlane)
                     // TODO: We can't see it yet!
@@ -72,7 +72,7 @@ namespace SparrowHawk.Interaction
 
                     //
                     planeNode.parent.remove(ref planeNode);
-                    mScene.staticGeometry.add(ref planeNode);
+                    mScene.tableGeometry.add(ref planeNode);
                     planeNode.transform = accumulatedTransform;
 
                     // Build in rhino

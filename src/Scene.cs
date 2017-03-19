@@ -156,6 +156,7 @@ namespace SparrowHawk
         public void render(ref Matrix4 vp)
         {
             Matrix4 m = new Matrix4(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1);
+            tableGeometry.transform = this.vrToRobot.Inverted()*this.platformRotation.Inverted()* this.vrToRobot;
             staticGeometry.render(ref vp, m);
             tableGeometry.render(ref vp, m);
             leftControllerNode.render(ref vp, m);

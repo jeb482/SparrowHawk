@@ -43,7 +43,7 @@ namespace SparrowHawk.Interaction
                 Material.Material m = new Material.SingleColorMaterial(250 / 255, 128 / 255, 128 / 255, 1);
                 drawPoint = new SceneNode("Point", ref geo, ref m);
                 drawPoint.transform = new OpenTK.Matrix4(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1);
-                mScene.staticGeometry.add(ref drawPoint);
+                mScene.tableGeometry.add(ref drawPoint);
 
                 //TODO-support both controllers
                 primaryDeviceIndex = (uint)mScene.leftControllerIdx;
@@ -107,11 +107,11 @@ namespace SparrowHawk.Interaction
             if (currentState == State.PAINT)
             {
                 //clear the stroke
-                foreach (SceneNode sn in mScene.staticGeometry.children)
+                foreach (SceneNode sn in mScene.tableGeometry.children)
                 {
                     if (sn.guid == strokeId)
                     {
-                        mScene.staticGeometry.children.Remove(sn);
+                        mScene.tableGeometry.children.Remove(sn);
                         break;
                     }
                 }

@@ -57,7 +57,7 @@ namespace SparrowHawk.Interaction
                 Material.Material m = new Material.SingleColorMaterial(250 / 255, 128 / 255, 128 / 255, 1);
                 drawPoint = new SceneNode("Point", ref geo, ref m);
                 drawPoint.transform = new OpenTK.Matrix4(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1);
-                mScene.staticGeometry.add(ref drawPoint);
+                mScene.tableGeometry.add(ref drawPoint);
 
                 //TODO-support both controllers
                 primaryDeviceIndex = (uint)mScene.leftControllerIdx;
@@ -158,7 +158,7 @@ namespace SparrowHawk.Interaction
             if (((Geometry.GeometryStroke)stroke_g).mNumPrimitives == 1)
             {
                 SceneNode stroke = new SceneNode("Stroke", ref stroke_g, ref stroke_m);
-                mScene.staticGeometry.add(ref stroke);
+                mScene.tableGeometry.add(ref stroke);
                 strokeId = stroke.guid;
             }
 

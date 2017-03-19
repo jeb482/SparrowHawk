@@ -51,7 +51,7 @@ namespace SparrowHawk.Interaction
                 Material.Material m = new Material.SingleColorMaterial(250 / 255, 128 / 255, 128 / 255, 1);
                 drawPoint = new SceneNode("Point", ref geo, ref m);
                 drawPoint.transform = new OpenTK.Matrix4(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1);
-                mScene.staticGeometry.add(ref drawPoint);
+                mScene.tableGeometry.add(ref drawPoint);
 
                 //TODO-support both controllers
                 primaryDeviceIndex = mScene.leftControllerIdx;

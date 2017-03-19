@@ -51,14 +51,14 @@ namespace SparrowHawk.Interaction
                     origin = Util.getTranslationVector3(Util.getControllerTipPosition(ref mScene, trackedDeviceIndex == mScene.leftControllerIdx));
                     mState = State.PickOrientation;
                     mPrimaryDevice = trackedDeviceIndex;
-                    Util.MarkPoint(ref mScene.staticGeometry, origin, 1, 1, 0);
-
+                    Util.MarkPoint(ref mScene.tableGeometry, origin, 1, 1, 0);
+                    
                     break;
                 case State.PickOrientation:
                     if (mPrimaryDevice != trackedDeviceIndex)
                         return;
                     orientation = Util.getTranslationVector3(Util.getControllerTipPosition(ref mScene, trackedDeviceIndex == mScene.leftControllerIdx));
-                    Util.MarkPoint(ref mScene.staticGeometry, orientation, 1, 1, 0);
+                    Util.MarkPoint(ref mScene.tableGeometry, orientation, 1, 1, 0);
                     orientation -= origin;
                     mState = State.PickRadius;                 
                     break;
@@ -66,7 +66,7 @@ namespace SparrowHawk.Interaction
                     if (mPrimaryDevice != trackedDeviceIndex)
                         return;
                     OpenTK.Vector3 radial = Util.getTranslationVector3(Util.getControllerTipPosition(ref mScene, trackedDeviceIndex == mScene.leftControllerIdx));
-                    Util.MarkPoint(ref mScene.staticGeometry, radial, 1, 1, 0);
+                    Util.MarkPoint(ref mScene.tableGeometry, radial, 1, 1, 0);
                     radial -= OpenTK.Vector3.Dot(orientation.Normalized(), radial) * orientation.Normalized();
                     radial = Util.vrToPlatformVector(ref mScene, radial);
                     radius = radial.Length;

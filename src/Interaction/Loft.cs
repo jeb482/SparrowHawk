@@ -156,11 +156,11 @@ namespace SparrowHawk.Interaction
             {
 
                 //clear the stroke
-                foreach (SceneNode sn in mScene.staticGeometry.children)
+                foreach (SceneNode sn in mScene.tableGeometry.children)
                 {
                     if (sn.guid == strokeId)
                     {
-                        mScene.staticGeometry.children.Remove(sn);
+                        mScene.tableGeometry.children.Remove(sn);
                         break;
                     }
                 }

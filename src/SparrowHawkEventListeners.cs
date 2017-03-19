@@ -18,7 +18,7 @@ namespace SparrowHawk
     {
         public enum ESparrowHawkSigalType
         {
-            InitType, LineType
+            InitType, LineType, EncoderType
         };
 
         public ESparrowHawkSigalType type;
@@ -34,6 +34,7 @@ namespace SparrowHawk
         // TODO: This is dangerous, should implement P-C-Q myself. 
         #region Members
         private readonly EventHandler<RhinoObjectEventArgs> m_add_rhino_object_handler;
+        private readonly EventHandler<RhinoModifyObjectAttributesEventArgs> m_modify_rhino_attributes_handler;
         //private Queue<SparrowHawkSignal> mSignalQueue;
         protected ConcurrentQueue<SparrowHawkSignal> mSignalQueue;
         #endregion
@@ -41,6 +42,7 @@ namespace SparrowHawk
         SparrowHawkEventListeners()
         {
             m_add_rhino_object_handler = new EventHandler<RhinoObjectEventArgs>(OnAddRhinoObject);
+            m_modify_rhino_attributes_handler = new EventHandler<RhinoModifyObjectAttributesEventArgs>(OnModifyObjectAttributes);
             mSignalQueue = new ConcurrentQueue<SparrowHawkSignal>();
         }
 
@@ -69,28 +71,41 @@ namespace SparrowHawk
         /// <param name="e"></param>
         void OnAddRhinoObject(object sender, Rhino.DocObjects.RhinoObjectEventArgs e)
         {
-            RhinoApp.WriteLine("La");
-            char[] delimiters = {' ', ','};
-            if (e.TheObject.Attributes.Name == "")
-                return;
-            string[] substrings = e.TheObject.Attributes.Name.Split(delimiters, StringSplitOptions.RemoveEmptyEntries);
+            processSignal(e.TheObject.Attributes.Name);
+        }
+
+        void OnModifyObjectAttributes(object sender, Rhino.DocObjects.RhinoModifyObjectAttributesEventArgs e)
+        {
+            processSignal(e.NewAttributes.Name);
+        }
+
+        void processSignal(string str)
+        {
+            char[] delimiters = { ' ', ',' };
+            if (str == "") return;
+            string[] substrings = str.Split(delimiters, StringSplitOptions.RemoveEmptyEntries);
             if (substrings.Length == 0) return;
 
-
+            SparrowHawkSignal s = new SparrowHawkSignal(SparrowHawkSignal.ESparrowHawkSigalType.InitType, new float[substrings.Length - 1]);
+            for (int i = 1; i < substrings.Length; i++)
+            {
+                if (!float.TryParse(substrings[i], out s.data[i - 1]))
+                    return;
+            }
             switch (substrings[0])
             {
                 case "init:":
-                    RhinoApp.WriteLine("Initted");
-                    SparrowHawkSignal s = new SparrowHawkSignal(SparrowHawkSignal.ESparrowHawkSigalType.InitType, new float[substrings.Length - 1]);
-                    for (int i = 1; i < substrings.Length; i++)
-                    {
-                        if (!float.TryParse(substrings[i], out s.data[i - 1]))
-                            return;
-                    }
-                    mSignalQueue.Enqueue(s);
+                    RhinoApp.WriteLine("Calibration point recieved");
+                    s.type = SparrowHawkSignal.ESparrowHawkSigalType.InitType;
+                    break;
+                case "angle:":
+                    s.type = SparrowHawkSignal.ESparrowHawkSigalType.EncoderType;
                     break;
             }
+            mSignalQueue.Enqueue(s);
+
         }
+
         #endregion
 
         /// <summary>
@@ -112,10 +127,12 @@ namespace SparrowHawk
                 if (enable)
                 {
                     RhinoDoc.AddRhinoObject += m_add_rhino_object_handler;
+                    RhinoDoc.ModifyObjectAttributes += m_modify_rhino_attributes_handler;
                 }
                 else
                 {
                     RhinoDoc.AddRhinoObject -= m_add_rhino_object_handler;
+                    RhinoDoc.ModifyObjectAttributes -= m_modify_rhino_attributes_handler;
                 }
             }
             IsEnabled = enable;

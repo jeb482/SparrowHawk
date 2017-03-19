@@ -244,6 +244,12 @@ namespace SparrowHawk
                         //calibrationTest();
                     }
                     break;
+
+                case SparrowHawkSignal.ESparrowHawkSigalType.EncoderType:
+                    float theta = (float) (s.data[0]/360f * 2 * Math.PI);
+                    Rhino.RhinoApp.WriteLine("Theta = " + theta);
+                    Matrix4.CreateRotationZ(theta, out mScene.platformRotation);
+                    break;
             }
         }
 
@@ -356,7 +362,7 @@ namespace SparrowHawk
             //Material.Material m = new Material.SingleColorMaterial(1, 0, 1, 1);
             SceneNode cube = new SceneNode("Triangle", ref g, ref m);
             cube.transform = new Matrix4(1, 0, 0, 0, 0, 1, 0, 1, 0, 0, 1, 0, 0, 0, 0, 1);
-            mScene.staticGeometry.add(ref cube);
+            mScene.tableGeometry.add(ref cube);
 
             g = new Geometry.PointMarker(new Vector3(0, 1, 0));
             m = new Material.SingleColorMaterial(1, 1, 1, 1);

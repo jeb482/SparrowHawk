@@ -472,7 +472,7 @@ namespace SparrowHawk
                 ((Geometry.RhinoMesh)meshStroke_g).setMesh(ref base_mesh);
                 
                 SceneNode ccMeshSN = new SceneNode("BrepMesh", ref meshStroke_g, ref mesh_m);            
-                mScene.staticGeometry.add(ref ccMeshSN);
+                mScene.tableGeometry.add(ref ccMeshSN);
                 
                 
 
@@ -493,7 +493,7 @@ namespace SparrowHawk
                 foreach (Mesh mesh in meshes)
                     base_mesh.Append(mesh);
                 Rhino.DocObjects.ObjectAttributes attr = new Rhino.DocObjects.ObjectAttributes();
-                attr.Name = "a1";
+                attr.Name = "a1"; // TODO: This can't be like this
                 Guid guid = mScene.rhinoDoc.Objects.AddBrep(brep, attr);
                 //add name attribute for printing
                 //mScene.rhinoDoc.Objects.Find(guid).Attributes.Name = "a" + guid.ToString();
@@ -505,7 +505,7 @@ namespace SparrowHawk
                 ((Geometry.RhinoMesh)meshStroke_g).setMesh(ref base_mesh);
 
                 SceneNode ccMeshSN = new SceneNode("BrepMesh", ref meshStroke_g, ref mesh_m);
-                mScene.staticGeometry.add(ref ccMeshSN);
+                mScene.tableGeometry.add(ref ccMeshSN);
 
 
 
