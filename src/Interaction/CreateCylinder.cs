@@ -38,7 +38,7 @@ namespace SparrowHawk.Interaction
             
             //render in VR
             Material.Material mesh_m = new Material.RGBNormalMaterial(1);
-            Util.addSceneNodePrint(ref mScene, brep, ref mesh_m);
+            Util.addSceneNode(ref mScene, brep, ref mesh_m, "a1");
 
 
         }

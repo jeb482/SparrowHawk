@@ -474,40 +474,7 @@ namespace SparrowHawk
                 SceneNode ccMeshSN = new SceneNode("BrepMesh", ref meshStroke_g, ref mesh_m);            
                 mScene.tableGeometry.add(ref ccMeshSN);
                 
-                
-
-                //add reference SceneNode to brep and vice versa
-                mScene.brepToSceneNodeDic.Add(guid, ccMeshSN);
-                mScene.SceneNodeToBrepDic.Add(ccMeshSN.guid, mScene.rhinoDoc.Objects.Find(guid));
-            }
-        }
-
-        public static void addSceneNodePrint(ref Scene mScene, Brep brep, ref Material.Material mesh_m)
-        {
-            //TODO: detect the # of faces
-            Mesh base_mesh = new Mesh();
-            if (brep != null)
-            {
-                Mesh[] meshes = Mesh.CreateFromBrep(brep, MeshingParameters.Default);
-
-                foreach (Mesh mesh in meshes)
-                    base_mesh.Append(mesh);
-                Rhino.DocObjects.ObjectAttributes attr = new Rhino.DocObjects.ObjectAttributes();
-                attr.Name = "a1"; // TODO: This can't be like this
-                Guid guid = mScene.rhinoDoc.Objects.AddBrep(brep, attr);
-                //add name attribute for printing
-                //mScene.rhinoDoc.Objects.Find(guid).Attributes.Name = "a" + guid.ToString();
-                //mScene.rhinoDoc.Objects.Find(guid).CommitChanges();
-                mScene.rhinoDoc.Views.Redraw();
-
-                Geometry.Geometry meshStroke_g = new Geometry.RhinoMesh(ref mScene);
-
-                ((Geometry.RhinoMesh)meshStroke_g).setMesh(ref base_mesh);
-
-                SceneNode ccMeshSN = new SceneNode("BrepMesh", ref meshStroke_g, ref mesh_m);
-                mScene.tableGeometry.add(ref ccMeshSN);
-
-
+               
 
                 //add reference SceneNode to brep and vice versa
                 mScene.brepToSceneNodeDic.Add(guid, ccMeshSN);
