@@ -18,6 +18,7 @@ namespace SparrowHawk.Interaction
         List<Point3d> curvePoints = new List<Point3d>();
         List<NurbsCurve> curvelist = new List<NurbsCurve>();
         List<Guid> curveGuids = new List<Guid>();
+        List<Point> allPoints = new List<Point>();
 
         public CreatePatch(ref Scene s)
         {
@@ -61,7 +62,8 @@ namespace SparrowHawk.Interaction
 
         public void renderPatch()
         {
-            Brep patchSurface = Brep.CreatePatch(curvelist, 4, 4, mScene.rhinoDoc.ModelAbsoluteTolerance);
+            //Brep patchSurface = Brep.CreatePatch(curvelist, 4, 4, mScene.rhinoDoc.ModelAbsoluteTolerance);
+            Brep patchSurface = Brep.CreatePatch(allPoints, 10, 10, mScene.rhinoDoc.ModelAbsoluteTolerance);
 
             Util.addSceneNode(ref mScene, patchSurface, ref mesh_m);
             mScene.rhinoDoc.Views.Redraw();
@@ -77,7 +79,7 @@ namespace SparrowHawk.Interaction
                     }
                 }
             }
-
+            allPoints.Clear();
             curvelist.Clear();
         }
 
@@ -92,6 +94,7 @@ namespace SparrowHawk.Interaction
                 // OpenTK.Vector3 p = Util.transformPoint(Util.mGLToRhino, point*1000);              
                 //curvePoints.Add(new Point3d(p.X, p.Y, p.Z));
                 curvePoints.Add(Util.openTkToRhinoPoint(Util.vrToPlatformPoint(ref mScene, point)));
+                allPoints.Add(new Point(Util.openTkToRhinoPoint(Util.vrToPlatformPoint(ref mScene, point))));
             }
 
             //Rhino CreateInterpolatedCurve and CreatePlanarBreps
@@ -129,10 +132,13 @@ namespace SparrowHawk.Interaction
 
                 curveGuids.Add(strokeId);
                 renderCurve();
+                /*
                 if (curvelist.Count == 8)
                 {
                     renderPatch();
-                }
+                }*/
+                //render patch with points
+                renderPatch();
                 currentState = State.READY;           
             }
         }
