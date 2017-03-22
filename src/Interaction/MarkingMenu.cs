@@ -9,6 +9,9 @@ namespace SparrowHawk.Interaction
     class MarkingMenu : Interaction
     {
         SceneNode mSceneNode;
+        Material.Material radialMenuMat;
+        int mNumSectors = 8;
+        float mFirstSectorOffsetAngle = 0f;
 
         public MarkingMenu(ref Scene scene)
         {
@@ -30,20 +33,28 @@ namespace SparrowHawk.Interaction
         }
 
         public override void draw(bool isTop) {
+            float r = 0;
+            float theta = 0;
             if (mScene.isOculus)
             {
-                float r, theta;
-                getViveTouchpadPoint((uint) mScene.leftControllerIdx, out r, out theta);
-                if (r > 0.1)                    launchInteraction(r, theta);
+                getOculusJoystickPoint((uint) mScene.leftControllerIdx, out r, out theta);
+                if (r > 0.1)
+                    launchInteraction(r, theta);
+            } else
+            {
+                getViveTouchpadPoint((uint)mScene.leftControllerIdx, out r, out theta);
             }
+            ((Material.RadialMenuMaterial) radialMenuMat).setHighlightedSector(mNumSectors, mFirstSectorOffsetAngle, theta);
+            
         }
 
         public override void activate()
         {
             Geometry.Geometry g = new Geometry.Geometry("C:\\workspace\\SparrowHawk\\src\\resources\\circle.obj");
             //Material.Material m = new Material.RGBNormalMaterial(1);
-            Material.Material m = new Material.TextureMaterial(mScene.rhinoDoc, "C:\\workspace\\SparrowHawk\\src\\resources\\mmenu1.png");
-            mSceneNode = new SceneNode("MarkingMenu", ref g, ref m);
+            //Material.Material m = new Material.TextureMaterial(mScene.rhinoDoc, "C:\\workspace\\SparrowHawk\\src\\resources\\mmenu1.png");
+            radialMenuMat = new Material.RadialMenuMaterial(mScene.rhinoDoc, "C:\\workspace\\SparrowHawk\\src\\resources\\mmenu1.png");
+            mSceneNode = new SceneNode("MarkingMenu", ref g, ref radialMenuMat);
             mSceneNode.transform = new OpenTK.Matrix4(1, 0,  0, 0,
                                                           0, 0,  -1, 0,
                                                           0, 1,  0, 0,
@@ -71,11 +82,11 @@ namespace SparrowHawk.Interaction
             mScene.popInteraction();
         }
 
+        // TODO: Need to account for offset. Next
         private void launchInteraction(float r, float theta)
         {
-            uint numInteractions = 8;
-            int interactionNumber = ((int) Math.Floor(numInteractions * theta / (2 * Math.PI)));
-            if (interactionNumber < 0) interactionNumber += (int) numInteractions;
+            int interactionNumber = ((int) Math.Floor(mNumSectors * theta / (2 * Math.PI)));
+            if (interactionNumber < 0) interactionNumber += (int)mNumSectors;
             mScene.popInteraction();
             Rhino.RhinoApp.WriteLine("Selected Interaction " + interactionNumber);
             switch (interactionNumber)

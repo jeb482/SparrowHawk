@@ -69,6 +69,28 @@ void main()
 	out_color = vec4(texture2D(tex, fuvs).xyz,1);
 }";
 
+// Also colors appropriate sector.
+public static string RadialMenuFragShader
+= @"#version 330 core
+uniform sampler2D tex;
+uniform float theta_min;
+uniform float theta_max;
+smooth in vec2 fuvs;
+out vec4 out_color;
+void main()
+{
+    bool invert = false;
+    float theta = mod(atan(fuvs.y - .5, fuvs.x - .5) + 6.28, 6.28)/6.28;
+    if (theta > theta_min && theta < theta_max)
+        invert = true;
+	out_color = vec4(texture2D(tex, fuvs).xyz,1);
+    out_color.x = theta;
+    out_color.y = 0;    
+    if (invert)
+        out_color.xyz = 1 - out_color.xyz;
+    
+}";
+
 
 //out_color = texture2D(texture, fuvs) * color;\
 // Read the Vertex Shader code from the file
