@@ -453,7 +453,7 @@ namespace SparrowHawk
                                                              -1, 0, 0, 0,
                                                              0, 0, 0, 1);
 
-        public static void addSceneNode(ref Scene mScene, Brep brep, ref Material.Material mesh_m)
+        public static Guid addSceneNode(ref Scene mScene, Brep brep, ref Material.Material mesh_m)
         {
             //TODO: detect the # of faces
             Mesh base_mesh = new Mesh();
@@ -474,15 +474,18 @@ namespace SparrowHawk
                 SceneNode ccMeshSN = new SceneNode("BrepMesh", ref meshStroke_g, ref mesh_m);            
                 mScene.tableGeometry.add(ref ccMeshSN);
                 
-               
-
                 //add reference SceneNode to brep and vice versa
                 mScene.brepToSceneNodeDic.Add(guid, ccMeshSN);
                 mScene.SceneNodeToBrepDic.Add(ccMeshSN.guid, mScene.rhinoDoc.Objects.Find(guid));
+
+                return guid;
+            }else
+            {
+                return Guid.Empty;
             }
         }
 
-        public static void addSceneNode(ref Scene mScene, Brep brep, ref Material.Material mesh_m, string name)
+        public static Guid addSceneNode(ref Scene mScene, Brep brep, ref Material.Material mesh_m, string name)
         {
             //TODO: detect the # of faces
             Mesh base_mesh = new Mesh();
@@ -507,11 +510,15 @@ namespace SparrowHawk
                 SceneNode ccMeshSN = new SceneNode("BrepMesh", ref meshStroke_g, ref mesh_m);
                 mScene.tableGeometry.add(ref ccMeshSN);
 
-
-
                 //add reference SceneNode to brep and vice versa
                 mScene.brepToSceneNodeDic.Add(guid, ccMeshSN);
                 mScene.SceneNodeToBrepDic.Add(ccMeshSN.guid, mScene.rhinoDoc.Objects.Find(guid));
+
+                return guid;
+
+            }else
+            {
+                return Guid.Empty;
             }
         }
 

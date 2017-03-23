@@ -82,6 +82,8 @@ namespace SparrowHawk
         public SceneNode rightControllerNode = new SceneNode("Left Controller Node");
         public Dictionary<Guid, SceneNode> brepToSceneNodeDic = new Dictionary<Guid, SceneNode>();
         public Dictionary<Guid, Rhino.DocObjects.RhinoObject> SceneNodeToBrepDic = new Dictionary<Guid, Rhino.DocObjects.RhinoObject>();
+        DateTime mLastFrameTime;
+        DateTime mCurrentFrameTime;
 
         // Camera data
         public Matrix4 mHMDPose;
