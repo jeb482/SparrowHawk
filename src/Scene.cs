@@ -16,7 +16,7 @@ namespace SparrowHawk
         public Geometry.Geometry geometry;
         public Material.Material material;
         public Matrix4 transform = new Matrix4(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1);
-
+        public DateTime gameTime;
 
         public SceneNode(string _name, ref Geometry.Geometry g, ref Material.Material m)
         {
