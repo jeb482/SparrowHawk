@@ -151,10 +151,11 @@ namespace SparrowHawk
             //default interaction
             if (mScene.interactionStackEmpty()) 
             {
-                mScene.pushInteraction(new Interaction.PickPoint(ref mScene, ref controllerPoses)); // HUAISHU: Enable only this line for callibration. Afterwards, to switch to cylinder, press 'o' on the keyboard.
+                //mScene.pushInteraction(new Interaction.PickPoint(ref mScene, ref controllerPoses)); // HUAISHU: Enable only this line for callibration. Afterwards, to switch to cylinder, press 'o' on the keyboard.
+                //mScene.pushInteraction(new Interaction.PickPoint(ref mScene, ref robotCallibrationPoints));
                 //mScene.pushInteraction(new Interaction.MarkingMenu(ref mScene));
                 // mScene.pushInteraction(new Interaction.CreatePlaneA(ref mScene));
-                //mScene.pushInteraction(new Interaction.CreateCylinder(ref mScene)); 
+                mScene.pushInteraction(new Interaction.CreateCylinder(ref mScene)); 
                 //mScene.mInteractionStack.Push(new Interaction.Stroke(ref mScene));
             }
 
@@ -430,16 +431,16 @@ namespace SparrowHawk
             Rhino.DocObjects.ObjectEnumeratorSettings settings = new Rhino.DocObjects.ObjectEnumeratorSettings();
             //settings.ObjectTypeFilter = Rhino.DocObjects.ObjectType.Brep
             int obj_count = 0;
-            foreach (Rhino.DocObjects.RhinoObject rhObj in mScene.rhinoDoc.Objects.GetObjectList(settings))
-            {
-                if (rhObj.Attributes.Name.StartsWith("a"))
-                {
-                    Util.addSceneNode(ref mScene, ((Surface)rhObj.Geometry).ToBrep(), ref mesh_m, rhObj.Attributes.Name);
-                    mScene.rhinoDoc.Views.Redraw();
-                }
-                obj_count++;
-            }
-            Rhino.RhinoApp.WriteLine(obj_count + " breps found");
+            //foreach (Rhino.DocObjects.RhinoObject rhObj in mScene.rhinoDoc.Objects.GetObjectList(settings))
+            //{
+            //    if (rhObj.Attributes.Name.StartsWith("a"))
+            //    {
+            //        Util.addSceneNode(ref mScene, ((Surface)rhObj.Geometry).ToBrep(), ref mesh_m, rhObj.Attributes.Name);
+            //        mScene.rhinoDoc.Views.Redraw();
+            //    }
+            //    obj_count++;
+            //}
+            //Rhino.RhinoApp.WriteLine(obj_count + " breps found");
 
             mRenderer = new VrRenderer(ref mHMD, ref mScene, mRenderWidth, mRenderHeight);
 
@@ -476,7 +477,11 @@ namespace SparrowHawk
         protected override void OnKeyPress(OpenTK.KeyPressEventArgs e)
         {
             if (e.KeyChar == 'C' || e.KeyChar == 'c')
-                mRenderer.ovrvision_controller.getMatrixHeadtoCamera();
+            {
+                //mRenderer.ovrvision_controller.getMatrixHeadtoCamera();
+                mScene.popInteraction();
+                mScene.pushInteraction(new Interaction.CalibrationAR(ref mScene, ref mRenderer.ovrvision_controller));
+            }
 
             if (e.KeyChar == 'D' || e.KeyChar == 'd')
                 mRenderer.ovrvision_controller.setDefaultMatrixHC();

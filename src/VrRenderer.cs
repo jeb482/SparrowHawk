@@ -42,6 +42,8 @@ namespace SparrowHawk
         Valve.VR.CVRSystem mHMD;
         Scene mScene;
         public OvrvisionController ovrvision_controller;
+
+
         private bool enableAR = false;
         Geometry.Geometry fullscreenQuad;
 

@@ -80,14 +80,16 @@ out vec4 out_color;
 void main()
 {
     bool invert = false;
-    float theta = mod(atan(fuvs.y - .5, fuvs.x - .5) + 6.28, 6.28)/6.28;
+    float theta = atan(.5 - fuvs.y, fuvs.x - .5);
+    if (theta < 0) {
+        theta = theta + 6.283;    
+    }
     if (theta > theta_min && theta < theta_max)
         invert = true;
-	out_color = vec4(texture2D(tex, fuvs).xyz,1);
-    out_color.x = theta;
-    out_color.y = 0;    
+	out_color = vec4(texture2D(tex, fuvs).xyz,1);    
     if (invert)
         out_color.xyz = 1 - out_color.xyz;
+    
     
 }";
 

@@ -19,6 +19,7 @@ namespace SparrowHawk.Ovrvision
     {
         Valve.VR.CVRSystem mHMD;
         Scene mScene;
+        uint primaryDeviceIndex;
         COvrvision Ovrvision = null;
         public int camWidth, camHeight;
         
@@ -183,10 +184,6 @@ namespace SparrowHawk.Ovrvision
                 BuildProjectionMatrix(0.1f, 30, 0);
                 BuildModelMatrix();
 
-                //Thread start
-                ThreadEnd = false;
-                UpdateThread = new Thread(new ThreadStart(Camera_UpdateThread));
-                UpdateThread.Start();
             }
             else
             {
@@ -229,7 +226,6 @@ namespace SparrowHawk.Ovrvision
                 //Util.WriteLine(ref mScene.rhinoDoc, "waiting camera views");
                 return;
             }
-
             _frame_L = Ovrvision.imageDataLeft_Mat;
             _frame_R = Ovrvision.imageDataRight_Mat;
 
@@ -440,28 +436,24 @@ namespace SparrowHawk.Ovrvision
 
         public void setDefaultMatrixHC()
         {
-            //(-13.86312, -2.31339, 41.60522, -15.28837)
-            //(-40.69572, 2.709207, -13.83543, 13.93765)
-            //(-1.969063, -40.31068, -1.043179, 32.76967)
-            //(0, 0, 0, 1)
             glmVRtoMarker = new Matrix4(
-                    -13.86312f, -2.31339f, 41.60522f, -15.28837f,
-                    -40.69572f, 2.709207f, -13.83543f, 13.93765f,
-                    -1.969063f, -40.31068f, -1.043179f, 32.76967f,
+                    41.17993f, -0.7992982f, 0.05855817f, -40.59021f,
+                    0.07283669f, 4.892177f, 40.19513f, 19.44431f,
+                    -0.894962f, -41.10464f, 1.052828f, 0.4367066f,
                     0, 0, 0, 1
            );
 
             mHeadtoCam_L = new Matrix4(
-                    42.96452f, 0.6706083f, 1.155278f, 1.186528f,
-                    -1.254154f, 44.08835f, 1.114768f, 0.1481566f,
-                    -2.066973f, -1.235542f, 40.16489f, 4.631462f,
+                    41.15958f, -0.05801749f, 0.9403467f, 1.362392f,
+                    -0.3709323f, 39.4918f, -3.760525f, -0.8313656f,
+                   -0.9785745f, 0.6824751f, 41.91914f, 5.587931f,
                     0, 0, 0, 1
            );
 
             mHeadtoCam_R = new Matrix4(
-                    42.99606f, 0.6534817f, 0.4786577f, -1.238245f,
-                    -1.223896f, 44.08417f, 1.241231f, 0.2366943f,
-                    -1.33017f, -1.375824f, 40.17358f, 4.709026f,
+                    41.16973f, -0.05447043f, 0.2204018f, -1.19957f,
+                    -0.3924753f, 39.4917f, -3.692798f, -0.7971983f,
+                    -0.2735618f, 0.6202517f, 41.93658f, 5.650891f,
                     0, 0, 0, 1
            );
             calib_status = 3;
@@ -469,33 +461,14 @@ namespace SparrowHawk.Ovrvision
             Rhino.RhinoApp.WriteLine("set default calibration matrix");
         }
 
-        public void getMatrixHeadtoCamera()
+        public void getMatrixHeadtoCamera(uint primaryDeviceIndex)
         {
-            Vector4 center = new Vector4(0, 0, 0, 1);
+
+            Vector3 center = new Vector3(0, 0, 0);
             if (vr_points.Count < 8)
             {
-                // find the pose of the controllers
-                /*
-                for (uint nDevice = OpenVR.k_unTrackedDeviceIndex_Hmd + 1; nDevice < OpenVR.k_unMaxTrackedDeviceCount; ++nDevice)
-                {
-                    if (!mHMD.IsTrackedDeviceConnected(nDevice))
-                        continue;
-
-                    if (mHMD.GetTrackedDeviceClass(nDevice) != ETrackedDeviceClass.Controller)
-                        continue;
-
-                    if (!mScene.mTrackedDevices[nDevice].bPoseIsValid)
-                        continue;
-
-
-                    Matrix4 mControllerPose = mScene.mDevicePose[nDevice];
-                    center = mControllerPose * new Vector4(0, 0, 0, 1);
-                    Rhino.RhinoApp.WriteLine(center.ToString());
-                }
-                */
                 //only use left controller for the calibration
-                Matrix4 mControllerPose = mScene.leftControllerNode.transform;
-                center = mControllerPose * new Vector4(0, 0, 0, 1);
+                center = Util.getTranslationVector3(Util.getControllerTipPosition(ref mScene, primaryDeviceIndex == mScene.leftControllerIdx));
                 Rhino.RhinoApp.WriteLine(center.ToString());
                 
                 vr_points.Add(new MCvPoint3D32f(center.X, center.Y, center.Z));
@@ -528,6 +501,12 @@ namespace SparrowHawk.Ovrvision
 
                 vr_points.Clear();
                 marker_points.Clear();
+
+                //Thread start to calculate the view matrix
+                ThreadEnd = false;
+                UpdateThread = new Thread(new ThreadStart(Camera_UpdateThread));
+                UpdateThread.Start();
+
             }
 
 

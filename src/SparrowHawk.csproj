@@ -87,6 +87,7 @@
     <Compile Include="Geometry\PlaneRep.cs" />
     <Compile Include="Geometry\RhinoMesh.cs" />
     <Compile Include="Interaction\Align.cs" />
+    <Compile Include="Interaction\CalibrationAR.cs" />
     <Compile Include="Interaction\CreatePatch.cs" />
     <Compile Include="Interaction\CreatePlaneA.cs" />
     <Compile Include="Interaction\Delete.cs" />

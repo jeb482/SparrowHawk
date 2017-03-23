@@ -92,8 +92,8 @@ namespace SparrowHawk.Material
             GL.UniformMatrix4(mShader.uniform("viewProjTransform"), false, ref vp);
             //GL.UniformMatrix4(mShader.uniform("viewProjTransform"), false, ref vp);
             GL.Uniform1(mShader.uniform("tex"), 0);
-            //GL.Uniform1(mShader.uniform("theta_min"), mThetaMin);
-            //GL.Uniform1(mShader.uniform("theta_max"), mThetaMax);
+            GL.Uniform1(mShader.uniform("theta_min"), mThetaMin);
+            GL.Uniform1(mShader.uniform("theta_max"), mThetaMax);
 
 
             //for debugging
