@@ -44,15 +44,20 @@ namespace SparrowHawk.Interaction
         {
             Geometry.Geometry g = new Geometry.Geometry("C:\\workspace\\SparrowHawk\\src\\resources\\circle.obj");
             //Material.Material m = new Material.RGBNormalMaterial(1);
-            Material.Material m = new Material.TextureMaterial(mScene.rhinoDoc, "C:\\workspace\\SparrowHawk\\src\\resources\\mmenu1.png");
+            Material.Material m = new Material.TextureMaterial(mScene.rhinoDoc, "C:\\workspace\\SparrowHawk\\src\\resources\\homemenu.png");
             mSceneNode = new SceneNode("MarkingMenu", ref g, ref m);
             //KMM: transform no longer applicable
-            mSceneNode.transform = new OpenTK.Matrix4(    1, 0, 0, 0,
+            /*mSceneNode.transform = new OpenTK.Matrix4(    1, 0, 0, 0,
                                                           0, 0, -1, 0,
                                                           0, 1, 0, 0,
-                                                          0, 0, 0, 1);
+                                                          0, 0, 0, 1);*/
+			mSceneNode.transform = new OpenTK.Matrix4(2,0,0,0,
+			                                          0,2,0,1,
+			                                          0,0,2,0,
+			                                          0,0,0,1);
             //KMM: shouldn't be put in controllerNode
-            mScene.leftControllerNode.add(ref mSceneNode);
+            //mScene.leftControllerNode.add(ref mSceneNode);
+			mScene.add(ref mSceneNode);
         }
 
         public override void deactivate()
