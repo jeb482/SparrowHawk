@@ -505,7 +505,7 @@ namespace SparrowHawk
                 ((Geometry.RhinoMesh)meshStroke_g).setMesh(ref base_mesh);
 
                 SceneNode ccMeshSN = new SceneNode("BrepMesh", ref meshStroke_g, ref mesh_m);
-                mScene.staticGeometry.add(ref ccMeshSN);
+                mScene.tableGeometry.add(ref ccMeshSN);
 
 
 

@@ -124,7 +124,7 @@ smooth in vec3 fnormal;
 out vec4 out_color;
 void main()
 {
-	out_color = vec4((fnormal + 1)/2, alpha);
+	out_color = vec4((fnormal + 1)/4, alpha);
 }";
 
 // Read the Fragment Shader code from the file

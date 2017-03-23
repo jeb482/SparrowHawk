@@ -152,10 +152,10 @@ namespace SparrowHawk
             if (mScene.interactionStackEmpty()) 
             {
                 //mScene.pushInteraction(new Interaction.PickPoint(ref mScene, ref controllerPoses)); // HUAISHU: Enable only this line for callibration. Afterwards, to switch to cylinder, press 'o' on the keyboard.
-                //mScene.pushInteraction(new Interaction.PickPoint(ref mScene, ref robotCallibrationPoints));
+                mScene.pushInteraction(new Interaction.PickPoint(ref mScene, ref robotCallibrationPoints));
                 //mScene.pushInteraction(new Interaction.MarkingMenu(ref mScene));
                 // mScene.pushInteraction(new Interaction.CreatePlaneA(ref mScene));
-                mScene.pushInteraction(new Interaction.CreateCylinder(ref mScene)); 
+                //mScene.pushInteraction(new Interaction.CreateCylinder(ref mScene)); 
                 //mScene.mInteractionStack.Push(new Interaction.Stroke(ref mScene));
             }
 
@@ -422,7 +422,7 @@ namespace SparrowHawk
 
             if (brep != null)
             {
-                Material.Material rhinoMseh_m = new Material.SingleColorMaterial(0, 1, 0, 0.5f);
+                Material.Material rhinoMseh_m = new Material.SingleColorMaterial(0, .5f, 0, 0.5f);
                 Util.addSceneNode(ref mScene, xy_plane, ref rhinoMseh_m, "plane");
             }
 
@@ -576,6 +576,8 @@ namespace SparrowHawk
                 mScene.popInteraction();
                 mScene.pushInteraction(new Interaction.CreatePatch(ref mScene));
             }
+
+
 
             
 
