@@ -43,6 +43,8 @@ namespace SparrowHawk
         Scene mScene;
         public OvrvisionController ovrvision_controller;
         private bool enableAR = false;
+        Geometry.Geometry fullscreenQuad;
+
 
         public VrRenderer(ref Valve.VR.CVRSystem HMD, ref Scene scene, uint mRenderWidth, uint mRenderHeight)
         {
@@ -272,9 +274,9 @@ namespace SparrowHawk
             mEyeProjLeft = GetHMDMatrixProjectionEye(ref mHMD, Valve.VR.EVREye.Eye_Left);
             mEyeProjRight = GetHMDMatrixProjectionEye(ref mHMD, Valve.VR.EVREye.Eye_Right);
         }
-            // TODO: RenderDistortion
         
-        // TODO: RenderFrame
+        
+        
         public void renderFrame()
         {
             if (mHMD != null)
@@ -288,6 +290,7 @@ namespace SparrowHawk
                 GL.Finish();
                 GL.Flush();
 
+                renderCompanionWindow();
                 Valve.VR.Texture_t leftEyeTexture, rightEyeTexture;
                 leftEyeTexture.handle = new IntPtr(leftEyeDesc.resolveTextureId);
                 rightEyeTexture.handle = new IntPtr(rightEyeDesc.resolveTextureId);
@@ -299,13 +302,21 @@ namespace SparrowHawk
                 pBounds.uMax = 1; pBounds.uMin = 0; pBounds.vMax = 1; pBounds.uMin = 0;
                 Valve.VR.OpenVR.Compositor.Submit(Valve.VR.EVREye.Eye_Left, ref leftEyeTexture, ref pBounds, Valve.VR.EVRSubmitFlags.Submit_Default); // TODO: There's a distortion already applied flag.
                 Valve.VR.OpenVR.Compositor.Submit(Valve.VR.EVREye.Eye_Right, ref rightEyeTexture, ref pBounds, Valve.VR.EVRSubmitFlags.Submit_Default);
-
-               
                 
                 GL.Finish();
             }
         }
 
-        // TODO: UpdateHMDMatrixPose
+        public void setupCompanionWindow()
+        {
+
+        }
+
+        public void renderCompanionWindow()
+        {
+            
+        }
+
+        
     }
 }
