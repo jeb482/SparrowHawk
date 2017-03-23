@@ -80,20 +80,40 @@ namespace SparrowHawk.Interaction
             launchInteraction(r, theta);
         }
 
+        protected override void onClickOculusTrigger(ref VREvent_t vrEvent)
+        {
+        }
+
+        protected override void onReleaseOculusStick(ref VREvent_t vrEvent)
+        {
+            float r = 0;
+            float theta = 0;
+            getOculusJoystickPoint((uint)mScene.leftControllerIdx, out r, out theta);
+            if (r > 0.2)
+                launchInteraction(r, theta);
+            else
+            {
+                mScene.popInteraction();
+            }
+        }
+
         public override void draw(bool isTop) {
             float r = 0;
             float theta = 0;
             if (mScene.isOculus)
             {
                 getOculusJoystickPoint((uint) mScene.leftControllerIdx, out r, out theta);
-                if (r > 0.1)
-                    launchInteraction(r, theta);
+            //    if (r > 0.1)
+            //        launchInteraction(r, theta);
             } else
             {
                 getViveTouchpadPoint((uint)mScene.leftControllerIdx, out r, out theta);
             }
-            ((Material.RadialMenuMaterial) radialMenuMat).setHighlightedSector(mNumSectors, mFirstSectorOffsetAngle, theta);
-            
+            if (r > 0.2)
+                ((Material.RadialMenuMaterial) radialMenuMat).setHighlightedSector(mNumSectors, mFirstSectorOffsetAngle, theta);
+            else
+                ((Material.RadialMenuMaterial)radialMenuMat).removeHighlight();
+
         }
 
         public override void activate()

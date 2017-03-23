@@ -45,7 +45,7 @@ namespace SparrowHawk
 
         bool manualCallibration = false;
 
-
+        DesignPlane xzPlane, xyPlane, yzPlane;
 
         public VrGame(ref Rhino.RhinoDoc doc)
         {
@@ -220,6 +220,7 @@ namespace SparrowHawk
                 mFrameCount = 0;
             } 
             mFrameCount += 1;
+            
             mLastFrameTime = DateTime.Now;
         }
 
@@ -406,25 +407,11 @@ namespace SparrowHawk
                 Util.addSceneNode(ref mScene, brep, ref rhinoMseh_m);
             }
 
-            //TODO-add a xy-plane in rhino (xz plane in VR)
-            Rhino.Geometry.Vector3d normal = new Rhino.Geometry.Vector3d(0, 0, 1);
-            Plane plane = new Plane(new Point3d(0, 0, 0), normal);
+            //create and render pre-defined planes
+            xzPlane = new DesignPlane(ref mScene, "XZ");
+            xyPlane = new DesignPlane(ref mScene, "XY");
+            yzPlane = new DesignPlane(ref mScene, "YZ");
 
-            //PlaneSurface plane_surface = new PlaneSurface(plane,
-            //  new Interval(0, corner_lt.DistanceTo(corner_rt)),
-            //  new Interval(0, corner_lb.DistanceTo(corner_lt)));
-
-            PlaneSurface plane_surface = new PlaneSurface(plane,
-              new Interval(-150, 150),
-              new Interval(-150, 150));
-
-            Brep xy_plane = Brep.CreateFromSurface(plane_surface);
-
-            if (brep != null)
-            {
-                Material.Material rhinoMseh_m = new Material.SingleColorMaterial(0, .5f, 0, 0.5f);
-                Util.addSceneNode(ref mScene, xy_plane, ref rhinoMseh_m, "plane");
-            }
 
             //Find the Rhino Object start with 'a' and render it
             Material.Material mesh_m = new Material.RGBNormalMaterial(1); ;
@@ -509,7 +496,7 @@ namespace SparrowHawk
             if (e.KeyChar == 'H' || e.KeyChar == 'h')
             {
                 mScene.popInteraction();
-                mScene.pushInteraction(new Interaction.EditPlane(ref mScene));
+                mScene.pushInteraction(new Interaction.EditPlane(ref mScene, ref xyPlane, ref xzPlane, ref yzPlane));
             }
 
             if (e.KeyChar == 'L' || e.KeyChar == 'l')

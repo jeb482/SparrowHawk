@@ -130,5 +130,10 @@ namespace SparrowHawk.Material
             mThetaMax = (float)(((firstSectorOffsetAngle + ((sector + 1) % numSectors) * (2 * Math.PI) / numSectors) + 2*Math.PI) % (2 * Math.PI));
         }
 
+        public void removeHighlight()
+        {
+            mThetaMax = 0;
+            mThetaMin = 0;
+        }
     }
 }

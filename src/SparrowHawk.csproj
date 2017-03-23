@@ -83,6 +83,7 @@
     <Reference Include="System.XML" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="DesignPlane.cs" />
     <Compile Include="Geometry\GeometryStroke.cs" />
     <Compile Include="Geometry\PlaneRep.cs" />
     <Compile Include="Geometry\RhinoMesh.cs" />
