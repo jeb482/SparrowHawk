@@ -84,11 +84,14 @@ void main()
     if (theta < 0) {
         theta = theta + 6.283;    
     }
-    if (theta > theta_min && theta < theta_max)
+    if (theta_min < theta_max && theta > theta_min && theta < theta_max) {
+        invert = true;        
+    } else if (theta_min > theta_max && (theta < theta_max || theta > theta_min)) {
         invert = true;
+    }
 	out_color = vec4(texture2D(tex, fuvs).xyz,1);    
     if (invert)
-        out_color.xyz = 1 - out_color.xyz;
+        out_color.x = 0;
     
     
 }";

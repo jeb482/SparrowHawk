@@ -126,8 +126,8 @@ namespace SparrowHawk.Material
         {
             int sector = (int)Math.Floor((theta - firstSectorOffsetAngle) * numSectors / (2 * Math.PI));
             if (sector < 0) sector += numSectors;
-            mThetaMin = (float)(firstSectorOffsetAngle + sector * (2 * Math.PI) / numSectors);
-            mThetaMax = (float)(firstSectorOffsetAngle + ((sector + 1) % numSectors) * (2 * Math.PI) / numSectors);
+            mThetaMin = (float)(((firstSectorOffsetAngle + sector * (2 * Math.PI) / numSectors) + 2*Math.PI) % (2 * Math.PI))  ;
+            mThetaMax = (float)(((firstSectorOffsetAngle + ((sector + 1) % numSectors) * (2 * Math.PI) / numSectors) + 2*Math.PI) % (2 * Math.PI));
         }
 
     }
