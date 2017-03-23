@@ -93,8 +93,8 @@ namespace SparrowHawk
         public char[] mDeviceClassChar = new char[Valve.VR.OpenVR.k_unMaxTrackedDeviceCount];
         public int leftControllerIdx = -1;
         public int rightControllerIdx = -1;
-        //public Matrix4 mLeftControllerOffset = Util.createTranslationMatrix(0, 0, 0);
-        public Matrix4 mLeftControllerOffset = Util.createTranslationMatrix(0.001885863f, -0.02479392f,-0.0003346408f);
+        public Matrix4 mLeftControllerOffset = Util.createTranslationMatrix(0.001457473f,-0.02422076f,-0.00521365f);
+        //public Matrix4 mLeftControllerOffset = Util.createTranslationMatrix(0.001885863f, -0.02479392f,-0.0003346408f);
         //public Matrix4 mLeftControllerOffset = Util.createTranslationMatrix(0.00134759f, -0.02559454f, -0.005455005f);//Util.createTranslationMatrix(0,0,0);//Util.createTranslationMatrix(0.0006068f, -.02383642f, -0.00026948f);
         public Matrix4 mRightControllerOffset = Util.createTranslationMatrix(0, 0, 0);//Util.createTranslationMatrix(-0.0006068f, -.02383642f, -0.00026948f);
 
@@ -113,10 +113,16 @@ namespace SparrowHawk
 
 
         //public Matrix4 vrToRobot = OpenTK.Matrix4.Identity;
-        public Matrix4 vrToRobot = new Matrix4(-1.018527f, -0.008061957f, 0.06252521f, -0.0658858f,
-           -0.02257842f, -0.0356043f, -1.034634f, 0.1029692f,
-           0.00329627f, -1.012641f, -0.006327522f, 0.7405275f,
-           0,0,0,1);
+        //public Matrix4 vrToRobot = new Matrix4(-1.018527f, -0.008061957f, 0.06252521f, -0.0658858f,
+        //   -0.02257842f, -0.0356043f, -1.034634f, 0.1029692f,
+        //   0.00329627f, -1.012641f, -0.006327522f, 0.7405275f,
+        //   0,0,0,1);
+
+        public Matrix4 vrToRobot = new Matrix4(0.04553255f, 0.0110915f, -1.016086f, -0.7004303f,
+                                               1.015694f, -0.01724754f, 0.06361949f, 0.02786883f,
+                                               -0.02152945f, -1.000105f, -0.007235864f, 1.449791f,
+                                               0, 0, 0, 1);
+
 
         // Interactions
         private Stack<Interaction.Interaction> mInteractionStack = new Stack<Interaction.Interaction>();
