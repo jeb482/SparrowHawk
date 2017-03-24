@@ -220,8 +220,9 @@ namespace SparrowHawk
                 mFrameCount = 0;
             } 
             mFrameCount += 1;
+            mScene.gameTime += e.Time;
             mLastFrameTime = DateTime.Now;
-            mScene.gameTime
+            
         }
 
         // TODO: Only works for oculus
@@ -510,7 +511,7 @@ namespace SparrowHawk
             if (e.KeyChar == 'H' || e.KeyChar == 'h')
             {
                 mScene.popInteraction();
-                mScene.pushInteraction(new Interaction.EditPlane(ref mScene));
+//                mScene.pushInteraction(new Interaction.EditPlane(ref mScene));
             }
 
             if (e.KeyChar == 'L' || e.KeyChar == 'l')

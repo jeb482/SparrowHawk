@@ -58,7 +58,7 @@ namespace SparrowHawk.Interaction
         int mNumSectors;
         float mFirstSectorOffsetAngle;
 
-        public MarkingMenu(ref Scene scene, MenuLayout layout = MenuLayout.RootMenu, OpenTK.Vector3 offset = new OpenTK.Vector3())
+        public MarkingMenu(ref Scene scene, MenuLayout layout = MenuLayout.RootMenu, double delay=0, OpenTK.Vector3 offset = new OpenTK.Vector3())
         {
             mLayout = layout;
             mNumSectors = getNumSectors(layout);
@@ -166,19 +166,19 @@ namespace SparrowHawk.Interaction
                     {
                         case 0:
                             mScene.popInteraction();
-                            mScene.pushInteraction(new MarkingMenu(ref mScene, MenuLayout.TwoDMenu, new OpenTK.Vector3(0,0,.005f)));
+                            mScene.pushInteraction(new MarkingMenu(ref mScene, MenuLayout.TwoDMenu, 0, new OpenTK.Vector3(0,0,.005f)));
                             break;
                         case 1:
                             mScene.popInteraction();
-                            mScene.pushInteraction(new MarkingMenu(ref mScene, MenuLayout.NavMenu, new OpenTK.Vector3(0, 0, .005f)));
+                            mScene.pushInteraction(new MarkingMenu(ref mScene, MenuLayout.NavMenu, 0, new OpenTK.Vector3(0, 0, .005f)));
                             break;
                         case 2:
                             mScene.popInteraction();
-                            mScene.pushInteraction(new MarkingMenu(ref mScene, MenuLayout.ThreeDMenu, new OpenTK.Vector3(0, 0, .005f)));
+                            mScene.pushInteraction(new MarkingMenu(ref mScene, MenuLayout.ThreeDMenu, 0, new OpenTK.Vector3(0, 0, .005f)));
                             break;
                         case 3:
                             mScene.popInteraction();
-                            mScene.pushInteraction(new MarkingMenu(ref mScene, MenuLayout.CalibrationMenu, new OpenTK.Vector3(0, 0, .005f)));
+                            mScene.pushInteraction(new MarkingMenu(ref mScene, MenuLayout.CalibrationMenu, 0, new OpenTK.Vector3(0, 0, .005f)));
                             break;
                     } break;
 
