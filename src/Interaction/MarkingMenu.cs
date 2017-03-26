@@ -40,9 +40,9 @@ namespace SparrowHawk.Interaction
             switch (layout)
             {
                 case MenuLayout.RootMenu: return @"C:\workspace\SparrowHawk\src\resources\menus\homemenu.png";
-                case MenuLayout.CalibrationMenu: return @"C:\workspace\SparrowHawk\src\resources\menus\homemenu.png";
-                case MenuLayout.TwoDMenu: return @"C:\workspace\SparrowHawk\src\resources\menus\homemenu.png";
-                case MenuLayout.ThreeDMenu: return @"C:\workspace\SparrowHawk\src\resources\menus\homemenu.png";
+                case MenuLayout.CalibrationMenu: return @"C:\workspace\SparrowHawk\src\resources\menus\3template.png";
+                case MenuLayout.TwoDMenu: return @"C:\workspace\SparrowHawk\src\resources\menus\2dgeo1.png";
+                case MenuLayout.ThreeDMenu: return @"C:\workspace\SparrowHawk\src\resources\menus\3dgeo1.png";
                 case MenuLayout.NavMenu: return @"C:\workspace\SparrowHawk\src\resources\menus\navmenu.png";
                 case MenuLayout.PlaneMenu: return @"C:\workspace\SparrowHawk\src\resources\menus\homemenu.png";
                 case MenuLayout.PlanarMenu: return @"C:\workspace\SparrowHawk\src\resources\menus\homemenu.png";
@@ -250,13 +250,39 @@ namespace SparrowHawk.Interaction
                 case MenuLayout.ThreeDMenu:
                     switch (interactionNumber)
                     {
-
+                        case 0:
+                            mScene.popInteraction();
+                            mScene.pushInteraction(new Loft(ref mScene));
+                            break;
+                        case 1:
+                            mScene.popInteraction();
+                            mScene.pushInteraction(new CreateCylinder(ref mScene));
+                            break;
+                        case 2:
+                            mScene.popInteraction();
+                            mScene.pushInteraction(new Loft(ref mScene));
+                            break;
+                        case 3:
+                            mScene.popInteraction();
+                            mScene.pushInteraction(new Sweep(ref mScene));
+                            break;
                     }
                     break;
                 case MenuLayout.TwoDMenu:
                     switch (interactionNumber)
                     {
-
+                        case 0:
+                            mScene.popInteraction();
+                            mScene.pushInteraction(new Closedcurve(ref mScene));
+                            break;
+                        case 1:
+                            mScene.popInteraction();
+                            mScene.pushInteraction(new Stroke(ref mScene));
+                            break;
+                        case 2:
+                            mScene.popInteraction();
+                            mScene.pushInteraction(new Closedcurve(ref mScene));
+                            break;
                     }
                     break;
             }
