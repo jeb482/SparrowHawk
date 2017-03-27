@@ -25,9 +25,9 @@ namespace SparrowHawk.Interaction
             {
                 case MenuLayout.RootMenu: return 4;
                 case MenuLayout.CalibrationMenu: return 3;
-                case MenuLayout.TwoDMenu: return 2;
+                case MenuLayout.TwoDMenu: return 3;
                 case MenuLayout.ThreeDMenu: return 4;
-                case MenuLayout.NavMenu: return 2;
+                case MenuLayout.NavMenu: return 3;
                 case MenuLayout.PlaneMenu: return 3;
                 case MenuLayout.PlanarMenu: return 3;
                 case MenuLayout.NonPlanarMenu: return 2;
@@ -40,11 +40,11 @@ namespace SparrowHawk.Interaction
             switch (layout)
             {
                 case MenuLayout.RootMenu: return @"C:\workspace\SparrowHawk\src\resources\menus\homemenu.png";
-                case MenuLayout.CalibrationMenu: return @"C:\workspace\SparrowHawk\src\resources\menus\3template.png";
+                case MenuLayout.CalibrationMenu: return @"C:\workspace\SparrowHawk\src\resources\menus\calmenu.png";
                 case MenuLayout.TwoDMenu: return @"C:\workspace\SparrowHawk\src\resources\menus\2dgeo1.png";
                 case MenuLayout.ThreeDMenu: return @"C:\workspace\SparrowHawk\src\resources\menus\3dgeo1.png";
-                case MenuLayout.NavMenu: return @"C:\workspace\SparrowHawk\src\resources\menus\navmenu.png";
-                case MenuLayout.PlaneMenu: return @"C:\workspace\SparrowHawk\src\resources\menus\homemenu.png";
+                case MenuLayout.NavMenu: return @"C:\workspace\SparrowHawk\src\resources\menus\navmenu_plane.png";
+                case MenuLayout.PlaneMenu: return @"C:\workspace\SparrowHawk\src\resources\menus\planesmenu.png";
                 case MenuLayout.PlanarMenu: return @"C:\workspace\SparrowHawk\src\resources\menus\homemenu.png";
                 case MenuLayout.NonPlanarMenu: return @"C:\workspace\SparrowHawk\src\resources\menus\homemenu.png";
             }
@@ -227,6 +227,10 @@ namespace SparrowHawk.Interaction
                             mScene.popInteraction();
                             mScene.pushInteraction(new Grip(ref mScene));
                             break;
+                        case 2:
+                            mScene.popInteraction();
+                            mScene.pushInteraction(new MarkingMenu(ref mScene, MenuLayout.PlaneMenu));
+                            break;
                     }
                     break;
                 case MenuLayout.NonPlanarMenu:
@@ -244,7 +248,18 @@ namespace SparrowHawk.Interaction
                 case MenuLayout.PlaneMenu:
                     switch (interactionNumber)
                     {
-
+                        case 0:
+                            mScene.popInteraction();
+                            mScene.pushInteraction(new EditPlane());
+                            break;
+                        case 1:
+                            mScene.popInteraction();
+                            mScene.pushInteraction(new Grip(ref mScene));
+                            break;
+                        case 2:
+                            mScene.popInteraction();
+                            mScene.pushInteraction(new MarkingMenu(ref mScene, MenuLayout.PlaneMenu));
+                            break;
                     }
                     break;
                 case MenuLayout.ThreeDMenu:
@@ -286,34 +301,6 @@ namespace SparrowHawk.Interaction
                     }
                     break;
             }
-            
-            //switch (interactionNumber)
-            //{
-            //    case 0:
-            //        mScene.pushInteraction(new PickPoint(ref mScene));
-            //        break;
-            //    case 1:
-            //        mScene.pushInteraction(new Stroke(ref mScene));
-            //        break;
-            //    case 2:
-            //        mScene.pushInteraction(new Closedcurve(ref mScene));
-            //        break;
-            //    case 3:
-            //        mScene.pushInteraction(new Sweep(ref mScene));
-            //        break;
-            //    case 4:
-            //        mScene.pushInteraction(new Loft(ref mScene));
-            //        break;
-            //    case 5:
-            //        mScene.pushInteraction(new Selection(ref mScene));
-            //        break;
-            //    case 6:
-            //        mScene.pushInteraction(new CreatePlaneA(ref mScene));
-            //        break;
-            //    case 7:
-            //        mScene.pushInteraction(new Delete(ref mScene));
-            //        break;
-            //}
         }
     }
 }
