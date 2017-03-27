@@ -6,8 +6,14 @@ using Valve.VR;
 
 namespace SparrowHawk.Interaction
 {
+    
+
     class MarkingMenu : Interaction
     {
+        protected int mCurrentSelection = -1;
+        protected double mSelectOKTime = 0;
+        double markingMenuSelectionDelay = 1;
+        float mMinSelectionRadius;
 
         public enum MenuLayout {RootMenu, CalibrationMenu, TwoDMenu,
                                 ThreeDMenu,NavMenu, PlaneMenu, PlanarMenu,
@@ -34,9 +40,9 @@ namespace SparrowHawk.Interaction
             switch (layout)
             {
                 case MenuLayout.RootMenu: return @"C:\workspace\SparrowHawk\src\resources\menus\homemenu.png";
-                case MenuLayout.CalibrationMenu: return @"C:\workspace\SparrowHawk\src\resources\menus\homemenu.png";
-                case MenuLayout.TwoDMenu: return @"C:\workspace\SparrowHawk\src\resources\menus\homemenu.png";
-                case MenuLayout.ThreeDMenu: return @"C:\workspace\SparrowHawk\src\resources\menus\homemenu.png";
+                case MenuLayout.CalibrationMenu: return @"C:\workspace\SparrowHawk\src\resources\menus\3template.png";
+                case MenuLayout.TwoDMenu: return @"C:\workspace\SparrowHawk\src\resources\menus\2dgeo1.png";
+                case MenuLayout.ThreeDMenu: return @"C:\workspace\SparrowHawk\src\resources\menus\3dgeo1.png";
                 case MenuLayout.NavMenu: return @"C:\workspace\SparrowHawk\src\resources\menus\navmenu.png";
                 case MenuLayout.PlaneMenu: return @"C:\workspace\SparrowHawk\src\resources\menus\homemenu.png";
                 case MenuLayout.PlanarMenu: return @"C:\workspace\SparrowHawk\src\resources\menus\homemenu.png";
@@ -58,12 +64,21 @@ namespace SparrowHawk.Interaction
         int mNumSectors;
         float mFirstSectorOffsetAngle;
 
-        public MarkingMenu(ref Scene scene, MenuLayout layout = MenuLayout.RootMenu, OpenTK.Vector3 offset = new OpenTK.Vector3())
+        public MarkingMenu(ref Scene scene, MenuLayout layout = MenuLayout.RootMenu, double delay=0, OpenTK.Vector3 offset = new OpenTK.Vector3())
         {
             mLayout = layout;
             mNumSectors = getNumSectors(layout);
             mFirstSectorOffsetAngle = getAngularMenuOffset(mNumSectors);
             mScene = scene;
+            mCurrentSelection = -1;
+            if (scene.isOculus)
+                mMinSelectionRadius = 0.2f;
+            else
+                mMinSelectionRadius = 0.5f;
+            if (delay > 0)
+            {
+                mSelectOKTime = mScene.gameTime + delay;
+            }
         }
 
         protected override void onClickViveTrigger(ref VREvent_t vrEvent)
@@ -97,23 +112,36 @@ namespace SparrowHawk.Interaction
             }
         }
 
+        // TODO: This could use a lot of refactoring.
         public override void draw(bool isTop) {
             float r = 0;
             float theta = 0;
             if (mScene.isOculus)
             {
                 getOculusJoystickPoint((uint) mScene.leftControllerIdx, out r, out theta);
-            //    if (r > 0.1)
-            //        launchInteraction(r, theta);
-            } else
-            {
+            } else {
                 getViveTouchpadPoint((uint)mScene.leftControllerIdx, out r, out theta);
             }
-            if (r > 0.2)
-                ((Material.RadialMenuMaterial) radialMenuMat).setHighlightedSector(mNumSectors, mFirstSectorOffsetAngle, theta);
-            else
-                ((Material.RadialMenuMaterial)radialMenuMat).removeHighlight();
+            int sector = (int)Math.Floor((theta - mFirstSectorOffsetAngle) * mNumSectors / (2 * Math.PI));
+            if (r > mMinSelectionRadius) {
+                ((Material.RadialMenuMaterial)radialMenuMat).setHighlightedSector(mNumSectors, mFirstSectorOffsetAngle, theta);
+                if (mCurrentSelection != sector) {
+                    mCurrentSelection = sector;
+                    mSelectOKTime = mScene.gameTime + markingMenuSelectionDelay;
+                } else
+                {
+                    if (mScene.gameTime > mSelectOKTime)
+                    {
+                        launchInteraction(r, theta);
+                    }
+                }
 
+            }
+            else
+            {
+                mCurrentSelection = -1;
+                ((Material.RadialMenuMaterial)radialMenuMat).removeHighlight();
+            }
         }
 
         public override void activate()
@@ -166,19 +194,19 @@ namespace SparrowHawk.Interaction
                     {
                         case 0:
                             mScene.popInteraction();
-                            mScene.pushInteraction(new MarkingMenu(ref mScene, MenuLayout.TwoDMenu, new OpenTK.Vector3(0,0,.005f)));
+                            mScene.pushInteraction(new MarkingMenu(ref mScene, MenuLayout.TwoDMenu, 1, new OpenTK.Vector3(0,0,.005f)));
                             break;
                         case 1:
                             mScene.popInteraction();
-                            mScene.pushInteraction(new MarkingMenu(ref mScene, MenuLayout.NavMenu, new OpenTK.Vector3(0, 0, .005f)));
+                            mScene.pushInteraction(new MarkingMenu(ref mScene, MenuLayout.NavMenu, 1, new OpenTK.Vector3(0, 0, .005f)));
                             break;
                         case 2:
                             mScene.popInteraction();
-                            mScene.pushInteraction(new MarkingMenu(ref mScene, MenuLayout.ThreeDMenu, new OpenTK.Vector3(0, 0, .005f)));
+                            mScene.pushInteraction(new MarkingMenu(ref mScene, MenuLayout.ThreeDMenu, 1, new OpenTK.Vector3(0, 0, .005f)));
                             break;
                         case 3:
                             mScene.popInteraction();
-                            mScene.pushInteraction(new MarkingMenu(ref mScene, MenuLayout.CalibrationMenu, new OpenTK.Vector3(0, 0, .005f)));
+                            mScene.pushInteraction(new MarkingMenu(ref mScene, MenuLayout.CalibrationMenu, 1, new OpenTK.Vector3(0, 0, .005f)));
                             break;
                     } break;
 
@@ -222,13 +250,39 @@ namespace SparrowHawk.Interaction
                 case MenuLayout.ThreeDMenu:
                     switch (interactionNumber)
                     {
-
+                        case 0:
+                            mScene.popInteraction();
+                            mScene.pushInteraction(new Loft(ref mScene));
+                            break;
+                        case 1:
+                            mScene.popInteraction();
+                            mScene.pushInteraction(new CreateCylinder(ref mScene));
+                            break;
+                        case 2:
+                            mScene.popInteraction();
+                            mScene.pushInteraction(new Loft(ref mScene));
+                            break;
+                        case 3:
+                            mScene.popInteraction();
+                            mScene.pushInteraction(new Sweep(ref mScene));
+                            break;
                     }
                     break;
                 case MenuLayout.TwoDMenu:
                     switch (interactionNumber)
                     {
-
+                        case 0:
+                            mScene.popInteraction();
+                            mScene.pushInteraction(new Closedcurve(ref mScene));
+                            break;
+                        case 1:
+                            mScene.popInteraction();
+                            mScene.pushInteraction(new Stroke(ref mScene));
+                            break;
+                        case 2:
+                            mScene.popInteraction();
+                            mScene.pushInteraction(new Closedcurve(ref mScene));
+                            break;
                     }
                     break;
             }

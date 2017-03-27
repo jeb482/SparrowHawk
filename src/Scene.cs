@@ -17,7 +17,6 @@ namespace SparrowHawk
         public Material.Material material;
         public Matrix4 transform = new Matrix4(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1);
 
-
         public SceneNode(string _name, ref Geometry.Geometry g, ref Material.Material m)
         {
             name = _name;
@@ -84,6 +83,7 @@ namespace SparrowHawk
         public Dictionary<Guid, Rhino.DocObjects.RhinoObject> SceneNodeToBrepDic = new Dictionary<Guid, Rhino.DocObjects.RhinoObject>();
         DateTime mLastFrameTime;
         DateTime mCurrentFrameTime;
+        public double gameTime;
 
         // Camera data
         public Matrix4 mHMDPose;

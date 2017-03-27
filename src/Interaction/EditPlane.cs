@@ -169,6 +169,27 @@ namespace SparrowHawk.Interaction
         //only detect the pre-defined plane breps
         protected override void onClickOculusGrip(ref VREvent_t vrEvent)
         {
+            gripPlane(ref vrEvent);
+        }
+
+        protected override void onClickViveTrigger(ref VREvent_t vrEvent)
+        {
+            gripPlane(ref vrEvent);
+        }
+
+        protected override void onReleaseViveTrigger(ref VREvent_t vrEvent)
+        {
+            releasePlane(ref vrEvent);
+        }
+
+
+        protected override void onReleaseOculusGrip(ref VREvent_t vrEvent)
+        {
+            releasePlane(ref vrEvent);
+        }
+
+        protected void gripPlane(ref VREvent_t vrEvent)
+        {
             Rhino.RhinoApp.WriteLine("Selcet event");
             primaryDeviceIndex = vrEvent.trackedDeviceIndex;
             if (currentState == State.READY)
@@ -267,7 +288,7 @@ namespace SparrowHawk.Interaction
 
         }
 
-        protected override void onReleaseOculusGrip(ref VREvent_t vrEvent)
+        protected void releasePlane(ref VREvent_t vrEvent)
         {
             Rhino.RhinoApp.WriteLine("Oculus grip release event");
             if (currentState == State.SELECTION)
@@ -307,6 +328,10 @@ namespace SparrowHawk.Interaction
                 //gripSceneNode.transform = new OpenTK.Matrix4(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1);
             }
         }
+
+
+
+
 
 
     }
