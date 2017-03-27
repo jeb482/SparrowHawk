@@ -81,6 +81,7 @@ namespace SparrowHawk.Interaction
                 Plane proj_plane = new Plane();
                 Plane.FitPlaneToPoints(curvePoints.ToArray(), out proj_plane);
                 Curve proj_curve = Curve.ProjectToPlane(closedCurve, proj_plane);
+                
 
                 //TODO: make sure the proj_curve is on the same plane ? or it's beacuse not enough points
                 Brep[] shapes = Brep.CreatePlanarBreps(proj_curve);

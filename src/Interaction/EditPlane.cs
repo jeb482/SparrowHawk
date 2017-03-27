@@ -13,6 +13,7 @@ namespace SparrowHawk.Interaction
     {
 
         OpenTK.Matrix4 mVRtocontroller;
+        OpenTK.Matrix4 mTransformO;
         OpenTK.Matrix4 currentTransform;
         OpenTK.Vector3 planeOrigin = new OpenTK.Vector3(0, 0, 0);
         OpenTK.Vector3 planeNormalV = new OpenTK.Vector3(0, 1, 0);
@@ -49,15 +50,28 @@ namespace SparrowHawk.Interaction
 
             //selectedSN.transform = Util.getControllerTipPosition(ref mScene, primaryDeviceIndex == mScene.leftControllerIdx) * mVRtocontroller * currentTransform;
 
-            //M_ControllerPose* M_VR-Controller = M_L - VR * 'M_L' *  M_VR - L  
+            //M_ControllerPose * M_VR-Controller * currentTransform = M_L - VR * 'M_L' *  M_VR - L * currentTransform
+            //ML =  M_L - VR.inverted * M_ControllerPose* M_VR-Controller *currentTransform.inverted() *  M_VR - L.inverted 
+            //M_ControllerPose = M_ControllerTras * M_contollerVR => M_ControllerTras = M_ControllerPose * M_contollerVR.inverted
+            // M_L = M_VR-L * M_ControllerTras * M_L-VR
 
-            M_L = selectedPlane.planeToVR.Inverted() * Util.getControllerTipPosition(ref mScene, primaryDeviceIndex == mScene.leftControllerIdx) * mVRtocontroller * selectedPlane.planeToVR;
+            //new version
+            //M_ControllerPose * M_VR-Controller * M_alignOrigin = M_L - VR * 'M_L' *  M_VR - L
+
+            //M_L = selectedPlane.planeToVR.Inverted() * Util.getControllerTipPosition(ref mScene, primaryDeviceIndex == mScene.leftControllerIdx) * mVRtocontroller * mTransformO * selectedPlane.planeToVR;
+            M_L = selectedPlane.VRToPlane * Util.getControllerTipPosition(ref mScene, primaryDeviceIndex == mScene.leftControllerIdx) * mVRtocontroller * mTransformO * selectedPlane.VRToPlane.Inverted();
 
             //get translation vector
             OpenTK.Vector3 translateV = new OpenTK.Vector3(M_L.M14, M_L.M24, M_L.M34);
-            translateV = new OpenTK.Vector3(selectedPlane.normal[0] * translateV[0], selectedPlane.normal[1] * translateV[1], selectedPlane.normal[2] * translateV[2]);
+            translateV = new OpenTK.Vector3(translateV[0], translateV[1], translateV[2]);
             OpenTK.Matrix4 translationM = OpenTK.Matrix4.CreateTranslation(translateV);
             translationM.Transpose();
+
+            //testing translation matrix
+            OpenTK.Vector3 translateT = new OpenTK.Vector3(0, 0, 0.01f);
+            //translateV = new OpenTK.Vector3(selectedPlane.normal[0] * translateV[0], selectedPlane.normal[1] * translateV[1], selectedPlane.normal[2] * translateV[2]);
+            OpenTK.Matrix4 translateTM = OpenTK.Matrix4.CreateTranslation(translateT);
+            translateTM.Transpose();
 
             //get dominate rotation vetor
             OpenTK.Quaternion q = OpenTK.Quaternion.FromMatrix(new OpenTK.Matrix3(M_L.M11, M_L.M12, M_L.M13,
@@ -113,12 +127,16 @@ namespace SparrowHawk.Interaction
                 }
             }
 
+            rotM = OpenTK.Matrix4.CreateRotationX((float)( (30.0f/180.0f) * Math.PI));
+
             rotM.Transpose();
 
-
-            //selectedSN.transform = selectedPlane.planeToVR * M_L * selectedPlane.planeToVR.Inverted() * currentTransform;         
-            selectedSN.transform = selectedPlane.planeToVR * translationM * selectedPlane.planeToVR.Inverted() * currentTransform;
-            //selectedSN.transform = selectedPlane.planeToVR * rotM * selectedPlane.planeToVR.Inverted() * currentTransform;
+            //This is correct, so M_L is correct for sure.
+            //selectedSN.transform = selectedPlane.VRToPlane.Inverted() * M_L * selectedPlane.VRToPlane * currentTransform;
+            //Extract translation from M_L is incorrect somehow
+            //selectedSN.transform = selectedPlane.VRToPlane.Inverted() * translationM * selectedPlane.VRToPlane * currentTransform;
+            //rotation didn't rotate around it's own axis
+            selectedSN.transform = selectedPlane.VRToPlane.Inverted() * rotM * selectedPlane.VRToPlane * currentTransform;
 
 
             /*
@@ -237,6 +255,14 @@ namespace SparrowHawk.Interaction
             {
                 currentTransform = selectedSN.transform;
                 mVRtocontroller = Util.getControllerTipPosition(ref mScene, primaryDeviceIndex == mScene.leftControllerIdx).Inverted();
+
+                OpenTK.Vector3 currentPO = Util.transformPoint(currentTransform,  Util.platformToVRPoint(ref mScene, new OpenTK.Vector3(0, 0, 0)));
+                OpenTK.Vector3 currentCO = Util.transformPoint(Util.getControllerTipPosition(ref mScene, primaryDeviceIndex == mScene.leftControllerIdx), new OpenTK.Vector3(0, 0, 0));
+                OpenTK.Vector3 translateO = currentCO - currentPO;
+
+                mTransformO = OpenTK.Matrix4.CreateTranslation(translateO);
+                mTransformO.Transpose();
+
             }
 
         }
@@ -274,7 +300,7 @@ namespace SparrowHawk.Interaction
 
                 //update the guid on selectPlane
                 selectedPlane.guid = newGuid;
-                selectedPlane.updateCoordinate(M_L);
+                selectedPlane.updateCoordinate(M_L, currentTransform);
                 planeList.Clear();
 
                 currentState = State.READY;

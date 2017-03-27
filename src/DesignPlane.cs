@@ -9,7 +9,7 @@ namespace SparrowHawk
     public class DesignPlane
     {
         private Scene mScene;
-        private string type;
+        public string type;
         public Guid guid;
         private Material.Material mesh_m;
         private Brep desingPlane;
@@ -19,6 +19,7 @@ namespace SparrowHawk
         private OpenTK.Vector3 xaxis;
         private OpenTK.Vector3 yaxis;
         public OpenTK.Matrix4 planeToVR;
+        public OpenTK.Matrix4 VRToPlane;
 
 
         public DesignPlane()
@@ -30,6 +31,13 @@ namespace SparrowHawk
         {
             mScene = scene;
             type = t;
+
+            //compute initial planeToVR trasform, use VR coordinate system
+            OpenTK.Vector3 planeO = Util.platformToVRPoint(ref mScene, new OpenTK.Vector3(0, 0, 0));
+
+            //get translation vector
+            OpenTK.Matrix4 translationM = OpenTK.Matrix4.CreateTranslation(origin - planeO);
+            translationM.Transpose();
             // we use VR coordinate for convevnience
             if (type == "XZ")
             {
@@ -38,6 +46,22 @@ namespace SparrowHawk
                 yaxis = new OpenTK.Vector3(0, 0, 1);
                 normal = new OpenTK.Vector3(0, 1, 0);
                 mesh_m = new Material.SingleColorMaterial(0, 1, 0, 0.5f);
+
+                //TODO: is this wrong ?
+                OpenTK.Matrix4 tc = new OpenTK.Matrix4(1, 0, 0, 0,
+                                                      0, 0, 1, 0,
+                                                      0, 1, 0, 0,
+                                                      0, 0, 0, 1);
+                planeToVR = tc * translationM;
+
+                //Try VRToPlane
+                OpenTK.Matrix4 translationM2 = OpenTK.Matrix4.CreateTranslation(planeO - origin);
+                translationM2.Transpose();
+                OpenTK.Matrix4 tc2 = new OpenTK.Matrix4(1, 0, 0, 0,
+                                                     0, 0, 1, 0,
+                                                     0, 1, 0, 0,
+                                                     0, 0, 0, 1);
+                VRToPlane = tc2 * translationM2;
 
             }
             else if (type == "XY")
@@ -48,6 +72,23 @@ namespace SparrowHawk
                 normal = new OpenTK.Vector3(0, 0, 1);
 
                 mesh_m = new Material.SingleColorMaterial(1, 0, 0, 0.5f);
+
+                OpenTK.Matrix4 tc = new OpenTK.Matrix4(1, 0, 0, 0,
+                                                      0, 1, 0, 0,
+                                                      0, 0, 1, 0,
+                                                      0, 0, 0, 1);
+
+                planeToVR = tc * translationM;
+
+                //Try VRToPlane
+                OpenTK.Matrix4 translationM2 = OpenTK.Matrix4.CreateTranslation(planeO - origin);
+                translationM2.Transpose();
+                OpenTK.Matrix4 tc2 = new OpenTK.Matrix4(1, 0, 0, 0,
+                                                      0, 1, 0, 0,
+                                                      0, 0, 1, 0,
+                                                      0, 0, 0, 1);
+                VRToPlane = tc2 * translationM2;
+
             }
             else if (type == "YZ")
             {
@@ -57,32 +98,41 @@ namespace SparrowHawk
                 normal = new OpenTK.Vector3(1, 0, 0);
 
                 mesh_m = new Material.SingleColorMaterial(0, 0, 1, 0.5f);
+
+                OpenTK.Matrix4 tc = new OpenTK.Matrix4(0, 0, 1, 0,
+                                                     0, 1, 0, 0,
+                                                     1, 0, 0, 0,
+                                                     0, 0, 0, 1);
+
+                planeToVR = tc * translationM;
+
+                //Try VRToPlane
+                OpenTK.Matrix4 translationM2 = OpenTK.Matrix4.CreateTranslation(planeO - origin);
+                translationM2.Transpose();
+                OpenTK.Matrix4 tc2 = new OpenTK.Matrix4(0, 0, 1, 0,
+                                                     0, 1, 0, 0,
+                                                     1, 0, 0, 0,
+                                                     0, 0, 0, 1);
+                VRToPlane = tc2 * translationM2;
+
             }
 
             createRhinoBrep();
-
-            //compute initial planeToVR trasform, use VR coordinate system
-            OpenTK.Vector3 planeO = Util.platformToVRPoint(ref mScene, new OpenTK.Vector3(0, 0, 0));
-
-            //get translation vector
-            OpenTK.Matrix4 translationM = OpenTK.Matrix4.CreateTranslation(planeO - origin);
-            translationM.Transpose();
-
-            planeToVR = translationM;
+           
 
         }
 
-        public void updateCoordinate(OpenTK.Matrix4 transform)
+        public void updateCoordinate(OpenTK.Matrix4 transform, OpenTK.Matrix4 currentTransform)
         {
-            planeToVR =  planeToVR * transform;
-
-            origin = Util.transformPoint(transform, origin);
-            xaxis = Util.transformVec(transform, xaxis);
-            xaxis.Normalize();
-            yaxis = Util.transformVec(transform, yaxis);
-            yaxis.Normalize();
-            normal = Util.transformVec(transform, normal);
-            normal.Normalize();
+            planeToVR = VRToPlane.Inverted() * transform * VRToPlane * currentTransform;
+            //origin = Util.transformPoint(transform, origin);
+            //xaxis = Util.transformVec(transform, xaxis);
+            //xaxis.Normalize();
+            //yaxis = Util.transformVec(transform, yaxis);
+            //yaxis.Normalize();
+            //normal = Util.transformVec(transform, normal);
+            //normal.Normalize();
+            Rhino.RhinoApp.WriteLine(normal.ToString());
 
         }
 
