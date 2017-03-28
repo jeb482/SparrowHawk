@@ -9,10 +9,10 @@ using Valve.VR;
 
 namespace SparrowHawk.Interaction
 {
-    public class EditPlane : Selection
+    public class RotatePlane : Selection
     {
 
-        OpenTK.Matrix4 mInitialVRtocontroller;
+        OpenTK.Matrix4 mVRtocontroller;
         OpenTK.Matrix4 currentTransform;
         OpenTK.Vector3 planeOrigin = new OpenTK.Vector3(0, 0, 0);
         OpenTK.Vector3 planeNormalV = new OpenTK.Vector3(0, 1, 0);
@@ -20,18 +20,18 @@ namespace SparrowHawk.Interaction
         OpenTK.Matrix4 transToPlane = new OpenTK.Matrix4();
         OpenTK.Matrix4 rotM = new OpenTK.Matrix4();
 
-        private DesignPlane planeXY, planeXZ, planeYZ, selectedPlane;
+        private DesignPlane2 planeXY, planeXZ, planeYZ, selectedPlane;
         private string selectedPlaneName;
         private List<RhinoObject> planeList = new List<RhinoObject>();
         OpenTK.Matrix4 M_L;
         OpenTK.Matrix4 mAlignO;
 
-        public EditPlane()
+        public RotatePlane()
         {
 
         }
 
-        public EditPlane(ref Scene s, ref DesignPlane xy, ref DesignPlane xz, ref DesignPlane yz)
+        public RotatePlane(ref Scene s, ref DesignPlane2 xy, ref DesignPlane2 xz, ref DesignPlane2 yz)
         {
             mScene = s;
             currentState = State.READY;
@@ -50,21 +50,14 @@ namespace SparrowHawk.Interaction
 
             //selectedSN.transform = Util.getControllerTipPosition(ref mScene, primaryDeviceIndex == mScene.leftControllerIdx) * mVRtocontroller * currentTransform;
 
-            // M = contoller_start.inverted() * controller_end() [normalize?]
-            // planeTransform = planeToVR * M
-            OpenTK.Matrix4 M = mInitialVRtocontroller * Util.getControllerTipPosition(ref mScene, primaryDeviceIndex == mScene.leftControllerIdx);
-
-
+            // M_ControllerPose* M_VR-Controller * currentTransform = M_L - VR * 'M_L' *  M_VR - L = currentTransform
+            // M_ControllerPose* M_VR-Controller * mAlignO = = M_L - VR * 'M_L' *  M_VR - L * mAlignO
             // M_ControllerPose_end = M_Transform * M_ControllerPose_start
             // M_ControllerPose_end = M_L - VR * M_Transform^ * M_VR - L * M_ControllerPose_start
             // M_Transform * M_ControllerPose_start = M_L - VR * M_Transform^ * M_VR - L * M_ControllerPose_start
             // M_Transform^ =    M_L - VR.inverted * M_Transform * M_ControllerPose_start * M_ControllerPose_start.inverted * M_VR - L.inverted
             // M_Transform^ = M_L - VR.inverted * M_ControllerPose_end * M_ControllerPose_start.inverted * M_VR - L.inverted
-
-
-            //M_L = selectedPlane.VRtoPlane * Util.getControllerTipPosition(ref mScene, primaryDeviceIndex == mScene.leftControllerIdx) * mInitialVRtocontroller * selectedPlane.VRtoPlane.Inverted();
-            //selectedSN.transform = Util.getControllerTipPosition(ref mScene, primaryDeviceIndex == mScene.leftControllerIdx) * mInitialVRtocontroller * selectedPlane.VRtoPlane.Inverted(); //selectedPlane.VRtoPlane.Inverted() * M_L;
-
+            M_L = selectedPlane.VRtoPlane * Util.getControllerTipPosition(ref mScene, primaryDeviceIndex == mScene.leftControllerIdx) * mVRtocontroller * selectedPlane.VRtoPlane.Inverted();
 
             //get translation vector
             OpenTK.Vector3 translateV = new OpenTK.Vector3(0, 0, M_L.M34);
@@ -135,9 +128,8 @@ namespace SparrowHawk.Interaction
             //rotation testing
             //rotM = OpenTK.Matrix4.CreateRotationX((float)(30.0f/180.0f * Math.PI));
 
-            //M_L = translationM;
-            //selectedSN.transform = selectedPlane.VRtoPlane.Inverted() * M_L * selectedPlane.VRtoPlane * currentTransform;
-            //selectedSN.transform = selectedPlane.VRtoPlane.Inverted() * M_L;
+            M_L = rotM;
+            selectedSN.transform = selectedPlane.VRtoPlane.Inverted() * M_L * selectedPlane.VRtoPlane * currentTransform;
             //selectedSN.transform = selectedPlane.VRtoPlane.Inverted() * translationM2 * selectedPlane.VRtoPlane * currentTransform;
             //selectedSN.transform = selectedPlane.planeToVR * rotM * selectedPlane.planeToVR.Inverted() * currentTransform;
 
@@ -189,34 +181,29 @@ namespace SparrowHawk.Interaction
 
                 Vector3d direction = new Vector3d(controller_pZRhin.X - controller_pRhino.X, controller_pZRhin.Y - controller_pRhino.Y, controller_pZRhin.Z - controller_pRhino.Z);
                 Ray3d ray = new Ray3d(controller_pRhino, direction);
+                float mimD = 1000000f;
+                int minIndex = -1;
 
                 for (int i = 0; i < planeList.Count; i++)
                 {
                     //grip selection
                     RhinoObject rhObj = planeList.ElementAt(i);
-                    if (rhObj.Geometry.GetBoundingBox(false).Contains(new Point3d(controller_p.X, -controller_p.Z, controller_p.Y)))
+                    if (rhObj.Geometry.GetBoundingBox(true).Contains(new Point3d(controller_p.X, -controller_p.Z, controller_p.Y)))
                     {
-                        selectedSN = mScene.brepToSceneNodeDic[rhObj.Id];
-                        selectedRhObj = rhObj;
                         currentState = State.SELECTION;
+                        //get the nearest one
+                        OpenTK.Vector3 centerBox = Util.platformToVRPoint(ref mScene, new OpenTK.Vector3((float)rhObj.Geometry.GetBoundingBox(true).Center.X, (float)rhObj.Geometry.GetBoundingBox(true).Center.Y, (float)rhObj.Geometry.GetBoundingBox(true).Center.Z));
+                        float distance = (float)Math.Sqrt(Math.Pow(centerBox.X - controller_p.X, 2) + Math.Pow(centerBox.Y - controller_p.Y, 2) + Math.Pow(centerBox.Z - controller_p.Z, 2));
 
-                        if (i == 0)
+                        if (distance < mimD)
                         {
-                            selectedPlane = planeXY;
-                            selectedPlaneName = "XY";
-                        }
-                        else if (i == 1)
-                        {
-                            selectedPlane = planeXZ;
-                            selectedPlaneName = "XZ";
-                        }
-                        else if (i == 2)
-                        {
-                            selectedPlane = planeYZ;
-                            selectedPlaneName = "YZ";
+                            selectedSN = mScene.brepToSceneNodeDic[rhObj.Id];
+                            selectedRhObj = rhObj;
+                            mimD = distance;
+                            minIndex = i;
                         }
 
-                        break;
+
                     }
                     else //ray casting selection
                     {
@@ -226,21 +213,39 @@ namespace SparrowHawk.Interaction
                         Point3d[] rayIntersections = Rhino.Geometry.Intersect.Intersection.RayShoot(ray, geometries, 1);
                         if (rayIntersections != null)
                         {
-                            selectedSN = mScene.brepToSceneNodeDic[rhObj.Id];
-                            selectedRhObj = rhObj;
                             currentState = State.SELECTION;
+                            //get the nearest one
+                            OpenTK.Vector3 projectP = Util.platformToVRPoint(ref mScene, new OpenTK.Vector3((float)rayIntersections[0].X, (float)rayIntersections[0].Y, (float)rayIntersections[0].Z));
 
-                            if (i == 0)
-                                selectedPlane = planeXY;
-                            else if (i == 1)
-                                selectedPlane = planeXZ;
-                            else if (i == 2)
-                                selectedPlane = planeYZ;
+                            float distance = (float)Math.Sqrt(Math.Pow(projectP.X - controller_p.X, 2) + Math.Pow(projectP.Y - controller_p.Y, 2) + Math.Pow(projectP.Z - controller_p.Z, 2));
 
-                            break;
+                            if (distance < mimD)
+                            {
+                                mimD = distance;
+                                minIndex = i;
+                                selectedSN = mScene.brepToSceneNodeDic[rhObj.Id];
+                                selectedRhObj = rhObj;
+                            }
+
                         }
                     }
 
+                }
+
+                if (minIndex == 0)
+                {
+                    selectedPlane = planeXY;
+                    selectedPlaneName = "XY";
+                }
+                else if (minIndex == 1)
+                {
+                    selectedPlane = planeXZ;
+                    selectedPlaneName = "XZ";
+                }
+                else if (minIndex == 2)
+                {
+                    selectedPlane = planeYZ;
+                    selectedPlaneName = "YZ";
                 }
 
             }
@@ -248,7 +253,7 @@ namespace SparrowHawk.Interaction
             if (currentState == State.SELECTION)
             {
                 currentTransform = selectedSN.transform;
-                mInitialVRtocontroller = Util.getControllerTipPosition(ref mScene, primaryDeviceIndex == mScene.leftControllerIdx).Inverted();
+                mVRtocontroller = Util.getControllerTipPosition(ref mScene, primaryDeviceIndex == mScene.leftControllerIdx).Inverted();
             }
 
         }
@@ -261,8 +266,6 @@ namespace SparrowHawk.Interaction
 
                 //Watchout!! since the bug of transformation, we need to remove currentTransform first here
                 //OpenTK.Matrix4 transMRhino = Util.mGLToRhino * (selectedSN.transform * currentTransform.Inverted()) * Util.mRhinoToGL;
-
-                
                 OpenTK.Matrix4 transMRhino = Util.platformToVR(ref mScene).Inverted() * (selectedSN.transform * currentTransform.Inverted()) * Util.platformToVR(ref mScene);
                 Transform transM = new Transform();
                 for (int row = 0; row < 4; row++)
@@ -288,7 +291,7 @@ namespace SparrowHawk.Interaction
 
                 //update the guid on selectPlane
                 selectedPlane.guid = newGuid;
-                selectedPlane.updateCoordinate(M_L);
+                selectedPlane.updateCoordinate(M_L, currentTransform);
                 planeList.Clear();
 
                 currentState = State.READY;

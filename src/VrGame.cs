@@ -45,7 +45,8 @@ namespace SparrowHawk
 
         bool manualCallibration = false;
 
-
+        DesignPlane xzPlane, xyPlane, yzPlane;
+        DesignPlane2 xzPlane2, xyPlane2, yzPlane2;
 
         public VrGame(ref Rhino.RhinoDoc doc)
         {
@@ -409,6 +410,7 @@ namespace SparrowHawk
             }
 
             //TODO-add a xy-plane in rhino (xz plane in VR)
+            /*
             Rhino.Geometry.Vector3d normal = new Rhino.Geometry.Vector3d(0, 0, 1);
             Plane plane = new Plane(new Point3d(0, 0, 0), normal);
 
@@ -426,7 +428,14 @@ namespace SparrowHawk
             {
                 Material.Material rhinoMseh_m = new Material.SingleColorMaterial(0, .5f, 0, 0.5f);
                 Util.addSceneNode(ref mScene, xy_plane, ref rhinoMseh_m, "plane");
-            }
+            }*/
+            xzPlane = new DesignPlane(ref mScene, 1);
+            xyPlane = new DesignPlane(ref mScene, 2);
+            yzPlane = new DesignPlane(ref mScene, 0);
+
+            //xzPlane2 = new DesignPlane2(ref mScene, "XZ");
+            //xyPlane2 = new DesignPlane2(ref mScene, "XY");
+            //yzPlane2 = new DesignPlane2(ref mScene, "YZ");
 
             //Find the Rhino Object start with 'a' and render it
             Material.Material mesh_m = new Material.RGBNormalMaterial(1); ;
@@ -511,7 +520,15 @@ namespace SparrowHawk
             if (e.KeyChar == 'H' || e.KeyChar == 'h')
             {
                 mScene.popInteraction();
-//                mScene.pushInteraction(new Interaction.EditPlane(ref mScene));
+                //mScene.pushInteraction(new Interaction.EditPlane(ref mScene, ref xyPlane, ref xzPlane, ref yzPlane));
+                mScene.pushInteraction(new Interaction.EditPlane2(ref mScene, ref xyPlane2, ref xzPlane2, ref yzPlane2));
+            }
+
+            if (e.KeyChar == 'J' || e.KeyChar == 'j')
+            {
+                mScene.popInteraction();
+                //mScene.pushInteraction(new Interaction.EditPlane(ref mScene, ref xyPlane, ref xzPlane, ref yzPlane));
+                mScene.pushInteraction(new Interaction.RotatePlane(ref mScene, ref xyPlane2, ref xzPlane2, ref yzPlane2));
             }
 
             if (e.KeyChar == 'L' || e.KeyChar == 'l')

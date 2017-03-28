@@ -246,14 +246,14 @@ namespace SparrowHawk
         public static OpenTK.Matrix4 platformToVR(ref Scene scene)
         {
 
-            OpenTK.Matrix4 m = OpenTK.Matrix4.CreateScale(0.001f);
+            OpenTK.Matrix4 m;// = OpenTK.Matrix4.CreateScale(0.001f);
             if (scene.vrToRobot.Equals(OpenTK.Matrix4.Identity))
             {
-                m = Util.mRhinoToGL * m;
+                m = Util.mRhinoToGL;// * m;
             }
             else
             {
-                m = scene.vrToRobot.Inverted() * scene.robotToPlatform.Inverted() * m;
+                m = scene.vrToRobot.Inverted() * scene.robotToPlatform.Inverted();// * m;
             }
 
 
@@ -294,6 +294,21 @@ namespace SparrowHawk
             return v;
         }
 
+        public static OpenTK.Matrix4 rhinoToVRMatrix(ref Scene scene, Transform T)
+        {
+            OpenTK.Matrix4 sm = OpenTK.Matrix4.CreateScale(0.001f);
+
+            OpenTK.Matrix4 m = sm * rhinoToOpenTKTransform(T);
+            return m;
+        }
+
+        public static OpenTK.Vector3 rhinoToVRPoint(ref Scene scene, OpenTK.Vector3 p)
+        {
+            p /= 1000;
+            p = Util.transformPoint(Util.mRhinoToGL, p);       
+            return p;
+        }
+
         public static Rhino.Geometry.Vector3f openTkToRhinoVector(OpenTK.Vector3 v)
         {
             return new Rhino.Geometry.Vector3f(v.X, v.Y, v.Z);
@@ -316,6 +331,50 @@ namespace SparrowHawk
             OpenTK.Vector4 homogenousVec = new OpenTK.Vector4(p.X, p.Y, p.Z, 0);
             homogenousVec = M * homogenousVec;
             return new OpenTK.Vector3(homogenousVec.X, homogenousVec.Y, homogenousVec.Z);
+        }
+
+        public static Transform OpenTKToRhinoTransform(OpenTK.Matrix4 M)
+        {
+            Transform t = new Transform();
+            t.M00 = M.M11;
+            t.M01 = M.M12;
+            t.M02 = M.M13;
+            t.M03 = M.M14;
+            t.M10 = M.M21;
+            t.M11 = M.M22;
+            t.M12 = M.M23;
+            t.M13 = M.M24;
+            t.M20 = M.M31;
+            t.M21 = M.M32;
+            t.M22 = M.M33;
+            t.M23 = M.M34;
+            t.M30 = M.M41;
+            t.M31 = M.M42;
+            t.M32 = M.M43;
+            t.M33 = M.M44;
+            return t;
+        }
+
+        public static OpenTK.Matrix4 rhinoToOpenTKTransform(Transform t)
+        {
+            OpenTK.Matrix4 M = new OpenTK.Matrix4();
+            M.M11 = (float) t.M00; 
+            M.M12 = (float) t.M01; 
+            M.M13 = (float) t.M02; 
+            M.M14 = (float) t.M03; 
+            M.M21 = (float) t.M10; 
+            M.M22 = (float) t.M11; 
+            M.M23 = (float) t.M12; 
+            M.M24 = (float) t.M13; 
+            M.M31 = (float) t.M20; 
+            M.M32 = (float) t.M21; 
+            M.M33 = (float) t.M22; 
+            M.M34 = (float) t.M23; 
+            M.M41 = (float) t.M30; 
+            M.M42 = (float) t.M31; 
+            M.M43 = (float) t.M32;
+            M.M44 = (float) t.M33; 
+            return M;
         }
 
         public enum OculusButtonId
@@ -522,6 +581,44 @@ namespace SparrowHawk
             }
         }
 
+        public static Guid addSceneNode(ref Scene mScene, Brep brep, ref Material.Material mesh_m, string name, Transform t)
+        {
+            //TODO: detect the # of faces
+            Mesh base_mesh = new Mesh();
+            if (brep != null)
+            {
+                Mesh[] meshes = Mesh.CreateFromBrep(brep, MeshingParameters.Default);
+
+                foreach (Mesh mesh in meshes)
+                    base_mesh.Append(mesh);
+                Rhino.DocObjects.ObjectAttributes attr = new Rhino.DocObjects.ObjectAttributes();
+                attr.Name = name;
+                Guid guid = mScene.rhinoDoc.Objects.AddBrep(brep, attr);
+                //add name attribute for printing
+                //mScene.rhinoDoc.Objects.Find(guid).Attributes.Name = "a" + guid.ToString();
+                //mScene.rhinoDoc.Objects.Find(guid).CommitChanges();
+                mScene.rhinoDoc.Views.Redraw();
+
+                Geometry.Geometry meshStroke_g = new Geometry.RhinoMesh(ref mScene, t);
+
+                ((Geometry.RhinoMesh)meshStroke_g).setMesh(ref base_mesh);
+
+                SceneNode ccMeshSN = new SceneNode("BrepMesh", ref meshStroke_g, ref mesh_m);
+                mScene.tableGeometry.add(ref ccMeshSN);
+
+                //add reference SceneNode to brep and vice versa
+                mScene.brepToSceneNodeDic.Add(guid, ccMeshSN);
+                mScene.SceneNodeToBrepDic.Add(ccMeshSN.guid, mScene.rhinoDoc.Objects.Find(guid));
+
+                return guid;
+
+            }
+            else
+            {
+                return Guid.Empty;
+            }
+        }
+
         public static void removeSceneNode(ref Scene mScene, Guid guid)
         {
             SceneNode deleteSN = mScene.brepToSceneNodeDic[guid];
@@ -633,4 +730,6 @@ namespace SparrowHawk
             return 2;
 		}
     }
+
+    //public static OpenTK.Matrix4
 }
