@@ -11,8 +11,10 @@ namespace SparrowHawk.Interaction
     class MarkingMenu : Interaction
     {
         protected int mCurrentSelection = -1;
+        protected double mInitialSelectOKTime = 0;
         protected double mSelectOKTime = 0;
         double markingMenuSelectionDelay = 1;
+        double defaultInitialDelay = .3;
         float mMinSelectionRadius;
 
         public enum MenuLayout {RootMenu, CalibrationMenu, TwoDMenu,
@@ -77,7 +79,7 @@ namespace SparrowHawk.Interaction
                 mMinSelectionRadius = 0.5f;
             if (delay > 0)
             {
-                mSelectOKTime = mScene.gameTime + delay;
+                mInitialSelectOKTime = mScene.gameTime + delay;
             }
         }
 
@@ -112,6 +114,35 @@ namespace SparrowHawk.Interaction
             }
         }
 
+        protected override void onUntouchOculusStick(ref VREvent_t vrEvent)
+        {
+            float r = 0;
+            float theta = 0;
+            int sector = (int)Math.Floor((theta - mFirstSectorOffsetAngle) * mNumSectors / (2 * Math.PI));
+            getOculusJoystickPoint((uint)mScene.leftControllerIdx, out r, out theta);
+            if(r > 0.5)
+            {
+                ((Material.RadialMenuMaterial)radialMenuMat).setHighlightedSector(mNumSectors, mFirstSectorOffsetAngle, theta);
+                if (this.mInitialSelectOKTime != 0)
+                {
+                    if (mScene.gameTime > this.mInitialSelectOKTime)
+                    {
+                        mCurrentSelection = sector;
+                        launchInteraction(r, theta);
+                    }
+                }
+                else
+                {
+                    mCurrentSelection = sector;
+                    launchInteraction(r, theta);
+                }
+            }
+            else
+            {
+                mScene.popInteraction();
+            }
+        }
+
         // TODO: This could use a lot of refactoring.
         public override void draw(bool isTop) {
             float r = 0;
@@ -123,19 +154,45 @@ namespace SparrowHawk.Interaction
                 getViveTouchpadPoint((uint)mScene.leftControllerIdx, out r, out theta);
             }
             int sector = (int)Math.Floor((theta - mFirstSectorOffsetAngle) * mNumSectors / (2 * Math.PI));
-            if (r > mMinSelectionRadius) {
+            if (mScene.isOculus) { 
+}
+            if (r > mMinSelectionRadius && r < 0.75f)
+            {
                 ((Material.RadialMenuMaterial)radialMenuMat).setHighlightedSector(mNumSectors, mFirstSectorOffsetAngle, theta);
-                if (mCurrentSelection != sector) {
+                if (mCurrentSelection != sector)
+                {
                     mCurrentSelection = sector;
                     mSelectOKTime = mScene.gameTime + markingMenuSelectionDelay;
-                } else
+                }
+                else
                 {
                     if (mScene.gameTime > mSelectOKTime)
                     {
+                       //Rhino.RhinoApp.WriteLine("Timeout Selection");
                         launchInteraction(r, theta);
                     }
                 }
 
+            }
+            else if (r >= 0.75f)
+            {
+                ((Material.RadialMenuMaterial)radialMenuMat).setHighlightedSector(mNumSectors, mFirstSectorOffsetAngle, theta);
+                if (this.mInitialSelectOKTime != 0)
+                {
+                    if (mScene.gameTime > this.mInitialSelectOKTime)
+                    {
+                        Rhino.RhinoApp.WriteLine("Radius Selection");
+                        mCurrentSelection = sector;
+                        launchInteraction(r, theta);
+                    }
+                }
+                else
+                {
+                    Rhino.RhinoApp.WriteLine("Radius Selection");
+                    mCurrentSelection = sector;
+                    launchInteraction(r, theta);
+                }
+ 
             }
             else
             {
@@ -188,25 +245,25 @@ namespace SparrowHawk.Interaction
             if (interactionNumber < 0) interactionNumber += (int)mNumSectors;
             Rhino.RhinoApp.WriteLine("Selected Interaction " + interactionNumber);
             switch(mLayout)
-            {
+            { 
                 case MenuLayout.RootMenu:
                     switch (interactionNumber)
                     {
                         case 0:
                             mScene.popInteraction();
-                            mScene.pushInteraction(new MarkingMenu(ref mScene, MenuLayout.TwoDMenu, 1, new OpenTK.Vector3(0,0,.005f)));
+                            mScene.pushInteraction(new MarkingMenu(ref mScene, MenuLayout.TwoDMenu, defaultInitialDelay, new OpenTK.Vector3(0,0,.005f)));
                             break;
                         case 1:
                             mScene.popInteraction();
-                            mScene.pushInteraction(new MarkingMenu(ref mScene, MenuLayout.NavMenu, 1, new OpenTK.Vector3(0, 0, .005f)));
+                            mScene.pushInteraction(new MarkingMenu(ref mScene, MenuLayout.NavMenu, defaultInitialDelay, new OpenTK.Vector3(0, 0, .005f)));
                             break;
                         case 2:
                             mScene.popInteraction();
-                            mScene.pushInteraction(new MarkingMenu(ref mScene, MenuLayout.ThreeDMenu, 1, new OpenTK.Vector3(0, 0, .005f)));
+                            mScene.pushInteraction(new MarkingMenu(ref mScene, MenuLayout.ThreeDMenu, defaultInitialDelay, new OpenTK.Vector3(0, 0, .005f)));
                             break;
                         case 3:
                             mScene.popInteraction();
-                            mScene.pushInteraction(new MarkingMenu(ref mScene, MenuLayout.CalibrationMenu, 1, new OpenTK.Vector3(0, 0, .005f)));
+                            mScene.pushInteraction(new MarkingMenu(ref mScene, MenuLayout.CalibrationMenu, defaultInitialDelay, new OpenTK.Vector3(0, 0, .005f)));
                             break;
                     } break;
 
@@ -258,7 +315,7 @@ namespace SparrowHawk.Interaction
                             break;
                         case 2:
                             mScene.popInteraction();
-                            mScene.pushInteraction(new MarkingMenu(ref mScene, MenuLayout.PlaneMenu));
+                            mScene.pushInteraction(new MarkingMenu(ref mScene, MenuLayout.PlaneMenu, defaultInitialDelay));
                             break;
                     }
                     break;

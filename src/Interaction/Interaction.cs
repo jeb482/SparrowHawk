@@ -15,7 +15,7 @@ namespace SparrowHawk.Interaction
         {
             VREvent_t vrEvent = new VREvent_t();
             unsafe {
-                while (mScene.mHMD.PollNextEvent(ref vrEvent, (uint)sizeof(VREvent_t))) {
+                while (mScene.mHMD.PollNextEvent(ref vrEvent, (uint)sizeof(VREvent_t))){
                     if (mScene.isOculus)
                         oculusInput(ref vrEvent);
                     else
@@ -161,7 +161,7 @@ namespace SparrowHawk.Interaction
         protected virtual void onReleaseViveTouchpad(ref VREvent_t vrEvent) { }
         protected virtual void onReleaseViveGrip(ref VREvent_t vrEvent) { }
         protected virtual void onReleaseViveAppMenu(ref VREvent_t vrEvent) { }
-        protected virtual void onUntouchViveTouchpad(ref VREvent_t vrEvent) { Rhino.RhinoApp.WriteLine("Low energy. 안돼!");}
+        protected virtual void onUntouchViveTouchpad(ref VREvent_t vrEvent) {}
         protected virtual void onClickOculusTrigger(ref VREvent_t vrEvent) { }
         protected virtual void onClickOculusStick(ref VREvent_t vrEvent) { mScene.pushInteraction(new MarkingMenu(ref mScene));}
         protected virtual void onClickOculusGrip(ref VREvent_t vrEvent) { }
