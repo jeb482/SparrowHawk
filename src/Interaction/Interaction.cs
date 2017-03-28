@@ -70,6 +70,16 @@ namespace SparrowHawk.Interaction
                         break;
                 }
             }
+
+            else if (vrEvent.eventType == (uint)EVREventType.VREvent_ButtonUntouch)
+            {
+                switch (vrEvent.data.controller.button)
+                {
+                    case (uint)Util.OculusButtonId.k_EButton_Oculus_Stick:
+                        onUntouchOculusStick(ref vrEvent);
+                        break;
+                }
+            }
         }
 
         protected void viveInput(ref VREvent_t vrEvent)
@@ -111,6 +121,16 @@ namespace SparrowHawk.Interaction
                         break;
                 }
             }
+
+            else if (vrEvent.eventType == (uint)EVREventType.VREvent_ButtonUntouch)
+            {
+                switch (vrEvent.data.controller.button)
+                {
+                    case (uint) EVRButtonId.k_EButton_SteamVR_Touchpad:
+                        onUntouchViveTouchpad(ref vrEvent);
+                        break;
+                }
+            }
         }
 
 
@@ -141,6 +161,7 @@ namespace SparrowHawk.Interaction
         protected virtual void onReleaseViveTouchpad(ref VREvent_t vrEvent) { }
         protected virtual void onReleaseViveGrip(ref VREvent_t vrEvent) { }
         protected virtual void onReleaseViveAppMenu(ref VREvent_t vrEvent) { }
+        protected virtual void onUntouchViveTouchpad(ref VREvent_t vrEvent) { Rhino.RhinoApp.WriteLine("Low energy. 안돼!");}
         protected virtual void onClickOculusTrigger(ref VREvent_t vrEvent) { }
         protected virtual void onClickOculusStick(ref VREvent_t vrEvent) { mScene.pushInteraction(new MarkingMenu(ref mScene));}
         protected virtual void onClickOculusGrip(ref VREvent_t vrEvent) { }
@@ -151,7 +172,8 @@ namespace SparrowHawk.Interaction
         protected virtual void onReleaseOculusGrip(ref VREvent_t vrEvent) { }
         protected virtual void onReleaseOculusAX(ref VREvent_t vrEvent) { }
         protected virtual void onReleaseOculusBY(ref VREvent_t vrEvent) { }
-
+        protected virtual void onUntouchOculusStick(ref VREvent_t vrEvent) { }
+        
 
 
         /// <summary>
