@@ -30,7 +30,7 @@ namespace SparrowHawk
         {
             mScene = scene;
             type = t;
-            OpenTK.Matrix4 tc = new OpenTK.Matrix4();
+            OpenTK.Matrix4 tc = new OpenTK.Matrix4(); //vrToplane
             // we use VR coordinate for convevnience
             if (type == "XZ")
             {
@@ -40,10 +40,16 @@ namespace SparrowHawk
                 normal = new OpenTK.Vector3(0, 1, 0);
                 mesh_m = new Material.SingleColorMaterial(0, 1, 0, 0.5f);
 
+                /*
                 tc = new OpenTK.Matrix4(1, 0, 0, 0,
                                         0, 0, 1, 0,
                                         0, -1, 0, 0,
                                         0, 0, 0, 1);
+                                        */
+                tc = new OpenTK.Matrix4(1, 0, 0, 0,
+                0, 0, -1, 0,
+                0, 1, 0, 0,
+                0, 0, 0, 1);
 
             }
             else if (type == "XY")
@@ -70,10 +76,12 @@ namespace SparrowHawk
 
                 mesh_m = new Material.SingleColorMaterial(0, 0, 1, 0.5f);
 
+                
                 tc = new OpenTK.Matrix4(0, 0, 1, 0,
                         0, 1, 0, 0,
                         -1, 0, 0, 0,
                         0, 0, 0, 1);
+
             }
 
             createRhinoBrep();
@@ -82,7 +90,8 @@ namespace SparrowHawk
             OpenTK.Vector3 planeO = Util.platformToVRPoint(ref mScene, new OpenTK.Vector3(0, 0, 0));
 
             //get translation vector
-            OpenTK.Matrix4 translationM = OpenTK.Matrix4.CreateTranslation(origin - planeO);
+            //OpenTK.Matrix4 translationM = OpenTK.Matrix4.CreateTranslation(origin - planeO);
+            OpenTK.Matrix4 translationM = OpenTK.Matrix4.CreateTranslation(planeO - origin);
             translationM.Transpose();
 
 

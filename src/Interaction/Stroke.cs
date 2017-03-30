@@ -114,26 +114,29 @@ namespace SparrowHawk.Interaction
                 //settings.NameFilter = "plane";
                 foreach (Rhino.DocObjects.RhinoObject rhObj in mScene.rhinoDoc.Objects.GetObjectList(settings))
                 {
-                    List<GeometryBase> geometries = new List<GeometryBase>();
-                    geometries.Add(rhObj.Geometry);
-                    //must be a brep or surface, not mesh
-                    Point3d[] rayIntersections = Rhino.Geometry.Intersect.Intersection.RayShoot(ray, geometries, 1);
-                    if (rayIntersections != null)
+                    if (rhObj.Attributes.Name.Contains("brepMesh") || rhObj.Attributes.Name.Contains("aprint") || rhObj.Attributes.Name.Contains("plane"))
                     {
-                        projectP = Util.platformToVRPoint(ref mScene, new OpenTK.Vector3((float)rayIntersections[0].X, (float)rayIntersections[0].Y, (float)rayIntersections[0].Z));
-                        OpenTK.Matrix4 t = OpenTK.Matrix4.CreateTranslation(projectP);
-                        t.Transpose();
-                        drawPoint.transform = t;
-                        targetPSN = mScene.brepToSceneNodeDic[rhObj.Id];
-                        targetPRhObj = rhObj;
-                        break;
-                    }
-                    else
-                    {
-                        //make markerpoint invisible
-                        OpenTK.Matrix4 t = OpenTK.Matrix4.CreateTranslation(new OpenTK.Vector3(100,100,100));
-                        t.Transpose();
-                        drawPoint.transform = t;
+                        List<GeometryBase> geometries = new List<GeometryBase>();
+                        geometries.Add(rhObj.Geometry);
+                        //must be a brep or surface, not mesh
+                        Point3d[] rayIntersections = Rhino.Geometry.Intersect.Intersection.RayShoot(ray, geometries, 1);
+                        if (rayIntersections != null)
+                        {
+                            projectP = Util.platformToVRPoint(ref mScene, new OpenTK.Vector3((float)rayIntersections[0].X, (float)rayIntersections[0].Y, (float)rayIntersections[0].Z));
+                            OpenTK.Matrix4 t = OpenTK.Matrix4.CreateTranslation(projectP);
+                            t.Transpose();
+                            drawPoint.transform = t;
+                            targetPSN = mScene.brepToSceneNodeDic[rhObj.Id];
+                            targetPRhObj = rhObj;
+                            break;
+                        }
+                        else
+                        {
+                            //make markerpoint invisible
+                            OpenTK.Matrix4 t = OpenTK.Matrix4.CreateTranslation(new OpenTK.Vector3(100, 100, 100));
+                            t.Transpose();
+                            drawPoint.transform = t;
+                        }
                     }
                 }
             }

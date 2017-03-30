@@ -188,12 +188,14 @@ namespace SparrowHawk.Interaction
                 {
                     //grip selection
                     RhinoObject rhObj = planeList.ElementAt(i);
-                    if (rhObj.Geometry.GetBoundingBox(true).Contains(new Point3d(controller_p.X, -controller_p.Z, controller_p.Y)))
+                    if (rhObj.Geometry.GetBoundingBox(false).Contains(new Point3d(controller_p.X, -controller_p.Z, controller_p.Y)))
                     {                      
                         currentState = State.SELECTION;
                         //get the nearest one
-                        OpenTK.Vector3 centerBox = Util.platformToVRPoint(ref mScene, new OpenTK.Vector3((float)rhObj.Geometry.GetBoundingBox(true).Center.X, (float)rhObj.Geometry.GetBoundingBox(true).Center.Y, (float)rhObj.Geometry.GetBoundingBox(true).Center.Z));
+                        OpenTK.Vector3 centerBox = Util.platformToVRPoint(ref mScene, new OpenTK.Vector3((float)rhObj.Geometry.GetBoundingBox(false).Center.X, (float)rhObj.Geometry.GetBoundingBox(false).Center.Y, (float)rhObj.Geometry.GetBoundingBox(false).Center.Z));
                         float distance = (float)Math.Sqrt(Math.Pow(centerBox.X - controller_p.X, 2) + Math.Pow(centerBox.Y - controller_p.Y, 2) + Math.Pow(centerBox.Z - controller_p.Z, 2));
+
+                        Rhino.RhinoApp.WriteLine("grip, " + i + ", " + distance);
 
                         if (distance < mimD)
                         {
@@ -219,14 +221,18 @@ namespace SparrowHawk.Interaction
 
                             float distance = (float)Math.Sqrt(Math.Pow(projectP.X - controller_p.X, 2) + Math.Pow(projectP.Y - controller_p.Y, 2) + Math.Pow(projectP.Z - controller_p.Z, 2));
 
-                            if(distance < mimD)
+                            Rhino.RhinoApp.WriteLine("raycasting " + i + ", " + distance);
+
+
+                            if (distance < mimD)
                             {
                                 mimD = distance;
                                 minIndex = i;
                                 selectedSN = mScene.brepToSceneNodeDic[rhObj.Id];
                                 selectedRhObj = rhObj;
                             }
-                        
+
+
                         }
                     }
 

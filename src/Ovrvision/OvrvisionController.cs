@@ -35,9 +35,9 @@ namespace SparrowHawk.Ovrvision
         private Mat outFrame_R = new Mat();
         private readonly Mat _grayFrame_R = new Mat();
         int _width = 9; //width of chessboard no. squares in width - 1
-        int _height = 6; // heght of chess board no. squares in heigth - 1
+        int _height = 5; // heght of chess board no. squares in heigth - 1
         private float _squareSize = 1.0f;
-        private Size _patternSize = new Size(9, 6);  //size of chess board to be detected
+        private Size _patternSize = new Size(9, 5);  //size of chess board to be detected
         VectorOfPointF _corners = new VectorOfPointF(); //corners found from chessboard
         Mat[] _rvecs, _tvecs;
         Matrix<double> _rvecAR = new Matrix<double>(3, 1);
@@ -214,7 +214,7 @@ namespace SparrowHawk.Ovrvision
         {
             while (!ThreadEnd)
             {
-                ProcessFrame();
+                //ProcessFrame();
             }
 
         }
@@ -436,26 +436,30 @@ namespace SparrowHawk.Ovrvision
 
         public void setDefaultMatrixHC()
         {
+
             glmVRtoMarker = new Matrix4(
-                    41.17993f, -0.7992982f, 0.05855817f, -40.59021f,
-                    0.07283669f, 4.892177f, 40.19513f, 19.44431f,
-                    -0.894962f, -41.10464f, 1.052828f, 0.4367066f,
+                    39.63798f, -0.4131081f, -4.319901f, 2.642879f,
+                    4.070388f, -0.8651507f, 39.60488f, 22.77811f,
+                    -0.143513f, -40.38705f, -0.6700774f, 56.09949f,
                     0, 0, 0, 1
            );
+
 
             mHeadtoCam_L = new Matrix4(
-                    41.15958f, -0.05801749f, 0.9403467f, 1.362392f,
-                    -0.3709323f, 39.4918f, -3.760525f, -0.8313656f,
-                   -0.9785745f, 0.6824751f, 41.91914f, 5.587931f,
+                    39.88066f, 0.4216409f, 1.050036f, 1.356731f,
+                    - 0.4503731f, 40.16751f, -1.081423f, -0.1868401f,
+                   -1.456724f, 1.670977f, 39.94979f, 5.054356f,
                     0, 0, 0, 1
            );
 
+
             mHeadtoCam_R = new Matrix4(
-                    41.16973f, -0.05447043f, 0.2204018f, -1.19957f,
-                    -0.3924753f, 39.4917f, -3.692798f, -0.7971983f,
-                    -0.2735618f, 0.6202517f, 41.93658f, 5.650891f,
+                    39.89778f, 0.434963f, 0.4065609f, -1.110305f,
+                    -0.4967673f, 40.17924f, -0.6893921f, -0.1616745f,
+                    -0.8116962f, 1.283939f, 39.97324f, 5.112743f,
                     0, 0, 0, 1
            );
+
             calib_status = 3;
 
             Rhino.RhinoApp.WriteLine("set default calibration matrix");
@@ -481,10 +485,10 @@ namespace SparrowHawk.Ovrvision
                 marker_points.Add(new MCvPoint3D32f(3, 3, 0));
                 marker_points.Add(new MCvPoint3D32f(0, 3, 0));
 
-                marker_points.Add(new MCvPoint3D32f(0, 0, -2.17f));
-                marker_points.Add(new MCvPoint3D32f(2.25f, 0, -2.17f));
-                marker_points.Add(new MCvPoint3D32f(2.25f, 2.25f, -2.17f));
-                marker_points.Add(new MCvPoint3D32f(0, 2.25f, -2.17f));
+                marker_points.Add(new MCvPoint3D32f(0, 0, -4.0f));
+                marker_points.Add(new MCvPoint3D32f(3.0f, 0, -4.0f));
+                marker_points.Add(new MCvPoint3D32f(3.0f, 3.0f, -4.0f));
+                marker_points.Add(new MCvPoint3D32f(0, 3.0f, -4.0f));
 
                 CvInvoke.EstimateAffine3D(vr_points.ToArray(), marker_points.ToArray(), out mVRtoMarker, out inliers, 3, 0.99);
 
