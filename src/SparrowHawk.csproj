@@ -103,6 +103,7 @@
     <Compile Include="Interaction\Sweep.cs" />
     <Compile Include="Material\LambertianMaterial.cs" />
     <Compile Include="Material\RadialMenuMaterial.cs" />
+    <Compile Include="OfflineCalibration.cs" />
     <Compile Include="Ovrvision\COvrvision.cs" />
     <Compile Include="Geometry\CubeGeometry.cs" />
     <Compile Include="SparrowHawkEventListeners.cs" />

@@ -50,6 +50,8 @@ namespace SparrowHawk
         public VrGame(ref Rhino.RhinoDoc doc)
         {
             mDoc = doc;
+            Rhino.RhinoApp.WriteLine("The robot offset is: " + OfflineCalibration.solveForRobotOffsetVector(OfflineCalibration.getHuaishuRobotMeasurements()));
+
             if (init())
                 Rhino.RhinoApp.WriteLine("Initialization complete!");
 
