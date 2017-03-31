@@ -117,14 +117,20 @@ namespace SparrowHawk
                             case ETrackedDeviceClass.Controller:
                                 mScene.mDeviceClassChar[i] = 'C';
                                 string name = Util.GetTrackedDeviceString(ref mHMD, i, ETrackedDeviceProperty.Prop_RenderModelName_String);
-                                if (name.ToLower().Contains("left"))
+                                if (name.ToLower().Contains("left")) {
                                     mScene.leftControllerIdx = (int)i;
+                                    Geometry.Geometry g = new Geometry.Geometry(@"C:/workspace/SparrowHawk/src/resources/external_controller01_left.obj");
+                                    Material.Material m = new Material.RGBNormalMaterial(.5f);
+                                    SceneNode s = new SceneNode("LeftControllerModel", ref g, ref m);
+                                    s.transform = Util.createTranslationMatrix(-mScene.mLeftControllerOffset.M14, -mScene.mLeftControllerOffset.M24, -mScene.mLeftControllerOffset.M34);
+                                    mScene.leftControllerNode.add(ref s);
+                                }
                                 else if (name.ToLower().Contains("right"))
                                     mScene.rightControllerIdx = (int)i;
                                 else if (mScene.leftControllerIdx < 0)
-                                    mScene.leftControllerIdx = (int) i;
+                                    mScene.leftControllerIdx = (int)i;
                                 else if (mScene.rightControllerIdx < 0)
-                                    mScene.rightControllerIdx = (int) i;
+                                    mScene.rightControllerIdx = (int)i;
                                 break;
                             case ETrackedDeviceClass.HMD: mScene.mDeviceClassChar[i] = 'H'; break;
                             case ETrackedDeviceClass.Invalid: mScene.mDeviceClassChar[i] = 'I'; break;
