@@ -125,7 +125,7 @@ namespace SparrowHawk.Interaction
                     if (brep != null && brep.Edges.Count != 0)
                     {
 
-                        Util.addSceneNode(ref mScene, brep, ref mesh_m);
+                        Util.addSceneNode(ref mScene, brep, ref mesh_m, "aprint");
 
                         //remove the shape surfaces of the loft
                         foreach (Guid id in loftObjsUID)

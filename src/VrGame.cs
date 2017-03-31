@@ -45,7 +45,8 @@ namespace SparrowHawk
 
         bool manualCallibration = false;
 
-
+        DesignPlane xzPlane, xyPlane, yzPlane;
+        DesignPlane2 xzPlane2, xyPlane2, yzPlane2;
 
         public VrGame(ref Rhino.RhinoDoc doc)
         {
@@ -240,7 +241,7 @@ namespace SparrowHawk
                     {                     
                         //Vector3 robotPoint = new Vector3(s.data[0] - 8, s.data[1], s.data[2] - 240);
                         Vector3 robotPoint = new Vector3(s.data[0], s.data[1], s.data[2]);
-                        robotPoint /= 1000;
+                        //robotPoint /= 1000;
                         robotCallibrationPoints.Add(robotPoint);
                         Rhino.RhinoApp.WriteLine("add robotPoint: " + robotPoint.ToString());
                         if (mScene.leftControllerIdx < 0)
@@ -266,12 +267,6 @@ namespace SparrowHawk
             Rhino.RhinoApp.WriteLine("add vrCallibrationPoints: " + vrPoint.ToString());
             Util.MarkPoint(ref mScene.staticGeometry, vrPoint, 1, 1, 0);
             if (vrCallibrationPoints.Count == 8) { 
-            //if (vrCallibrationPoints.Count == 11)
-            //{
-            //    //ADD 3 POINTS ON THE XY-PLANE
-            //    robotCallibrationPoints.Add(new Vector3(0, 0, 0));
-            //    robotCallibrationPoints.Add(new Vector3(0, 30, 0));
-            //    robotCallibrationPoints.Add(new Vector3(-50, 0, 0));
 
             Util.solveForAffineTransformOpenCV(vrCallibrationPoints, robotCallibrationPoints, ref mScene.vrToRobot);
                 foreach (Vector3 v in robotCallibrationPoints)
@@ -411,6 +406,7 @@ namespace SparrowHawk
             }
 
             //TODO-add a xy-plane in rhino (xz plane in VR)
+            /*
             Rhino.Geometry.Vector3d normal = new Rhino.Geometry.Vector3d(0, 0, 1);
             Plane plane = new Plane(new Point3d(0, 0, 0), normal);
 
@@ -428,7 +424,15 @@ namespace SparrowHawk
             {
                 Material.Material rhinoMseh_m = new Material.SingleColorMaterial(0, .5f, 0, 0.5f);
                 Util.addSceneNode(ref mScene, xy_plane, ref rhinoMseh_m, "plane");
-            }
+            }*/
+            
+            xzPlane = new DesignPlane(ref mScene, 1);
+            xyPlane = new DesignPlane(ref mScene, 2);
+            yzPlane = new DesignPlane(ref mScene, 0);
+
+            //xzPlane2 = new DesignPlane2(ref mScene, "XZ");
+            //xyPlane2 = new DesignPlane2(ref mScene, "XY");
+            //yzPlane2 = new DesignPlane2(ref mScene, "YZ");
 
             //Find the Rhino Object start with 'a' and render it
             Material.Material mesh_m = new Material.RGBNormalMaterial(1); ;
@@ -513,7 +517,21 @@ namespace SparrowHawk
             if (e.KeyChar == 'H' || e.KeyChar == 'h')
             {
                 mScene.popInteraction();
-//                mScene.pushInteraction(new Interaction.EditPlane(ref mScene));
+                mScene.pushInteraction(new Interaction.EditPlane(ref mScene, ref xyPlane, ref xzPlane, ref yzPlane));
+                //mScene.pushInteraction(new Interaction.EditPlane2(ref mScene, ref xyPlane2, ref xzPlane2, ref yzPlane2));
+            }
+
+            if (e.KeyChar == 'J' || e.KeyChar == 'j')
+            {
+                mScene.popInteraction();
+                //mScene.pushInteraction(new Interaction.EditPlane(ref mScene, ref xyPlane, ref xzPlane, ref yzPlane));
+                mScene.pushInteraction(new Interaction.RotatePlane(ref mScene, ref xyPlane2, ref xzPlane2, ref yzPlane2));
+            }
+
+            if (e.KeyChar == 'K' || e.KeyChar == 'k')
+            {
+                mScene.popInteraction();
+                mScene.pushInteraction(new Interaction.Revolve(ref mScene, true));
             }
 
             if (e.KeyChar == 'L' || e.KeyChar == 'l')
@@ -533,6 +551,13 @@ namespace SparrowHawk
                 mScene.popInteraction();
                 mScene.pushInteraction(new Interaction.Stroke(ref mScene));
             }
+
+            if (e.KeyChar == 'N' || e.KeyChar == 'n')
+            {
+                mScene.popInteraction();
+                mScene.pushInteraction(new Interaction.Sweep2(ref mScene));
+            }
+
             if (e.KeyChar == 'V' || e.KeyChar == 'v')
             {
                 calibrationTest();

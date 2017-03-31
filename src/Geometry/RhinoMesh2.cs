@@ -6,32 +6,41 @@ using Rhino.Geometry;
 
 namespace SparrowHawk.Geometry
 {
-    class RhinoMesh : Geometry
+    class RhinoMesh2 : Geometry
     {
 
         public Mesh triMesh;
         private Scene mScene;
+        private Transform transM;
 
-        public RhinoMesh()
+        public RhinoMesh2()
         {
             mNumPrimitives = 0;
             primitiveType = OpenTK.Graphics.OpenGL4.BeginMode.Triangles;
         }
 
-        public RhinoMesh(ref Scene s)
+        public RhinoMesh2(ref Scene s)
         {
             mScene = s;
             mNumPrimitives = 0;
             primitiveType = OpenTK.Graphics.OpenGL4.BeginMode.Triangles;
         }
 
-        public RhinoMesh(ref Mesh mesh)
+        public RhinoMesh2(ref Scene s, Transform t)
+        {
+            mScene = s;
+            mNumPrimitives = 0;
+            primitiveType = OpenTK.Graphics.OpenGL4.BeginMode.Triangles;
+            transM = t;
+        }
+
+        public RhinoMesh2(ref Mesh mesh)
         {
             triMesh = Triangulate(mesh);
             initMeshGeometry(ref triMesh);
         }
 
-        public RhinoMesh(ref Scene s, ref Mesh mesh)
+        public RhinoMesh2(ref Scene s, ref Mesh mesh)
         {
             mScene = s;
             triMesh = Triangulate(mesh);
@@ -80,17 +89,21 @@ namespace SparrowHawk.Geometry
             OpenTK.Matrix4 transToOrigin = new OpenTK.Matrix4();
 
             // visualize the origin of the platform for debugging
+            /*
             if (!mScene.vrToRobot.Equals(OpenTK.Matrix4.Identity))
             {
                 OpenTK.Vector3 robotO = Util.platformToVRPoint(ref mScene, new OpenTK.Vector3(0, 0, 0));
                 Util.MarkPoint(ref mScene.staticGeometry, robotO, 0, 1, 0);
             }
-
+            */
 
             foreach (Point3d vertex in triMesh.Vertices)
             {
                 vertices.Add(vertex);
-                OpenTK.Vector3 p = Util.platformToVRPoint(ref mScene, new OpenTK.Vector3((float)vertex.X, (float)vertex.Y, (float)vertex.Z));
+                OpenTK.Vector3 p = new OpenTK.Vector3((float)vertex.X, (float)vertex.Y, (float)vertex.Z);
+                //points in the object (plane) space
+                p = Util.transformPoint(Util.rhinoToOpenTKTransform(transM).Inverted(), p);
+
                 vertices_array.Add(p.X);
                 vertices_array.Add(p.Y);
                 vertices_array.Add(p.Z);

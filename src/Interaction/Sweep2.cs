@@ -9,16 +9,17 @@ using Valve.VR;
 
 namespace SparrowHawk.Interaction
 {
-    class Sweep : Stroke
+    class Sweep2 : Stroke
     {
-
         public Geometry.Geometry meshStroke_g;
         Material.Material mesh_m;
         //Rhino.Geometry.NurbsCurve closedCurve;
         Rhino.Geometry.Curve closedCurve;
         List<Point3d> curvePoints = new List<Point3d>();
+        Brep startPlane, endPlane;
+        Guid sGuid, eGuid;
 
-        public Sweep(ref Scene s)
+        public Sweep2(ref Scene s)
         {
 
             mScene = s;
@@ -29,7 +30,7 @@ namespace SparrowHawk.Interaction
 
         }
 
-        public Sweep(ref Scene s, ref Rhino.Geometry.Brep brep)
+        public Sweep2(ref Scene s, ref Rhino.Geometry.Brep brep)
         {
             mScene = s;
             stroke_g = new Geometry.GeometryStroke();
@@ -63,37 +64,33 @@ namespace SparrowHawk.Interaction
             if (curvePoints.Count >= 2)
             {
                 Rhino.Geometry.Curve rail = Rhino.Geometry.Curve.CreateInterpolatedCurve(curvePoints.ToArray(), 3);
-                //get the shape  first
-                Curve[] overlap_curves;
-                Point3d[] inter_points;
-                Rhino.DocObjects.ObjectEnumeratorSettings settings = new Rhino.DocObjects.ObjectEnumeratorSettings();
-                settings.ObjectTypeFilter = Rhino.DocObjects.ObjectType.Brep;
-                foreach (Rhino.DocObjects.RhinoObject rhObj in mScene.rhinoDoc.Objects.GetObjectList(settings))
+
+                //
+                Plane planeStart = new Plane(rail.PointAtStart, rail.TangentAtStart);
+                PlaneSurface planeStart_surface = new PlaneSurface(planeStart,
+                  new Interval(-30, 30),
+                  new Interval(-30, 30));
+
+                Rhino.Geometry.Vector3d enormal = rail.TangentAtEnd;
+                //enormal.Reverse();
+
+                Plane planeEnd = new Plane(rail.PointAtEnd, rail.TangentAtEnd);
+                PlaneSurface planeEnd_surface = new PlaneSurface(planeEnd,
+                  new Interval(-30, 30),
+                  new Interval(-30, 30));
+
+                startPlane = Brep.CreateFromSurface(planeStart_surface);
+                endPlane = Brep.CreateFromSurface(planeEnd_surface);
+
+                if (startPlane != null && endPlane != null)
                 {
-                    if (rhObj.Attributes.Name == "plane")
-                        continue;
-
-                    if (Intersection.CurveBrep(rail, rhObj.Geometry as Brep, mScene.rhinoDoc.ModelAbsoluteTolerance, out overlap_curves, out inter_points))
-                    {
-                        if (overlap_curves.Length > 0 || inter_points.Length > 0)
-                        {
-                            closedCurve = ((Brep)rhObj.Geometry).Curves3D.ElementAt(0);
-                            //testing open/close curve
-                            closedCurve.SetEndPoint(closedCurve.PointAtStart);
-
-                            Brep[] breps = Brep.CreateFromSweep(rail, closedCurve, false, mScene.rhinoDoc.ModelAbsoluteTolerance);
-                            Brep brep = breps[0];
-
-                            if (brep != null)
-                            {
-                                Util.addSceneNode(ref mScene, brep, ref mesh_m, "aprint");
-                                Util.removeSceneNode(ref mScene, rhObj.Id);
-                                mScene.rhinoDoc.Views.Redraw();
-                            }
-                            break;
-                        }
-                    }
+                    sGuid = Util.addSceneNode(ref mScene, startPlane, ref mesh_m, "planeStart");
+                    eGuid = Util.addSceneNode(ref mScene, endPlane, ref mesh_m, "planeEnd");
                 }
+
+
+                mScene.popInteraction();
+                mScene.pushInteraction(new SweepShape(ref mScene, true, rail, sGuid, eGuid));
 
             }
         }

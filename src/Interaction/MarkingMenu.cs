@@ -85,34 +85,34 @@ namespace SparrowHawk.Interaction
             }
         }
 
-        protected override void onUntouchOculusStick(ref VREvent_t vrEvent)
-        {
-            float r = 0;
-            float theta = 0;
-            int sector = (int)Math.Floor((theta - mFirstSectorOffsetAngle) * mNumSectors / (2 * Math.PI));
-            getOculusJoystickPoint((uint)mScene.leftControllerIdx, out r, out theta);
-            if(r > 0.5)
-            {
-                ((Material.RadialMenuMaterial)radialMenuMat).setHighlightedSector(mNumSectors, mFirstSectorOffsetAngle, theta);
-                if (this.mInitialSelectOKTime != 0)
-                {
-                    if (mScene.gameTime > this.mInitialSelectOKTime)
-                    {
-                        mCurrentSelection = sector;
-                        launchInteraction(r, theta);
-                    }
-                }
-                else
-                {
-                    mCurrentSelection = sector;
-                    launchInteraction(r, theta);
-                }
-            }
-            else
-            {
-                mScene.popInteraction();
-            }
-        }
+        //protected override void onUntouchOculusStick(ref VREvent_t vrEvent)
+        //{
+        //    float r = 0;
+        //    float theta = 0;
+        //    int sector = (int)Math.Floor((theta - mFirstSectorOffsetAngle) * mNumSectors / (2 * Math.PI));
+        //    getOculusJoystickPoint((uint)mScene.leftControllerIdx, out r, out theta);
+        //    if(r > 0.5)
+        //    {
+        //        ((Material.RadialMenuMaterial)radialMenuMat).setHighlightedSector(mNumSectors, mFirstSectorOffsetAngle, theta);
+        //        if (this.mInitialSelectOKTime != 0)
+        //        {
+        //            if (mScene.gameTime > this.mInitialSelectOKTime)
+        //            {
+        //                mCurrentSelection = sector;
+        //                launchInteraction(r, theta);
+        //            }
+        //        }
+        //        else
+        //        {
+        //            mCurrentSelection = sector;
+        //            launchInteraction(r, theta);
+        //        }
+        //    }
+        //    else
+        //    {
+        //        mScene.popInteraction();
+        //    }
+        //}
 
         // TODO: This could use a lot of refactoring.
         public override void draw(bool isTop) {
@@ -125,7 +125,7 @@ namespace SparrowHawk.Interaction
             } else {
                 getViveTouchpadPoint((uint)mScene.leftControllerIdx, out r, out theta);
             }
-            int sector = (int)Math.Floor((theta - mFirstSectorOffsetAngle) * mNumSectors / (2 * Math.PI));
+            int sector = (int)Math.Floor((((theta + 2*Math.PI) % (2*Math.PI)) - mFirstSectorOffsetAngle) * mNumSectors / (2 * Math.PI));
 
             // Update the shader
             if (r > mMinSelectionRadius)
@@ -142,17 +142,18 @@ namespace SparrowHawk.Interaction
                 }
                 return;
             }
-
+            /*
             // If you're in the outer ring, select immediately
             if (r >= mOuterSelectionRadius)
             {
                 launchInteraction(r, theta);
                 return;
             }
-
+            */
             // If in midlle selection ring, check delay
             if (r > mMinSelectionRadius)
             {
+                Rhino.RhinoApp.WriteLine(r + ", " + theta);
                 if (mCurrentSelection != sector)
                 {
                     mCurrentSelection = sector;
@@ -162,7 +163,6 @@ namespace SparrowHawk.Interaction
                 {
                     if (mScene.gameTime > mSelectOKTime)
                     {
-                       //Rhino.RhinoApp.WriteLine("Timeout Selection");
                         launchInteraction(r, theta);
                     }
                 }
@@ -262,7 +262,7 @@ namespace SparrowHawk.Interaction
                     {
                         case 0:
                             mScene.popInteraction();
-                            mScene.pushInteraction(new Grip(ref mScene));
+                            mScene.pushInteraction(new Delete(ref mScene));
                             break;
                         case 1:
                             mScene.popInteraction();
@@ -270,7 +270,7 @@ namespace SparrowHawk.Interaction
                             break;
                         case 2:
                             mScene.popInteraction();
-                            mScene.pushInteraction(new Delete(ref mScene));
+                            mScene.pushInteraction(new Grip(ref mScene));
                             break;
                     }
                     break;
@@ -329,11 +329,11 @@ namespace SparrowHawk.Interaction
                             break;
                         case 2:
                             mScene.popInteraction();
-                            mScene.pushInteraction(new Loft(ref mScene));
+                            mScene.pushInteraction(new Revolve(ref mScene));
                             break;
                         case 3:
                             mScene.popInteraction();
-                            mScene.pushInteraction(new Sweep(ref mScene));
+                            mScene.pushInteraction(new Sweep2(ref mScene));
                             break;
                     }
                     break;
@@ -341,7 +341,6 @@ namespace SparrowHawk.Interaction
                     switch (interactionNumber)
                     {
                         case 0:
-                            //will eventually be circle
                             mScene.popInteraction();
                             mScene.pushInteraction(new Closedcurve(ref mScene));
                             break;
@@ -351,7 +350,7 @@ namespace SparrowHawk.Interaction
                             break;
                         case 2:
                             mScene.popInteraction();
-                            mScene.pushInteraction(new Closedcurve(ref mScene));
+                            mScene.pushInteraction(new CreateCircle(ref mScene));
                             break;
                     }
                     break;

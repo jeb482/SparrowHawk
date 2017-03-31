@@ -11,7 +11,7 @@ namespace SparrowHawk.Material
 
     class SingleColorMaterial : Material
     {
-        OpenTK.Graphics.Color4 mColor;
+        public OpenTK.Graphics.Color4 mColor;
 
         public SingleColorMaterial(float r, float g, float b, float a)
         {

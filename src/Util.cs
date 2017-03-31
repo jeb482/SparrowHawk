@@ -217,12 +217,14 @@ namespace SparrowHawk
             if (scene.vrToRobot.Equals(OpenTK.Matrix4.Identity))
             {
                 v = Util.transformVec(Util.mGLToRhino, v);
-            }else
+                //v *= 1000;
+            }
+            else
             {
                 v = Util.transformVec(scene.vrToRobot, v);
                 v = Util.transformVec(scene.robotToPlatform, v);
             }
-            v *= 1000;
+            //v *= 1000;
             return v;
         }
 
@@ -232,6 +234,7 @@ namespace SparrowHawk
             if (scene.vrToRobot.Equals(OpenTK.Matrix4.Identity))
             {
                 p = Util.transformPoint(Util.mGLToRhino, p);
+               // p *= 1000;
             }
             else
             {
@@ -239,16 +242,17 @@ namespace SparrowHawk
                 p = Util.transformPoint(scene.robotToPlatform, p);
             }
 
-            p *= 1000;
+            //p *= 1000;
             return p;
         }
 
         public static OpenTK.Matrix4 platformToVR(ref Scene scene)
         {
 
-            OpenTK.Matrix4 m = OpenTK.Matrix4.CreateScale(0.001f);
+            OpenTK.Matrix4 m = OpenTK.Matrix4.Identity; //OpenTK.Matrix4.CreateScale(0.001f);
             if (scene.vrToRobot.Equals(OpenTK.Matrix4.Identity))
             {
+                m = OpenTK.Matrix4.CreateScale(0.001f);
                 m = Util.mRhinoToGL * m;
             }
             else
@@ -262,9 +266,10 @@ namespace SparrowHawk
 
         public static OpenTK.Vector3 platformToVRPoint(ref Scene scene, OpenTK.Vector3 p)
         {
-            p /= 1000;
+            //p /= 1000;
             if (scene.vrToRobot.Equals(OpenTK.Matrix4.Identity))
             {
+                p /= 1000;
                 p = Util.transformPoint(Util.mRhinoToGL, p);
             }
             else
@@ -279,9 +284,10 @@ namespace SparrowHawk
 
         public static OpenTK.Vector3 platformToVRVec(ref Scene scene, OpenTK.Vector3 v)
         {
-            v /= 1000;
+            //v /= 1000;
             if (scene.vrToRobot.Equals(OpenTK.Matrix4.Identity))
             {
+                v /= 1000;
                 v = Util.transformPoint(Util.mRhinoToGL, v);
             }
             else
@@ -316,6 +322,56 @@ namespace SparrowHawk
             OpenTK.Vector4 homogenousVec = new OpenTK.Vector4(p.X, p.Y, p.Z, 0);
             homogenousVec = M * homogenousVec;
             return new OpenTK.Vector3(homogenousVec.X, homogenousVec.Y, homogenousVec.Z);
+        }
+
+        public static OpenTK.Matrix4 getTransformInVR(OpenTK.Matrix4 m)
+        {
+            OpenTK.Matrix4 sm = OpenTK.Matrix4.CreateScale(1000f);
+            return m = sm.Inverted() * m * sm;
+        }
+
+        public static Transform OpenTKToRhinoTransform(OpenTK.Matrix4 M)
+        {
+            Transform t = new Transform();
+            t.M00 = M.M11;
+            t.M01 = M.M12;
+            t.M02 = M.M13;
+            t.M03 = M.M14;
+            t.M10 = M.M21;
+            t.M11 = M.M22;
+            t.M12 = M.M23;
+            t.M13 = M.M24;
+            t.M20 = M.M31;
+            t.M21 = M.M32;
+            t.M22 = M.M33;
+            t.M23 = M.M34;
+            t.M30 = M.M41;
+            t.M31 = M.M42;
+            t.M32 = M.M43;
+            t.M33 = M.M44;
+            return t;
+        }
+
+        public static OpenTK.Matrix4 rhinoToOpenTKTransform(Transform t)
+        {
+            OpenTK.Matrix4 M = new OpenTK.Matrix4();
+            M.M11 = (float) t.M00; 
+            M.M12 = (float) t.M01; 
+            M.M13 = (float) t.M02; 
+            M.M14 = (float) t.M03; 
+            M.M21 = (float) t.M10; 
+            M.M22 = (float) t.M11; 
+            M.M23 = (float) t.M12; 
+            M.M24 = (float) t.M13; 
+            M.M31 = (float) t.M20; 
+            M.M32 = (float) t.M21; 
+            M.M33 = (float) t.M22; 
+            M.M34 = (float) t.M23; 
+            M.M41 = (float) t.M30; 
+            M.M42 = (float) t.M31; 
+            M.M43 = (float) t.M32;
+            M.M44 = (float) t.M33; 
+            return M;
         }
 
         public enum OculusButtonId
@@ -464,14 +520,16 @@ namespace SparrowHawk
                 foreach (Mesh mesh in meshes)
                     base_mesh.Append(mesh);
 
-                Guid guid = mScene.rhinoDoc.Objects.AddBrep(brep);
+                Rhino.DocObjects.ObjectAttributes attr = new Rhino.DocObjects.ObjectAttributes();
+                attr.Name = "brepMesh";
+                Guid guid = mScene.rhinoDoc.Objects.AddBrep(brep, attr);
                 mScene.rhinoDoc.Views.Redraw();
 
                 Geometry.Geometry meshStroke_g = new Geometry.RhinoMesh(ref mScene);
                 
                 ((Geometry.RhinoMesh)meshStroke_g).setMesh(ref base_mesh);
                 
-                SceneNode ccMeshSN = new SceneNode("BrepMesh", ref meshStroke_g, ref mesh_m);            
+                SceneNode ccMeshSN = new SceneNode("brepMesh", ref meshStroke_g, ref mesh_m);            
                 mScene.tableGeometry.add(ref ccMeshSN);
                 
                 //add reference SceneNode to brep and vice versa
@@ -495,19 +553,21 @@ namespace SparrowHawk
 
                 foreach (Mesh mesh in meshes)
                     base_mesh.Append(mesh);
+
+                long ticks = DateTime.Now.Ticks;
+                byte[] bytes = BitConverter.GetBytes(ticks);
+                string timeuid = Convert.ToBase64String(bytes).Replace('+', '_').Replace('/', '-').TrimEnd('=');
+
                 Rhino.DocObjects.ObjectAttributes attr = new Rhino.DocObjects.ObjectAttributes();
-                attr.Name = name;
+                attr.Name = name + timeuid;
                 Guid guid = mScene.rhinoDoc.Objects.AddBrep(brep, attr);
-                //add name attribute for printing
-                //mScene.rhinoDoc.Objects.Find(guid).Attributes.Name = "a" + guid.ToString();
-                //mScene.rhinoDoc.Objects.Find(guid).CommitChanges();
                 mScene.rhinoDoc.Views.Redraw();
 
                 Geometry.Geometry meshStroke_g = new Geometry.RhinoMesh(ref mScene);
 
                 ((Geometry.RhinoMesh)meshStroke_g).setMesh(ref base_mesh);
 
-                SceneNode ccMeshSN = new SceneNode("BrepMesh", ref meshStroke_g, ref mesh_m);
+                SceneNode ccMeshSN = new SceneNode(name, ref meshStroke_g, ref mesh_m);
                 mScene.tableGeometry.add(ref ccMeshSN);
 
                 //add reference SceneNode to brep and vice versa
@@ -522,6 +582,44 @@ namespace SparrowHawk
             }
         }
 
+        public static Guid addSceneNode(ref Scene mScene, Brep brep, ref Material.Material mesh_m, string name, Transform t)
+        {
+            //TODO: detect the # of faces
+            Mesh base_mesh = new Mesh();
+            if (brep != null)
+            {
+                Mesh[] meshes = Mesh.CreateFromBrep(brep, MeshingParameters.Default);
+
+                foreach (Mesh mesh in meshes)
+                    base_mesh.Append(mesh);
+                Rhino.DocObjects.ObjectAttributes attr = new Rhino.DocObjects.ObjectAttributes();
+                attr.Name = name;
+                Guid guid = mScene.rhinoDoc.Objects.AddBrep(brep, attr);
+                //add name attribute for printing
+                //mScene.rhinoDoc.Objects.Find(guid).Attributes.Name = "a" + guid.ToString();
+                //mScene.rhinoDoc.Objects.Find(guid).CommitChanges();
+                mScene.rhinoDoc.Views.Redraw();
+
+                Geometry.Geometry meshStroke_g = new Geometry.RhinoMesh2(ref mScene, t);
+
+                ((Geometry.RhinoMesh2)meshStroke_g).setMesh(ref base_mesh);
+
+                SceneNode ccMeshSN = new SceneNode(name, ref meshStroke_g, ref mesh_m);
+                mScene.tableGeometry.add(ref ccMeshSN);
+
+                //add reference SceneNode to brep and vice versa
+                mScene.brepToSceneNodeDic.Add(guid, ccMeshSN);
+                mScene.SceneNodeToBrepDic.Add(ccMeshSN.guid, mScene.rhinoDoc.Objects.Find(guid));
+
+                return guid;
+
+            }
+            else
+            {
+                return Guid.Empty;
+            }
+        }
+
         public static void removeSceneNode(ref Scene mScene, Guid guid)
         {
             SceneNode deleteSN = mScene.brepToSceneNodeDic[guid];
@@ -529,11 +627,11 @@ namespace SparrowHawk
             mScene.SceneNodeToBrepDic.Remove(deleteSN.guid);
 
             mScene.rhinoDoc.Objects.Delete(guid, true);
-            foreach (SceneNode sn in mScene.staticGeometry.children)
+            foreach (SceneNode sn in mScene.tableGeometry.children)
             {
                 if (sn.guid == deleteSN.guid)
                 {
-                    mScene.staticGeometry.children.Remove(sn);
+                    mScene.tableGeometry.children.Remove(sn);
                     break;
                 }
             }
@@ -633,4 +731,6 @@ namespace SparrowHawk
             return 2;
 		}
     }
+
+    //public static OpenTK.Matrix4
 }

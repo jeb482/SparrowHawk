@@ -84,23 +84,30 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="DesignPlane.cs" />
+    <Compile Include="DesignPlane2.cs" />
     <Compile Include="Geometry\GeometryStroke.cs" />
     <Compile Include="Geometry\PlaneRep.cs" />
     <Compile Include="Geometry\RhinoMesh.cs" />
+    <Compile Include="Geometry\RhinoMesh2.cs" />
     <Compile Include="Interaction\Align.cs" />
     <Compile Include="Interaction\CalibrationAR.cs" />
     <Compile Include="Interaction\CreatePatch.cs" />
     <Compile Include="Interaction\CreatePlaneA.cs" />
     <Compile Include="Interaction\Delete.cs" />
     <Compile Include="Interaction\EditPlane.cs" />
+    <Compile Include="Interaction\EditPlane2.cs" />
     <Compile Include="Interaction\Grip.cs" />
     <Compile Include="Interaction\Loft.cs" />
+    <Compile Include="Interaction\Revolve.cs" />
+    <Compile Include="Interaction\RotatePlane.cs" />
     <Compile Include="Interaction\Selection.cs" />
     <Compile Include="Interaction\CreateCircle.cs" />
     <Compile Include="Interaction\ClosedCurve.cs" />
     <Compile Include="Interaction\CreateCylinder.cs" />
     <Compile Include="Interaction\Stroke.cs" />
     <Compile Include="Interaction\Sweep.cs" />
+    <Compile Include="Interaction\Sweep2.cs" />
+    <Compile Include="Interaction\SweepShape.cs" />
     <Compile Include="Material\LambertianMaterial.cs" />
     <Compile Include="Material\RadialMenuMaterial.cs" />
     <Compile Include="OfflineCalibration.cs" />
@@ -134,6 +141,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />
+    <None Include="ClassDiagram1.cd" />
     <None Include="OpenTK.dll.config" />
     <None Include="packages.config" />
     <None Include="Shaders\RGBNormal.frag" />

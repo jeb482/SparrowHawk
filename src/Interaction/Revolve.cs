@@ -1,33 +1,33 @@
-﻿using OpenTK;
-using Rhino.Geometry;
-using Rhino.Geometry.Collections;
-using System;
+﻿using System;
+using Rhino;
+using Rhino.Commands;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+using Rhino.Geometry;
 using Valve.VR;
 
 namespace SparrowHawk.Interaction
 {
-    class Closedcurve : Stroke
+    class Revolve : Stroke
     {
-
-        private Material.Material mesh_m;
-        private Rhino.Geometry.NurbsCurve closedCurve;
-        private Rhino.Geometry.Brep closedCurveBrep;
+        public Geometry.Geometry meshStroke_g;
+        protected Material.Material mesh_m;
+        private Rhino.Geometry.NurbsCurve revolveCurve;
         List<Point3d> curvePoints = new List<Point3d>();
 
-        public Closedcurve(ref Scene s)
+        public Revolve()
         {
-            mScene = s;
-            stroke_g = new Geometry.GeometryStroke();
-            stroke_m = new Material.SingleColorMaterial(1, 0, 0, 1);
-            mesh_m = new Material.RGBNormalMaterial(1);
-            currentState = State.READY;
 
         }
 
-        public Closedcurve(ref Scene s, bool drawOnP)
+        public Revolve(ref Scene s)
+        {
+            mScene = s;
+            stroke_m = new Material.SingleColorMaterial(1, 0, 0, 1);
+            mesh_m = new Material.RGBNormalMaterial(1);
+
+        }
+
+        public Revolve(ref Scene s, bool drawOnP)
         {
             mScene = s;
             stroke_g = new Geometry.GeometryStroke();
@@ -51,13 +51,7 @@ namespace SparrowHawk.Interaction
 
         }
 
-        public override void draw(bool inTop)
-        {
-            base.draw(inTop);
-        }
-
-
-        public void renderPlanarShape()
+        private void renderRevolve()
         {
             //reduce the points in the curve first
             simplifyCurve(ref ((Geometry.GeometryStroke)(stroke_g)).mPoints);
@@ -71,34 +65,30 @@ namespace SparrowHawk.Interaction
             }
 
             //Rhino CreateInterpolatedCurve and CreatePlanarBreps
-            if (curvePoints.Count >= 8)
+            if (curvePoints.Count >= 4)
             {
-                //Rhino closed curve through NURBS curve
-                closedCurve = Rhino.Geometry.NurbsCurve.Create(true, 3, curvePoints.ToArray());
-                //Rhino.Geometry.Curve nc = Curve.CreateInterpolatedCurve(curvePoints.ToArray(), 3);
-                //nc.SetEndPoint(nc.PointAtStart);
+                //Rhino curve through NURBS curve
+                revolveCurve = Rhino.Geometry.NurbsCurve.Create(false, 3, curvePoints.ToArray());
+                Line axis = new Line(new Point3d(0,0,0), new Point3d(0, 0, 1));
+                RevSurface revsrf = RevSurface.Create(revolveCurve, axis);
 
-                Plane proj_plane = new Plane();
-                Plane.FitPlaneToPoints(curvePoints.ToArray(), out proj_plane);
-                Curve proj_curve = Curve.ProjectToPlane(closedCurve, proj_plane);
-                
+                Brep brepRevolve = Brep.CreateFromRevSurface(revsrf, true, true);
 
-                //TODO: make sure the proj_curve is on the same plane ? or it's beacuse not enough points
-                Brep[] shapes = Brep.CreatePlanarBreps(proj_curve);
-                Brep curve_s = shapes[0];
-                closedCurveBrep = curve_s;
-
-                Util.addSceneNode(ref mScene, curve_s, ref mesh_m);
+                Util.addSceneNode(ref mScene, brepRevolve, ref mesh_m, "aprint");
 
             }
+
+        }
+
+        public override void draw(bool isTop)
+        {
+            base.draw(isTop);
         }
 
         protected override void onClickOculusGrip(ref VREvent_t vrEvent)
         {
             curvePoints = new List<Point3d>();
             base.onClickOculusGrip(ref vrEvent);
-
-
         }
 
         protected override void onReleaseOculusGrip(ref VREvent_t vrEvent)
@@ -116,10 +106,11 @@ namespace SparrowHawk.Interaction
                     }
                 }
 
-                renderPlanarShape();
+                renderRevolve();
                 currentState = State.READY;
             }
         }
+
 
     }
 }

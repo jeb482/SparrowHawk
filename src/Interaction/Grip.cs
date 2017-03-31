@@ -73,6 +73,7 @@ namespace SparrowHawk.Interaction
                 mScene.brepToSceneNodeDic.Remove(selectedRhObj.Id);
 
                 Guid newGuid = mScene.rhinoDoc.Objects.Transform(selectedRhObj.Id, transM, true);
+                Rhino.RhinoApp.WriteLine("transM " + transM.ToString());
                 mScene.rhinoDoc.Views.Redraw();
 
                 //add reference SceneNode to brep and vice versa
