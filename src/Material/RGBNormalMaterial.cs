@@ -25,12 +25,13 @@ namespace SparrowHawk.Material
         override public void draw(ref Geometry.Geometry g, ref Matrix4 model, ref Matrix4 vp)
         {
             // bind shader
+            GL.BlendFunc(BlendingFactorSrc.SrcAlpha, BlendingFactorDest.OneMinusSrcAlpha);
             mShader.bind();
 
             Matrix4 modelIT = model.Inverted();
             modelIT.Transpose();
 
-           // GL.Enable(EnableCap.Blend);
+            GL.Enable(EnableCap.Blend);
             mShader.uploadAttrib<int>("indices", g.mGeometryIndices.Length, 3, 4, VertexAttribPointerType.UnsignedInt, false, ref g.mGeometryIndices, 0);
             mShader.uploadAttrib<float>("position", g.mGeometry.Count(), 3, 4, VertexAttribPointerType.Float, false, ref g.mGeometry, 0);
             if (g.mNormals == null)
@@ -46,7 +47,7 @@ namespace SparrowHawk.Material
             GL.Disable(EnableCap.Blend);
             // LALALA
 
-            // GL.BlendFunc(BlendingFactorSrc.SrcAlpha, BlendingFactorDest.OneMinusSrcAlpha);
+            
 
             // //GL.BindBuffer(BufferTarget.ElementArrayBuffer, in);
             // mShader.uploadAttrib("indices", g.mGeometryIndices.Count, 3, 4, VertexAttribPointerType.Int, true, g.mGeometryIndices, 0);
