@@ -23,7 +23,7 @@ namespace SparrowHawk.Interaction
         {
             mScene = s;
             stroke_m = new Material.SingleColorMaterial(1, 0, 0, 1);
-            mesh_m = new Material.RGBNormalMaterial(1);
+            mesh_m = new Material.RGBNormalMaterial(0.5f);
 
         }
 
@@ -32,7 +32,7 @@ namespace SparrowHawk.Interaction
             mScene = s;
             stroke_g = new Geometry.GeometryStroke();
             stroke_m = new Material.SingleColorMaterial(1, 0, 0, 1);
-            mesh_m = new Material.RGBNormalMaterial(1);
+            mesh_m = new Material.RGBNormalMaterial(0.5f);
             currentState = State.READY;
 
             onPlane = drawOnP;
@@ -40,7 +40,7 @@ namespace SparrowHawk.Interaction
             if (onPlane)
             {
                 Geometry.Geometry geo = new Geometry.PointMarker(new OpenTK.Vector3(0, 0, 0));
-                Material.Material m = new Material.SingleColorMaterial(250 / 255, 128 / 255, 128 / 255, 1);
+                Material.Material m = new Material.SingleColorMaterial(250 / 255, 128 / 255, 128 / 255, 0.5f);
                 drawPoint = new SceneNode("Point", ref geo, ref m);
                 drawPoint.transform = new OpenTK.Matrix4(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1);
                 mScene.tableGeometry.add(ref drawPoint);

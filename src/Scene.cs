@@ -7,6 +7,23 @@ using Valve.VR;
 
 namespace SparrowHawk
 {
+    public class RenderOrderComparer : IComparer<SceneNode>
+    {
+        private RenderOrderComparer() { }
+        private static RenderOrderComparer instance;
+        public static RenderOrderComparer Instance {
+            get {
+                if (instance == null)
+                    RenderOrderComparer.instance = new RenderOrderComparer();
+                return instance;
+            }
+        }
+        public int Compare(SceneNode x, SceneNode y)
+        {
+            if (x.mRenderLate && !y.mRenderLate) return 1; else return 0;
+        }
+    }
+
     public class SceneNode
     {
         public string name;
@@ -16,13 +33,15 @@ namespace SparrowHawk
         public Geometry.Geometry geometry;
         public Material.Material material;
         public Matrix4 transform = new Matrix4(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1);
+        public bool mRenderLate;
 
-        public SceneNode(string _name, ref Geometry.Geometry g, ref Material.Material m)
+        public SceneNode(string _name, ref Geometry.Geometry g, ref Material.Material m, bool renderLate = false)
         {
             name = _name;
             geometry = g;
             material = m;
             guid = Guid.NewGuid();
+            mRenderLate = renderLate;
         }
 
         public SceneNode(string _name)
@@ -31,6 +50,7 @@ namespace SparrowHawk
             geometry = null;
             material = null;
             guid = Guid.NewGuid();
+            mRenderLate = false;
         }
 
         public void render(ref Matrix4 vp, Matrix4 model) {
@@ -62,6 +82,7 @@ namespace SparrowHawk
         {
             children.Add(child);
             child.parent = this;
+            children.Sort(RenderOrderComparer.Instance);
         }
 
         public void remove(ref SceneNode child)

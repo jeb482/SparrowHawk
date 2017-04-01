@@ -27,7 +27,7 @@ namespace SparrowHawk
         {
             mScene = scene;
             planeToRhino = new OpenTK.Matrix4(); // maps the z axis in plane space to the right axis in rhino space
-            mesh_m = new Material.SingleColorMaterial(0, 0, 0, 0.5f);
+            mesh_m = new Material.SingleColorMaterial(0, 0, 0, 0.4f);
             
             switch (axis)
             {
@@ -85,8 +85,8 @@ namespace SparrowHawk
 
             //-150 150
             PlaneSurface plane_surface = new PlaneSurface(plane,
-              new Interval(-40, 40),
-              new Interval(-40, 40));
+              new Interval(-140, 140),
+              new Interval(-140, 140));
             
             designPlane = Brep.CreateFromSurface(plane_surface);
             

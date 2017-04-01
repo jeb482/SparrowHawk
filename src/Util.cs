@@ -582,7 +582,7 @@ namespace SparrowHawk
             }
         }
 
-        public static Guid addSceneNode(ref Scene mScene, Brep brep, ref Material.Material mesh_m, string name, Transform t)
+        public static Guid addSceneNode(ref Scene mScene, Brep brep, ref Material.Material mesh_m, string name, Transform t, bool renderLate = false)
         {
             //TODO: detect the # of faces
             Mesh base_mesh = new Mesh();
@@ -604,7 +604,7 @@ namespace SparrowHawk
 
                 ((Geometry.RhinoMesh2)meshStroke_g).setMesh(ref base_mesh);
 
-                SceneNode ccMeshSN = new SceneNode(name, ref meshStroke_g, ref mesh_m);
+                SceneNode ccMeshSN = new SceneNode(name, ref meshStroke_g, ref mesh_m,renderLate);
                 mScene.tableGeometry.add(ref ccMeshSN);
 
                 //add reference SceneNode to brep and vice versa

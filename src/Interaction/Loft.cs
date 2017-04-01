@@ -23,14 +23,14 @@ namespace SparrowHawk.Interaction
         {
             mScene = s;
             stroke_m = new Material.SingleColorMaterial(1, 0, 0, 1);
-            mesh_m = new Material.RGBNormalMaterial(1); ;
+            mesh_m = new Material.RGBNormalMaterial(.5f); ;
         }
 
         public Loft(ref Scene s, ref Rhino.Geometry.Brep[] brep)
         {
             mScene = s;
             stroke_m = new Material.SingleColorMaterial(1, 0, 0, 1);
-            mesh_m = new Material.RGBNormalMaterial(1); ;
+            mesh_m = new Material.RGBNormalMaterial(.5f); ;
 
         }
 

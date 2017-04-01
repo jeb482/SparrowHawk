@@ -329,7 +329,7 @@ namespace SparrowHawk.Interaction
                             break;
                         case 2:
                             mScene.popInteraction();
-                            mScene.pushInteraction(new Revolve(ref mScene));
+                            mScene.pushInteraction(new Revolve(ref mScene, true));
                             break;
                         case 3:
                             mScene.popInteraction();

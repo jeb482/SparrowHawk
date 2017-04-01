@@ -32,7 +32,7 @@ namespace SparrowHawk
         uint vrRenderWidth;
         uint vrRenderHeight;
         float mNearClip = 0.1f;
-        float mFarClip = 30.0f;
+        float mFarClip = 90.0f;
         Matrix4 mEyeProjLeft;
         Matrix4 mEyeProjRight;
         Matrix4 mEyePosLeft;
@@ -300,8 +300,8 @@ namespace SparrowHawk
                 rightEyeTexture.eColorSpace = Valve.VR.EColorSpace.Gamma;
                 Valve.VR.VRTextureBounds_t pBounds = new Valve.VR.VRTextureBounds_t();
                 pBounds.uMax = 1; pBounds.uMin = 0; pBounds.vMax = 1; pBounds.uMin = 0;
-                Valve.VR.OpenVR.Compositor.Submit(Valve.VR.EVREye.Eye_Left, ref leftEyeTexture, ref pBounds, Valve.VR.EVRSubmitFlags.Submit_Default); // TODO: There's a distortion already applied flag.
-                Valve.VR.OpenVR.Compositor.Submit(Valve.VR.EVREye.Eye_Right, ref rightEyeTexture, ref pBounds, Valve.VR.EVRSubmitFlags.Submit_Default);
+                Valve.VR.OpenVR.Compositor.Submit(Valve.VR.EVREye.Eye_Left, ref leftEyeTexture, ref pBounds, Valve.VR.EVRSubmitFlags.Submit_LensDistortionAlreadyApplied); // TODO: There's a distortion already applied flag.
+                Valve.VR.OpenVR.Compositor.Submit(Valve.VR.EVREye.Eye_Right, ref rightEyeTexture, ref pBounds, Valve.VR.EVRSubmitFlags.Submit_LensDistortionAlreadyApplied);
                 
                 GL.Finish();
             }
