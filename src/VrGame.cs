@@ -25,6 +25,7 @@ namespace SparrowHawk
 
         TrackedDevicePose_t[] renderPoseArray, gamePoseArray;
         DateTime mLastFrameTime;
+        bool mSafeForRobot = false;
 
         int mFrameCount;
         double frameRateTimer = 1;
@@ -286,6 +287,7 @@ namespace SparrowHawk
             base.OnRenderFrame(e);
             MakeCurrent();
             updateMatrixPose();
+            notifyRobotIfSafe();
             handleSignals();
             handleInteractions();
             mRenderer.renderFrame();
@@ -531,6 +533,24 @@ namespace SparrowHawk
             {
                 mScene.popInteraction();
                 mScene.pushInteraction(new Interaction.CreatePatch(ref mScene));
+            }
+        }
+
+        protected void notifyRobotIfSafe()
+        {
+            Vector3 tableOrigin = Util.transformPoint(mScene.vrToRobot.Inverted(), new Vector3(0, 0, 0));
+            Vector3 headOrigin = Util.transformPoint(mScene.mHMDPose.Inverted(), new Vector3(0, 0, 0));
+            Vector3 displacement = tableOrigin - headOrigin;
+            displacement.Y = 0;
+            if (displacement.Length > 1.5f && mSafeForRobot == false)
+            {
+                mSafeForRobot = true;
+                Rhino.RhinoApp.WriteLine("Go. " + displacement.Length);
+            }
+            else if (displacement.Length < 1.5f && mSafeForRobot == true)
+            {
+                mSafeForRobot = false;
+                Rhino.RhinoApp.WriteLine("Stop. " + displacement.Length);
             }
         }
     }
