@@ -224,7 +224,10 @@ namespace SparrowHawk
                 int oy = ((int)vrRenderHeight - ovrvision_controller.camHeight) / 2;
                 //ox+100 to deal with blur issue
                 GL.Viewport(ox + 100, oy, ovrvision_controller.camWidth, ovrvision_controller.camHeight);
-            }else
+                //GL.Viewport(ox + 100, oy, (int)vrRenderWidth, (int)vrRenderHeight);
+                //GL.Viewport(0, 0, (int)vrRenderWidth, (int)vrRenderHeight);
+            }
+            else
             {
                 GL.Viewport(0, 0, (int)vrRenderWidth, (int)vrRenderHeight);
             }
@@ -248,7 +251,10 @@ namespace SparrowHawk
                 int oy = ((int)vrRenderHeight - ovrvision_controller.camHeight) / 2;
                 //ox-100 to deal with the blur issue
                 GL.Viewport(ox - 100, oy, ovrvision_controller.camWidth, ovrvision_controller.camHeight);
-            }else
+                //GL.Viewport(ox - 100, oy, (int)vrRenderWidth, (int)vrRenderHeight);
+                //GL.Viewport(0, 0, (int)vrRenderWidth, (int)vrRenderHeight);
+            }
+            else
             {
                 GL.Viewport(0, 0, (int)vrRenderWidth, (int)vrRenderHeight);
             }  

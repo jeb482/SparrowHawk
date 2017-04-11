@@ -30,6 +30,32 @@ namespace SparrowHawk.Interaction
 
         }
 
+        public Sweep2(ref Scene s, bool drawOnP)
+        {
+
+            mScene = s;
+            stroke_g = new Geometry.GeometryStroke();
+            stroke_m = new Material.SingleColorMaterial(1, 0, 0, 1);
+            mesh_m = new Material.RGBNormalMaterial(.5f);
+            currentState = State.READY;
+
+            onPlane = drawOnP;
+
+            if (onPlane)
+            {
+                Geometry.Geometry geo = new Geometry.PointMarker(new OpenTK.Vector3(0, 0, 0));
+                Material.Material m = new Material.SingleColorMaterial(250 / 255, 128 / 255, 128 / 255, 0.5f);
+                drawPoint = new SceneNode("Point", ref geo, ref m);
+                drawPoint.transform = new OpenTK.Matrix4(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1);
+                mScene.tableGeometry.add(ref drawPoint);
+
+                //TODO-support both controllers
+                primaryDeviceIndex = (uint)mScene.leftControllerIdx;
+
+            }
+
+        }
+
         public Sweep2(ref Scene s, ref Rhino.Geometry.Brep brep)
         {
             mScene = s;

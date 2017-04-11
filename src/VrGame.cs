@@ -484,7 +484,7 @@ namespace SparrowHawk
             if (e.KeyChar == 'N' || e.KeyChar == 'n')
             {
                 mScene.popInteraction();
-                mScene.pushInteraction(new Interaction.Sweep2(ref mScene));
+                mScene.pushInteraction(new Interaction.Sweep2(ref mScene,true));
             }
 
             if (e.KeyChar == 'V' || e.KeyChar == 'v')

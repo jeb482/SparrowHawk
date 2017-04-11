@@ -109,6 +109,7 @@
     <Compile Include="Interaction\Sweep.cs" />
     <Compile Include="Interaction\Sweep2.cs" />
     <Compile Include="Interaction\SweepShape.cs" />
+    <Compile Include="Interaction\SweepShapeCircle.cs" />
     <Compile Include="Material\LambertianMaterial.cs" />
     <Compile Include="Material\RadialMenuMaterial.cs" />
     <Compile Include="OfflineCalibration.cs" />
