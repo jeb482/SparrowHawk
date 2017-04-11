@@ -153,7 +153,7 @@ namespace SparrowHawk.Interaction
             // If in midlle selection ring, check delay
             if (r > mMinSelectionRadius)
             {
-                Rhino.RhinoApp.WriteLine(r + ", " + theta);
+                //Rhino.RhinoApp.WriteLine(r + ", " + theta);
                 if (mCurrentSelection != sector)
                 {
                     mCurrentSelection = sector;
@@ -183,9 +183,9 @@ namespace SparrowHawk.Interaction
             }
             radialMenuMat = new Material.RadialMenuMaterial(mScene.rhinoDoc, getTexturePath(mLayout));
             mSceneNode = new SceneNode("MarkingMenu", ref g, ref radialMenuMat);
-            mSceneNode.transform = new OpenTK.Matrix4(1, 0,  0, 0,
-                                                          0, 0,  -1, 0,
-                                                          0, 1,  0, 0,
+            mSceneNode.transform = new OpenTK.Matrix4(2, 0,  0, 0,
+                                                          0, 0,  -2, 0,
+                                                          0, 2,  0, 0,
                                                           0, 0,  0, 1);
             mScene.leftControllerNode.add(ref mSceneNode);
 
@@ -216,8 +216,20 @@ namespace SparrowHawk.Interaction
         // TODO: Need to account for offset. Next
         private void launchInteraction(float r, float theta)
         {
-
-            int interactionNumber = ((int) Math.Floor((mNumSectors * theta - mFirstSectorOffsetAngle) / (2 * Math.PI)));
+            //Angle is off
+            //int interactionNumber = ((int) Math.Floor((mNumSectors * theta - mFirstSectorOffsetAngle) / (2 * Math.PI)));
+            int interactionNumber;
+            double intNumber = (mNumSectors * theta - mFirstSectorOffsetAngle) / (2 * Math.PI);
+            Rhino.RhinoApp.WriteLine(theta + " Radians");
+            Rhino.RhinoApp.WriteLine("" + (mNumSectors * theta - mFirstSectorOffsetAngle) / (2 * Math.PI));
+            if (intNumber - Math.Floor(intNumber) >= 0.5)
+            {
+                interactionNumber = (int) Math.Ceiling(intNumber);
+            }
+            else
+            {
+                interactionNumber = (int)Math.Floor(intNumber);
+            }
             if (interactionNumber < 0) interactionNumber += (int)mNumSectors;
             Rhino.RhinoApp.WriteLine("Selected Interaction " + interactionNumber);
             switch(mLayout)
@@ -226,18 +238,22 @@ namespace SparrowHawk.Interaction
                     switch (interactionNumber)
                     {
                         case 0:
+                            Rhino.RhinoApp.WriteLine("Chose 2D");
                             mScene.popInteraction();
                             mScene.pushInteraction(new MarkingMenu(ref mScene, MenuLayout.TwoDMenu));
                             break;
                         case 1:
+                            Rhino.RhinoApp.WriteLine("Chose Nav");
                             mScene.popInteraction();
                             mScene.pushInteraction(new MarkingMenu(ref mScene, MenuLayout.NavMenu));
                             break;
                         case 2:
+                            Rhino.RhinoApp.WriteLine("Chose 3D");
                             mScene.popInteraction();
                             mScene.pushInteraction(new MarkingMenu(ref mScene, MenuLayout.ThreeDMenu));
                             break;
                         case 3:
+                            Rhino.RhinoApp.WriteLine("Chose Calibrate");
                             mScene.popInteraction();
                             mScene.pushInteraction(new MarkingMenu(ref mScene, MenuLayout.CalibrationMenu));
                             break;

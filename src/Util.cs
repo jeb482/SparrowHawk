@@ -211,6 +211,16 @@ namespace SparrowHawk
             node.add(ref child);
         }
 
+        public static SceneNode MarkPointSN(ref SceneNode node, OpenTK.Vector3 p, float r, float g, float b)
+        {
+            Geometry.Geometry geo = new Geometry.PointMarker(p);
+            Material.Material m = new Material.SingleColorMaterial(r, g, b, 1);
+            SceneNode child = new SceneNode("Point", ref geo, ref m);
+            child.transform = new OpenTK.Matrix4(1, 0, 0, p.X, 0, 1, 0, p.Y, 0, 0, 1, p.Z, 0, 0, 0, 1);
+            node.add(ref child);
+            return child;
+        }
+
         public static OpenTK.Vector3 vrToPlatformVector(ref Scene scene, OpenTK.Vector3 v) 
         {
             

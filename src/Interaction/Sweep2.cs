@@ -63,8 +63,9 @@ namespace SparrowHawk.Interaction
             //Rhino curve and extrude test
             if (curvePoints.Count >= 2)
             {
+                // only curve works !!
                 Rhino.Geometry.Curve rail = Rhino.Geometry.Curve.CreateInterpolatedCurve(curvePoints.ToArray(), 3);
-
+                //Rhino.Geometry.NurbsCurve rail = Rhino.Geometry.NurbsCurve.Create(true, 3, curvePoints.ToArray());
                 //
                 Plane planeStart = new Plane(rail.PointAtStart, rail.TangentAtStart);
                 PlaneSurface planeStart_surface = new PlaneSurface(planeStart,
@@ -109,6 +110,7 @@ namespace SparrowHawk.Interaction
             {
 
                 //clear the stroke
+                /*
                 foreach (SceneNode sn in mScene.tableGeometry.children)
                 {
                     if (sn.guid == strokeId)
@@ -116,7 +118,7 @@ namespace SparrowHawk.Interaction
                         mScene.tableGeometry.children.Remove(sn);
                         break;
                     }
-                }
+                }*/
 
                 renderSweep();
                 currentState = State.READY;

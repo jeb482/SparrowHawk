@@ -7,6 +7,8 @@ using Valve.VR;
 
 namespace SparrowHawk.Interaction
 {
+    public delegate void revolveFun(ref Scene mScene, ref Material.Material mesh_m, ref NurbsCurve curve);
+
     class Revolve : Stroke
     {
         public Geometry.Geometry meshStroke_g;
@@ -47,6 +49,8 @@ namespace SparrowHawk.Interaction
 
                 //TODO-support both controllers
                 primaryDeviceIndex = (uint)mScene.leftControllerIdx;
+
+                revolveFun rf = revolveF;
             }
 
         }
@@ -67,17 +71,19 @@ namespace SparrowHawk.Interaction
             //Rhino CreateInterpolatedCurve and CreatePlanarBreps
             if (curvePoints.Count >= 4)
             {
-                //Rhino curve through NURBS curve
                 revolveCurve = Rhino.Geometry.NurbsCurve.Create(false, 3, curvePoints.ToArray());
-                Line axis = new Line(new Point3d(0,0,0), new Point3d(0, 0, 1));
-                RevSurface revsrf = RevSurface.Create(revolveCurve, axis);
-
-                Brep brepRevolve = Brep.CreateFromRevSurface(revsrf, true, true);
-
-                Util.addSceneNode(ref mScene, brepRevolve, ref mesh_m, "aprint");
-
+                //do it after edit point interaction
+                //revolveF(ref mScene, ref mesh_m, ref revolveCurve);
             }
 
+        }
+
+        public void revolveF(ref Scene mScene, ref Material.Material mesh_m, ref NurbsCurve curve)
+        {
+            Line axis = new Line(new Point3d(0, 0, 0), new Point3d(0, 0, 1));
+            RevSurface revsrf = RevSurface.Create(curve, axis);
+            Brep brepRevolve = Brep.CreateFromRevSurface(revsrf, true, true);
+            Util.addSceneNode(ref mScene, brepRevolve, ref mesh_m, "aprint");
         }
 
         public override void draw(bool isTop)
@@ -105,8 +111,16 @@ namespace SparrowHawk.Interaction
                         break;
                     }
                 }
-
+                //render after edit point interaction
                 renderRevolve();
+                //testing edit point interaction
+                if (onPlane && revolveCurve!=null)
+                {
+                    List<NurbsCurve> curveL = new List<NurbsCurve>();
+                    curveL.Add(revolveCurve);
+                    mScene.popInteraction();
+                    mScene.pushInteraction(new EditPoint(ref mScene, ref targetPRhObj, true, curveL, Guid.Empty, "Revolve"));
+                }
                 currentState = State.READY;
             }
         }
