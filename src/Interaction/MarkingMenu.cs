@@ -216,44 +216,29 @@ namespace SparrowHawk.Interaction
         // TODO: Need to account for offset. Next
         private void launchInteraction(float r, float theta)
         {
-            //Angle is off
             //int interactionNumber = ((int) Math.Floor((mNumSectors * theta - mFirstSectorOffsetAngle) / (2 * Math.PI)));
             int interactionNumber;
-            double intNumber = (mNumSectors * theta - mFirstSectorOffsetAngle) / (2 * Math.PI);
-            Rhino.RhinoApp.WriteLine(theta + " Radians");
-            Rhino.RhinoApp.WriteLine("" + (mNumSectors * theta - mFirstSectorOffsetAngle) / (2 * Math.PI));
-            if (intNumber - Math.Floor(intNumber) >= 0.5)
-            {
-                interactionNumber = (int) Math.Ceiling(intNumber);
-            }
-            else
-            {
-                interactionNumber = (int)Math.Floor(intNumber);
-            }
-            if (interactionNumber < 0) interactionNumber += (int)mNumSectors;
-            Rhino.RhinoApp.WriteLine("Selected Interaction " + interactionNumber);
+            if (theta < 0) { theta += (float)(2 * Math.PI); }
+            interactionNumber = (int) Math.Ceiling((theta - (Math.PI / mNumSectors)) / (Math.PI / 2));
+            if (interactionNumber >= mNumSectors) { interactionNumber = 0; }
             switch(mLayout)
             { 
                 case MenuLayout.RootMenu:
                     switch (interactionNumber)
                     {
                         case 0:
-                            Rhino.RhinoApp.WriteLine("Chose 2D");
                             mScene.popInteraction();
                             mScene.pushInteraction(new MarkingMenu(ref mScene, MenuLayout.TwoDMenu));
                             break;
                         case 1:
-                            Rhino.RhinoApp.WriteLine("Chose Nav");
                             mScene.popInteraction();
                             mScene.pushInteraction(new MarkingMenu(ref mScene, MenuLayout.NavMenu));
                             break;
                         case 2:
-                            Rhino.RhinoApp.WriteLine("Chose 3D");
                             mScene.popInteraction();
                             mScene.pushInteraction(new MarkingMenu(ref mScene, MenuLayout.ThreeDMenu));
                             break;
                         case 3:
-                            Rhino.RhinoApp.WriteLine("Chose Calibrate");
                             mScene.popInteraction();
                             mScene.pushInteraction(new MarkingMenu(ref mScene, MenuLayout.CalibrationMenu));
                             break;
