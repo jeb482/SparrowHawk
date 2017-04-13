@@ -256,6 +256,24 @@ namespace SparrowHawk
                     float theta = (float)(s.data[0] / 360f * 2 * Math.PI);
                     Rhino.RhinoApp.WriteLine("Theta = " + theta);
                     Matrix4.CreateRotationZ(theta, out mScene.platformRotation);
+                    mScene.platformRotation.Transpose();
+
+                    //rotate rhino object as well                   
+                    Transform transM = new Transform();
+                    for (int row = 0; row < 4; row++)
+                    {
+                        for (int col = 0; col < 4; col++)
+                        {
+                            transM[row, col] = mScene.platformRotation[row, col];
+                        }
+                    }
+                    Rhino.DocObjects.ObjectEnumeratorSettings settings = new Rhino.DocObjects.ObjectEnumeratorSettings();
+                    settings.ObjectTypeFilter = Rhino.DocObjects.ObjectType.Brep;
+                    foreach (Rhino.DocObjects.RhinoObject rhObj in mScene.rhinoDoc.Objects.GetObjectList(settings))
+                    {
+                        mDoc.Objects.Transform(rhObj.Id, transM, true);
+                    }
+
                     break;
             }
         }
@@ -301,6 +319,7 @@ namespace SparrowHawk
 
         public bool init()
         {
+
             // Set up HMD
             EVRInitError eError = EVRInitError.None;
             mHMD = OpenVR.Init(ref eError, EVRApplicationType.VRApplication_Scene);
@@ -334,7 +353,10 @@ namespace SparrowHawk
             if (mStrDriver.Contains("oculus")) mScene.isOculus = true; else mScene.isOculus = false;
             mHMD.GetRecommendedRenderTargetSize(ref mRenderWidth, ref mRenderHeight);
 
-
+            float theta = (float)(45.0f / 360f * 2 * Math.PI);
+            Rhino.RhinoApp.WriteLine("Theta = " + theta);
+            Matrix4.CreateRotationZ(theta, out mScene.platformRotation);
+            mScene.platformRotation.Transpose();
 
 
             Geometry.Geometry g = new Geometry.Geometry("C:/workspace/Kestrel/resources/meshes/bunny.obj");
@@ -406,7 +428,27 @@ namespace SparrowHawk
                 Util.MarkPoint(ref mScene.staticGeometry, new Vector3(v4.X, v4.Y, v4.Z), 1, 1, 1);
             }
             robotCallibrationPointsTest.Clear();
+
+            //testing - rotate rhino object as well                   
+            Transform transM = new Transform();
+            for (int row = 0; row < 4; row++)
+            {
+                for (int col = 0; col < 4; col++)
+                {
+                    transM[row, col] = mScene.platformRotation[row, col];
+                }
+            }
+            Rhino.DocObjects.ObjectEnumeratorSettings settings = new Rhino.DocObjects.ObjectEnumeratorSettings();
+            settings.ObjectTypeFilter = Rhino.DocObjects.ObjectType.Brep;
+            foreach (Rhino.DocObjects.RhinoObject rhObj in mScene.rhinoDoc.Objects.GetObjectList(settings))
+            {
+                mDoc.Objects.Transform(rhObj.Id, transM, true);
+            }
+            mScene.rhinoDoc.Views.Redraw();
+
             return true;
+
+            
         }
 
         List<Point3d> curvePoints = new List<Point3d>();
@@ -484,6 +526,7 @@ namespace SparrowHawk
             if (e.KeyChar == 'N' || e.KeyChar == 'n')
             {
                 mScene.popInteraction();
+                //mScene.pushInteraction(new Interaction.Sweep2(ref mScene));
                 mScene.pushInteraction(new Interaction.Sweep2(ref mScene,true));
             }
 

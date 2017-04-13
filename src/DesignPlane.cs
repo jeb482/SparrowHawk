@@ -57,8 +57,9 @@ namespace SparrowHawk
                                                      0, 0, 0, 1);
                     break;
             }
-              
-            // 
+
+            //
+            //planeToRhino = mScene.platformRotation * planeToRhino;
             createRhinoBrep();
         }
 
@@ -96,8 +97,13 @@ namespace SparrowHawk
             }
 
             SceneNode planeSN = mScene.brepToSceneNodeDic[guid];
-            planeToVr = Util.platformToVR(ref mScene) * planeToRhino;
+            planeToVr = Util.platformToVR(ref mScene) *planeToRhino;
             planeSN.transform = planeToVr;
+
+            //planeToVr = mScene.vrToRobot.Inverted() * mScene.robotToPlatform.Inverted() * planeToRhino;
+            //planeSN.transform = planeToVr;
+
+
         }
 
 

@@ -142,14 +142,15 @@ namespace SparrowHawk.Interaction
                 }
                 return;
             }
-            /*
+            
             // If you're in the outer ring, select immediately
             if (r >= mOuterSelectionRadius)
             {
                 launchInteraction(r, theta);
                 return;
             }
-            */
+            
+
             // If in midlle selection ring, check delay
             if (r > mMinSelectionRadius)
             {
@@ -334,7 +335,7 @@ namespace SparrowHawk.Interaction
                             break;
                         case 3:
                             mScene.popInteraction();
-                            mScene.pushInteraction(new Sweep2(ref mScene));
+                            mScene.pushInteraction(new Sweep2(ref mScene, true));
                             break;
                     }
                     break;

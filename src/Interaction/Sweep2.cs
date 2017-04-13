@@ -113,11 +113,14 @@ namespace SparrowHawk.Interaction
                 {
                     sGuid = Util.addSceneNode(ref mScene, startPlane, ref mesh_m, "planeStart");
                     eGuid = Util.addSceneNode(ref mScene, endPlane, ref mesh_m, "planeEnd");
+
+                    mScene.popInteraction();
+                    //mScene.pushInteraction(new SweepShape(ref mScene, true, rail, sGuid, eGuid));
+                    mScene.pushInteraction(new SweepShapeCircle(ref mScene, true, rail, sGuid, eGuid));
                 }
 
 
-                mScene.popInteraction();
-                mScene.pushInteraction(new SweepShape(ref mScene, true, rail, sGuid, eGuid));
+               
 
             }
         }

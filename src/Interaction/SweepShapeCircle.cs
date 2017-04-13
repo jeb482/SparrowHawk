@@ -95,16 +95,38 @@ namespace SparrowHawk.Interaction
                 //must be a brep or surface, not mesh
                 Point3d[] rayIntersectionsS = Rhino.Geometry.Intersect.Intersection.RayShoot(ray, geometriesS, 1);
                 Point3d[] rayIntersectionsE = Rhino.Geometry.Intersect.Intersection.RayShoot(ray, geometriesE, 1);
-                if (rayIntersectionsS != null)
+                //TODO- fix when ray shoot both planes
+                float mimD = 1000000f;
+                int hitPlane = -1;
+                if (rayIntersectionsS != null && rayIntersectionsE != null)
+                {
+                    //get the nearest one
+                    OpenTK.Vector3 tmpS = Util.platformToVRPoint(ref mScene, new OpenTK.Vector3((float)rayIntersectionsS[0].X, (float)rayIntersectionsS[0].Y, (float)rayIntersectionsS[0].Z));
+                    float distanceS = (float)Math.Sqrt(Math.Pow(tmpS.X - controller_p.X, 2) + Math.Pow(tmpS.Y - controller_p.Y, 2) + Math.Pow(tmpS.Z - controller_p.Z, 2));
+
+                    OpenTK.Vector3 tmpE = Util.platformToVRPoint(ref mScene, new OpenTK.Vector3((float)rayIntersectionsE[0].X, (float)rayIntersectionsE[0].Y, (float)rayIntersectionsE[0].Z));
+                    float distanceE = (float)Math.Sqrt(Math.Pow(tmpE.X - controller_p.X, 2) + Math.Pow(tmpE.Y - controller_p.Y, 2) + Math.Pow(tmpE.Z - controller_p.Z, 2));
+
+                    if(distanceS < distanceE)
+                    {
+                        hitPlane = 0;
+                    }
+                    else
+                    {
+                        hitPlane = 1;
+                    }
+
+                }
+                else if (rayIntersectionsS != null || hitPlane == 0)
                 {
                     projectP = Util.platformToVRPoint(ref mScene, new OpenTK.Vector3((float)rayIntersectionsS[0].X, (float)rayIntersectionsS[0].Y, (float)rayIntersectionsS[0].Z));
-
+                    
                     BoundingBox planeBB = ((Brep)rhObjS.Geometry).GetBoundingBox(false);
                     planeO = planeBB.Center;
                     OpenTK.Vector3 planeOVR = Util.platformToVRPoint(ref mScene, new OpenTK.Vector3((float)planeO.X, (float)planeO.Y, (float)planeO.Z));
 
                     //snap to origin
-                    if (Math.Sqrt(Math.Pow(projectP.X - planeOVR.X, 2) + Math.Pow(projectP.Y - planeOVR.Y, 2) + Math.Pow(projectP.Z - planeOVR.Z, 2)) < 0.03)
+                    if (Math.Sqrt(Math.Pow(projectP.X - planeOVR.X, 2) + Math.Pow(projectP.Y - planeOVR.Y, 2) + Math.Pow(projectP.Z - planeOVR.Z, 2)) < 0.01)
                     {
                         projectP = planeOVR;
                     }
@@ -116,7 +138,7 @@ namespace SparrowHawk.Interaction
                     targetPRhObj = rhObjS;
                     type = "start";
                 }
-                else if (rayIntersectionsE != null)
+                else if (rayIntersectionsE != null ||  hitPlane == 1)
                 {
                     projectP = Util.platformToVRPoint(ref mScene, new OpenTK.Vector3((float)rayIntersectionsE[0].X, (float)rayIntersectionsE[0].Y, (float)rayIntersectionsE[0].Z));
 
@@ -125,7 +147,7 @@ namespace SparrowHawk.Interaction
                     OpenTK.Vector3 planeOVR = Util.platformToVRPoint(ref mScene, new OpenTK.Vector3((float)planeO.X, (float)planeO.Y, (float)planeO.Z));
 
                     //snap to origin
-                    if (Math.Sqrt(Math.Pow(projectP.X - planeOVR.X, 2) + Math.Pow(projectP.Y - planeOVR.Y, 2) + Math.Pow(projectP.Z - planeOVR.Z, 2)) < 0.03)
+                    if (Math.Sqrt(Math.Pow(projectP.X - planeOVR.X, 2) + Math.Pow(projectP.Y - planeOVR.Y, 2) + Math.Pow(projectP.Z - planeOVR.Z, 2)) < 0.01)
                     {
                         projectP = planeOVR;
                     }
@@ -176,14 +198,18 @@ namespace SparrowHawk.Interaction
                 plane = new Rhino.Geometry.Plane(center_point, new Rhino.Geometry.Vector3d(0, 0, 1));
             }
 
-            Rhino.Geometry.Circle circle = new Rhino.Geometry.Circle(plane, radius);// *1000);
-            circleCurve = circle.ToNurbsCurve();
-            Brep[] shapes = Brep.CreatePlanarBreps(circleCurve);
-            Brep circle_s = shapes[0];
-            circleBrep = circle_s;
+            if (radius != 0)
+            {
+                Rhino.Geometry.Circle circle = new Rhino.Geometry.Circle(plane, radius);// *1000);
+                circleCurve = circle.ToNurbsCurve();
+                Brep[] shapes = Brep.CreatePlanarBreps(circleCurve);
+                Brep circle_s = shapes[0];
+                circleBrep = circle_s;
 
-            Util.addSceneNode(ref mScene, circleBrep, ref mesh_m);
-            mScene.rhinoDoc.Views.Redraw();
+                Util.addSceneNode(ref mScene, circleBrep, ref mesh_m);
+                mScene.rhinoDoc.Views.Redraw();
+            }
+            
 
         }
 

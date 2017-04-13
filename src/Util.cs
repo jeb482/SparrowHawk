@@ -233,6 +233,8 @@ namespace SparrowHawk
             {
                 v = Util.transformVec(scene.vrToRobot, v);
                 v = Util.transformVec(scene.robotToPlatform, v);
+                //platform to rhino
+                //v = Util.transformVec(scene.platformRotation.Inverted(), v);
             }
             //v *= 1000;
             return v;
@@ -250,6 +252,8 @@ namespace SparrowHawk
             {
                 p = Util.transformPoint(scene.vrToRobot, p);
                 p = Util.transformPoint(scene.robotToPlatform, p);
+                //platform to rhino
+                //p = Util.transformPoint(scene.platformRotation.Inverted(), p);
             }
 
             //p *= 1000;
@@ -268,6 +272,8 @@ namespace SparrowHawk
             else
             {
                 m = scene.vrToRobot.Inverted() * scene.robotToPlatform.Inverted() * m;
+                //rhino to platform
+                //m = scene.vrToRobot.Inverted() * scene.robotToPlatform.Inverted() * scene.platformRotation * m;
             }
 
 
@@ -284,6 +290,8 @@ namespace SparrowHawk
             }
             else
             {
+                //rhino to platform
+                //p = Util.transformPoint(scene.platformRotation, p);
                 p = Util.transformPoint(scene.robotToPlatform.Inverted(), p);
                 p = Util.transformPoint(scene.vrToRobot.Inverted(), p);
             }
@@ -302,6 +310,8 @@ namespace SparrowHawk
             }
             else
             {
+                //rhino to platform
+                //v = Util.transformVec(scene.platformRotation, v);
                 v = Util.transformVec(scene.robotToPlatform.Inverted(), v);
                 v = Util.transformVec(scene.vrToRobot.Inverted(), v);
             }

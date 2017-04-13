@@ -58,22 +58,24 @@ namespace SparrowHawk.Interaction
         private void renderRevolve()
         {
             //reduce the points in the curve first
-            simplifyCurve(ref ((Geometry.GeometryStroke)(stroke_g)).mPoints);
+            if(((Geometry.GeometryStroke)(stroke_g)).mPoints.Count >= 2){
+                simplifyCurve(ref ((Geometry.GeometryStroke)(stroke_g)).mPoints);
 
-            foreach (OpenTK.Vector3 point in reducePoints)
-            {
-                // -y_rhino = z_gl, z_rhino = y_gl and unit conversion
-                // OpenTK.Vector3 p = Util.transformPoint(Util.mGLToRhino, point*1000);              
-                //curvePoints.Add(new Point3d(p.X, p.Y, p.Z));
-                curvePoints.Add(Util.openTkToRhinoPoint(Util.vrToPlatformPoint(ref mScene, point)));
-            }
+                foreach (OpenTK.Vector3 point in reducePoints)
+                {
+                    // -y_rhino = z_gl, z_rhino = y_gl and unit conversion
+                    // OpenTK.Vector3 p = Util.transformPoint(Util.mGLToRhino, point*1000);              
+                    //curvePoints.Add(new Point3d(p.X, p.Y, p.Z));
+                    curvePoints.Add(Util.openTkToRhinoPoint(Util.vrToPlatformPoint(ref mScene, point)));
+                }
 
-            //Rhino CreateInterpolatedCurve and CreatePlanarBreps
-            if (curvePoints.Count >= 4)
-            {
-                revolveCurve = Rhino.Geometry.NurbsCurve.Create(false, 3, curvePoints.ToArray());
-                //do it after edit point interaction
-                //revolveF(ref mScene, ref mesh_m, ref revolveCurve);
+                //Rhino CreateInterpolatedCurve and CreatePlanarBreps
+                if (curvePoints.Count >= 4)
+                {
+                    revolveCurve = Rhino.Geometry.NurbsCurve.Create(false, 3, curvePoints.ToArray());
+                    //do it after edit point interaction
+                    //revolveF(ref mScene, ref mesh_m, ref revolveCurve);
+                }
             }
 
         }
