@@ -15,6 +15,7 @@ namespace SparrowHawk.Material
         int m_iTexture;
         int texWidth;
         int texHeight;
+        int mIsSelected = 0;
         float mThetaMin = 0;
         float mThetaMax = 0;
 
@@ -94,6 +95,7 @@ namespace SparrowHawk.Material
             GL.Uniform1(mShader.uniform("tex"), 0);
             GL.Uniform1(mShader.uniform("theta_min"), mThetaMin);
             GL.Uniform1(mShader.uniform("theta_max"), mThetaMax);
+            GL.Uniform1(mShader.uniform("isSelected"), mIsSelected);
 
 
             //for debugging
@@ -134,6 +136,11 @@ namespace SparrowHawk.Material
         {
             mThetaMax = 0;
             mThetaMin = 0;
+        }
+
+        public void setIsSelected(int i)
+        {
+            mIsSelected = i;
         }
     }
 }

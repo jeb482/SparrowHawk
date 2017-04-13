@@ -13,8 +13,9 @@ namespace SparrowHawk.Interaction
         protected int mCurrentSelection = -1;
         protected double mInitialSelectOKTime = 0;
         protected double mSelectOKTime = 0;
-        double markingMenuSelectionDelay = .75f;
-        double defaultInitialDelay = .3;
+        double markingMenuFeedbackDelay = .2;
+        double markingMenuSelectionDelay = .85f;
+        double defaultInitialDelay = .2;
         float mMinSelectionRadius;
         float mOuterSelectionRadius;
 
@@ -130,8 +131,10 @@ namespace SparrowHawk.Interaction
             // Update the shader
             if (r > mMinSelectionRadius)
                 ((Material.RadialMenuMaterial)radialMenuMat).setHighlightedSector(mNumSectors, mFirstSectorOffsetAngle, theta);
-
-
+            if (mSelectOKTime - mScene.gameTime < markingMenuFeedbackDelay)
+                ((Material.RadialMenuMaterial)radialMenuMat).setIsSelected(1);
+            else
+                ((Material.RadialMenuMaterial)radialMenuMat).setIsSelected(0);
             // Enforce initial delay
             if (mScene.gameTime < this.mInitialSelectOKTime)
             {

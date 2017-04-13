@@ -18,8 +18,6 @@ namespace SparrowHawk.Material
             mColor = new OpenTK.Graphics.Color4(r, g, b, a);
             mShader = new GLShader();
             mShader.init("SingleColorMaterial", ShaderSource.SingleColorVertShader, ShaderSource.SingleColorFragShader);
-            
-
         }
 
         public override void draw(ref Geometry.Geometry g, ref Matrix4 model, ref Matrix4 vp)

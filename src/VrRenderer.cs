@@ -32,7 +32,7 @@ namespace SparrowHawk
         uint vrRenderWidth;
         uint vrRenderHeight;
         float mNearClip = 0.1f;
-        float mFarClip = 30.0f;
+        float mFarClip = 60.0f;
         Matrix4 mEyeProjLeft;
         Matrix4 mEyeProjRight;
         Matrix4 mEyePosLeft;

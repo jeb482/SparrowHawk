@@ -75,6 +75,7 @@ public static string RadialMenuFragShader
 uniform sampler2D tex;
 uniform float theta_min;
 uniform float theta_max;
+uniform int isSelected;
 smooth in vec2 fuvs;
 out vec4 out_color;
 void main()
@@ -89,11 +90,11 @@ void main()
     } else if (theta_min > theta_max && (theta < theta_max || theta > theta_min)) {
         invert = true;
     }
-	out_color = vec4(texture2D(tex, fuvs).xyz,1);    
-    if (invert)
-        out_color.x = 0;
-    
-    
+	out_color = vec4(texture2D(tex, fuvs).rgb,1);    
+    if (invert && isSelected == 0)
+        out_color.xyz = out_color.xyz * vec3(0,1,1);
+    if (invert && isSelected == 1)
+        out_color.xyz = out_color.xyz * vec3(1,0.478,0);
 }";
 
 
