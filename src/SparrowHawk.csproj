@@ -96,6 +96,7 @@
     <Compile Include="Interaction\Delete.cs" />
     <Compile Include="Interaction\EditPlane.cs" />
     <Compile Include="Interaction\EditPlane2.cs" />
+    <Compile Include="Interaction\EditPoint.cs" />
     <Compile Include="Interaction\Grip.cs" />
     <Compile Include="Interaction\Loft.cs" />
     <Compile Include="Interaction\Revolve.cs" />
@@ -108,6 +109,7 @@
     <Compile Include="Interaction\Sweep.cs" />
     <Compile Include="Interaction\Sweep2.cs" />
     <Compile Include="Interaction\SweepShape.cs" />
+    <Compile Include="Interaction\SweepShapeCircle.cs" />
     <Compile Include="Material\LambertianMaterial.cs" />
     <Compile Include="Material\RadialMenuMaterial.cs" />
     <Compile Include="OfflineCalibration.cs" />

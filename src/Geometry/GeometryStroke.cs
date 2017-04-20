@@ -42,6 +42,14 @@ namespace SparrowHawk.Geometry
 
         }
 
+        public void removePoint()
+        {
+            mNumPoints = 0;
+            mPoints.Clear();
+            vertices_array.Clear();
+            indices_array.Clear();
+        }
+
         public void truncate(int n)
         {
             if (n > mNumPoints)

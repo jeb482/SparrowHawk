@@ -13,7 +13,7 @@ namespace SparrowHawk.Interaction
         protected int mCurrentSelection = -1;
         protected double mInitialSelectOKTime = 0;
         protected double mSelectOKTime = 0;
-        double markingMenuFeedbackDelay = .2;
+        double markingMenuFeedbackDelay = .1;
         double markingMenuSelectionDelay = .85f;
         double defaultInitialDelay = .2;
         float mMinSelectionRadius;
@@ -82,7 +82,7 @@ namespace SparrowHawk.Interaction
             }
             else { 
                 mMinSelectionRadius = 0.4f;
-                mOuterSelectionRadius = 0.75f;
+                mOuterSelectionRadius = 0.6f;
             }
         }
 
@@ -145,18 +145,29 @@ namespace SparrowHawk.Interaction
                 }
                 return;
             }
-            /*
+            
             // If you're in the outer ring, select immediately
-            if (r >= mOuterSelectionRadius)
+            if (r >= mOuterSelectionRadius )
             {
-                launchInteraction(r, theta);
-                return;
+                if (mCurrentSelection != sector)
+                {
+                    mCurrentSelection = sector;
+                    mSelectOKTime = mScene.gameTime + markingMenuFeedbackDelay;
+                }
+                else
+                {
+                    if (mScene.gameTime > mSelectOKTime)
+                    {
+                        launchInteraction(r, theta);
+                    }
+                }
             }
-            */
+
+
             // If in midlle selection ring, check delay
             if (r > mMinSelectionRadius)
             {
-                Rhino.RhinoApp.WriteLine(r + ", " + theta);
+                //Rhino.RhinoApp.WriteLine(r + ", " + theta);
                 if (mCurrentSelection != sector)
                 {
                     mCurrentSelection = sector;
@@ -186,9 +197,9 @@ namespace SparrowHawk.Interaction
             }
             radialMenuMat = new Material.RadialMenuMaterial(mScene.rhinoDoc, getTexturePath(mLayout));
             mSceneNode = new SceneNode("MarkingMenu", ref g, ref radialMenuMat);
-            mSceneNode.transform = new OpenTK.Matrix4(1, 0,  0, 0,
-                                                          0, 0,  -1, 0,
-                                                          0, 1,  0, 0,
+            mSceneNode.transform = new OpenTK.Matrix4(2, 0,  0, 0,
+                                                          0, 0,  -2, 0,
+                                                          0, 2,  0, 0,
                                                           0, 0,  0, 1);
             mScene.leftControllerNode.add(ref mSceneNode);
 
@@ -219,10 +230,11 @@ namespace SparrowHawk.Interaction
         // TODO: Need to account for offset. Next
         private void launchInteraction(float r, float theta)
         {
-
-            int interactionNumber = ((int) Math.Floor((mNumSectors * theta - mFirstSectorOffsetAngle) / (2 * Math.PI)));
-            if (interactionNumber < 0) interactionNumber += (int)mNumSectors;
-            Rhino.RhinoApp.WriteLine("Selected Interaction " + interactionNumber);
+            //int interactionNumber = ((int) Math.Floor((mNumSectors * theta - mFirstSectorOffsetAngle) / (2 * Math.PI)));
+            int interactionNumber;
+            if (theta < 0) { theta += (float)(2 * Math.PI); }
+            interactionNumber = (int) Math.Ceiling((theta - (Math.PI / mNumSectors)) / (Math.PI / 2));
+            if (interactionNumber >= mNumSectors) { interactionNumber = 0; }
             switch(mLayout)
             { 
                 case MenuLayout.RootMenu:
@@ -332,11 +344,11 @@ namespace SparrowHawk.Interaction
                             break;
                         case 2:
                             mScene.popInteraction();
-                            mScene.pushInteraction(new Revolve(ref mScene));
+                            mScene.pushInteraction(new Revolve(ref mScene, true));
                             break;
                         case 3:
                             mScene.popInteraction();
-                            mScene.pushInteraction(new Sweep2(ref mScene));
+                            mScene.pushInteraction(new Sweep2(ref mScene, true));
                             break;
                     }
                     break;

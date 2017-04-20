@@ -211,6 +211,16 @@ namespace SparrowHawk
             node.add(ref child);
         }
 
+        public static SceneNode MarkPointSN(ref SceneNode node, OpenTK.Vector3 p, float r, float g, float b)
+        {
+            Geometry.Geometry geo = new Geometry.PointMarker(p);
+            Material.Material m = new Material.SingleColorMaterial(r, g, b, 1);
+            SceneNode child = new SceneNode("Point", ref geo, ref m);
+            child.transform = new OpenTK.Matrix4(1, 0, 0, p.X, 0, 1, 0, p.Y, 0, 0, 1, p.Z, 0, 0, 0, 1);
+            node.add(ref child);
+            return child;
+        }
+
         public static OpenTK.Vector3 vrToPlatformVector(ref Scene scene, OpenTK.Vector3 v) 
         {
             
@@ -223,6 +233,8 @@ namespace SparrowHawk
             {
                 v = Util.transformVec(scene.vrToRobot, v);
                 v = Util.transformVec(scene.robotToPlatform, v);
+                //platform to rhino
+                //v = Util.transformVec(scene.platformRotation.Inverted(), v);
             }
             //v *= 1000;
             return v;
@@ -240,6 +252,8 @@ namespace SparrowHawk
             {
                 p = Util.transformPoint(scene.vrToRobot, p);
                 p = Util.transformPoint(scene.robotToPlatform, p);
+                //platform to rhino
+                //p = Util.transformPoint(scene.platformRotation.Inverted(), p);
             }
 
             //p *= 1000;
@@ -258,6 +272,8 @@ namespace SparrowHawk
             else
             {
                 m = scene.vrToRobot.Inverted() * scene.robotToPlatform.Inverted() * m;
+                //rhino to platform
+                //m = scene.vrToRobot.Inverted() * scene.robotToPlatform.Inverted() * scene.platformRotation * m;
             }
 
 
@@ -274,6 +290,8 @@ namespace SparrowHawk
             }
             else
             {
+                //rhino to platform
+                //p = Util.transformPoint(scene.platformRotation, p);
                 p = Util.transformPoint(scene.robotToPlatform.Inverted(), p);
                 p = Util.transformPoint(scene.vrToRobot.Inverted(), p);
             }
@@ -292,6 +310,8 @@ namespace SparrowHawk
             }
             else
             {
+                //rhino to platform
+                //v = Util.transformVec(scene.platformRotation, v);
                 v = Util.transformVec(scene.robotToPlatform.Inverted(), v);
                 v = Util.transformVec(scene.vrToRobot.Inverted(), v);
             }
@@ -582,7 +602,7 @@ namespace SparrowHawk
             }
         }
 
-        public static Guid addSceneNode(ref Scene mScene, Brep brep, ref Material.Material mesh_m, string name, Transform t)
+        public static Guid addSceneNode(ref Scene mScene, Brep brep, ref Material.Material mesh_m, string name, Transform t, bool renderLate = false)
         {
             //TODO: detect the # of faces
             Mesh base_mesh = new Mesh();
@@ -604,7 +624,7 @@ namespace SparrowHawk
 
                 ((Geometry.RhinoMesh2)meshStroke_g).setMesh(ref base_mesh);
 
-                SceneNode ccMeshSN = new SceneNode(name, ref meshStroke_g, ref mesh_m);
+                SceneNode ccMeshSN = new SceneNode(name, ref meshStroke_g, ref mesh_m,renderLate);
                 mScene.tableGeometry.add(ref ccMeshSN);
 
                 //add reference SceneNode to brep and vice versa

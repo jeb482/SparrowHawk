@@ -17,7 +17,7 @@ namespace SparrowHawk
         VrRenderer mRenderer;
         Rhino.RhinoDoc mDoc;
         String mStrDriver = "No Driver";
-	    String mStrDisplay = "No Display";
+        String mStrDisplay = "No Display";
         String mTitleBase;
         uint mRenderWidth = 1280;
         uint mRenderHeight = 720;
@@ -25,6 +25,7 @@ namespace SparrowHawk
 
         TrackedDevicePose_t[] renderPoseArray, gamePoseArray;
         DateTime mLastFrameTime;
+        bool mSafeForRobot = false;
 
         int mFrameCount;
         double frameRateTimer = 1;
@@ -60,7 +61,7 @@ namespace SparrowHawk
             //Run();  
 
             // Manual callibration
-            
+
             if (manualCallibration)
             {
                 //robotCallibrationPoints.Add(new Vector3(0, 0, 0));
@@ -86,7 +87,7 @@ namespace SparrowHawk
                 //               mScene.mInteractionStack.Pop();
                 mScene.pushInteraction(new Interaction.PickPoint(ref mScene, ref vrCallibrationPoints));
             }
-            
+
 
         }
 
@@ -118,13 +119,20 @@ namespace SparrowHawk
                                 mScene.mDeviceClassChar[i] = 'C';
                                 string name = Util.GetTrackedDeviceString(ref mHMD, i, ETrackedDeviceProperty.Prop_RenderModelName_String);
                                 if (name.ToLower().Contains("left"))
+                                {
                                     mScene.leftControllerIdx = (int)i;
+                                    Geometry.Geometry g = new Geometry.Geometry(@"C:/workspace/SparrowHawk/src/resources/external_controller01_left.obj");
+                                    Material.Material m = new Material.RGBNormalMaterial(.5f);
+                                    SceneNode s = new SceneNode("LeftControllerModel", ref g, ref m);
+                                    s.transform = Util.createTranslationMatrix(-mScene.mLeftControllerOffset.M14, -mScene.mLeftControllerOffset.M24, -mScene.mLeftControllerOffset.M34);
+                                    mScene.leftControllerNode.add(ref s);
+                                }
                                 else if (name.ToLower().Contains("right"))
                                     mScene.rightControllerIdx = (int)i;
                                 else if (mScene.leftControllerIdx < 0)
-                                    mScene.leftControllerIdx = (int) i;
+                                    mScene.leftControllerIdx = (int)i;
                                 else if (mScene.rightControllerIdx < 0)
-                                    mScene.rightControllerIdx = (int) i;
+                                    mScene.rightControllerIdx = (int)i;
                                 break;
                             case ETrackedDeviceClass.HMD: mScene.mDeviceClassChar[i] = 'H'; break;
                             case ETrackedDeviceClass.Invalid: mScene.mDeviceClassChar[i] = 'I'; break;
@@ -132,9 +140,9 @@ namespace SparrowHawk
                             case ETrackedDeviceClass.TrackingReference: mScene.mDeviceClassChar[i] = 'T'; break;
                             default: mScene.mDeviceClassChar[i] = '?'; break;
                         }
-                    }                  
+                    }
                 }
-  
+
             }
 
             if (gamePoseArray[OpenVR.k_unTrackedDeviceIndex_Hmd].bPoseIsValid)
@@ -152,7 +160,7 @@ namespace SparrowHawk
         {
 
             //default interaction
-            if (mScene.interactionStackEmpty()) 
+            if (mScene.interactionStackEmpty())
             {
                 //mScene.pushInteraction(new Interaction.PickPoint(ref mScene, ref controllerPoses)); // HUAISHU: Enable only this line for callibration. Afterwards, to switch to cylinder, press 'o' on the keyboard.
                 mScene.pushInteraction(new Interaction.PickPoint(ref mScene, ref robotCallibrationPoints));
@@ -171,10 +179,7 @@ namespace SparrowHawk
                 Vector3 x = Util.solveForOffsetVector(controllerPoses);
                 Rhino.RhinoApp.WriteLine("Controller offset: " + x);
             }
-
-
-
-
+            
             if (manualCallibration && vrCallibrationPoints.Count == 8)
             {
                 manualCallibration = false; // HACK to not reset my cylinder forever.
@@ -206,11 +211,9 @@ namespace SparrowHawk
                 Rhino.RhinoApp.WriteLine("P1: " + p1.ToString());
                 Rhino.RhinoApp.WriteLine("P2: " + p2.ToString());
                 Rhino.RhinoApp.WriteLine("Distance: " + ((p1 - p2).Length).ToString());
-                Rhino.RhinoApp.WriteLine("Vector: " + (p1-p2).ToString());
+                Rhino.RhinoApp.WriteLine("Vector: " + (p1 - p2).ToString());
                 controllerP.Clear();
             }
-
-
         }
 
         protected override void OnUpdateFrame(FrameEventArgs e)
@@ -219,16 +222,14 @@ namespace SparrowHawk
             if (mFrameCount >= 30)
             {
                 this.Title = mTitleBase + " - " + 1 / ((TimeSpan)(System.DateTime.Now - mLastFrameTime)).TotalSeconds + "fps.";
-                
                 mFrameCount = 0;
-            } 
+            }
             mFrameCount += 1;
             mScene.gameTime += e.Time;
             mLastFrameTime = DateTime.Now;
-            
+
         }
 
-        // TODO: Only works for oculus
         protected void handleSignals()
         {
             SparrowHawkSignal s = SparrowHawkEventListeners.Instance.getOneSignal();
@@ -238,7 +239,7 @@ namespace SparrowHawk
             {
                 case SparrowHawkSignal.ESparrowHawkSigalType.InitType:
                     if (s.data.Length >= 3)
-                    {                     
+                    {
                         //Vector3 robotPoint = new Vector3(s.data[0] - 8, s.data[1], s.data[2] - 240);
                         Vector3 robotPoint = new Vector3(s.data[0], s.data[1], s.data[2]);
                         //robotPoint /= 1000;
@@ -252,34 +253,50 @@ namespace SparrowHawk
                     break;
 
                 case SparrowHawkSignal.ESparrowHawkSigalType.EncoderType:
-                    float theta = (float) (s.data[0]/360f * 2 * Math.PI);
+                    float theta = (float)(s.data[0] / 360f * 2 * Math.PI);
                     Rhino.RhinoApp.WriteLine("Theta = " + theta);
                     Matrix4.CreateRotationZ(theta, out mScene.platformRotation);
+                    mScene.platformRotation.Transpose();
+
+                    //rotate rhino object as well                   
+                    Transform transM = new Transform();
+                    for (int row = 0; row < 4; row++)
+                    {
+                        for (int col = 0; col < 4; col++)
+                        {
+                            transM[row, col] = mScene.platformRotation[row, col];
+                        }
+                    }
+                    Rhino.DocObjects.ObjectEnumeratorSettings settings = new Rhino.DocObjects.ObjectEnumeratorSettings();
+                    settings.ObjectTypeFilter = Rhino.DocObjects.ObjectType.Brep;
+                    foreach (Rhino.DocObjects.RhinoObject rhObj in mScene.rhinoDoc.Objects.GetObjectList(settings))
+                    {
+                        mDoc.Objects.Transform(rhObj.Id, transM, true);
+                    }
+
                     break;
             }
         }
 
         private void calibrationTest()
         {
-  
+
             Vector3 vrPoint = Util.getTranslationVector3(Util.getControllerTipPosition(ref mScene, true));
             vrCallibrationPoints.Add(vrPoint);
             Rhino.RhinoApp.WriteLine("add vrCallibrationPoints: " + vrPoint.ToString());
             Util.MarkPoint(ref mScene.staticGeometry, vrPoint, 1, 1, 0);
-            if (vrCallibrationPoints.Count == 8) { 
-
-            Util.solveForAffineTransformOpenCV(vrCallibrationPoints, robotCallibrationPoints, ref mScene.vrToRobot);
+            if (vrCallibrationPoints.Count == 8)
+            {
+                Util.solveForAffineTransformOpenCV(vrCallibrationPoints, robotCallibrationPoints, ref mScene.vrToRobot);
                 foreach (Vector3 v in robotCallibrationPoints)
                 {
                     Vector4 v4 = new Vector4(v.X, v.Y, v.Z, 1);
                     v4 = mScene.vrToRobot.Inverted() * v4;
                     Util.MarkPoint(ref mScene.staticGeometry, new Vector3(v4.X, v4.Y, v4.Z), 0, 1, 0);
-                   
                 }
                 Rhino.RhinoApp.WriteLine(mScene.vrToRobot.ToString());
                 robotCallibrationPoints.Clear();
                 vrCallibrationPoints.Clear();
-
             }
         }
 
@@ -288,6 +305,7 @@ namespace SparrowHawk
             base.OnRenderFrame(e);
             MakeCurrent();
             updateMatrixPose();
+            notifyRobotIfSafe();
             handleSignals();
             handleInteractions();
             mRenderer.renderFrame();
@@ -299,33 +317,16 @@ namespace SparrowHawk
             base.Dispose(manual);
         }
 
-        /*
-        void FindOrLoadRenderModel(string modelName)
-        {
-            RenderModel_t model;
-            EVRRenderModelError error;
-            IntPtr pRenderModel = new IntPtr();
-
-            error = OpenVR.RenderModels.LoadRenderModel_Async(modelName, ref pRenderModel);
-        }
-
-        protected Geometry.Geometry SetupRenderModelForTrackedDevice(uint trackedDeviceIndex)
-        {
-            if (trackedDeviceIndex >= OpenVR.k_unMaxTrackedDeviceCount)
-                return null;
-            FindOrLoadRenderModel();
-
-        }
-        */
         public bool init()
         {
+
             // Set up HMD
             EVRInitError eError = EVRInitError.None;
             mHMD = OpenVR.Init(ref eError, EVRApplicationType.VRApplication_Scene);
-            
+
 
             bool can = OpenVR.Compositor.CanRenderScene();
-            
+
             if (eError == EVRInitError.None)
                 Rhino.RhinoApp.WriteLine("Booted VR System");
             else
@@ -352,9 +353,12 @@ namespace SparrowHawk
             if (mStrDriver.Contains("oculus")) mScene.isOculus = true; else mScene.isOculus = false;
             mHMD.GetRecommendedRenderTargetSize(ref mRenderWidth, ref mRenderHeight);
 
+            float theta = (float)(45.0f / 360f * 2 * Math.PI);
+            Rhino.RhinoApp.WriteLine("Theta = " + theta);
+            Matrix4.CreateRotationZ(theta, out mScene.platformRotation);
+            mScene.platformRotation.Transpose();
 
-            
-            
+
             Geometry.Geometry g = new Geometry.Geometry("C:/workspace/Kestrel/resources/meshes/bunny.obj");
 
             //Material.Material m = new Material.SingleColorMaterial(mDoc,1f,1f,1f,1f);
@@ -384,48 +388,8 @@ namespace SparrowHawk
             point = new SceneNode("Right Cursor", ref g, ref m);
             mScene.rightControllerNode.add(ref point);
             point.transform = new Matrix4(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1);
- 
-            //rhino extrusion test
-            Rhino.Collections.Point3dList points = new Rhino.Collections.Point3dList(5);
-            points.Add(0.0, 0.0, 200);
-            points.Add(0.0, 100, 200);
-            points.Add(100, 100, 200);
-            points.Add(100, 0.0, 200);
-            Rhino.Geometry.NurbsCurve nc = Rhino.Geometry.NurbsCurve.Create(true, 3, points);
-            //Rhino.Geometry.Curve nc = Curve.CreateInterpolatedCurve(points,3);
-            //nc.SetEndPoint(nc.PointAtStart);
 
-            //create surface from curve extruve CreateExtrusion => create brep from surface
-            Surface s_extrude = Surface.CreateExtrusion(nc, new Rhino.Geometry.Vector3d(0, 0, 150));
-            brep = Brep.CreateFromSurface(s_extrude);
 
-            if (brep != null)
-            {
-                Material.Material rhinoMseh_m = new Material.RGBNormalMaterial(1);
-                Util.addSceneNode(ref mScene, brep, ref rhinoMseh_m);
-            }
-
-            //TODO-add a xy-plane in rhino (xz plane in VR)
-            /*
-            Rhino.Geometry.Vector3d normal = new Rhino.Geometry.Vector3d(0, 0, 1);
-            Plane plane = new Plane(new Point3d(0, 0, 0), normal);
-
-            //PlaneSurface plane_surface = new PlaneSurface(plane,
-            //  new Interval(0, corner_lt.DistanceTo(corner_rt)),
-            //  new Interval(0, corner_lb.DistanceTo(corner_lt)));
-
-            PlaneSurface plane_surface = new PlaneSurface(plane,
-              new Interval(-150, 150),
-              new Interval(-150, 150));
-
-            Brep xy_plane = Brep.CreateFromSurface(plane_surface);
-
-            if (brep != null)
-            {
-                Material.Material rhinoMseh_m = new Material.SingleColorMaterial(0, .5f, 0, 0.5f);
-                Util.addSceneNode(ref mScene, xy_plane, ref rhinoMseh_m, "plane");
-            }*/
-            
             xzPlane = new DesignPlane(ref mScene, 1);
             xyPlane = new DesignPlane(ref mScene, 2);
             yzPlane = new DesignPlane(ref mScene, 0);
@@ -435,10 +399,10 @@ namespace SparrowHawk
             //yzPlane2 = new DesignPlane2(ref mScene, "YZ");
 
             //Find the Rhino Object start with 'a' and render it
-            Material.Material mesh_m = new Material.RGBNormalMaterial(1); ;
-            Rhino.DocObjects.ObjectEnumeratorSettings settings = new Rhino.DocObjects.ObjectEnumeratorSettings();
+            //Material.Material mesh_m = new Material.RGBNormalMaterial(1); ;
+            //Rhino.DocObjects.ObjectEnumeratorSettings settings = new Rhino.DocObjects.ObjectEnumeratorSettings();
             //settings.ObjectTypeFilter = Rhino.DocObjects.ObjectType.Brep
-            int obj_count = 0;
+            //int obj_count = 0;
             //foreach (Rhino.DocObjects.RhinoObject rhObj in mScene.rhinoDoc.Objects.GetObjectList(settings))
             //{
             //    if (rhObj.Attributes.Name.StartsWith("a"))
@@ -453,7 +417,7 @@ namespace SparrowHawk
             mRenderer = new VrRenderer(ref mHMD, ref mScene, mRenderWidth, mRenderHeight);
 
             //use other 8 points for calibrartion
-            robotCallibrationPointsTest.Add(new Vector3(22, 15, -100)/1000);
+            robotCallibrationPointsTest.Add(new Vector3(22, 15, -100) / 1000);
             robotCallibrationPointsTest.Add(new Vector3(-10, 40, -153) / 1000);
             robotCallibrationPointsTest.Add(new Vector3(25, -25, -181) / 1000);
 
@@ -465,21 +429,28 @@ namespace SparrowHawk
             }
             robotCallibrationPointsTest.Clear();
 
-            // build shaders? Maybe in renderer!
-            // setup texture maps is commented out.
-
-            // TODO: Encoder Init
-            // TODO: Setup Cameras
-            // TODO: Setup OVRVision
-            // TODO: Setup StereoRenderTargets
-            // TODO: Setup Distortion
-            // TODO: Setup DeviceModels
-            // TODO: Setup Interactions
+            //testing - rotate rhino object as well                   
+            Transform transM = new Transform();
+            for (int row = 0; row < 4; row++)
+            {
+                for (int col = 0; col < 4; col++)
+                {
+                    transM[row, col] = mScene.platformRotation[row, col];
+                }
+            }
+            Rhino.DocObjects.ObjectEnumeratorSettings settings = new Rhino.DocObjects.ObjectEnumeratorSettings();
+            settings.ObjectTypeFilter = Rhino.DocObjects.ObjectType.Brep;
+            foreach (Rhino.DocObjects.RhinoObject rhObj in mScene.rhinoDoc.Objects.GetObjectList(settings))
+            {
+                mDoc.Objects.Transform(rhObj.Id, transM, true);
+            }
+            mScene.rhinoDoc.Views.Redraw();
 
             return true;
+
+            
         }
 
-        //add key event handler
         List<Point3d> curvePoints = new List<Point3d>();
         Rhino.Geometry.Brep brep;
         protected override void OnKeyPress(OpenTK.KeyPressEventArgs e)
@@ -555,7 +526,8 @@ namespace SparrowHawk
             if (e.KeyChar == 'N' || e.KeyChar == 'n')
             {
                 mScene.popInteraction();
-                mScene.pushInteraction(new Interaction.Sweep2(ref mScene));
+                //mScene.pushInteraction(new Interaction.Sweep2(ref mScene));
+                mScene.pushInteraction(new Interaction.Sweep2(ref mScene,true));
             }
 
             if (e.KeyChar == 'V' || e.KeyChar == 'v')
@@ -605,75 +577,24 @@ namespace SparrowHawk
                 mScene.popInteraction();
                 mScene.pushInteraction(new Interaction.CreatePatch(ref mScene));
             }
-
-
-
-            
-
         }
 
-
-        // public void runMainLoop()
-        //  {
-        // /     // Not sure if this is right. How do we close it?
-        // /     while (true)
-        //      {
-        //          mRenderer.renderFrame();
-        //      }
-        //  }
-
-
-        Geometry.Geometry FindOrLoadRenderModel(string modelName)
-      {
-          RenderModel_t model;
-          EVRRenderModelError error;
-          IntPtr pRenderModel = new IntPtr();
-          while (true)
+        protected void notifyRobotIfSafe()
+        {
+            Vector3 tableOrigin = Util.transformPoint(mScene.vrToRobot.Inverted(), new Vector3(0, 0, 0));
+            Vector3 headOrigin = Util.transformPoint(mScene.mHMDPose.Inverted(), new Vector3(0, 0, 0));
+            Vector3 displacement = tableOrigin - headOrigin;
+            displacement.Y = 0;
+            if (displacement.Length > 1.5f && mSafeForRobot == false)
             {
-                error = OpenVR.RenderModels.LoadRenderModel_Async(modelName, ref pRenderModel);
-                if (error != EVRRenderModelError.Loading)
-                    break;
-                System.Threading.Thread.Sleep(1);
+                mSafeForRobot = true;
+                Rhino.RhinoApp.WriteLine("Go. " + displacement.Length);
             }
-
-            if ( error != EVRRenderModelError.None)
+            else if (displacement.Length < 1.5f && mSafeForRobot == true)
             {
-                Rhino.RhinoApp.WriteLine("Unable to load render model " + modelName + " -- " + OpenVR.RenderModels.GetRenderModelErrorNameFromEnum(error));
-                return null;
+                mSafeForRobot = false;
+                Rhino.RhinoApp.WriteLine("Stop. " + displacement.Length);
             }
-
-
-            // Unpack
-            int nTexId;
-            Geometry.Geometry mesh = new Geometry.Geometry(pRenderModel, out nTexId);
-
-            //unsafe
-            //{
-            //    RenderModel_TextureMap_t* pTexture;
-                
-            //    IntPtr ppTexture = (IntPtr) &pTexture;
-            //    while (true)
-            //    {
-            //        error = OpenVR.RenderModels.LoadTexture_Async(nTexId, ref ppTexture);
-
-
-
-            //    }
-            //}
-
-            return null;
-      }
- 
-      //protected Geometry.Geometry SetupRenderModelForTrackedDevice(uint trackedDeviceIndex)
-      //{
-      //    if (trackedDeviceIndex >= OpenVR.k_unMaxTrackedDeviceCount)
-      //        return null;
-      //    FindOrLoadRenderModel("");
- 
-      //}
- 
-         
-
-
+        }
     }
 }

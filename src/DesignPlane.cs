@@ -27,7 +27,7 @@ namespace SparrowHawk
         {
             mScene = scene;
             planeToRhino = new OpenTK.Matrix4(); // maps the z axis in plane space to the right axis in rhino space
-            mesh_m = new Material.SingleColorMaterial(0, 0, 0, 0.5f);
+            mesh_m = new Material.SingleColorMaterial(0, 0, 0, 0.4f);
             
             switch (axis)
             {
@@ -57,8 +57,9 @@ namespace SparrowHawk
                                                      0, 0, 0, 1);
                     break;
             }
-              
-            // 
+
+            //
+            //planeToRhino = mScene.platformRotation * planeToRhino;
             createRhinoBrep();
         }
 
@@ -85,8 +86,8 @@ namespace SparrowHawk
 
             //-150 150
             PlaneSurface plane_surface = new PlaneSurface(plane,
-              new Interval(-40, 40),
-              new Interval(-40, 40));
+              new Interval(-140, 140),
+              new Interval(-140, 140));
             
             designPlane = Brep.CreateFromSurface(plane_surface);
             
@@ -96,8 +97,13 @@ namespace SparrowHawk
             }
 
             SceneNode planeSN = mScene.brepToSceneNodeDic[guid];
-            planeToVr = Util.platformToVR(ref mScene) * planeToRhino;
+            planeToVr = Util.platformToVR(ref mScene) *planeToRhino;
             planeSN.transform = planeToVr;
+
+            //planeToVr = mScene.vrToRobot.Inverted() * mScene.robotToPlatform.Inverted() * planeToRhino;
+            //planeSN.transform = planeToVr;
+
+
         }
 
 

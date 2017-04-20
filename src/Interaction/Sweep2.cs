@@ -25,8 +25,34 @@ namespace SparrowHawk.Interaction
             mScene = s;
             stroke_g = new Geometry.GeometryStroke();
             stroke_m = new Material.SingleColorMaterial(1, 0, 0, 1);
-            mesh_m = new Material.RGBNormalMaterial(1);
+            mesh_m = new Material.RGBNormalMaterial(.5f);
             currentState = State.READY;
+
+        }
+
+        public Sweep2(ref Scene s, bool drawOnP)
+        {
+
+            mScene = s;
+            stroke_g = new Geometry.GeometryStroke();
+            stroke_m = new Material.SingleColorMaterial(1, 0, 0, 1);
+            mesh_m = new Material.RGBNormalMaterial(.5f);
+            currentState = State.READY;
+
+            onPlane = drawOnP;
+
+            if (onPlane)
+            {
+                Geometry.Geometry geo = new Geometry.PointMarker(new OpenTK.Vector3(0, 0, 0));
+                Material.Material m = new Material.SingleColorMaterial(250 / 255, 128 / 255, 128 / 255, 0.5f);
+                drawPoint = new SceneNode("Point", ref geo, ref m);
+                drawPoint.transform = new OpenTK.Matrix4(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1);
+                mScene.tableGeometry.add(ref drawPoint);
+
+                //TODO-support both controllers
+                primaryDeviceIndex = (uint)mScene.leftControllerIdx;
+
+            }
 
         }
 
@@ -63,8 +89,9 @@ namespace SparrowHawk.Interaction
             //Rhino curve and extrude test
             if (curvePoints.Count >= 2)
             {
+                // only curve works !!
                 Rhino.Geometry.Curve rail = Rhino.Geometry.Curve.CreateInterpolatedCurve(curvePoints.ToArray(), 3);
-
+                //Rhino.Geometry.NurbsCurve rail = Rhino.Geometry.NurbsCurve.Create(true, 3, curvePoints.ToArray());
                 //
                 Plane planeStart = new Plane(rail.PointAtStart, rail.TangentAtStart);
                 PlaneSurface planeStart_surface = new PlaneSurface(planeStart,
@@ -86,11 +113,14 @@ namespace SparrowHawk.Interaction
                 {
                     sGuid = Util.addSceneNode(ref mScene, startPlane, ref mesh_m, "planeStart");
                     eGuid = Util.addSceneNode(ref mScene, endPlane, ref mesh_m, "planeEnd");
+
+                    mScene.popInteraction();
+                    //mScene.pushInteraction(new SweepShape(ref mScene, true, rail, sGuid, eGuid));
+                    mScene.pushInteraction(new SweepShapeCircle(ref mScene, true, rail, sGuid, eGuid));
                 }
 
 
-                mScene.popInteraction();
-                mScene.pushInteraction(new SweepShape(ref mScene, true, rail, sGuid, eGuid));
+               
 
             }
         }
@@ -109,6 +139,7 @@ namespace SparrowHawk.Interaction
             {
 
                 //clear the stroke
+                /*
                 foreach (SceneNode sn in mScene.tableGeometry.children)
                 {
                     if (sn.guid == strokeId)
@@ -116,7 +147,7 @@ namespace SparrowHawk.Interaction
                         mScene.tableGeometry.children.Remove(sn);
                         break;
                     }
-                }
+                }*/
 
                 renderSweep();
                 currentState = State.READY;

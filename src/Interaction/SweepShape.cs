@@ -16,7 +16,7 @@ namespace SparrowHawk.Interaction
         private Rhino.Geometry.NurbsCurve closedCurve;
         private Rhino.Geometry.Brep closedCurveBrep;
         List<Point3d> curvePoints = new List<Point3d>();
-        Rhino.Geometry.Curve railCurve;
+        Rhino.Geometry.NurbsCurve railCurve;
         Guid sGuid, eGuid;
         private string type = "none";
 
@@ -25,21 +25,21 @@ namespace SparrowHawk.Interaction
             mScene = s;
             stroke_g = new Geometry.GeometryStroke();
             stroke_m = new Material.SingleColorMaterial(1, 0, 0, 1);
-            mesh_m = new Material.RGBNormalMaterial(1);
+            mesh_m = new Material.RGBNormalMaterial(.5f);
             currentState = State.READY;
 
         }
 
         public SweepShape(ref Scene s, bool drawOnP, Curve curve, Guid startGuid, Guid endGuid)
         {
-            railCurve = curve;
+            railCurve = curve.ToNurbsCurve();
             sGuid = startGuid;
             eGuid = endGuid;
 
             mScene = s;
             stroke_g = new Geometry.GeometryStroke();
             stroke_m = new Material.SingleColorMaterial(1, 0, 0, 1);
-            mesh_m = new Material.RGBNormalMaterial(1);
+            mesh_m = new Material.RGBNormalMaterial(0.5f);
             currentState = State.READY;
 
             onPlane = drawOnP;
@@ -157,9 +157,9 @@ namespace SparrowHawk.Interaction
             {
                 //Rhino closed curve through NURBS curve
                 closedCurve = Rhino.Geometry.NurbsCurve.Create(true, 3, curvePoints.ToArray());
-                //Rhino.Geometry.Curve nc = Curve.CreateInterpolatedCurve(curvePoints.ToArray(), 3);
-                //nc.SetEndPoint(nc.PointAtStart);
 
+                //do it after edit point interaction
+                /*
                 Plane proj_plane = new Plane();
                 Plane.FitPlaneToPoints(curvePoints.ToArray(), out proj_plane);
                 Curve proj_curve = Curve.ProjectToPlane(closedCurve, proj_plane);
@@ -188,6 +188,7 @@ namespace SparrowHawk.Interaction
                     //mScene.popInteraction();
                     //mScene.pushInteraction(new Sweep2(ref mScene));
                 }
+                */
 
             }
 
@@ -216,7 +217,17 @@ namespace SparrowHawk.Interaction
                     }
                 }
 
+                //render after edit point interaction
                 renderSweep();
+                if (closedCurve != null)
+                {
+                    List<NurbsCurve> curveL = new List<NurbsCurve>();
+                    curveL.Add(closedCurve);
+                    curveL.Add(railCurve);
+                    mScene.popInteraction();
+                    mScene.pushInteraction(new EditPoint(ref mScene, ref targetPRhObj, true, curveL, Guid.Empty, "Sweep2-" + type));
+                }
+
                 currentState = State.READY;
             }
         }

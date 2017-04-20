@@ -34,7 +34,7 @@ namespace SparrowHawk.Interaction
             mScene = scene;
             origin = new OpenTK.Vector3();
             mState = State.PickOrigin;
-            mesh_m = new Material.RGBNormalMaterial(1);
+            mesh_m = new Material.RGBNormalMaterial(.5f);
         }
 
         public CreateCircle(ref Scene scene, bool drawOnP)
@@ -42,7 +42,7 @@ namespace SparrowHawk.Interaction
             mScene = scene;
             origin = new OpenTK.Vector3();
             mState = State.PickOrigin;
-            mesh_m = new Material.RGBNormalMaterial(1);
+            mesh_m = new Material.RGBNormalMaterial(.5f);
 
             onPlane = drawOnP;
             if (onPlane)

@@ -32,7 +32,7 @@ namespace SparrowHawk
         uint vrRenderWidth;
         uint vrRenderHeight;
         float mNearClip = 0.1f;
-        float mFarClip = 60.0f;
+        float mFarClip = 90.0f;
         Matrix4 mEyeProjLeft;
         Matrix4 mEyeProjRight;
         Matrix4 mEyePosLeft;
@@ -42,7 +42,7 @@ namespace SparrowHawk
         Valve.VR.CVRSystem mHMD;
         Scene mScene;
         public OvrvisionController ovrvision_controller;
-        private bool enableAR = true;
+        private bool enableAR = false;
         Geometry.Geometry fullscreenQuad;
 
 
@@ -224,7 +224,10 @@ namespace SparrowHawk
                 int oy = ((int)vrRenderHeight - ovrvision_controller.camHeight) / 2;
                 //ox+100 to deal with blur issue
                 GL.Viewport(ox + 100, oy, ovrvision_controller.camWidth, ovrvision_controller.camHeight);
-            }else
+                //GL.Viewport(ox + 100, oy, (int)vrRenderWidth, (int)vrRenderHeight);
+                //GL.Viewport(0, 0, (int)vrRenderWidth, (int)vrRenderHeight);
+            }
+            else
             {
                 GL.Viewport(0, 0, (int)vrRenderWidth, (int)vrRenderHeight);
             }
@@ -248,7 +251,10 @@ namespace SparrowHawk
                 int oy = ((int)vrRenderHeight - ovrvision_controller.camHeight) / 2;
                 //ox-100 to deal with the blur issue
                 GL.Viewport(ox - 100, oy, ovrvision_controller.camWidth, ovrvision_controller.camHeight);
-            }else
+                //GL.Viewport(ox - 100, oy, (int)vrRenderWidth, (int)vrRenderHeight);
+                //GL.Viewport(0, 0, (int)vrRenderWidth, (int)vrRenderHeight);
+            }
+            else
             {
                 GL.Viewport(0, 0, (int)vrRenderWidth, (int)vrRenderHeight);
             }  
@@ -300,8 +306,8 @@ namespace SparrowHawk
                 rightEyeTexture.eColorSpace = Valve.VR.EColorSpace.Gamma;
                 Valve.VR.VRTextureBounds_t pBounds = new Valve.VR.VRTextureBounds_t();
                 pBounds.uMax = 1; pBounds.uMin = 0; pBounds.vMax = 1; pBounds.uMin = 0;
-                Valve.VR.OpenVR.Compositor.Submit(Valve.VR.EVREye.Eye_Left, ref leftEyeTexture, ref pBounds, Valve.VR.EVRSubmitFlags.Submit_Default); // TODO: There's a distortion already applied flag.
-                Valve.VR.OpenVR.Compositor.Submit(Valve.VR.EVREye.Eye_Right, ref rightEyeTexture, ref pBounds, Valve.VR.EVRSubmitFlags.Submit_Default);
+                Valve.VR.OpenVR.Compositor.Submit(Valve.VR.EVREye.Eye_Left, ref leftEyeTexture, ref pBounds, Valve.VR.EVRSubmitFlags.Submit_LensDistortionAlreadyApplied); // TODO: There's a distortion already applied flag.
+                Valve.VR.OpenVR.Compositor.Submit(Valve.VR.EVREye.Eye_Right, ref rightEyeTexture, ref pBounds, Valve.VR.EVRSubmitFlags.Submit_LensDistortionAlreadyApplied);
                 
                 GL.Finish();
             }

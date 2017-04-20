@@ -26,10 +26,16 @@ namespace SparrowHawk.Interaction
         bool mPopAfterStroke = false;
 
         public bool onPlane = false;
+        private bool hitPlane = false;
+        private bool lockPlane = false;
         protected SceneNode targetPSN;
         protected RhinoObject targetPRhObj;
         protected SceneNode drawPoint;
         protected OpenTK.Vector3 projectP;
+
+        //testing rhino curve
+        private List<Point3d> rhihoPointList = new List<Point3d>();
+        private Rhino.Geometry.Curve rcurve;
 
         public Stroke()
         {
@@ -57,7 +63,8 @@ namespace SparrowHawk.Interaction
                 Material.Material m = new Material.SingleColorMaterial(250 / 255, 128 / 255, 128 / 255, 1);
                 drawPoint = new SceneNode("Point", ref geo, ref m);
                 drawPoint.transform = new OpenTK.Matrix4(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1);
-                mScene.tableGeometry.add(ref drawPoint);
+                //mScene.tableGeometry.add(ref drawPoint);
+                mScene.staticGeometry.add(ref drawPoint);
 
                 //TODO-support both controllers
                 primaryDeviceIndex = (uint)mScene.leftControllerIdx;
@@ -112,57 +119,113 @@ namespace SparrowHawk.Interaction
                 Rhino.DocObjects.ObjectEnumeratorSettings settings = new Rhino.DocObjects.ObjectEnumeratorSettings();
                 settings.ObjectTypeFilter = Rhino.DocObjects.ObjectType.Brep;
                 //settings.NameFilter = "plane";
-                foreach (Rhino.DocObjects.RhinoObject rhObj in mScene.rhinoDoc.Objects.GetObjectList(settings))
+                float mimD = 1000000f;
+                hitPlane = false;
+                if (!lockPlane)
                 {
-                    if (rhObj.Attributes.Name.Contains("brepMesh") || rhObj.Attributes.Name.Contains("aprint") || rhObj.Attributes.Name.Contains("plane"))
+                    foreach (Rhino.DocObjects.RhinoObject rhObj in mScene.rhinoDoc.Objects.GetObjectList(settings))
+                    {
+                        //only drawing on planes for now rhObj.Attributes.Name.Contains("brepMesh") || rhObj.Attributes.Name.Contains("aprint") || rhObj.Attributes.Name.Contains("plane")
+                        if (rhObj.Attributes.Name.Contains("plane"))
+                        {
+                            List<GeometryBase> geometries = new List<GeometryBase>();
+                            geometries.Add(rhObj.Geometry);
+                            //must be a brep or surface, not mesh
+                            Point3d[] rayIntersections = Rhino.Geometry.Intersect.Intersection.RayShoot(ray, geometries, 1);
+                            if (rayIntersections != null)
+                            {
+                                //get the nearest one
+                                OpenTK.Vector3 tmpP = Util.platformToVRPoint(ref mScene, new OpenTK.Vector3((float)rayIntersections[0].X, (float)rayIntersections[0].Y, (float)rayIntersections[0].Z));
+                                float distance = (float)Math.Sqrt(Math.Pow(tmpP.X - controller_p.X, 2) + Math.Pow(tmpP.Y - controller_p.Y, 2) + Math.Pow(tmpP.Z - controller_p.Z, 2));
+
+                                if (distance < mimD)
+                                {
+                                    hitPlane = true;
+                                    targetPSN = mScene.brepToSceneNodeDic[rhObj.Id];
+                                    targetPRhObj = rhObj;
+                                    mimD = distance;
+                                    projectP = Util.platformToVRPoint(ref mScene, new OpenTK.Vector3((float)rayIntersections[0].X, (float)rayIntersections[0].Y, (float)rayIntersections[0].Z));
+                                }
+                            }
+                        }
+                    }
+                }else
+                {
+                    if (targetPRhObj != null)
                     {
                         List<GeometryBase> geometries = new List<GeometryBase>();
-                        geometries.Add(rhObj.Geometry);
+                        geometries.Add(targetPRhObj.Geometry);
                         //must be a brep or surface, not mesh
                         Point3d[] rayIntersections = Rhino.Geometry.Intersect.Intersection.RayShoot(ray, geometries, 1);
                         if (rayIntersections != null)
                         {
-                            projectP = Util.platformToVRPoint(ref mScene, new OpenTK.Vector3((float)rayIntersections[0].X, (float)rayIntersections[0].Y, (float)rayIntersections[0].Z));
-                            OpenTK.Matrix4 t = OpenTK.Matrix4.CreateTranslation(projectP);
-                            t.Transpose();
-                            drawPoint.transform = t;
-                            targetPSN = mScene.brepToSceneNodeDic[rhObj.Id];
-                            targetPRhObj = rhObj;
-                            break;
-                        }
-                        else
-                        {
-                            //make markerpoint invisible
-                            OpenTK.Matrix4 t = OpenTK.Matrix4.CreateTranslation(new OpenTK.Vector3(100, 100, 100));
-                            t.Transpose();
-                            drawPoint.transform = t;
+                            //get the nearest one
+                            OpenTK.Vector3 tmpP = Util.platformToVRPoint(ref mScene, new OpenTK.Vector3((float)rayIntersections[0].X, (float)rayIntersections[0].Y, (float)rayIntersections[0].Z));
+                            float distance = (float)Math.Sqrt(Math.Pow(tmpP.X - controller_p.X, 2) + Math.Pow(tmpP.Y - controller_p.Y, 2) + Math.Pow(tmpP.Z - controller_p.Z, 2));
+
+                            if (distance < mimD)
+                            {
+                                hitPlane = true;
+                                mimD = distance;
+                                projectP = Util.platformToVRPoint(ref mScene, new OpenTK.Vector3((float)rayIntersections[0].X, (float)rayIntersections[0].Y, (float)rayIntersections[0].Z));
+                            }
                         }
                     }
                 }
+
+                if (!hitPlane)
+                {
+                    targetPSN = null;
+                    targetPRhObj = null;
+                    projectP = new OpenTK.Vector3(100, 100, 100); //make it invisable
+                }
+                        
+                //visualize the projection points
+                OpenTK.Matrix4 t = OpenTK.Matrix4.CreateTranslation(projectP);
+                t.Transpose();
+                drawPoint.transform = t;
             }
 
+            
             if (currentState != State.PAINT || !isTop)
             {
                 return;
             }
 
+            // drawing curve
             Vector3 pos = new Vector3();
             if (onPlane)
             {
                 pos = projectP;
+                if (hitPlane)
+                {
+                   ((Geometry.GeometryStroke)stroke_g).addPoint(pos);
+                    rhihoPointList.Add(Util.openTkToRhinoPoint(Util.vrToPlatformPoint(ref mScene, pos)));
+                }
+
             }
             else
             {
                 pos = Util.getTranslationVector3(Util.getControllerTipPosition(ref mScene, primaryDeviceIndex == mScene.leftControllerIdx));
+                ((Geometry.GeometryStroke)stroke_g).addPoint(pos);
+                rhihoPointList.Add(Util.openTkToRhinoPoint(Util.vrToPlatformPoint(ref mScene, pos)));
             }
-
-            ((Geometry.GeometryStroke)stroke_g).addPoint(pos);
 
             if (((Geometry.GeometryStroke)stroke_g).mNumPrimitives == 1)
             {
                 SceneNode stroke = new SceneNode("Stroke", ref stroke_g, ref stroke_m);
-                mScene.tableGeometry.add(ref stroke);
+                //mScene.tableGeometry.add(ref stroke);
+                mScene.staticGeometry.add(ref stroke);
                 strokeId = stroke.guid;
+            }
+
+            //testing the performance of rhino curve
+            if(rhihoPointList.Count == 2)
+            {
+                rcurve = Curve.CreateInterpolatedCurve(rhihoPointList.ToArray(), 3);
+            }else if(rhihoPointList.Count > 2)
+            {
+                rcurve.Extend(Rhino.Geometry.CurveEnd.End, Rhino.Geometry.CurveExtensionStyle.Line, rhihoPointList[rhihoPointList.Count - 1]);
             }
 
         }
@@ -173,6 +236,7 @@ namespace SparrowHawk.Interaction
             primaryDeviceIndex = vrEvent.trackedDeviceIndex;
             if (currentState == State.READY)
             {
+                lockPlane = true;
                 stroke_g = new Geometry.GeometryStroke();
                 reducePoints = new List<Vector3>();
                 currentState = State.PAINT;
@@ -185,6 +249,7 @@ namespace SparrowHawk.Interaction
             Rhino.RhinoApp.WriteLine("oculus grip release event test");
             if (currentState == State.PAINT)
             {
+                lockPlane = false;
                 currentState = State.READY;
             }
         }

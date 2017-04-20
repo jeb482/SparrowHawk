@@ -37,7 +37,7 @@ namespace SparrowHawk.Interaction
             Rhino.Geometry.Brep brep = cylinder.ToBrep(true, true);
             
             //render in VR
-            Material.Material mesh_m = new Material.RGBNormalMaterial(1);
+            Material.Material mesh_m = new Material.RGBNormalMaterial(.5f);
             Util.addSceneNode(ref mScene, brep, ref mesh_m, "a1");
 
 
