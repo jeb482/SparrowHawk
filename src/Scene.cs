@@ -120,6 +120,8 @@ namespace SparrowHawk
         //public Matrix4 mLeftControllerOffset = Util.createTranslationMatrix(0.001885863f, -0.02479392f,-0.0003346408f);
         //public Matrix4 mLeftControllerOffset = Util.createTranslationMatrix(0.00134759f, -0.02559454f, -0.005455005f);//Util.createTranslationMatrix(0,0,0);//Util.createTranslationMatrix(0.0006068f, -.02383642f, -0.00026948f);
         public Matrix4 mRightControllerOffset = Util.createTranslationMatrix(0, 0, 0);//Util.createTranslationMatrix(-0.0006068f, -.02383642f, -0.00026948f);
+        private double leftControllerEndVibrateTime;
+        private double rightControllerEndVibrateTime;
 
         // For rhino positioning
         public Rhino.RhinoDoc rhinoDoc;
@@ -194,6 +196,24 @@ namespace SparrowHawk
             tableGeometry.render(ref vp, m);
             leftControllerNode.render(ref vp, m);
             rightControllerNode.render(ref vp, m);
+        }
+
+        public void vibrateController(double duration, uint deviceIndex)
+        {
+            if (deviceIndex == leftControllerIdx)
+                leftControllerEndVibrateTime = Math.Max(leftControllerEndVibrateTime, gameTime + duration);  
+            else if (deviceIndex == rightControllerIdx)
+                rightControllerEndVibrateTime = Math.Max(rightControllerEndVibrateTime, gameTime + duration);
+        }
+
+        public bool leftControllerShouldVibrate()
+        {
+            return (leftControllerEndVibrateTime > gameTime);
+        }
+
+        public bool rightControllerShouldVibrate()
+        {
+            return (rightControllerEndVibrateTime > gameTime);
         }
 
         // Implement traceray

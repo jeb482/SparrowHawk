@@ -739,6 +739,7 @@ namespace SparrowHawk
         /// x = 0
         /// y = 1
         /// z = 2
+        /// Doesn't work.
         /// </summary>
         /// <param name="M">The affine matrix with some rotational componenet to analyse.</param>
         /// <returns></returns>
@@ -750,7 +751,14 @@ namespace SparrowHawk
                 return 1;
             return 2;
 		}
+
+
+
+
     }
+
+    
+
 
     //public static OpenTK.Matrix4
 }

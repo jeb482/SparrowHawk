@@ -303,6 +303,10 @@ namespace SparrowHawk
         protected override void OnRenderFrame(FrameEventArgs e)
         {
             base.OnRenderFrame(e);
+            if (mScene.leftControllerShouldVibrate())
+                mHMD.TriggerHapticPulse((uint) mScene.leftControllerIdx, 0, (char) 127);
+            if (mScene.rightControllerShouldVibrate())
+                mHMD.TriggerHapticPulse((uint)mScene.rightControllerIdx, 0, (char)127);
             MakeCurrent();
             updateMatrixPose();
             notifyRobotIfSafe();

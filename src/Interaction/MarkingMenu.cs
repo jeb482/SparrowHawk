@@ -237,6 +237,7 @@ namespace SparrowHawk.Interaction
         private void launchInteraction(float r, float theta)
         {
             //int interactionNumber = ((int) Math.Floor((mNumSectors * theta - mFirstSectorOffsetAngle) / (2 * Math.PI)));
+            mScene.vibrateController(0.1, (uint)mScene.leftControllerIdx);
             int interactionNumber;
             if (theta < 0) { theta += (float)(2 * Math.PI); }
             interactionNumber = (int) Math.Ceiling((theta - (Math.PI / mNumSectors)) / (Math.PI / 2));
