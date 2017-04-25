@@ -13,11 +13,12 @@ namespace SparrowHawk.Interaction
         protected int mCurrentSelection = -1;
         protected double mInitialSelectOKTime = 0;
         protected double mSelectOKTime = 0;
-        double markingMenuFeedbackDelay = .1;
+        double markingMenuFeedbackDelay = .2;
         double markingMenuSelectionDelay = .85f;
         double defaultInitialDelay = .2;
         float mMinSelectionRadius;
         float mOuterSelectionRadius;
+        float mCurrentRadius;
 
         public enum MenuLayout {RootMenu, CalibrationMenu, TwoDMenu,
                                 ThreeDMenu,NavMenu, PlaneMenu, PlanarMenu,
@@ -78,7 +79,7 @@ namespace SparrowHawk.Interaction
             if (scene.isOculus)
             {
                 mMinSelectionRadius = 0.2f;
-                mOuterSelectionRadius = 0.9f;
+                mOuterSelectionRadius = 0.8f;
             }
             else { 
                 mMinSelectionRadius = 0.4f;
@@ -118,23 +119,27 @@ namespace SparrowHawk.Interaction
         // TODO: This could use a lot of refactoring.
         public override void draw(bool isTop) {
             // get R and Theta and the associated sector
-            float r = 0;
             float theta = 0;
+            float mLastRadius = mCurrentRadius;
             if (mScene.isOculus)
             {
-                getOculusJoystickPoint((uint) mScene.leftControllerIdx, out r, out theta);
+                getOculusJoystickPoint((uint) mScene.leftControllerIdx, out mCurrentRadius, out theta);
             } else {
-                getViveTouchpadPoint((uint)mScene.leftControllerIdx, out r, out theta);
+                getViveTouchpadPoint((uint)mScene.leftControllerIdx, out mCurrentRadius, out theta);
             }
             int sector = (int)Math.Floor((((theta + 2*Math.PI) % (2*Math.PI)) - mFirstSectorOffsetAngle) * mNumSectors / (2 * Math.PI));
+            ;
+
+            Rhino.RhinoApp.WriteLine("r = " + mCurrentRadius);
 
             // Update the shader
-            if (r > mMinSelectionRadius)
+            if (mCurrentRadius > mMinSelectionRadius)
                 ((Material.RadialMenuMaterial)radialMenuMat).setHighlightedSector(mNumSectors, mFirstSectorOffsetAngle, theta);
             if (mSelectOKTime - mScene.gameTime < markingMenuFeedbackDelay)
                 ((Material.RadialMenuMaterial)radialMenuMat).setIsSelected(1);
             else
                 ((Material.RadialMenuMaterial)radialMenuMat).setIsSelected(0);
+            
             // Enforce initial delay
             if (mScene.gameTime < this.mInitialSelectOKTime)
             {
@@ -147,9 +152,9 @@ namespace SparrowHawk.Interaction
             }
             
             // If you're in the outer ring, select immediately
-            if (r >= mOuterSelectionRadius )
+            if (mCurrentRadius >= mOuterSelectionRadius )
             {
-                if (mCurrentSelection != sector)
+                if (mLastRadius < mOuterSelectionRadius)
                 {
                     mCurrentSelection = sector;
                     mSelectOKTime = mScene.gameTime + markingMenuFeedbackDelay;
@@ -158,14 +163,15 @@ namespace SparrowHawk.Interaction
                 {
                     if (mScene.gameTime > mSelectOKTime)
                     {
-                        launchInteraction(r, theta);
+                        launchInteraction(mCurrentRadius, theta);
                     }
                 }
+                return;
             }
 
 
             // If in midlle selection ring, check delay
-            if (r > mMinSelectionRadius)
+            if (mCurrentRadius > mMinSelectionRadius)
             {
                 //Rhino.RhinoApp.WriteLine(r + ", " + theta);
                 if (mCurrentSelection != sector)
@@ -177,7 +183,7 @@ namespace SparrowHawk.Interaction
                 {
                     if (mScene.gameTime > mSelectOKTime)
                     {
-                        launchInteraction(r, theta);
+                        launchInteraction(mCurrentRadius, theta);
                     }
                 }
             }
