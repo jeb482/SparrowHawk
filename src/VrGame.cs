@@ -357,12 +357,6 @@ namespace SparrowHawk
             if (mStrDriver.Contains("oculus")) mScene.isOculus = true; else mScene.isOculus = false;
             mHMD.GetRecommendedRenderTargetSize(ref mRenderWidth, ref mRenderHeight);
 
-            float theta = (float)(45.0f / 360f * 2 * Math.PI);
-            Rhino.RhinoApp.WriteLine("Theta = " + theta);
-            Matrix4.CreateRotationZ(theta, out mScene.platformRotation);
-            mScene.platformRotation.Transpose();
-
-
             Geometry.Geometry g = new Geometry.Geometry("C:/workspace/Kestrel/resources/meshes/bunny.obj");
 
             //Material.Material m = new Material.SingleColorMaterial(mDoc,1f,1f,1f,1f);
@@ -548,8 +542,41 @@ namespace SparrowHawk
 
             if (e.KeyChar == 'A' || e.KeyChar == 'a')
             {
-                mScene.popInteraction();
-                mScene.pushInteraction(new Interaction.Align(ref mScene));
+                //mScene.popInteraction();
+                //mScene.pushInteraction(new Interaction.Align(ref mScene));
+
+                //for rhino object
+                OpenTK.Matrix4 currentRotation =  mScene.platformRotation;
+
+                float theta = (float)(45.0f / 360f * 2 * Math.PI);
+                Rhino.RhinoApp.WriteLine("Theta = " + theta);
+                Matrix4.CreateRotationZ(theta, out mScene.platformRotation);
+                mScene.platformRotation.Transpose();
+
+                //rotate Rhino objects
+                OpenTK.Matrix4 rotMRhino =  mScene.platformRotation * currentRotation.Inverted();
+                Rhino.DocObjects.ObjectEnumeratorSettings settings = new Rhino.DocObjects.ObjectEnumeratorSettings();
+                Transform transM = new Transform();
+                for (int row = 0; row < 4; row++)
+                {
+                    for (int col = 0; col < 4; col++)
+                    {
+                        transM[row, col] = rotMRhino[row, col];
+                    }
+                }
+                settings.ObjectTypeFilter = Rhino.DocObjects.ObjectType.Brep;
+                foreach (Rhino.DocObjects.RhinoObject rhObj in mScene.rhinoDoc.Objects.GetObjectList(settings))
+                {
+                    SceneNode sn = mScene.brepToSceneNodeDic[rhObj.Id];
+                    mScene.brepToSceneNodeDic.Remove(rhObj.Id);
+
+                    Guid newGuid = mScene.rhinoDoc.Objects.Transform(rhObj.Id, transM, true);
+                    Rhino.RhinoApp.WriteLine("transM " + transM.ToString());
+                    mScene.rhinoDoc.Views.Redraw();
+
+                    mScene.brepToSceneNodeDic.Add(newGuid, sn);
+                    mScene.SceneNodeToBrepDic[sn.guid] = mScene.rhinoDoc.Objects.Find(newGuid);
+                }
             }
 
             if (e.KeyChar == 'W' || e.KeyChar == 'w')

@@ -34,7 +34,7 @@ namespace SparrowHawk.Interaction
             }
             //controller pose map from controller coordinate system to VR world system. In order to use pose matrix, we first transform the select object to controller coordinate system.
             selectedSN.transform = Util.getControllerTipPosition(ref mScene, primaryDeviceIndex == mScene.leftControllerIdx) * mVRtocontroller * currentTransform;
-
+            //selectedSN.transform = mScene.tableGeometry.transform.Inverted() * selectedSN.transform;
         }
 
         protected override void onClickOculusGrip(ref VREvent_t vrEvent)

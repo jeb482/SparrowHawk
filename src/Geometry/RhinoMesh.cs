@@ -11,6 +11,7 @@ namespace SparrowHawk.Geometry
 
         public Mesh triMesh;
         private Scene mScene;
+        private OpenTK.Matrix4 transM;
 
         public RhinoMesh()
         {
@@ -36,6 +37,15 @@ namespace SparrowHawk.Geometry
             mScene = s;
             triMesh = Triangulate(mesh);
             initMeshGeometry(ref triMesh);
+        }
+
+        public RhinoMesh(ref Scene s, OpenTK.Matrix4 t)
+        {
+            mScene = s;
+            mNumPrimitives = 0;
+            primitiveType = OpenTK.Graphics.OpenGL4.BeginMode.Triangles;
+            transM = t;
+            transM = transM.Inverted();
         }
 
         public void setMesh(ref Mesh mesh)
@@ -90,7 +100,15 @@ namespace SparrowHawk.Geometry
             foreach (Point3d vertex in triMesh.Vertices)
             {
                 vertices.Add(vertex);
-                OpenTK.Vector3 p = Util.platformToVRPoint(ref mScene, new OpenTK.Vector3((float)vertex.X, (float)vertex.Y, (float)vertex.Z));
+                OpenTK.Vector3 rp = new OpenTK.Vector3((float)vertex.X, (float)vertex.Y, (float)vertex.Z);   
+                /*          
+                if(transM != OpenTK.Matrix4.Identity)
+                {                 
+                    rp = Util.transformPoint(transM, rp);
+
+                }*/
+
+                OpenTK.Vector3 p = Util.platformToVRPoint(ref mScene, rp);
                 vertices_array.Add(p.X);
                 vertices_array.Add(p.Y);
                 vertices_array.Add(p.Z);
