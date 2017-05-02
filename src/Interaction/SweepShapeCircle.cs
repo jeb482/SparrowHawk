@@ -131,7 +131,7 @@ namespace SparrowHawk.Interaction
                         projectP = planeOVR;
                     }
 
-                    OpenTK.Matrix4 t = OpenTK.Matrix4.CreateTranslation(projectP);
+                    OpenTK.Matrix4 t = OpenTK.Matrix4.CreateTranslation(Util.transformPoint(mScene.tableGeometry.transform.Inverted(), projectP));
                     t.Transpose();
                     drawPoint.transform = t;
                     targetPSN = mScene.brepToSceneNodeDic[rhObjS.Id];
@@ -152,7 +152,7 @@ namespace SparrowHawk.Interaction
                         projectP = planeOVR;
                     }
 
-                    OpenTK.Matrix4 t = OpenTK.Matrix4.CreateTranslation(projectP);
+                    OpenTK.Matrix4 t = OpenTK.Matrix4.CreateTranslation(Util.transformPoint(mScene.tableGeometry.transform.Inverted(), projectP));
                     t.Transpose();
                     drawPoint.transform = t;
                     targetPSN = mScene.brepToSceneNodeDic[rhObjE.Id];
@@ -267,7 +267,7 @@ namespace SparrowHawk.Interaction
             if (mState == State.DrawCircle)
             {
 
-                List<NurbsCurve> curveL = new List<NurbsCurve>();
+                List<Curve> curveL = new List<Curve>();
                 curveL.Add(circleCurve);
                 curveL.Add(railCurve);
                 mScene.popInteraction();

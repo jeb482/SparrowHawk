@@ -22,7 +22,7 @@ namespace SparrowHawk.Interaction
         {
 
             mScene = s;
-            stroke_g = new Geometry.GeometryStroke();
+            stroke_g = new Geometry.GeometryStroke(ref mScene);
             stroke_m = new Material.SingleColorMaterial(1, 0, 0, 1);
             mesh_m = new Material.RGBNormalMaterial(.5f);
             currentState = State.READY;
@@ -32,7 +32,7 @@ namespace SparrowHawk.Interaction
         public Sweep(ref Scene s, ref Rhino.Geometry.Brep brep)
         {
             mScene = s;
-            stroke_g = new Geometry.GeometryStroke();
+            stroke_g = new Geometry.GeometryStroke(ref mScene);
             stroke_m = new Material.SingleColorMaterial(1, 0, 0, 1);
             mesh_m = new Material.SingleColorMaterial(0, 1, 0, 1);
             closedCurve = brep.Curves3D.ElementAt(0);

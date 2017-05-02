@@ -8,7 +8,7 @@ namespace SparrowHawk.Geometry
 {
     class GeometryStroke : Geometry
     {
-
+        private Scene mScene;
         public int mNumPoints;
         public List<OpenTK.Vector3> mPoints = new List<OpenTK.Vector3>();
         public List<float> vertices_array = new List<float>();
@@ -20,10 +20,20 @@ namespace SparrowHawk.Geometry
             primitiveType = OpenTK.Graphics.OpenGL4.BeginMode.Lines;
         }
 
+        public GeometryStroke(ref Scene s)
+        {
+            mScene = s;
+            mNumPoints = 0;
+            primitiveType = OpenTK.Graphics.OpenGL4.BeginMode.Lines;
+        }
+
         public void addPoint(OpenTK.Vector3 p)
         {
 
             mPoints.Add(p);
+
+            //when visualizing, stroke is in tableGeometry so we need to apply tableGeomeotry.transfrom inverted first
+            p = Util.transformPoint(mScene.tableGeometry.transform.Inverted(), p);
 
             vertices_array.Add(p.X);
             vertices_array.Add(p.Y);

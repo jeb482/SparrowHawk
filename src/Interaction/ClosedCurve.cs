@@ -24,7 +24,7 @@ namespace SparrowHawk.Interaction
         public Closedcurve(ref Scene s)
         {
             mScene = s;
-            stroke_g = new Geometry.GeometryStroke();
+            stroke_g = new Geometry.GeometryStroke(ref mScene);
             stroke_m = new Material.SingleColorMaterial(1, 0, 0, 1);
             mesh_m = new Material.RGBNormalMaterial(.5f);
             currentState = State.READY;
@@ -34,7 +34,7 @@ namespace SparrowHawk.Interaction
         public Closedcurve(ref Scene s, bool drawOnP)
         {
             mScene = s;
-            stroke_g = new Geometry.GeometryStroke();
+            stroke_g = new Geometry.GeometryStroke(ref mScene);
             stroke_m = new Material.SingleColorMaterial(1, 0, 0, 1);
             mesh_m = new Material.RGBNormalMaterial(.5f);
             currentState = State.READY;
@@ -47,8 +47,8 @@ namespace SparrowHawk.Interaction
                 Material.Material m = new Material.SingleColorMaterial(250 / 255, 128 / 255, 128 / 255, 1);
                 drawPoint = new SceneNode("Point", ref geo, ref m);
                 drawPoint.transform = new OpenTK.Matrix4(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1);
-                //mScene.tableGeometry.add(ref drawPoint);
-                mScene.staticGeometry.add(ref drawPoint);
+                mScene.tableGeometry.add(ref drawPoint);
+                //mScene.staticGeometry.add(ref drawPoint);
 
                 //TODO-support both controllers
                 primaryDeviceIndex = (uint)mScene.leftControllerIdx;
@@ -127,7 +127,7 @@ namespace SparrowHawk.Interaction
                 //testing edit point interaction
                 if (onPlane && editCurve != null)
                 {
-                    List<NurbsCurve> curveL = new List<NurbsCurve>();
+                    List<Curve> curveL = new List<Curve>();
                     curveL.Add(editCurve);
                     mScene.popInteraction();
                     mScene.pushInteraction(new EditPoint(ref mScene, ref targetPRhObj, true, curveL, surfaceID, "ClosedCurve"));

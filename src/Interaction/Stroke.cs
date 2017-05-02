@@ -45,14 +45,14 @@ namespace SparrowHawk.Interaction
         public Stroke(ref Scene s)
         {
             mScene = s;
-            stroke_g = new Geometry.GeometryStroke();
+            stroke_g = new Geometry.GeometryStroke(ref s);
             stroke_m = new Material.SingleColorMaterial(1, 0, 0, 1);
             currentState = State.READY;
         }
         public Stroke(ref Scene s, bool drawOnP)
         {
             mScene = s;
-            stroke_g = new Geometry.GeometryStroke();
+            stroke_g = new Geometry.GeometryStroke(ref s);
             stroke_m = new Material.SingleColorMaterial(1, 0, 0, 1);
             currentState = State.READY;
             onPlane = drawOnP;
@@ -63,8 +63,8 @@ namespace SparrowHawk.Interaction
                 Material.Material m = new Material.SingleColorMaterial(250 / 255, 128 / 255, 128 / 255, 1);
                 drawPoint = new SceneNode("Point", ref geo, ref m);
                 drawPoint.transform = new OpenTK.Matrix4(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1);
-                //mScene.tableGeometry.add(ref drawPoint);
-                mScene.staticGeometry.add(ref drawPoint);
+                mScene.tableGeometry.add(ref drawPoint);
+                //mScene.staticGeometry.add(ref drawPoint);
 
                 //TODO-support both controllers
                 primaryDeviceIndex = (uint)mScene.leftControllerIdx;
@@ -75,7 +75,7 @@ namespace SparrowHawk.Interaction
         public Stroke(ref Scene s, uint devIndex)
         {
             mScene = s;
-            stroke_g = new Geometry.GeometryStroke();
+            stroke_g = new Geometry.GeometryStroke(ref s);
             stroke_m = new Material.SingleColorMaterial(1, 0, 0, 1);
             currentState = State.READY;
             primaryDeviceIndex = devIndex;
@@ -181,7 +181,9 @@ namespace SparrowHawk.Interaction
                 }
                         
                 //visualize the projection points
-                OpenTK.Matrix4 t = OpenTK.Matrix4.CreateTranslation(projectP);
+                // inverted rotation first
+
+                OpenTK.Matrix4 t = OpenTK.Matrix4.CreateTranslation(Util.transformPoint(mScene.tableGeometry.transform.Inverted(), projectP));
                 t.Transpose();
                 drawPoint.transform = t;
             }
@@ -199,7 +201,8 @@ namespace SparrowHawk.Interaction
                 pos = projectP;
                 if (hitPlane)
                 {
-                   ((Geometry.GeometryStroke)stroke_g).addPoint(pos);
+                    //GeometryStroke handle rotation
+                    ((Geometry.GeometryStroke)stroke_g).addPoint(pos);
                     rhihoPointList.Add(Util.openTkToRhinoPoint(Util.vrToPlatformPoint(ref mScene, pos)));
                 }
 
@@ -207,6 +210,7 @@ namespace SparrowHawk.Interaction
             else
             {
                 pos = Util.getTranslationVector3(Util.getControllerTipPosition(ref mScene, primaryDeviceIndex == mScene.leftControllerIdx));
+                //GeometryStroke handle rotation already
                 ((Geometry.GeometryStroke)stroke_g).addPoint(pos);
                 rhihoPointList.Add(Util.openTkToRhinoPoint(Util.vrToPlatformPoint(ref mScene, pos)));
             }
@@ -214,8 +218,8 @@ namespace SparrowHawk.Interaction
             if (((Geometry.GeometryStroke)stroke_g).mNumPrimitives == 1)
             {
                 SceneNode stroke = new SceneNode("Stroke", ref stroke_g, ref stroke_m);
-                //mScene.tableGeometry.add(ref stroke);
-                mScene.staticGeometry.add(ref stroke);
+                mScene.tableGeometry.add(ref stroke);
+                //mScene.staticGeometry.add(ref stroke);
                 strokeId = stroke.guid;
             }
 
@@ -237,7 +241,7 @@ namespace SparrowHawk.Interaction
             if (currentState == State.READY)
             {
                 lockPlane = true;
-                stroke_g = new Geometry.GeometryStroke();
+                stroke_g = new Geometry.GeometryStroke(ref mScene);
                 reducePoints = new List<Vector3>();
                 currentState = State.PAINT;
             }

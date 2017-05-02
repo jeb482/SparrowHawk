@@ -27,9 +27,10 @@ namespace SparrowHawk.Interaction
         SceneNode drawPoint;
         OpenTK.Vector3 projectP;
         private Rhino.Geometry.NurbsCurve closedCurve;
-        private List<NurbsCurve> curveList= new List<NurbsCurve>();
+        private PolylineCurve polyline;
+        private List<Curve> curveList= new List<Curve>();
         List<Point3d> curvePoints = new List<Point3d>();
-        Geometry.Geometry stroke_g2 = new Geometry.GeometryStroke();
+        Geometry.Geometry stroke_g2;
         Material.Material stroke_m2 = new Material.SingleColorMaterial(0, 0, 1, 1);
         SceneNode stroke;
         private Material.Material mesh_m;
@@ -38,15 +39,20 @@ namespace SparrowHawk.Interaction
         private Guid surfaceID;
         string type;
 
+        //for sweep2
+        Guid sGuid;
+        Guid eGuid;
+
         public EditPoint(ref Scene scene)
         {
             mScene = scene;
+            stroke_g2 = new Geometry.GeometryStroke(ref mScene);
         }
 
-        public EditPoint(ref Scene scene, ref RhinoObject rp, bool drawOnP, List<NurbsCurve> curveL, Guid sid, string t)
+        public EditPoint(ref Scene scene, ref RhinoObject rp, bool drawOnP, List<Curve> curveL, Guid sid, string t)
         {
             mScene = scene;
-
+            stroke_g2 = new Geometry.GeometryStroke(ref mScene);
             onPlane = drawOnP;
             if (onPlane)
             {
@@ -62,7 +68,7 @@ namespace SparrowHawk.Interaction
                 rhinoPlane = rp;
                 // closedCurve = curve;
                 curveList = curveL;
-                closedCurve = curveList[0];
+                closedCurve = curveList[0].ToNurbsCurve();
                 surfaceID = sid;
                 type = t;
                 mesh_m = new Material.RGBNormalMaterial(.5f);
@@ -72,10 +78,53 @@ namespace SparrowHawk.Interaction
                 {
                     Point3d ep = new Point3d(closedCurve.Points.ElementAt(i).Location.X, closedCurve.Points.ElementAt(i).Location.Y, closedCurve.Points.ElementAt(i).Location.Z);
                     curvePoints.Add(ep);
-
-                    SceneNode sn = Util.MarkPointSN(ref mScene.staticGeometry, Util.platformToVRPoint(ref mScene, new OpenTK.Vector3((float)ep.X, (float)ep.Y, (float)ep.Z)), 0, 1, 0);
+                    // p is the point before apply tableGeometry.transform inverted so we need to transfrom here
+                    SceneNode sn = Util.MarkPointSN(ref mScene.tableGeometry, Util.transformPoint(mScene.tableGeometry.transform.Inverted(),Util.platformToVRPoint(ref mScene, new OpenTK.Vector3((float)ep.X, (float)ep.Y, (float)ep.Z))), 0, 1, 0);
                     pointMarkers.Add(sn);
                     
+                }
+
+                //render the rhino curve
+                polyline = closedCurve.ToPolyline(0, 0, 0, 0, 0, 1, 1, 0, true);
+                if (stroke == null)
+                {
+                    for (int i = 0; i < polyline.PointCount; i++)
+                    {
+                        ((Geometry.GeometryStroke)stroke_g2).addPoint(Util.platformToVRPoint(ref mScene, new OpenTK.Vector3((float)polyline.Point(i).X, (float)polyline.Point(i).Y, (float)polyline.Point(i).Z)));
+
+                    }
+                    stroke = new SceneNode("Stroke2", ref stroke_g2, ref stroke_m2);
+                    mScene.tableGeometry.add(ref stroke);
+                }
+
+                if(type == "Sweep-rail")
+                {
+                    //covert from Nurbcurvie to curve                 
+                    Plane planeStart = new Plane(polyline.PointAtStart, polyline.TangentAtStart);
+                    PlaneSurface planeStart_surface = new PlaneSurface(planeStart,
+                      new Interval(-30, 30),
+                      new Interval(-30, 30));
+
+                    Plane planeEnd = new Plane(polyline.PointAtEnd, polyline.TangentAtEnd);
+                    PlaneSurface planeEnd_surface = new PlaneSurface(planeEnd,
+                      new Interval(-30, 30),
+                      new Interval(-30, 30));
+
+                    Brep startPlane = Brep.CreateFromSurface(planeStart_surface);
+                    Brep endPlane = Brep.CreateFromSurface(planeEnd_surface);
+
+                    if (startPlane != null && endPlane != null)
+                    {
+                        if (sGuid != Guid.Empty && eGuid != Guid.Empty)
+                        {
+                            Util.removeSceneNode(ref mScene, sGuid);
+                            Util.removeSceneNode(ref mScene, eGuid);
+
+                        }
+                        sGuid = Util.addSceneNode(ref mScene, startPlane, ref mesh_m, "planeStart");
+                        eGuid = Util.addSceneNode(ref mScene, endPlane, ref mesh_m, "planeEnd");
+
+                    }
                 }
 
                 currentState = State.Start;
@@ -145,17 +194,18 @@ namespace SparrowHawk.Interaction
                         for (int i = 0; i < pointMarkers.Count; i++)
                         {
                             SceneNode sn = pointMarkers[i];
-                            mScene.staticGeometry.remove(ref sn);
+                            mScene.tableGeometry.remove(ref sn);
                         }
                         pointMarkers.Clear();
                         foreach (ControlPoint cp in closedCurve.Points)
                         {
-                            SceneNode sn = Util.MarkPointSN(ref mScene.staticGeometry, Util.platformToVRPoint(ref mScene, new OpenTK.Vector3((float)cp.Location.X, (float)cp.Location.Y, (float)cp.Location.Z)), 0, 1, 0);
+                            //rotation inverted before visualizing
+                            SceneNode sn = Util.MarkPointSN(ref mScene.tableGeometry, Util.transformPoint(mScene.tableGeometry.transform.Inverted(), Util.platformToVRPoint(ref mScene, new OpenTK.Vector3((float)cp.Location.X, (float)cp.Location.Y, (float)cp.Location.Z))), 0, 1, 0);
                             pointMarkers.Add(sn);
                         }
 
                         //render the rhino curve
-                        PolylineCurve polyline = closedCurve.ToPolyline(0, 0, 0, 0, 0, 1, 1, 0, true);
+                        polyline = closedCurve.ToPolyline(0, 0, 0, 0, 0, 1, 1, 0, true);
                         if (stroke == null)
                         {
                             for (int i = 0; i < polyline.PointCount; i++)
@@ -178,7 +228,7 @@ namespace SparrowHawk.Interaction
                     }
 
                     //visualize the projection point on the plane
-                    OpenTK.Matrix4 t = OpenTK.Matrix4.CreateTranslation(projectP);
+                    OpenTK.Matrix4 t = OpenTK.Matrix4.CreateTranslation(Util.transformPoint(mScene.tableGeometry.transform.Inverted(), projectP));
                     t.Transpose();
                     drawPoint.transform = t;
                     targetPSN = mScene.brepToSceneNodeDic[rhinoPlane.Id];
@@ -215,6 +265,35 @@ namespace SparrowHawk.Interaction
 
                     surfaceID = Util.addSceneNode(ref mScene, curve_s, ref mesh_m);
                 }
+                else if (type == "Sweep-rail")
+                {
+                    //covert from Nurbcurvie to curve                 
+                    Plane planeStart = new Plane(polyline.PointAtStart, polyline.TangentAtStart);
+                    PlaneSurface planeStart_surface = new PlaneSurface(planeStart,
+                      new Interval(-30, 30),
+                      new Interval(-30, 30));
+
+                    Plane planeEnd = new Plane(polyline.PointAtEnd, polyline.TangentAtEnd);
+                    PlaneSurface planeEnd_surface = new PlaneSurface(planeEnd,
+                      new Interval(-30, 30),
+                      new Interval(-30, 30));
+
+                    Brep startPlane = Brep.CreateFromSurface(planeStart_surface);
+                    Brep endPlane = Brep.CreateFromSurface(planeEnd_surface);
+
+                    if (startPlane != null && endPlane != null)
+                    {
+                        if(sGuid != Guid.Empty && eGuid != Guid.Empty)
+                        {
+                            Util.removeSceneNode(ref mScene, sGuid);
+                            Util.removeSceneNode(ref mScene, eGuid);
+
+                        }
+                        sGuid = Util.addSceneNode(ref mScene, startPlane, ref mesh_m, "planeStart");
+                        eGuid = Util.addSceneNode(ref mScene, endPlane, ref mesh_m, "planeEnd");
+
+                    }
+                }
 
                 isSnap = false;
                 currentState = State.Start;
@@ -223,12 +302,17 @@ namespace SparrowHawk.Interaction
 
         protected override void onClickOculusAX(ref VREvent_t vrEvent)
         {
-            if(type == "Revolve")
+            if (type == "Revolve")
             {
                 Line axis = new Line(new Point3d(0, 0, 0), new Point3d(0, 0, 1));
                 RevSurface revsrf = RevSurface.Create(closedCurve, axis);
                 Brep brepRevolve = Brep.CreateFromRevSurface(revsrf, true, true);
                 Util.addSceneNode(ref mScene, brepRevolve, ref mesh_m, "aprint");
+            }
+            else if(type.Contains("Sweep-rail"))
+            {
+                mScene.popInteraction();
+                mScene.pushInteraction(new SweepShapeCircle(ref mScene, true, closedCurve, sGuid, eGuid));
             }
             else if (type.Contains("Sweep2"))
             {

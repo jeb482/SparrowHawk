@@ -108,7 +108,9 @@ namespace SparrowHawk.Geometry
 
                 }*/
 
+                //seperate the data and visualization
                 OpenTK.Vector3 p = Util.platformToVRPoint(ref mScene, rp);
+                p = Util.transformPoint(mScene.tableGeometry.transform.Inverted(), p);
                 vertices_array.Add(p.X);
                 vertices_array.Add(p.Y);
                 vertices_array.Add(p.Z);

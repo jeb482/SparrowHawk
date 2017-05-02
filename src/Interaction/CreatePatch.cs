@@ -23,7 +23,7 @@ namespace SparrowHawk.Interaction
         public CreatePatch(ref Scene s)
         {
             mScene = s;
-            stroke_g = new Geometry.GeometryStroke();
+            stroke_g = new Geometry.GeometryStroke(ref mScene);
             stroke_m = new Material.SingleColorMaterial(1, 0, 0, 1);
             mesh_m = new Material.RGBNormalMaterial(.5f);
             currentState = State.READY;
@@ -33,7 +33,7 @@ namespace SparrowHawk.Interaction
         public CreatePatch(ref Scene s, bool drawOnP)
         {
             mScene = s;
-            stroke_g = new Geometry.GeometryStroke();
+            stroke_g = new Geometry.GeometryStroke(ref mScene);
             stroke_m = new Material.SingleColorMaterial(1, 0, 0, 1);
             mesh_m = new Material.RGBNormalMaterial(.5f);
             currentState = State.READY;

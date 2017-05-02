@@ -32,7 +32,7 @@ namespace SparrowHawk.Interaction
         public Revolve(ref Scene s, bool drawOnP)
         {
             mScene = s;
-            stroke_g = new Geometry.GeometryStroke();
+            stroke_g = new Geometry.GeometryStroke(ref mScene);
             stroke_m = new Material.SingleColorMaterial(1, 0, 0, 1);
             mesh_m = new Material.RGBNormalMaterial(0.5f);
             currentState = State.READY;
@@ -66,6 +66,9 @@ namespace SparrowHawk.Interaction
                     // -y_rhino = z_gl, z_rhino = y_gl and unit conversion
                     // OpenTK.Vector3 p = Util.transformPoint(Util.mGLToRhino, point*1000);              
                     //curvePoints.Add(new Point3d(p.X, p.Y, p.Z));
+                    //TODO: point is not the real position we want, we want rotation * point
+                    //testing
+                    //OpenTK.Vector3 p = Util.transformPoint(mScene.tableGeometry.transform, point);
                     curvePoints.Add(Util.openTkToRhinoPoint(Util.vrToPlatformPoint(ref mScene, point)));
                 }
 
@@ -118,7 +121,7 @@ namespace SparrowHawk.Interaction
                 //testing edit point interaction
                 if (onPlane && revolveCurve!=null)
                 {
-                    List<NurbsCurve> curveL = new List<NurbsCurve>();
+                    List<Curve> curveL = new List<Curve>();
                     curveL.Add(revolveCurve);
                     mScene.popInteraction();
                     mScene.pushInteraction(new EditPoint(ref mScene, ref targetPRhObj, true, curveL, Guid.Empty, "Revolve"));

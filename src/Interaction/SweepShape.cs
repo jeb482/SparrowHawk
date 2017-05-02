@@ -23,7 +23,7 @@ namespace SparrowHawk.Interaction
         public SweepShape(ref Scene s)
         {
             mScene = s;
-            stroke_g = new Geometry.GeometryStroke();
+            stroke_g = new Geometry.GeometryStroke(ref mScene);
             stroke_m = new Material.SingleColorMaterial(1, 0, 0, 1);
             mesh_m = new Material.RGBNormalMaterial(.5f);
             currentState = State.READY;
@@ -37,7 +37,7 @@ namespace SparrowHawk.Interaction
             eGuid = endGuid;
 
             mScene = s;
-            stroke_g = new Geometry.GeometryStroke();
+            stroke_g = new Geometry.GeometryStroke(ref mScene);
             stroke_m = new Material.SingleColorMaterial(1, 0, 0, 1);
             mesh_m = new Material.RGBNormalMaterial(0.5f);
             currentState = State.READY;
@@ -221,7 +221,7 @@ namespace SparrowHawk.Interaction
                 renderSweep();
                 if (closedCurve != null)
                 {
-                    List<NurbsCurve> curveL = new List<NurbsCurve>();
+                    List<Curve> curveL = new List<Curve>();
                     curveL.Add(closedCurve);
                     curveL.Add(railCurve);
                     mScene.popInteraction();

@@ -23,7 +23,7 @@ namespace SparrowHawk.Interaction
         {
 
             mScene = s;
-            stroke_g = new Geometry.GeometryStroke();
+            stroke_g = new Geometry.GeometryStroke(ref mScene);
             stroke_m = new Material.SingleColorMaterial(1, 0, 0, 1);
             mesh_m = new Material.RGBNormalMaterial(.5f);
             currentState = State.READY;
@@ -34,7 +34,7 @@ namespace SparrowHawk.Interaction
         {
 
             mScene = s;
-            stroke_g = new Geometry.GeometryStroke();
+            stroke_g = new Geometry.GeometryStroke(ref mScene);
             stroke_m = new Material.SingleColorMaterial(1, 0, 0, 1);
             mesh_m = new Material.RGBNormalMaterial(.5f);
             currentState = State.READY;
@@ -59,7 +59,7 @@ namespace SparrowHawk.Interaction
         public Sweep2(ref Scene s, ref Rhino.Geometry.Brep brep)
         {
             mScene = s;
-            stroke_g = new Geometry.GeometryStroke();
+            stroke_g = new Geometry.GeometryStroke(ref mScene);
             stroke_m = new Material.SingleColorMaterial(1, 0, 0, 1);
             mesh_m = new Material.SingleColorMaterial(0, 1, 0, 1);
             closedCurve = brep.Curves3D.ElementAt(0);
@@ -90,9 +90,10 @@ namespace SparrowHawk.Interaction
             if (curvePoints.Count >= 2)
             {
                 // only curve works !!
-                Rhino.Geometry.Curve rail = Rhino.Geometry.Curve.CreateInterpolatedCurve(curvePoints.ToArray(), 3);
+                //Rhino.Geometry.Curve rail = Rhino.Geometry.Curve.CreateInterpolatedCurve(curvePoints.ToArray(), 3);
                 //Rhino.Geometry.NurbsCurve rail = Rhino.Geometry.NurbsCurve.Create(true, 3, curvePoints.ToArray());
                 //
+                /*
                 Plane planeStart = new Plane(rail.PointAtStart, rail.TangentAtStart);
                 PlaneSurface planeStart_surface = new PlaneSurface(planeStart,
                   new Interval(-30, 30),
@@ -118,9 +119,26 @@ namespace SparrowHawk.Interaction
                     //mScene.pushInteraction(new SweepShape(ref mScene, true, rail, sGuid, eGuid));
                     mScene.pushInteraction(new SweepShapeCircle(ref mScene, true, rail, sGuid, eGuid));
                 }
+                */
+                //clear the stroke
+                foreach (SceneNode sn in mScene.tableGeometry.children)
+                {
+                    if (sn.guid == strokeId)
+                    {
+                        mScene.tableGeometry.children.Remove(sn);
+                        break;
+                    }
+                }
 
+                Rhino.Geometry.NurbsCurve rail = Rhino.Geometry.NurbsCurve.Create(false, 3, curvePoints.ToArray());
+                if (onPlane && rail != null)
+                {
+                    List<Curve> curveL = new List<Curve>();
+                    curveL.Add(rail);
+                    mScene.popInteraction();
+                    mScene.pushInteraction(new EditPoint(ref mScene, ref targetPRhObj, true, curveL, Guid.Empty, "Sweep-rail"));
+                }
 
-               
 
             }
         }

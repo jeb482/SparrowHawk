@@ -213,6 +213,7 @@ namespace SparrowHawk
 
         public static SceneNode MarkPointSN(ref SceneNode node, OpenTK.Vector3 p, float r, float g, float b)
         {
+            // p is already rotation inverted.
             Geometry.Geometry geo = new Geometry.PointMarker(p);
             Material.Material m = new Material.SingleColorMaterial(r, g, b, 1);
             SceneNode child = new SceneNode("Point", ref geo, ref m);
@@ -273,8 +274,8 @@ namespace SparrowHawk
             {
 
                 //rhino to platform
-                //m = scene.vrToRobot.Inverted() * scene.robotToPlatform.Inverted() * scene.platformRotation.Inverted() * m;
-                m = scene.tableGeometry.transform.Inverted() * scene.vrToRobot.Inverted() * scene.robotToPlatform.Inverted() * m;
+                m = scene.vrToRobot.Inverted() * scene.robotToPlatform.Inverted() * scene.platformRotation.Inverted() * m;
+                //m = scene.tableGeometry.transform.Inverted() * scene.vrToRobot.Inverted() * scene.robotToPlatform.Inverted() * m;
             }
 
 
@@ -295,7 +296,7 @@ namespace SparrowHawk
                 //p = Util.transformPoint(scene.platformRotation.Inverted(), p);
                 p = Util.transformPoint(scene.robotToPlatform.Inverted(), p);
                 p = Util.transformPoint(scene.vrToRobot.Inverted(), p);
-                p = Util.transformPoint(scene.tableGeometry.transform.Inverted(), p);
+                //p = Util.transformPoint(scene.tableGeometry.transform.Inverted(), p);
             }
 
             
@@ -316,7 +317,7 @@ namespace SparrowHawk
                 //v = Util.transformVec(scene.platformRotation.Inverted(), v);
                 v = Util.transformVec(scene.robotToPlatform.Inverted(), v);
                 v = Util.transformVec(scene.vrToRobot.Inverted(), v);
-                v = Util.transformVec(scene.tableGeometry.transform.Inverted(), v);
+                //v = Util.transformVec(scene.tableGeometry.transform.Inverted(), v);
             }
 
            
