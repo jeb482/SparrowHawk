@@ -343,11 +343,11 @@ namespace SparrowHawk.Interaction
                     {
                         case 0:
                             mScene.popInteraction();
-                            mScene.pushInteraction(new Loft(ref mScene));
+                            mScene.pushInteraction(new CreatePatch(ref mScene));
                             break;
                         case 1:
                             mScene.popInteraction();
-                            mScene.pushInteraction(new CreateCylinder(ref mScene));
+                            mScene.pushInteraction(new Sweep(ref mScene));
                             break;
                         case 2:
                             mScene.popInteraction();

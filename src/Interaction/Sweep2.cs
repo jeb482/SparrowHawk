@@ -43,9 +43,22 @@ namespace SparrowHawk.Interaction
 
             if (onPlane)
             {
+                //clear previous drawpoint
+                if (mScene.tableGeometry.children.Count > 0)
+                {
+                    foreach (SceneNode sn in mScene.tableGeometry.children)
+                    {
+                        if (sn.name == "drawPoint")
+                        {
+                            mScene.tableGeometry.children.Remove(sn);
+                            break;
+                        }
+                    }
+                }
+
                 Geometry.Geometry geo = new Geometry.PointMarker(new OpenTK.Vector3(0, 0, 0));
                 Material.Material m = new Material.SingleColorMaterial(250 / 255, 128 / 255, 128 / 255, 0.5f);
-                drawPoint = new SceneNode("Point", ref geo, ref m);
+                drawPoint = new SceneNode("drawPoint", ref geo, ref m);
                 drawPoint.transform = new OpenTK.Matrix4(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1);
                 mScene.tableGeometry.add(ref drawPoint);
 
@@ -130,7 +143,7 @@ namespace SparrowHawk.Interaction
                     }
                 }
 
-                Rhino.Geometry.NurbsCurve rail = Rhino.Geometry.NurbsCurve.Create(false, 3, curvePoints.ToArray());
+                Rhino.Geometry.Curve rail = Rhino.Geometry.Curve.CreateInterpolatedCurve(curvePoints.ToArray(), 3);
                 if (onPlane && rail != null)
                 {
                     List<Curve> curveL = new List<Curve>();

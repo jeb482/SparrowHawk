@@ -17,6 +17,7 @@ namespace SparrowHawk.Interaction
         //Rhino.Geometry.NurbsCurve closedCurve;
         Rhino.Geometry.Curve closedCurve;
         List<Point3d> curvePoints = new List<Point3d>();
+        Guid planGuid;
 
         public Sweep(ref Scene s)
         {
@@ -25,6 +26,18 @@ namespace SparrowHawk.Interaction
             stroke_g = new Geometry.GeometryStroke(ref mScene);
             stroke_m = new Material.SingleColorMaterial(1, 0, 0, 1);
             mesh_m = new Material.RGBNormalMaterial(.5f);
+            currentState = State.READY;
+
+        }
+
+        public Sweep(ref Scene s, Guid pid)
+        {
+
+            mScene = s;
+            stroke_g = new Geometry.GeometryStroke(ref mScene);
+            stroke_m = new Material.SingleColorMaterial(1, 0, 0, 1);
+            mesh_m = new Material.RGBNormalMaterial(.5f);
+            planGuid = pid;
             currentState = State.READY;
 
         }
@@ -66,18 +79,15 @@ namespace SparrowHawk.Interaction
                 //get the shape  first
                 Curve[] overlap_curves;
                 Point3d[] inter_points;
-                Rhino.DocObjects.ObjectEnumeratorSettings settings = new Rhino.DocObjects.ObjectEnumeratorSettings();
-                settings.ObjectTypeFilter = Rhino.DocObjects.ObjectType.Brep;
-                foreach (Rhino.DocObjects.RhinoObject rhObj in mScene.rhinoDoc.Objects.GetObjectList(settings))
-                {
-                    if (rhObj.Attributes.Name == "plane")
-                        continue;
 
-                    if (Intersection.CurveBrep(rail, rhObj.Geometry as Brep, mScene.rhinoDoc.ModelAbsoluteTolerance, out overlap_curves, out inter_points))
+                if (planGuid != Guid.Empty)
+                {
+                    Rhino.DocObjects.RhinoObject rhObjPlane = mScene.rhinoDoc.Objects.Find(planGuid);
+                    if (Intersection.CurveBrep(rail, rhObjPlane.Geometry as Brep, mScene.rhinoDoc.ModelAbsoluteTolerance, out overlap_curves, out inter_points))
                     {
                         if (overlap_curves.Length > 0 || inter_points.Length > 0)
                         {
-                            closedCurve = ((Brep)rhObj.Geometry).Curves3D.ElementAt(0);
+                            closedCurve = ((Brep)rhObjPlane.Geometry).Curves3D.ElementAt(0);
                             //testing open/close curve
                             closedCurve.SetEndPoint(closedCurve.PointAtStart);
 
@@ -87,14 +97,45 @@ namespace SparrowHawk.Interaction
                             if (brep != null)
                             {
                                 Util.addSceneNode(ref mScene, brep, ref mesh_m, "aprint");
-                                Util.removeSceneNode(ref mScene, rhObj.Id);
+                                Util.removeSceneNode(ref mScene, rhObjPlane.Id);
                                 mScene.rhinoDoc.Views.Redraw();
                             }
-                            break;
+                            
                         }
                     }
                 }
+                else
+                {
 
+                    Rhino.DocObjects.ObjectEnumeratorSettings settings = new Rhino.DocObjects.ObjectEnumeratorSettings();
+                    settings.ObjectTypeFilter = Rhino.DocObjects.ObjectType.Brep;
+                    foreach (Rhino.DocObjects.RhinoObject rhObj in mScene.rhinoDoc.Objects.GetObjectList(settings))
+                    {
+                        if (rhObj.Attributes.Name == "plane")
+                            continue;
+
+                        if (Intersection.CurveBrep(rail, rhObj.Geometry as Brep, mScene.rhinoDoc.ModelAbsoluteTolerance, out overlap_curves, out inter_points))
+                        {
+                            if (overlap_curves.Length > 0 || inter_points.Length > 0)
+                            {
+                                closedCurve = ((Brep)rhObj.Geometry).Curves3D.ElementAt(0);
+                                //testing open/close curve
+                                closedCurve.SetEndPoint(closedCurve.PointAtStart);
+
+                                Brep[] breps = Brep.CreateFromSweep(rail, closedCurve, false, mScene.rhinoDoc.ModelAbsoluteTolerance);
+                                Brep brep = breps[0];
+
+                                if (brep != null)
+                                {
+                                    Util.addSceneNode(ref mScene, brep, ref mesh_m, "aprint");
+                                    Util.removeSceneNode(ref mScene, rhObj.Id);
+                                    mScene.rhinoDoc.Views.Redraw();
+                                }
+                                break;
+                            }
+                        }
+                    }
+                }
             }
         }
 

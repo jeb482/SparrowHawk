@@ -43,6 +43,8 @@ namespace SparrowHawk.Interaction
         Guid sGuid;
         Guid eGuid;
 
+        float mimD = 1000000f;
+
         public EditPoint(ref Scene scene)
         {
             mScene = scene;
@@ -56,9 +58,22 @@ namespace SparrowHawk.Interaction
             onPlane = drawOnP;
             if (onPlane)
             {
+                //clear previous drawpoint
+                if (mScene.tableGeometry.children.Count > 0)
+                {
+                    foreach (SceneNode sn in mScene.tableGeometry.children)
+                    {
+                        if (sn.name == "drawPoint")
+                        {
+                            mScene.tableGeometry.children.Remove(sn);
+                            break;
+                        }
+                    }
+                }
+
                 Geometry.Geometry geo = new Geometry.PointMarker(new OpenTK.Vector3(0, 0, 0));
                 Material.Material m = new Material.SingleColorMaterial(250 / 255, 128 / 255, 128 / 255, 1);
-                drawPoint = new SceneNode("Point", ref geo, ref m);
+                drawPoint = new SceneNode("drawPoint", ref geo, ref m);
                 drawPoint.transform = new OpenTK.Matrix4(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1);
                 mScene.tableGeometry.add(ref drawPoint);
 
@@ -153,28 +168,52 @@ namespace SparrowHawk.Interaction
                 if (rayIntersections != null)
                 {
                     projectP = Util.platformToVRPoint(ref mScene, new OpenTK.Vector3((float)rayIntersections[0].X, (float)rayIntersections[0].Y, (float)rayIntersections[0].Z));
-
+                    
                     if (currentState == State.Start)
                     {
+                        mimD = 1000000f;
+                        OpenTK.Vector3 snapP = new OpenTK.Vector3();
                         for (int i = 0; i < closedCurve.Points.Count; i++)
                         {
                             ControlPoint cp = closedCurve.Points.ElementAt(i);
                             OpenTK.Vector3 pVR = Util.platformToVRPoint(ref mScene, new OpenTK.Vector3((float)cp.Location.X, (float)cp.Location.Y, (float)cp.Location.Z));
-
+                            float distance = (float)Math.Sqrt(Math.Pow(projectP.X - pVR.X, 2) + Math.Pow(projectP.Y - pVR.Y, 2) + Math.Pow(projectP.Z - pVR.Z, 2));
                             //snap to point
-                            if (Math.Sqrt(Math.Pow(projectP.X - pVR.X, 2) + Math.Pow(projectP.Y - pVR.Y, 2) + Math.Pow(projectP.Z - pVR.Z, 2)) < 0.03)
+                            if (distance <= 0.03 && distance <= mimD)
                             {
-                                projectP = pVR;
+                                mimD = distance;
+                                snapP = pVR;
                                 snapIndex = i;
-                                isSnap = true;
-                                break;
                             }
-                            else
-                            {
-                                isSnap = false;
-                            }
-
+                            
                         }
+
+                        if(mimD <= 0.03f)
+                        {
+                            isSnap = true;
+                            projectP = snapP;
+                            for (int i = 0; i < pointMarkers.Count; i++)
+                            {
+                                if (i == snapIndex)
+                                {
+                                    pointMarkers[i].material = new Material.SingleColorMaterial(250 / 255, 128 / 255, 128 / 255, 1);
+                                }else
+                                {
+                                    pointMarkers[i].material = new Material.SingleColorMaterial(0, 1, 0, 1);
+                                }
+                            }
+                                
+                        }
+                        else
+                        {
+                            isSnap = false;
+                            //set to default color
+                            foreach (SceneNode sn in pointMarkers)
+                            {
+                                sn.material = new Material.SingleColorMaterial(0,1,0,1);
+                            }
+                        }
+
                     }
                     else if (currentState == State.Snap)
                     {
@@ -190,6 +229,9 @@ namespace SparrowHawk.Interaction
                         {
                             closedCurve = Rhino.Geometry.NurbsCurve.Create(false, 3, curvePoints.ToArray());
                         }
+                        //prevent crash
+                        if (closedCurve == null)
+                            return;
                         //remove and visualize the new control points
                         for (int i = 0; i < pointMarkers.Count; i++)
                         {
@@ -228,9 +270,9 @@ namespace SparrowHawk.Interaction
                     }
 
                     //visualize the projection point on the plane
-                    OpenTK.Matrix4 t = OpenTK.Matrix4.CreateTranslation(Util.transformPoint(mScene.tableGeometry.transform.Inverted(), projectP));
-                    t.Transpose();
-                    drawPoint.transform = t;
+                    //OpenTK.Matrix4 t = OpenTK.Matrix4.CreateTranslation(Util.transformPoint(mScene.tableGeometry.transform.Inverted(), projectP));
+                    //t.Transpose();
+                    //drawPoint.transform = t;
                     targetPSN = mScene.brepToSceneNodeDic[rhinoPlane.Id];
                     targetPRhObj = rhinoPlane;
 
@@ -238,13 +280,21 @@ namespace SparrowHawk.Interaction
                 else
                 {
                     isSnap = false;
+                    targetPSN = null;
+                    targetPRhObj = null;
+                    projectP = new OpenTK.Vector3(100, 100, 100); //make it invisable
                 }
 
+                //visualize the projection point on the plane
+                OpenTK.Matrix4 t = OpenTK.Matrix4.CreateTranslation(Util.transformPoint(mScene.tableGeometry.transform.Inverted(), projectP));
+                t.Transpose();
+                drawPoint.transform = t;
             }
         }
 
         protected override void onClickOculusGrip(ref VREvent_t vrEvent)
         {
+            Rhino.RhinoApp.WriteLine("mim D: " + mimD);
             if (isSnap)
             {
                 currentState = State.Snap;

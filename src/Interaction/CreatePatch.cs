@@ -19,6 +19,7 @@ namespace SparrowHawk.Interaction
         List<NurbsCurve> curvelist = new List<NurbsCurve>();
         List<Guid> curveGuids = new List<Guid>();
         List<Point> allPoints = new List<Point>();
+        Guid planGuid;
 
         public CreatePatch(ref Scene s)
         {
@@ -65,7 +66,7 @@ namespace SparrowHawk.Interaction
             //Brep patchSurface = Brep.CreatePatch(curvelist, 4, 4, mScene.rhinoDoc.ModelAbsoluteTolerance);
             Brep patchSurface = Brep.CreatePatch(allPoints, 10, 10, mScene.rhinoDoc.ModelAbsoluteTolerance);
 
-            Util.addSceneNode(ref mScene, patchSurface, ref mesh_m);
+            planGuid = Util.addSceneNode(ref mScene, patchSurface, ref mesh_m);
             mScene.rhinoDoc.Views.Redraw();
 
             foreach (Guid id in curveGuids)
@@ -139,7 +140,11 @@ namespace SparrowHawk.Interaction
                 }*/
                 //render patch with points
                 renderPatch();
-                currentState = State.READY;           
+                currentState = State.READY;
+
+                //psuh sweep interation
+                mScene.popInteraction();
+                mScene.pushInteraction(new Sweep(ref mScene, planGuid));
             }
         }
 

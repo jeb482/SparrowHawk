@@ -49,6 +49,9 @@ namespace SparrowHawk
         DesignPlane xzPlane, xyPlane, yzPlane;
         DesignPlane2 xzPlane2, xyPlane2, yzPlane2;
 
+        Geometry.Geometry printStroke;
+        Material.Material printStroke_m;
+
         public VrGame(ref Rhino.RhinoDoc doc)
         {
             mDoc = doc;
@@ -251,7 +254,32 @@ namespace SparrowHawk
                         //calibrationTest();
                     }
                     break;
+                case SparrowHawkSignal.ESparrowHawkSigalType.LineType:
+                    if(s.data.Length >= 4)
+                    {
 
+                        if (s.data[0] == 0)
+                        {
+                            printStroke = new Geometry.GeometryStroke(ref mScene);
+                            OpenTK.Vector3 p1 = new Vector3(s.data[1], s.data[2], s.data[3]);
+                            p1 = Util.platformToVRPoint(ref mScene, p1);
+                            OpenTK.Vector3 p2 = new Vector3(s.data[4], s.data[5], s.data[6]);
+                            p2 = Util.platformToVRPoint(ref mScene, p2);
+
+                            ((Geometry.GeometryStroke)printStroke).addPoint(p1);
+                            ((Geometry.GeometryStroke)printStroke).addPoint(p2);
+                            SceneNode stroke = new SceneNode("PrintStroke", ref printStroke, ref printStroke_m);
+                            mScene.tableGeometry.add(ref stroke);
+
+                        }
+                        else
+                        {
+                            OpenTK.Vector3 p1 = new Vector3(s.data[1], s.data[2], s.data[3]);
+                            p1 = Util.platformToVRPoint(ref mScene, p1);
+                            ((Geometry.GeometryStroke)printStroke).addPoint(p1);
+                        }
+                    }
+                    break;
                 case SparrowHawkSignal.ESparrowHawkSigalType.EncoderType:
 
                     //for rhino object
@@ -399,6 +427,13 @@ namespace SparrowHawk
             mScene.leftControllerNode.add(ref point);
             point.transform = new Matrix4(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1);//mScene.mLeftControllerOffset;
 
+            g = new Geometry.GeometryStroke(ref mScene);
+            ((Geometry.GeometryStroke)g).addPoint(new Vector3(0, 0, 0));
+            ((Geometry.GeometryStroke)g).addPoint(new Vector3(0, 0, -1));
+            SceneNode rayTrace = new SceneNode("PrintStroke", ref g, ref m);
+            mScene.leftControllerNode.add(ref rayTrace);
+            rayTrace.transform = new Matrix4(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1);//mScene.mLeftControllerOffset;
+
             g = new Geometry.PointMarker(new Vector3(0, 0, 0));
             m = new Material.SingleColorMaterial(0, 0, 1, 1);
             point = new SceneNode("Right Cursor", ref g, ref m);
@@ -462,6 +497,10 @@ namespace SparrowHawk
             }
             mScene.rhinoDoc.Views.Redraw();
 
+            //testing visualize printStroke
+            printStroke = new Geometry.GeometryStroke(ref mScene);
+            printStroke_m = new Material.SingleColorMaterial(1, 1, 0, 1);
+
             return true;
 
             
@@ -510,9 +549,19 @@ namespace SparrowHawk
 
             if (e.KeyChar == 'J' || e.KeyChar == 'j')
             {
-                mScene.popInteraction();
+                //mScene.popInteraction();
                 //mScene.pushInteraction(new Interaction.EditPlane(ref mScene, ref xyPlane, ref xzPlane, ref yzPlane));
-                mScene.pushInteraction(new Interaction.RotatePlane(ref mScene, ref xyPlane2, ref xzPlane2, ref yzPlane2));
+                //mScene.pushInteraction(new Interaction.RotatePlane(ref mScene, ref xyPlane2, ref xzPlane2, ref yzPlane2));
+
+                //clear the stroke
+                foreach (SceneNode sn in mScene.tableGeometry.children)
+                {
+                    if (sn.name == "PrintStroke")
+                    {
+                        mScene.tableGeometry.children.Remove(sn);
+                        break;
+                    }
+                }
             }
 
             if (e.KeyChar == 'K' || e.KeyChar == 'k')

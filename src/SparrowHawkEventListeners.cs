@@ -101,6 +101,9 @@ namespace SparrowHawk
                 case "angle:":
                     s.type = SparrowHawkSignal.ESparrowHawkSigalType.EncoderType;
                     break;
+                case "stroke:":
+                    s.type = SparrowHawkSignal.ESparrowHawkSigalType.LineType;
+                    break;
             }
             mSignalQueue.Enqueue(s);
 

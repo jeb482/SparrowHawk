@@ -86,8 +86,8 @@ namespace SparrowHawk
 
             //-150 150
             PlaneSurface plane_surface = new PlaneSurface(plane,
-              new Interval(-140, 140),
-              new Interval(-140, 140));
+              new Interval(-160, 160),
+              new Interval(-160, 160));
             
             designPlane = Brep.CreateFromSurface(plane_surface);
             
