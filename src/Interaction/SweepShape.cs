@@ -194,7 +194,7 @@ namespace SparrowHawk.Interaction
 
         }
 
-        protected override void onClickOculusGrip(ref VREvent_t vrEvent)
+        protected override void onClickOculusTrigger(ref VREvent_t vrEvent)
         {
             curvePoints = new List<Point3d>();
             base.onClickOculusGrip(ref vrEvent);
@@ -202,7 +202,7 @@ namespace SparrowHawk.Interaction
 
         }
 
-        protected override void onReleaseOculusGrip(ref VREvent_t vrEvent)
+        protected override void onReleaseOculusTrigger(ref VREvent_t vrEvent)
         {
             Rhino.RhinoApp.WriteLine("oculus grip release event test");
             if (currentState == State.PAINT)

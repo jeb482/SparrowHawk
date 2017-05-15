@@ -52,9 +52,9 @@ namespace SparrowHawk
             mScene = scene;
             SetupStereoRenderTargets(ref mHMD);
             SetupDistortion();
+            //1344 * 1600
             vrRenderWidth = mRenderWidth;
             vrRenderHeight = mRenderHeight;
-
             //ovrvision
             if (enableAR)
             {
@@ -220,12 +220,14 @@ namespace SparrowHawk
 
             if (enableAR)
             {
+                //1344 * 1600  <-> 960*950
                 int ox = ((int)vrRenderWidth - ovrvision_controller.camWidth) / 2;
                 int oy = ((int)vrRenderHeight - ovrvision_controller.camHeight) / 2;
                 //ox+100 to deal with blur issue
                 GL.Viewport(ox + 100, oy, ovrvision_controller.camWidth, ovrvision_controller.camHeight);
                 //GL.Viewport(ox + 100, oy, (int)vrRenderWidth, (int)vrRenderHeight);
                 //GL.Viewport(0, 0, (int)vrRenderWidth, (int)vrRenderHeight);
+                //GL.Viewport(ox + 100, oy, (int)(ovrvision_controller.camHeight * 0.84), (int)ovrvision_controller.camHeight);
             }
             else
             {
@@ -253,6 +255,7 @@ namespace SparrowHawk
                 GL.Viewport(ox - 100, oy, ovrvision_controller.camWidth, ovrvision_controller.camHeight);
                 //GL.Viewport(ox - 100, oy, (int)vrRenderWidth, (int)vrRenderHeight);
                 //GL.Viewport(0, 0, (int)vrRenderWidth, (int)vrRenderHeight);
+                
             }
             else
             {

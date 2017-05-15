@@ -97,7 +97,8 @@ namespace SparrowHawk.Interaction
         {
             Line axis = new Line(new Point3d(0, 0, 0), new Point3d(0, 0, 1));
             RevSurface revsrf = RevSurface.Create(curve, axis);
-            Brep brepRevolve = Brep.CreateFromRevSurface(revsrf, true, true);
+
+            Brep brepRevolve = Brep.CreateFromRevSurface(revsrf, false, false);
             Util.addSceneNode(ref mScene, brepRevolve, ref mesh_m, "aprint");
         }
 
@@ -106,13 +107,13 @@ namespace SparrowHawk.Interaction
             base.draw(isTop);
         }
 
-        protected override void onClickOculusGrip(ref VREvent_t vrEvent)
+        protected override void onClickOculusTrigger(ref VREvent_t vrEvent)
         {
             curvePoints = new List<Point3d>();
-            base.onClickOculusGrip(ref vrEvent);
+            base.onClickOculusTrigger(ref vrEvent);
         }
 
-        protected override void onReleaseOculusGrip(ref VREvent_t vrEvent)
+        protected override void onReleaseOculusTrigger(ref VREvent_t vrEvent)
         {
             Rhino.RhinoApp.WriteLine("oculus grip release event test");
             if (currentState == State.PAINT)
@@ -129,7 +130,7 @@ namespace SparrowHawk.Interaction
                 //render after edit point interaction
                 renderRevolve();
                 //testing edit point interaction
-                if (onPlane && revolveCurve!=null)
+                if (onPlane && revolveCurve!=null && targetPRhObj != null)
                 {
                     List<Curve> curveL = new List<Curve>();
                     curveL.Add(revolveCurve);

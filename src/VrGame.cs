@@ -165,8 +165,8 @@ namespace SparrowHawk
             //default interaction
             if (mScene.interactionStackEmpty())
             {
-                //mScene.pushInteraction(new Interaction.PickPoint(ref mScene, ref controllerPoses)); // HUAISHU: Enable only this line for callibration. Afterwards, to switch to cylinder, press 'o' on the keyboard.
-                mScene.pushInteraction(new Interaction.PickPoint(ref mScene, ref robotCallibrationPoints));
+                mScene.pushInteraction(new Interaction.PickPoint(ref mScene, ref controllerPoses)); // HUAISHU: Enable only this line for callibration. Afterwards, to switch to cylinder, press 'o' on the keyboard.
+                //mScene.pushInteraction(new Interaction.PickPoint(ref mScene, ref robotCallibrationPoints));
                 //mScene.pushInteraction(new Interaction.MarkingMenu(ref mScene));
                 // mScene.pushInteraction(new Interaction.CreatePlaneA(ref mScene));
                 //mScene.pushInteraction(new Interaction.CreateCylinder(ref mScene)); 

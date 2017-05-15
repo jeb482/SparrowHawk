@@ -152,7 +152,12 @@ namespace SparrowHawk.Ovrvision
         public void initOVrvision()
         {
             Ovrvision = new COvrvision();
-            Ovrvision.useProcessingQuality = 0;	//DEMOSAIC & REMAP
+            Ovrvision.useProcessingQuality = 0; //DEMOSAIC & REMAP
+
+            //OV_CAMVR_FULL 	1280x960 @45fps x2
+            //OV_CAMVR_WIDE     960x950 @60fps x2
+            //OV_CAMVR_VGA      1280x800 @60fps x2
+            //OV_CAMVR_QVGA     640x480 @90fps x2
 
             if (Ovrvision.Open(COvrvision.OV_CAMVR_FULL))
             {
@@ -394,6 +399,9 @@ namespace SparrowHawk.Ovrvision
             float y0 = (Ovrvision.imageSizeH / 2);
             */
 
+            //TODO- update the camera matirx according to the resolution.
+            //Recompile the ovrvision.dll 
+
             //init new cameraMatrix
             _cameraMatrix_new.SetValue(0, 0, camMatirx_array[0]);
             _cameraMatrix_new.SetValue(0, 1, camMatirx_array[1]);
@@ -436,7 +444,7 @@ namespace SparrowHawk.Ovrvision
 
         public void setDefaultMatrixHC()
         {
-
+            
             glmVRtoMarker = new Matrix4(
                     39.63798f, -0.4131081f, -4.319901f, 2.642879f,
                     4.070388f, -0.8651507f, 39.60488f, 22.77811f,
@@ -459,6 +467,31 @@ namespace SparrowHawk.Ovrvision
                     -0.8116962f, 1.283939f, 39.97324f, 5.112743f,
                     0, 0, 0, 1
            );
+           
+           /*
+            glmVRtoMarker = new Matrix4(
+                    32.15127f, 0.346411f, -23.5402f, -5.860559f,
+                    23.62533f, -0.1350575f, 31.7945f, 40.53667f,
+                    -0.3756773f, -40.51973f, -0.2229949f, 58.98475f,
+                    0, 0, 0, 1
+           );
+
+
+            mHeadtoCam_L = new Matrix4(
+                    39.297f, 1.050882f, -6.047445f, 2.840308f,
+                    -2.483533f, 38.64155f, -8.83186f, -1.009811f,
+                   6.168161f, 9.866668f, 38.78663f, 3.756252f,
+                    0, 0, 0, 1
+           );
+
+
+            mHeadtoCam_R = new Matrix4(
+                    38.94378f, 1.557293f, -7.829716f, -0.5962353f,
+                    -3.054468f, 39.01528f, -6.937758f, -0.3480644f,
+                    7.908152f, 8.182682f, 38.85321f, 4.141853f,
+                    0, 0, 0, 1
+           );
+           */
 
             calib_status = 3;
 

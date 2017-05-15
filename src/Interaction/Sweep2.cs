@@ -89,81 +89,56 @@ namespace SparrowHawk.Interaction
         {
 
             //reduce the points in the curve first
-            simplifyCurve(ref ((Geometry.GeometryStroke)(stroke_g)).mPoints);
-
-            foreach (OpenTK.Vector3 point in reducePoints)
+            if (((Geometry.GeometryStroke)(stroke_g)).mPoints.Count >= 2)
             {
-                // -y_rhino = z_gl, z_rhino = y_gl
-                //OpenTK.Vector3 p = Util.transformPoint(Util.mGLToRhino, point);
-                ///curvePoints.Add(new Point3d(p.X, p.Y, p.Z));
-                curvePoints.Add(Util.openTkToRhinoPoint(Util.vrToPlatformPoint(ref mScene, point)));
-            }
 
-            //Rhino curve and extrude test
-            if (curvePoints.Count >= 2)
-            {
-                // only curve works !!
-                //Rhino.Geometry.Curve rail = Rhino.Geometry.Curve.CreateInterpolatedCurve(curvePoints.ToArray(), 3);
-                //Rhino.Geometry.NurbsCurve rail = Rhino.Geometry.NurbsCurve.Create(true, 3, curvePoints.ToArray());
-                //
-                /*
-                Plane planeStart = new Plane(rail.PointAtStart, rail.TangentAtStart);
-                PlaneSurface planeStart_surface = new PlaneSurface(planeStart,
-                  new Interval(-30, 30),
-                  new Interval(-30, 30));
+                simplifyCurve(ref ((Geometry.GeometryStroke)(stroke_g)).mPoints);
 
-                Rhino.Geometry.Vector3d enormal = rail.TangentAtEnd;
-                //enormal.Reverse();
-
-                Plane planeEnd = new Plane(rail.PointAtEnd, rail.TangentAtEnd);
-                PlaneSurface planeEnd_surface = new PlaneSurface(planeEnd,
-                  new Interval(-30, 30),
-                  new Interval(-30, 30));
-
-                startPlane = Brep.CreateFromSurface(planeStart_surface);
-                endPlane = Brep.CreateFromSurface(planeEnd_surface);
-
-                if (startPlane != null && endPlane != null)
+                foreach (OpenTK.Vector3 point in reducePoints)
                 {
-                    sGuid = Util.addSceneNode(ref mScene, startPlane, ref mesh_m, "planeStart");
-                    eGuid = Util.addSceneNode(ref mScene, endPlane, ref mesh_m, "planeEnd");
-
-                    mScene.popInteraction();
-                    //mScene.pushInteraction(new SweepShape(ref mScene, true, rail, sGuid, eGuid));
-                    mScene.pushInteraction(new SweepShapeCircle(ref mScene, true, rail, sGuid, eGuid));
+                    // -y_rhino = z_gl, z_rhino = y_gl
+                    //OpenTK.Vector3 p = Util.transformPoint(Util.mGLToRhino, point);
+                    ///curvePoints.Add(new Point3d(p.X, p.Y, p.Z));
+                    curvePoints.Add(Util.openTkToRhinoPoint(Util.vrToPlatformPoint(ref mScene, point)));
                 }
-                */
-                //clear the stroke
-                foreach (SceneNode sn in mScene.tableGeometry.children)
+
+                //Rhino curve and extrude test
+                if (curvePoints.Count >= 2)
                 {
-                    if (sn.guid == strokeId)
+
+                    //clear the stroke
+                    foreach (SceneNode sn in mScene.tableGeometry.children)
                     {
-                        mScene.tableGeometry.children.Remove(sn);
-                        break;
+                        if (sn.guid == strokeId)
+                        {
+                            mScene.tableGeometry.children.Remove(sn);
+                            break;
+                        }
                     }
+
+                    Rhino.Geometry.Curve rail = Rhino.Geometry.Curve.CreateInterpolatedCurve(curvePoints.ToArray(), 3);
+                    //check targetPRhObj to prevent the user draw outside of the plane and crash
+                    if (onPlane && rail != null && targetPRhObj != null)
+                    {
+                        List<Curve> curveL = new List<Curve>();
+                        curveL.Add(rail);
+                        mScene.popInteraction();
+                        mScene.pushInteraction(new EditPoint(ref mScene, ref targetPRhObj, true, curveL, Guid.Empty, "Sweep-rail"));
+                    }
+
+
                 }
-
-                Rhino.Geometry.Curve rail = Rhino.Geometry.Curve.CreateInterpolatedCurve(curvePoints.ToArray(), 3);
-                if (onPlane && rail != null)
-                {
-                    List<Curve> curveL = new List<Curve>();
-                    curveL.Add(rail);
-                    mScene.popInteraction();
-                    mScene.pushInteraction(new EditPoint(ref mScene, ref targetPRhObj, true, curveL, Guid.Empty, "Sweep-rail"));
-                }
-
-
             }
         }
 
-        protected override void onClickOculusGrip(ref VREvent_t vrEvent)
+        protected override void onClickOculusTrigger(ref VREvent_t vrEvent)
         {
             curvePoints = new List<Point3d>();
-            base.onClickOculusGrip(ref vrEvent);
+            base.onClickOculusTrigger(ref vrEvent);
 
         }
 
-        protected override void onReleaseOculusGrip(ref VREvent_t vrEvent)
+        protected override void onReleaseOculusTrigger(ref VREvent_t vrEvent)
         {
             Rhino.RhinoApp.WriteLine("oculus grip release event test");
             if (currentState == State.PAINT)

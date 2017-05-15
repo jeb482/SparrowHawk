@@ -216,7 +216,7 @@ namespace SparrowHawk
             // p is already rotation inverted.
             Geometry.Geometry geo = new Geometry.PointMarker(p);
             Material.Material m = new Material.SingleColorMaterial(r, g, b, 1);
-            SceneNode child = new SceneNode("Point", ref geo, ref m);
+            SceneNode child = new SceneNode("EditPoint", ref geo, ref m);
             child.transform = new OpenTK.Matrix4(1, 0, 0, p.X, 0, 1, 0, p.Y, 0, 0, 1, p.Z, 0, 0, 0, 1);
             node.add(ref child);
             return child;

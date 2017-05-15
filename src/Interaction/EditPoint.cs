@@ -13,7 +13,7 @@ namespace SparrowHawk.Interaction
     {
         public enum State
         {
-            Start = 0, Snap = 1
+            Start = 0, Snap = 1, End =2
         };
 
         protected State currentState;
@@ -108,7 +108,7 @@ namespace SparrowHawk.Interaction
                         ((Geometry.GeometryStroke)stroke_g2).addPoint(Util.platformToVRPoint(ref mScene, new OpenTK.Vector3((float)polyline.Point(i).X, (float)polyline.Point(i).Y, (float)polyline.Point(i).Z)));
 
                     }
-                    stroke = new SceneNode("Stroke2", ref stroke_g2, ref stroke_m2);
+                    stroke = new SceneNode("EditCurve", ref stroke_g2, ref stroke_m2);
                     mScene.tableGeometry.add(ref stroke);
                 }
 
@@ -149,6 +149,9 @@ namespace SparrowHawk.Interaction
 
         public override void draw(bool inTop)
         {
+            if (currentState == State.End)
+                return;
+
             if (onPlane)
             {
                 //ray casting to the pre-defind planes
@@ -255,7 +258,7 @@ namespace SparrowHawk.Interaction
                                 ((Geometry.GeometryStroke)stroke_g2).addPoint(Util.platformToVRPoint(ref mScene, new OpenTK.Vector3((float)polyline.Point(i).X, (float)polyline.Point(i).Y, (float)polyline.Point(i).Z)));
 
                             }
-                            stroke = new SceneNode("Stroke2", ref stroke_g2, ref stroke_m2);
+                            stroke = new SceneNode("EditCurve", ref stroke_g2, ref stroke_m2);
                             mScene.tableGeometry.add(ref stroke);
                         }
                         else
@@ -292,7 +295,7 @@ namespace SparrowHawk.Interaction
             }
         }
 
-        protected override void onClickOculusGrip(ref VREvent_t vrEvent)
+        protected override void onClickOculusTrigger(ref VREvent_t vrEvent)
         {
             Rhino.RhinoApp.WriteLine("mim D: " + mimD);
             if (isSnap)
@@ -301,7 +304,7 @@ namespace SparrowHawk.Interaction
             }
         }
 
-        protected override void onReleaseOculusGrip(ref VREvent_t vrEvent)
+        protected override void onReleaseOculusTrigger(ref VREvent_t vrEvent)
         {
             Rhino.RhinoApp.WriteLine("oculus grip release event test");
             if (currentState == State.Snap)
@@ -356,16 +359,53 @@ namespace SparrowHawk.Interaction
             {
                 Line axis = new Line(new Point3d(0, 0, 0), new Point3d(0, 0, 1));
                 RevSurface revsrf = RevSurface.Create(closedCurve, axis);
-                Brep brepRevolve = Brep.CreateFromRevSurface(revsrf, true, true);
+                Brep brepRevolve = Brep.CreateFromRevSurface(revsrf, false, false);
                 Util.addSceneNode(ref mScene, brepRevolve, ref mesh_m, "aprint");
+
+
+
+                //clear the curve and points
+                if (mScene.tableGeometry.children.Count > 0)
+                {
+                    // need to remove rerverse since the list update dynamically
+                    foreach (SceneNode sn in mScene.tableGeometry.children.Reverse<SceneNode>())
+                    {
+                        if (sn.name == "EditCurve" || sn.name == "drawPoint" || sn.name == "EditPoint")
+                        {
+                            mScene.tableGeometry.children.Remove(sn);
+                        }
+                    }
+                }
+
+                mScene.popInteraction();
+                currentState = State.End;
             }
             else if(type.Contains("Sweep-rail"))
             {
                 mScene.popInteraction();
                 mScene.pushInteraction(new SweepShapeCircle(ref mScene, true, closedCurve, sGuid, eGuid));
+                currentState = State.End;
             }
             else if (type.Contains("Sweep2"))
             {
+
+                //clear the curve and points
+                if (mScene.tableGeometry.children.Count > 0)
+                {
+                    // need to remove rerverse since the list update dynamically
+                    foreach (SceneNode sn in mScene.tableGeometry.children.Reverse<SceneNode>())
+                    {
+                        if (sn.name == "EditCurve" || sn.name == "drawPoint" || sn.name == "EditPoint")
+                        {
+                            mScene.tableGeometry.children.Remove(sn);
+                        }else if (sn.name == "planeStart" || sn.name == "planeEnd")
+                        {
+                            RhinoObject rhobj = mScene.SceneNodeToBrepDic[sn.guid];
+                            Util.removeSceneNode(ref mScene, rhobj.Id);
+                        }
+                    }
+                }
+
                 string sweepType;
 
                 if (type.Contains("start"))
@@ -401,7 +441,13 @@ namespace SparrowHawk.Interaction
                     //mScene.popInteraction();
                     //mScene.pushInteraction(new Sweep2(ref mScene));
                 }
+                mScene.popInteraction();
+                currentState = State.End;
             }
+
+            
+
+
         }
 
     }
