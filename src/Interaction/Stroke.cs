@@ -37,22 +37,16 @@ namespace SparrowHawk.Interaction
         private List<Point3d> rhihoPointList = new List<Point3d>();
         private Rhino.Geometry.Curve rcurve;
 
-        public Stroke()
+        public Stroke(ref Scene scene) : base(ref scene)
         {
-
-        }
-
-        public Stroke(ref Scene s)
-        {
-            mScene = s;
-            stroke_g = new Geometry.GeometryStroke(ref s);
+            stroke_g = new Geometry.GeometryStroke(ref mScene);
             stroke_m = new Material.SingleColorMaterial(1, 0, 0, 1);
             currentState = State.READY;
         }
-        public Stroke(ref Scene s, bool drawOnP)
+        public Stroke(ref Scene scene, bool drawOnP) : base(ref scene)
         {
-            mScene = s;
-            stroke_g = new Geometry.GeometryStroke(ref s);
+            mScene = scene;
+            stroke_g = new Geometry.GeometryStroke(ref mScene);
             stroke_m = new Material.SingleColorMaterial(1, 0, 0, 1);
             currentState = State.READY;
             onPlane = drawOnP;
@@ -85,10 +79,9 @@ namespace SparrowHawk.Interaction
 
         }
 
-        public Stroke(ref Scene s, uint devIndex)
-        {
-            mScene = s;
-            stroke_g = new Geometry.GeometryStroke(ref s);
+        public Stroke(ref Scene scene, uint devIndex) : base(ref scene)
+        { 
+            stroke_g = new Geometry.GeometryStroke(ref scene);
             stroke_m = new Material.SingleColorMaterial(1, 0, 0, 1);
             currentState = State.READY;
             primaryDeviceIndex = devIndex;
@@ -105,9 +98,9 @@ namespace SparrowHawk.Interaction
         /// GeometryStroke but C# will not allow this because of type safety.</param>
         /// <param name="currentState">The starting state. Probably == State.Paint</param>
         /// <param name="devIndex">The controller index responsible for this interaction.</param>
-        public Stroke(ref Scene s, ref Geometry.Geometry target, State state, uint devIndex)
+        public Stroke(ref Scene scene, ref Geometry.Geometry target, State state, uint devIndex) : base(ref scene)
         {
-            mScene = s;
+            mScene = scene;
             stroke_g = target;
             currentState = state;
             primaryDeviceIndex = devIndex;

@@ -16,22 +16,16 @@ namespace SparrowHawk.Interaction
         private Rhino.Geometry.NurbsCurve revolveCurve;
         List<Point3d> curvePoints = new List<Point3d>();
 
-        public Revolve()
-        {
 
-        }
-
-        public Revolve(ref Scene s)
+        public Revolve(ref Scene scene) : base(ref scene)
         {
-            mScene = s;
             stroke_m = new Material.SingleColorMaterial(1, 0, 0, 1);
             mesh_m = new Material.RGBNormalMaterial(0.5f);
 
         }
 
-        public Revolve(ref Scene s, bool drawOnP)
+        public Revolve(ref Scene scene, bool drawOnP) : base(ref scene)
         {
-            mScene = s;
             stroke_g = new Geometry.GeometryStroke(ref mScene);
             stroke_m = new Material.SingleColorMaterial(1, 0, 0, 1);
             mesh_m = new Material.RGBNormalMaterial(0.5f);

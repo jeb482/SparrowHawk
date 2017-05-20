@@ -21,12 +21,12 @@ namespace SparrowHawk
         String mTitleBase;
         uint mRenderWidth = 1280;
         uint mRenderHeight = 720;
-
+        bool mIsLefty;
 
         TrackedDevicePose_t[] renderPoseArray, gamePoseArray;
         DateTime mLastFrameTime;
         bool mSafeForRobot = false;
-
+        DateTime mLastTrackingTime;
         int mFrameCount;
         double frameRateTimer = 1;
 
@@ -39,7 +39,10 @@ namespace SparrowHawk
         //using opencv by Eric
         List<MCvPoint3D32f> robotCallibrationPoints_cv = new List<MCvPoint3D32f>();
         List<MCvPoint3D32f> vrCallibrationPoints_cv = new List<MCvPoint3D32f>();
-        List<OpenTK.Matrix4> controllerPoses = new List<OpenTK.Matrix4>();
+        int lastNumRightControllerPoses;
+        int lastNumLeftControllerPoses;
+        List<OpenTK.Matrix4> mRightControllerPoses = new List<OpenTK.Matrix4>();
+        List<OpenTK.Matrix4> mLeftControllerPoses = new List<OpenTK.Matrix4>();
         Matrix<double> mVRtoRobot;
         Matrix4 glmVRtoMarker;
         byte[] inliers;
@@ -52,46 +55,17 @@ namespace SparrowHawk
         Geometry.Geometry printStroke;
         Material.Material printStroke_m;
 
-        public VrGame(ref Rhino.RhinoDoc doc)
+        public VrGame(ref Rhino.RhinoDoc doc, bool isLefty = false)
         {
             mDoc = doc;
             Rhino.RhinoApp.WriteLine("The robot offset is: " + OfflineCalibration.solveForRobotOffsetVector(OfflineCalibration.getHuaishuRobotMeasurements()));
+            Rhino.RhinoApp.WriteLine("Working Directory: " + System.IO.Directory.GetCurrentDirectory());
+            mIsLefty = isLefty;
 
             if (init())
                 Rhino.RhinoApp.WriteLine("Initialization complete!");
 
-            Rhino.RhinoApp.WriteLine("Directory: " + System.IO.Directory.GetCurrentDirectory());
-            //Run();  
-
-            // Manual callibration
-
-            if (manualCallibration)
-            {
-                //robotCallibrationPoints.Add(new Vector3(0, 0, 0));
-                //robotCallibrationPoints.Add(new Vector3(0, 95.0f, 0));
-                //robotCallibrationPoints.Add(new Vector3(95.0f, 95.0f, 0));
-                //robotCallibrationPoints.Add(new Vector3(95.0f, 0, 0));
-                //robotCallibrationPoints.Add(new Vector3(0, 0, 95.0f));
-                //robotCallibrationPoints.Add(new Vector3(0, 95.0f, 95.0f));
-                //robotCallibrationPoints.Add(new Vector3(95.0f, 95.0f, 95.0f));
-                //robotCallibrationPoints.Add(new Vector3(95.0f, 0, 95.0f));
-
-                //using opencv by eric
-                robotCallibrationPoints_cv.Add(new MCvPoint3D32f(0, 0, 0));
-                robotCallibrationPoints_cv.Add(new MCvPoint3D32f(0, 95.0f, 0));
-                robotCallibrationPoints_cv.Add(new MCvPoint3D32f(95.0f, 95.0f, 0));
-                robotCallibrationPoints_cv.Add(new MCvPoint3D32f(95.0f, 0, 0));
-                robotCallibrationPoints_cv.Add(new MCvPoint3D32f(0, 0, 95.0f));
-                robotCallibrationPoints_cv.Add(new MCvPoint3D32f(0, 95.0f, 95.0f));
-                robotCallibrationPoints_cv.Add(new MCvPoint3D32f(95.0f, 95.0f, 95.0f));
-                robotCallibrationPoints_cv.Add(new MCvPoint3D32f(95.0f, 0, 95.0f));
-
-
-                //               mScene.mInteractionStack.Pop();
-                mScene.pushInteraction(new Interaction.PickPoint(ref mScene, ref vrCallibrationPoints));
-            }
-
-
+            mScene.pushInteraction(new Interaction.PickPoint(ref mScene, ref vrCallibrationPoints));
         }
 
         /**
@@ -111,7 +85,6 @@ namespace SparrowHawk
                 var device = gamePoseArray[i];
                 if (device.bPoseIsValid)
                 {
-                    // TODO: Store it
                     mScene.mDevicePose[i] = Util.steamVRMatrixToMatrix4(mScene.mTrackedDevices[i].mDeviceToAbsoluteTracking);
                     mHMD.GetTrackedDeviceClass(i);
                     if (mScene.mDeviceClassChar[i] == 0)
@@ -124,11 +97,12 @@ namespace SparrowHawk
                                 if (name.ToLower().Contains("left"))
                                 {
                                     mScene.leftControllerIdx = (int)i;
-                                    Geometry.Geometry g = new Geometry.Geometry(@"C:/workspace/SparrowHawk/src/resources/external_controller01_left.obj");
-                                    Material.Material m = new Material.RGBNormalMaterial(.5f);
-                                    SceneNode s = new SceneNode("LeftControllerModel", ref g, ref m);
-                                    s.transform = Util.createTranslationMatrix(-mScene.mLeftControllerOffset.M14, -mScene.mLeftControllerOffset.M24, -mScene.mLeftControllerOffset.M34);
-                                    mScene.leftControllerNode.add(ref s);
+                                    // Uncomment to show controller model.
+                                    //Geometry.Geometry g = new Geometry.Geometry(@"C:/workspace/SparrowHawk/src/resources/external_controller01_left.obj");
+                                    //Material.Material m = new Material.RGBNormalMaterial(.5f);
+                                    //SceneNode s = new SceneNode("LeftControllerModel", ref g, ref m);
+                                    //s.transform = Util.createTranslationMatrix(-mScene.mLeftControllerOffset.M14, -mScene.mLeftControllerOffset.M24, -mScene.mLeftControllerOffset.M34);
+                                    //mScene.leftControllerNode.add(ref s);
                                 }
                                 else if (name.ToLower().Contains("right"))
                                     mScene.rightControllerIdx = (int)i;
@@ -159,30 +133,34 @@ namespace SparrowHawk
                 mScene.rightControllerNode.transform = mScene.mDevicePose[mScene.rightControllerIdx] * mScene.mRightControllerOffset;
         }
 
+        protected void updateControllerCallibration()
+        {
+            if (mLeftControllerPoses.Count >= 4 && mLeftControllerPoses.Count > lastNumLeftControllerPoses)
+            {
+                lastNumLeftControllerPoses = mLeftControllerPoses.Count;
+                Vector3 x = Util.solveForOffsetVector(mLeftControllerPoses);
+                Rhino.RhinoApp.WriteLine("Left controller offset: " + x);
+            }
+            if (mRightControllerPoses.Count >= 4 && mRightControllerPoses.Count > lastNumRightControllerPoses)
+            {
+                lastNumRightControllerPoses = mRightControllerPoses.Count;
+                Vector3 x = Util.solveForOffsetVector(mRightControllerPoses);
+                Rhino.RhinoApp.WriteLine("Right controller offset: " + x);
+            }
+        }
+
         protected void handleInteractions()
         {
 
             //default interaction
             if (mScene.interactionStackEmpty())
-            {
-                mScene.pushInteraction(new Interaction.PickPoint(ref mScene, ref controllerPoses)); // HUAISHU: Enable only this line for callibration. Afterwards, to switch to cylinder, press 'o' on the keyboard.
-                //mScene.pushInteraction(new Interaction.PickPoint(ref mScene, ref robotCallibrationPoints));
-                //mScene.pushInteraction(new Interaction.MarkingMenu(ref mScene));
-                // mScene.pushInteraction(new Interaction.CreatePlaneA(ref mScene));
-                //mScene.pushInteraction(new Interaction.CreateCylinder(ref mScene)); 
-                //mScene.mInteractionStack.Push(new Interaction.Stroke(ref mScene));
-            }
+                mScene.pushInteraction(new Interaction.PickPoint(ref mScene));
+         
 
             Interaction.Interaction current_i = mScene.peekInteraction();
             current_i.handleInput();
             current_i.draw(true);
 
-            if (controllerPoses.Count >= 4)
-            {
-                Vector3 x = Util.solveForOffsetVector(controllerPoses);
-                Rhino.RhinoApp.WriteLine("Controller offset: " + x);
-            }
-            
             if (manualCallibration && vrCallibrationPoints.Count == 8)
             {
                 manualCallibration = false; // HACK to not reset my cylinder forever.
@@ -224,7 +202,8 @@ namespace SparrowHawk
             base.OnUpdateFrame(e);
             if (mFrameCount >= 30)
             {
-                this.Title = mTitleBase + " - " + 1 / ((TimeSpan)(System.DateTime.Now - mLastFrameTime)).TotalSeconds + "fps.";
+                this.Title = mTitleBase + " - " + mFrameCount / ((TimeSpan)(System.DateTime.Now - mLastTrackingTime)).TotalSeconds + "fps.";
+                mLastTrackingTime = DateTime.Now;
                 mFrameCount = 0;
             }
             mFrameCount += 1;
@@ -248,7 +227,7 @@ namespace SparrowHawk
                         //robotPoint /= 1000;
                         robotCallibrationPoints.Add(robotPoint);
                         Rhino.RhinoApp.WriteLine("add robotPoint: " + robotPoint.ToString());
-                        if (mScene.leftControllerIdx < 0)
+                        if (mIsLefty && mScene.leftControllerIdx < 0 || !mIsLefty && mScene.leftControllerIdx < 0)
                             break;
                         //adding vrCallibrationPoints by pressing v
                         //calibrationTest();
@@ -352,12 +331,13 @@ namespace SparrowHawk
             if (mScene.leftControllerShouldVibrate())
                 mHMD.TriggerHapticPulse((uint) mScene.leftControllerIdx, 0, (char) 127);
             if (mScene.rightControllerShouldVibrate())
-                mHMD.TriggerHapticPulse((uint)mScene.rightControllerIdx, 0, (char)127);
+                mHMD.TriggerHapticPulse((uint)mScene.rightControllerIdx, 0, (char) 127);
             MakeCurrent();
             updateMatrixPose();
             notifyRobotIfSafe();
             handleSignals();
             handleInteractions();
+            updateControllerCallibration();
             mRenderer.renderFrame();
             SwapBuffers();
         }
@@ -365,6 +345,79 @@ namespace SparrowHawk
         protected override void Dispose(bool manual)
         {
             base.Dispose(manual);
+        }
+
+        protected void setupScene()
+        {
+            mScene = new Scene(ref mDoc, ref mHMD);
+            mScene.mIsLefty = mIsLefty;
+            if (mStrDriver.Contains("oculus")) mScene.isOculus = true; else mScene.isOculus = false;
+            mHMD.GetRecommendedRenderTargetSize(ref mRenderWidth, ref mRenderHeight);
+
+            Geometry.Geometry g = new Geometry.Geometry("C:/workspace/Kestrel/resources/meshes/bunny.obj");
+
+            //Material.Material m = new Material.SingleColorMaterial(mDoc,1f,1f,1f,1f);
+            Material.Material m = new Material.RGBNormalMaterial(1);
+            //Material.Material m = new Material.SingleColorMaterial(1, 0, 1, 1);
+            SceneNode cube = new SceneNode("Triangle", ref g, ref m);
+            cube.transform = new Matrix4(1, 0, 0, 0, 0, 1, 0, 1, 0, 0, 1, 0, 0, 0, 0, 1);
+            mScene.tableGeometry.add(ref cube);
+
+            g = new Geometry.PointMarker(new Vector3(0, 1, 0));
+            m = new Material.SingleColorMaterial(1, 1, 1, 1);
+            SceneNode point = new SceneNode("Point 1", ref g, ref m);
+            mScene.staticGeometry.add(ref point);
+            point.transform = new Matrix4(1, 0, 0, 0, 0, 1, 0, 1, 0, 0, 1, 0, 0, 0, 0, 1);
+
+            // Left
+            //g = new Geometry.Geometry("C:/workspace/Kestrel/resources/meshes/bunny.obj");
+            //m = new Material.RGBNormalMaterial(1);
+            g = new Geometry.PointMarker(new Vector3(0, 0, 0));
+            m = new Material.SingleColorMaterial(1, 0, 0, 1);
+            point = new SceneNode("Left Cursor", ref g, ref m);
+            mScene.rightControllerNode.add(ref point);
+            point.transform = new Matrix4(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1);//mScene.mLeftControllerOffset;
+
+            g = new Geometry.GeometryStroke(ref mScene);
+            ((Geometry.GeometryStroke)g).addPoint(new Vector3(0, 0, 0));
+            ((Geometry.GeometryStroke)g).addPoint(new Vector3(0, 0, -1));
+            SceneNode rayTrace = new SceneNode("PrintStroke", ref g, ref m);
+            if (mIsLefty)
+                mScene.leftControllerNode.add(ref rayTrace);
+            else
+                mScene.rightControllerNode.add(ref rayTrace);
+            rayTrace.transform = new Matrix4(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1);//mScene.mLeftControllerOffset;
+
+            g = new Geometry.PointMarker(new Vector3(0, 0, 0));
+            m = new Material.SingleColorMaterial(0, 0, 1, 1);
+            point = new SceneNode("Right Cursor", ref g, ref m);
+            mScene.rightControllerNode.add(ref point);
+            point.transform = new Matrix4(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1);
+
+
+            xzPlane = new DesignPlane(ref mScene, 1);
+            xyPlane = new DesignPlane(ref mScene, 2);
+            yzPlane = new DesignPlane(ref mScene, 0);
+
+            //xzPlane2 = new DesignPlane2(ref mScene, "XZ");
+            //xyPlane2 = new DesignPlane2(ref mScene, "XY");
+            //yzPlane2 = new DesignPlane2(ref mScene, "YZ");
+
+            //Find the Rhino Object start with 'a' and render it
+            //Material.Material mesh_m = new Material.RGBNormalMaterial(1); ;
+            //Rhino.DocObjects.ObjectEnumeratorSettings settings = new Rhino.DocObjects.ObjectEnumeratorSettings();
+            //settings.ObjectTypeFilter = Rhino.DocObjects.ObjectType.Brep
+            //int obj_count = 0;
+            //foreach (Rhino.DocObjects.RhinoObject rhObj in mScene.rhinoDoc.Objects.GetObjectList(settings))
+            //{
+            //    if (rhObj.Attributes.Name.StartsWith("a"))
+            //    {
+            //        Util.addSceneNode(ref mScene, ((Surface)rhObj.Geometry).ToBrep(), ref mesh_m, rhObj.Attributes.Name);
+            //        mScene.rhinoDoc.Views.Redraw();
+            //    }
+            //    obj_count++;
+            //}
+            //Rhino.RhinoApp.WriteLine(obj_count + " breps found");
         }
 
         public bool init()
@@ -399,71 +452,8 @@ namespace SparrowHawk
 
             MakeCurrent();
 
-            mScene = new Scene(ref mDoc, ref mHMD);
-            if (mStrDriver.Contains("oculus")) mScene.isOculus = true; else mScene.isOculus = false;
-            mHMD.GetRecommendedRenderTargetSize(ref mRenderWidth, ref mRenderHeight);
-
-            Geometry.Geometry g = new Geometry.Geometry("C:/workspace/Kestrel/resources/meshes/bunny.obj");
-
-            //Material.Material m = new Material.SingleColorMaterial(mDoc,1f,1f,1f,1f);
-            Material.Material m = new Material.RGBNormalMaterial(1);
-            //Material.Material m = new Material.SingleColorMaterial(1, 0, 1, 1);
-            SceneNode cube = new SceneNode("Triangle", ref g, ref m);
-            cube.transform = new Matrix4(1, 0, 0, 0, 0, 1, 0, 1, 0, 0, 1, 0, 0, 0, 0, 1);
-            mScene.tableGeometry.add(ref cube);
-
-            g = new Geometry.PointMarker(new Vector3(0, 1, 0));
-            m = new Material.SingleColorMaterial(1, 1, 1, 1);
-            SceneNode point = new SceneNode("Point 1", ref g, ref m);
-            mScene.staticGeometry.add(ref point);
-            point.transform = new Matrix4(1, 0, 0, 0, 0, 1, 0, 1, 0, 0, 1, 0, 0, 0, 0, 1);
-
-            // Left
-            //g = new Geometry.Geometry("C:/workspace/Kestrel/resources/meshes/bunny.obj");
-            //m = new Material.RGBNormalMaterial(1);
-            g = new Geometry.PointMarker(new Vector3(0, 0, 0));
-            m = new Material.SingleColorMaterial(1, 0, 0, 1);
-            point = new SceneNode("Left Cursor", ref g, ref m);
-            mScene.leftControllerNode.add(ref point);
-            point.transform = new Matrix4(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1);//mScene.mLeftControllerOffset;
-
-            g = new Geometry.GeometryStroke(ref mScene);
-            ((Geometry.GeometryStroke)g).addPoint(new Vector3(0, 0, 0));
-            ((Geometry.GeometryStroke)g).addPoint(new Vector3(0, 0, -1));
-            SceneNode rayTrace = new SceneNode("PrintStroke", ref g, ref m);
-            mScene.leftControllerNode.add(ref rayTrace);
-            rayTrace.transform = new Matrix4(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1);//mScene.mLeftControllerOffset;
-
-            g = new Geometry.PointMarker(new Vector3(0, 0, 0));
-            m = new Material.SingleColorMaterial(0, 0, 1, 1);
-            point = new SceneNode("Right Cursor", ref g, ref m);
-            mScene.rightControllerNode.add(ref point);
-            point.transform = new Matrix4(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1);
-
-
-            xzPlane = new DesignPlane(ref mScene, 1);
-            xyPlane = new DesignPlane(ref mScene, 2);
-            yzPlane = new DesignPlane(ref mScene, 0);
-
-            //xzPlane2 = new DesignPlane2(ref mScene, "XZ");
-            //xyPlane2 = new DesignPlane2(ref mScene, "XY");
-            //yzPlane2 = new DesignPlane2(ref mScene, "YZ");
-
-            //Find the Rhino Object start with 'a' and render it
-            //Material.Material mesh_m = new Material.RGBNormalMaterial(1); ;
-            //Rhino.DocObjects.ObjectEnumeratorSettings settings = new Rhino.DocObjects.ObjectEnumeratorSettings();
-            //settings.ObjectTypeFilter = Rhino.DocObjects.ObjectType.Brep
-            //int obj_count = 0;
-            //foreach (Rhino.DocObjects.RhinoObject rhObj in mScene.rhinoDoc.Objects.GetObjectList(settings))
-            //{
-            //    if (rhObj.Attributes.Name.StartsWith("a"))
-            //    {
-            //        Util.addSceneNode(ref mScene, ((Surface)rhObj.Geometry).ToBrep(), ref mesh_m, rhObj.Attributes.Name);
-            //        mScene.rhinoDoc.Views.Redraw();
-            //    }
-            //    obj_count++;
-            //}
-            //Rhino.RhinoApp.WriteLine(obj_count + " breps found");
+            setupScene();
+            
 
             mRenderer = new VrRenderer(ref mHMD, ref mScene, mRenderWidth, mRenderHeight);
 
@@ -679,6 +669,19 @@ namespace SparrowHawk
                 mScene.popInteraction();
                 mScene.pushInteraction(new Interaction.CreatePatch(ref mScene));
             }
+
+            if (e.KeyChar == '[' || e.KeyChar == '{')
+            {
+                mScene.popInteraction();
+                mScene.pushInteraction(new Interaction.PickPoint(ref mScene, ref mLeftControllerPoses));
+            }
+
+            if (e.KeyChar == ']' || e.KeyChar == '}')
+            {
+                mScene.popInteraction();
+                mScene.pushInteraction(new Interaction.PickPoint(ref mScene, ref mLeftControllerPoses));
+            }
+
         }
 
         protected void notifyRobotIfSafe()

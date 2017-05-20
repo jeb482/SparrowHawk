@@ -16,12 +16,7 @@ namespace SparrowHawk.Interaction
         List<RhinoObject> selectedRhObjs = new List<RhinoObject>();
         OpenTK.Matrix4 currentTransform;
 
-        public Align()
-        {
-
-        }
-
-        public Align(ref Scene s)
+        public Align(ref Scene s) : base(ref s)
         {
             mScene = s;
             currentState = State.READY;

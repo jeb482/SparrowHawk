@@ -45,15 +45,13 @@ namespace SparrowHawk.Interaction
 
         float mimD = 1000000f;
 
-        public EditPoint(ref Scene scene)
+        public EditPoint(ref Scene scene) : base(ref scene)
         {
-            mScene = scene;
             stroke_g2 = new Geometry.GeometryStroke(ref mScene);
         }
 
-        public EditPoint(ref Scene scene, ref RhinoObject rp, bool drawOnP, List<Curve> curveL, Guid sid, string t)
+        public EditPoint(ref Scene scene, ref RhinoObject rp, bool drawOnP, List<Curve> curveL, Guid sid, string t) : base(ref scene)
         {
-            mScene = scene;
             stroke_g2 = new Geometry.GeometryStroke(ref mScene);
             onPlane = drawOnP;
             if (onPlane)

@@ -27,14 +27,8 @@ namespace SparrowHawk.Interaction
         OpenTK.Matrix4 M_L;
         OpenTK.Matrix4 mAlignO;
 
-        public EditPlane()
+        public EditPlane(ref Scene s, ref DesignPlane xy, ref DesignPlane xz, ref DesignPlane yz) : base(ref s)
         {
-
-        }
-
-        public EditPlane(ref Scene s, ref DesignPlane xy, ref DesignPlane xz, ref DesignPlane yz)
-        {
-            mScene = s;
             currentState = State.READY;
             planeXY = xy;
             planeXZ = xz;

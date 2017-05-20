@@ -122,6 +122,7 @@ namespace SparrowHawk
         public Matrix4 mRightControllerOffset = Util.createTranslationMatrix(0, 0, 0);//Util.createTranslationMatrix(-0.0006068f, -.02383642f, -0.00026948f);
         private double leftControllerEndVibrateTime;
         private double rightControllerEndVibrateTime;
+        public bool mIsLefty;
 
         // For rhino positioning
         public Rhino.RhinoDoc rhinoDoc;

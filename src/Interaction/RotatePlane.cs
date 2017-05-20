@@ -26,14 +26,8 @@ namespace SparrowHawk.Interaction
         OpenTK.Matrix4 M_L;
         OpenTK.Matrix4 mAlignO;
 
-        public RotatePlane()
+        public RotatePlane(ref Scene s, ref DesignPlane2 xy, ref DesignPlane2 xz, ref DesignPlane2 yz) : base(ref s)
         {
-
-        }
-
-        public RotatePlane(ref Scene s, ref DesignPlane2 xy, ref DesignPlane2 xz, ref DesignPlane2 yz)
-        {
-            mScene = s;
             currentState = State.READY;
             planeXY = xy;
             planeXZ = xz;
@@ -41,7 +35,7 @@ namespace SparrowHawk.Interaction
 
         }
 
-        public override void draw(bool isTop)
+        public override void draw(bool isTop) 
         {
             if (currentState != State.SELECTION || !isTop)
             {

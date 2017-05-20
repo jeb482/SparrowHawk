@@ -21,9 +21,8 @@ namespace SparrowHawk.Interaction
         List<SceneNode> pointMarkers = new List<SceneNode>();
         private Guid surfaceID;
 
-        public Closedcurve(ref Scene s)
+        public Closedcurve(ref Scene s) : base(ref s)
         {
-            mScene = s;
             stroke_g = new Geometry.GeometryStroke(ref mScene);
             stroke_m = new Material.SingleColorMaterial(1, 0, 0, 1);
             mesh_m = new Material.RGBNormalMaterial(.5f);
@@ -31,9 +30,8 @@ namespace SparrowHawk.Interaction
 
         }
 
-        public Closedcurve(ref Scene s, bool drawOnP)
+        public Closedcurve(ref Scene s, bool drawOnP): base(ref s)
         {
-            mScene = s;
             stroke_g = new Geometry.GeometryStroke(ref mScene);
             stroke_m = new Material.SingleColorMaterial(1, 0, 0, 1);
             mesh_m = new Material.RGBNormalMaterial(.5f);

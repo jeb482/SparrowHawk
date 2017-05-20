@@ -12,9 +12,8 @@ namespace SparrowHawk.Interaction
     public class Delete : Grip
     {
 
-        public Delete(ref Scene s)
+        public Delete(ref Scene s) : base(ref s)
         {
-            mScene = s;
             currentState = State.READY;
         }
 

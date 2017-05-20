@@ -19,16 +19,14 @@ namespace SparrowHawk.Interaction
         List<Guid> loftObjsUID = new List<Guid>();
 
 
-        public Loft(ref Scene s)
+        public Loft(ref Scene s) : base(ref s)
         {
-            mScene = s;
             stroke_m = new Material.SingleColorMaterial(1, 0, 0, 1);
             mesh_m = new Material.RGBNormalMaterial(.5f); ;
         }
 
-        public Loft(ref Scene s, ref Rhino.Geometry.Brep[] brep)
+        public Loft(ref Scene s, ref Rhino.Geometry.Brep[] brep) : base(ref s)
         {
-            mScene = s;
             stroke_m = new Material.SingleColorMaterial(1, 0, 0, 1);
             mesh_m = new Material.RGBNormalMaterial(.5f); ;
 

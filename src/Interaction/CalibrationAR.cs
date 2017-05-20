@@ -11,9 +11,8 @@ namespace SparrowHawk.Interaction
     {
         private OvrvisionController ovrcontroller;
 
-        public CalibrationAR(ref Scene scene, ref OvrvisionController controller)
+        public CalibrationAR(ref Scene scene, ref OvrvisionController controller) : base(ref scene)
         {
-            mScene = scene;
             ovrcontroller = controller;
         }
 

@@ -15,14 +15,8 @@ namespace SparrowHawk.Interaction
         OpenTK.Matrix4 mVRtocontroller;
         OpenTK.Matrix4 currentTransform;
 
-        public Grip()
+        public Grip(ref Scene s) : base(ref s)
         {
-
-        }
-
-        public Grip(ref Scene s)
-        {
-            mScene = s;
             currentState = State.READY;
         }
 

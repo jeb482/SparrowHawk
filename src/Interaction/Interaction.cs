@@ -10,6 +10,22 @@ namespace SparrowHawk.Interaction
     public class Interaction
     {
         protected Scene mScene;
+        protected int primaryControllerIdx;
+        protected int secondaryControllerIdx;
+
+        protected Interaction(ref Scene scene)
+        {
+            mScene = scene;
+            if (mScene.mIsLefty)
+            {
+                primaryControllerIdx = mScene.leftControllerIdx;
+                secondaryControllerIdx = mScene.rightControllerIdx;
+            } else
+            {
+                primaryControllerIdx = mScene.rightControllerIdx;
+                secondaryControllerIdx = mScene.leftControllerIdx;
+            }
+        }
 
         public void handleInput()
         {

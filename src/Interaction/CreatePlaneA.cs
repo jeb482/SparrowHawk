@@ -15,9 +15,8 @@ namespace SparrowHawk.Interaction
         protected Vector3 normal;
         protected SceneNode planeNode;
 
-        public CreatePlaneA(ref Scene scene)
+        public CreatePlaneA(ref Scene scene) : base(ref scene)
         {
-            mScene = scene;
             mState = State.Ready;
         }
 

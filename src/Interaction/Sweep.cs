@@ -19,10 +19,8 @@ namespace SparrowHawk.Interaction
         List<Point3d> curvePoints = new List<Point3d>();
         Guid planGuid;
 
-        public Sweep(ref Scene s)
+        public Sweep(ref Scene scene) : base(ref scene)
         {
-
-            mScene = s;
             stroke_g = new Geometry.GeometryStroke(ref mScene);
             stroke_m = new Material.SingleColorMaterial(1, 0, 0, 1);
             mesh_m = new Material.RGBNormalMaterial(.5f);
@@ -30,10 +28,8 @@ namespace SparrowHawk.Interaction
 
         }
 
-        public Sweep(ref Scene s, Guid pid)
+        public Sweep(ref Scene scene, Guid pid) : base(ref scene)
         {
-
-            mScene = s;
             stroke_g = new Geometry.GeometryStroke(ref mScene);
             stroke_m = new Material.SingleColorMaterial(1, 0, 0, 1);
             mesh_m = new Material.RGBNormalMaterial(.5f);
@@ -42,9 +38,8 @@ namespace SparrowHawk.Interaction
 
         }
 
-        public Sweep(ref Scene s, ref Rhino.Geometry.Brep brep)
+        public Sweep(ref Scene scene, ref Rhino.Geometry.Brep brep) : base(ref scene)
         {
-            mScene = s;
             stroke_g = new Geometry.GeometryStroke(ref mScene);
             stroke_m = new Material.SingleColorMaterial(1, 0, 0, 1);
             mesh_m = new Material.SingleColorMaterial(0, 1, 0, 1);

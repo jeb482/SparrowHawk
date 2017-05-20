@@ -35,22 +35,20 @@ namespace SparrowHawk.Interaction
         Guid sGuid, eGuid;
         private string type = "none";
 
-        public SweepShapeCircle(ref Scene s)
+        public SweepShapeCircle(ref Scene scene) : base(ref scene)
         {
-            mScene = s;
             origin = new OpenTK.Vector3();
             mState = State.PickOrigin;
             mesh_m = new Material.RGBNormalMaterial(.5f);
 
         }
 
-        public SweepShapeCircle(ref Scene s, bool drawOnP, Curve curve, Guid startGuid, Guid endGuid)
+        public SweepShapeCircle(ref Scene scene, bool drawOnP, Curve curve, Guid startGuid, Guid endGuid) : base(ref scene)
         {
             railCurve = curve.ToNurbsCurve();
             sGuid = startGuid;
             eGuid = endGuid;
 
-            mScene = s;
             origin = new OpenTK.Vector3();
             mState = State.PickOrigin;
             mesh_m = new Material.RGBNormalMaterial(.5f);

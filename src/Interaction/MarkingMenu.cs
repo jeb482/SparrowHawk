@@ -69,13 +69,15 @@ namespace SparrowHawk.Interaction
         int mNumSectors;
         float mFirstSectorOffsetAngle;
 
-        public MarkingMenu(ref Scene scene, MenuLayout layout = MenuLayout.RootMenu)
+        public MarkingMenu(ref Scene scene, MenuLayout layout = MenuLayout.RootMenu) : base(ref scene)
         {
+
             mLayout = layout;
             mNumSectors = getNumSectors(layout);
             mFirstSectorOffsetAngle = getAngularMenuOffset(mNumSectors);
             mScene = scene;
             mCurrentSelection = -1;
+            
             if (scene.isOculus)
             {
                 mMinSelectionRadius = 0.2f;
@@ -87,45 +89,17 @@ namespace SparrowHawk.Interaction
             }
         }
 
-        //protected override void onUntouchOculusStick(ref VREvent_t vrEvent)
-        //{
-        //    float r = 0;
-        //    float theta = 0;
-        //    int sector = (int)Math.Floor((theta - mFirstSectorOffsetAngle) * mNumSectors / (2 * Math.PI));
-        //    getOculusJoystickPoint((uint)mScene.leftControllerIdx, out r, out theta);
-        //    if(r > 0.5)
-        //    {
-        //        ((Material.RadialMenuMaterial)radialMenuMat).setHighlightedSector(mNumSectors, mFirstSectorOffsetAngle, theta);
-        //        if (this.mInitialSelectOKTime != 0)
-        //        {
-        //            if (mScene.gameTime > this.mInitialSelectOKTime)
-        //            {
-        //                mCurrentSelection = sector;
-        //                launchInteraction(r, theta);
-        //            }
-        //        }
-        //        else
-        //        {
-        //            mCurrentSelection = sector;
-        //            launchInteraction(r, theta);
-        //        }
-        //    }
-        //    else
-        //    {
-        //        mScene.popInteraction();
-        //    }
-        //}
 
-        // TODO: This could use a lot of refactoring.
+
         public override void draw(bool isTop) {
             // get R and Theta and the associated sector
             float theta = 0;
             float mLastRadius = mCurrentRadius;
             if (mScene.isOculus)
             {
-                getOculusJoystickPoint((uint) mScene.leftControllerIdx, out mCurrentRadius, out theta);
+                getOculusJoystickPoint((uint) primaryControllerIdx, out mCurrentRadius, out theta);
             } else {
-                getViveTouchpadPoint((uint)mScene.leftControllerIdx, out mCurrentRadius, out theta);
+                getViveTouchpadPoint((uint)primaryControllerIdx, out mCurrentRadius, out theta);
             }
             int sector = (int)Math.Floor((((theta + 2*Math.PI) % (2*Math.PI)) - mFirstSectorOffsetAngle) * mNumSectors / (2 * Math.PI));
             ;
@@ -207,15 +181,21 @@ namespace SparrowHawk.Interaction
                                                           0, 0,  -2, 0,
                                                           0, 2,  0, 0,
                                                           0, 0,  0, 1);
-            mScene.leftControllerNode.add(ref mSceneNode);
-
+            if (mScene.mIsLefty)
+                mScene.leftControllerNode.add(ref mSceneNode);
+            else
+                mScene.rightControllerNode.add(ref mSceneNode);
             // Set initial timeout that cannot be skipped to prevent double selections.
             mInitialSelectOKTime = mScene.gameTime + defaultInitialDelay;
         }
 
         public override void deactivate()
         {
-            mScene.leftControllerNode.remove(ref mSceneNode);
+            if (mScene.mIsLefty)
+                mScene.leftControllerNode.remove(ref mSceneNode);
+            else
+                mScene.rightControllerNode.remove(ref mSceneNode);
+
         }
 
         protected override void onClickViveAppMenu(ref VREvent_t vrEvent)
@@ -237,7 +217,7 @@ namespace SparrowHawk.Interaction
         private void launchInteraction(float r, float theta)
         {
             //int interactionNumber = ((int) Math.Floor((mNumSectors * theta - mFirstSectorOffsetAngle) / (2 * Math.PI)));
-            mScene.vibrateController(0.1, (uint)mScene.leftControllerIdx);
+            mScene.vibrateController(0.1, (uint) primaryControllerIdx);
             int interactionNumber;
             if (theta < 0) { theta += (float)(2 * Math.PI); }
             interactionNumber = (int) Math.Ceiling((theta - (Math.PI / mNumSectors)) / (Math.PI / 2));

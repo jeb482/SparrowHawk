@@ -19,10 +19,8 @@ namespace SparrowHawk.Interaction
         Brep startPlane, endPlane;
         Guid sGuid, eGuid;
 
-        public Sweep2(ref Scene s)
+        public Sweep2(ref Scene scene) : base(ref scene)
         {
-
-            mScene = s;
             stroke_g = new Geometry.GeometryStroke(ref mScene);
             stroke_m = new Material.SingleColorMaterial(1, 0, 0, 1);
             mesh_m = new Material.RGBNormalMaterial(.5f);
@@ -30,10 +28,8 @@ namespace SparrowHawk.Interaction
 
         }
 
-        public Sweep2(ref Scene s, bool drawOnP)
-        {
-
-            mScene = s;
+        public Sweep2(ref Scene scene, bool drawOnP) : base(ref scene)
+        { 
             stroke_g = new Geometry.GeometryStroke(ref mScene);
             stroke_m = new Material.SingleColorMaterial(1, 0, 0, 1);
             mesh_m = new Material.RGBNormalMaterial(.5f);
@@ -69,9 +65,8 @@ namespace SparrowHawk.Interaction
 
         }
 
-        public Sweep2(ref Scene s, ref Rhino.Geometry.Brep brep)
+        public Sweep2(ref Scene scene, ref Rhino.Geometry.Brep brep) : base(ref scene)
         {
-            mScene = s;
             stroke_g = new Geometry.GeometryStroke(ref mScene);
             stroke_m = new Material.SingleColorMaterial(1, 0, 0, 1);
             mesh_m = new Material.SingleColorMaterial(0, 1, 0, 1);

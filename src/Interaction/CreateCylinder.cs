@@ -15,7 +15,7 @@ namespace SparrowHawk.Interaction
         float radius;
         uint mPrimaryDevice;
 
-        public CreateCylinder(ref Scene scene)
+        public CreateCylinder(ref Scene scene) : base(ref scene)
         {
             mScene = scene;
             origin = new OpenTK.Vector3();

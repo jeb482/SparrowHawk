@@ -29,17 +29,15 @@ namespace SparrowHawk.Interaction
         OpenTK.Vector3 projectP;
         Point3d planeO;
 
-        public CreateCircle(ref Scene scene)
+        public CreateCircle(ref Scene scene) : base(ref scene)
         {
-            mScene = scene;
             origin = new OpenTK.Vector3();
             mState = State.PickOrigin;
             mesh_m = new Material.RGBNormalMaterial(.5f);
         }
 
-        public CreateCircle(ref Scene scene, bool drawOnP)
+        public CreateCircle(ref Scene scene, bool drawOnP) : base(ref scene)
         {
-            mScene = scene;
             origin = new OpenTK.Vector3();
             mState = State.PickOrigin;
             mesh_m = new Material.RGBNormalMaterial(.5f);

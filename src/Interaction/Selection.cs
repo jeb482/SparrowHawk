@@ -21,14 +21,8 @@ namespace SparrowHawk.Interaction
             READY = 0, SELECTION = 1
         };
 
-        public Selection()
+        public Selection(ref Scene scene) : base (ref scene)
         {
-
-        }
-
-        public Selection(ref Scene s)
-        {
-            mScene = s;
             currentState = State.READY;
         }
 

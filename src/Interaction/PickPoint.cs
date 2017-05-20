@@ -11,23 +11,20 @@ namespace SparrowHawk.Interaction
     {
         List<Vector3> mPoints;
         List<Matrix4> mPoses;
-        public PickPoint(ref Scene s)
+        public PickPoint(ref Scene scene) : base(ref scene)
         {
-            mScene = s;
             mPoints = null;
             mPoses = null;
         }
 
-        public PickPoint(ref Scene s, ref List<Vector3> points)
+        public PickPoint(ref Scene scene, ref List<Vector3> points) : base(ref scene)
         {
-            mScene = s;
             mPoints = points;
             mPoses = null;
         }
 
-        public PickPoint(ref Scene s, ref List<Matrix4> poses)
+        public PickPoint(ref Scene scene, ref List<Matrix4> poses) : base(ref scene)
         {
-            mScene = s;
             mPoints = null;
             mPoses = poses;
         }

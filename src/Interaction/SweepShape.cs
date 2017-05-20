@@ -20,9 +20,8 @@ namespace SparrowHawk.Interaction
         Guid sGuid, eGuid;
         private string type = "none";
 
-        public SweepShape(ref Scene s)
+        public SweepShape(ref Scene s) : base(ref s)
         {
-            mScene = s;
             stroke_g = new Geometry.GeometryStroke(ref mScene);
             stroke_m = new Material.SingleColorMaterial(1, 0, 0, 1);
             mesh_m = new Material.RGBNormalMaterial(.5f);
@@ -30,13 +29,12 @@ namespace SparrowHawk.Interaction
 
         }
 
-        public SweepShape(ref Scene s, bool drawOnP, Curve curve, Guid startGuid, Guid endGuid)
+        public SweepShape(ref Scene s, bool drawOnP, Curve curve, Guid startGuid, Guid endGuid) : base(ref s)
         {
             railCurve = curve.ToNurbsCurve();
             sGuid = startGuid;
             eGuid = endGuid;
 
-            mScene = s;
             stroke_g = new Geometry.GeometryStroke(ref mScene);
             stroke_m = new Material.SingleColorMaterial(1, 0, 0, 1);
             mesh_m = new Material.RGBNormalMaterial(0.5f);
