@@ -50,7 +50,7 @@ namespace SparrowHawk.Interaction
             eGuid = endGuid;
 
             origin = new OpenTK.Vector3();
-            mState = State.PickOrigin;
+            mState = State.PickRadius;
             mesh_m = new Material.RGBNormalMaterial(.5f);
 
             onPlane = drawOnP;
@@ -135,11 +135,14 @@ namespace SparrowHawk.Interaction
                     planeO = planeBB.Center;
                     OpenTK.Vector3 planeOVR = Util.platformToVRPoint(ref mScene, new OpenTK.Vector3((float)planeO.X, (float)planeO.Y, (float)planeO.Z));
 
+                    //asign the orgin of plane to be the center of the circle and cancel the snap
+                    origin = planeOVR;
                     //snap to origin
+                    /*
                     if (Math.Sqrt(Math.Pow(projectP.X - planeOVR.X, 2) + Math.Pow(projectP.Y - planeOVR.Y, 2) + Math.Pow(projectP.Z - planeOVR.Z, 2)) < 0.01)
                     {
                         projectP = planeOVR;
-                    }
+                    }*/
 
                     OpenTK.Matrix4 t = OpenTK.Matrix4.CreateTranslation(Util.transformPoint(mScene.tableGeometry.transform.Inverted(), projectP));
                     t.Transpose();
@@ -155,12 +158,14 @@ namespace SparrowHawk.Interaction
                     BoundingBox planeBB = ((Brep)rhObjE.Geometry).GetBoundingBox(false);
                     planeO = planeBB.Center;
                     OpenTK.Vector3 planeOVR = Util.platformToVRPoint(ref mScene, new OpenTK.Vector3((float)planeO.X, (float)planeO.Y, (float)planeO.Z));
-
+                    //asign the orgin of plane to be the center of the circle and cancel the snap
+                    origin = planeOVR;
                     //snap to origin
+                    /*
                     if (Math.Sqrt(Math.Pow(projectP.X - planeOVR.X, 2) + Math.Pow(projectP.Y - planeOVR.Y, 2) + Math.Pow(projectP.Z - planeOVR.Z, 2)) < 0.01)
                     {
                         projectP = planeOVR;
-                    }
+                    }*/
 
                     OpenTK.Matrix4 t = OpenTK.Matrix4.CreateTranslation(Util.transformPoint(mScene.tableGeometry.transform.Inverted(), projectP));
                     t.Transpose();
@@ -284,7 +289,7 @@ namespace SparrowHawk.Interaction
                 mScene.pushInteraction(new EditPoint(ref mScene, ref targetPRhObj, true, curveL, Guid.Empty, "Sweep2-" + type));
 
 
-                mState = State.PickOrigin;
+                mState = State.PickRadius;
             }
         }
 
