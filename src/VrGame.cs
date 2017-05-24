@@ -55,7 +55,7 @@ namespace SparrowHawk
         Geometry.Geometry printStroke;
         Material.Material printStroke_m;
 
-        public VrGame(ref Rhino.RhinoDoc doc, bool isLefty = false)
+        public VrGame(ref Rhino.RhinoDoc doc, bool isLefty = true)
         {
             mDoc = doc;
             Rhino.RhinoApp.WriteLine("The robot offset is: " + OfflineCalibration.solveForRobotOffsetVector(OfflineCalibration.getHuaishuRobotMeasurements()));

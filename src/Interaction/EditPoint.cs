@@ -1,5 +1,6 @@
 ﻿using Rhino.DocObjects;
 using Rhino.Geometry;
+using Rhino.Geometry.Intersect;
 using SparrowHawk.Geometry;
 using System;
 using System.Collections.Generic;
@@ -112,38 +113,96 @@ namespace SparrowHawk.Interaction
 
                 if(type == "Sweep-rail")
                 {
-                    //covert from Nurbcurvie to curve                 
-                    Plane planeStart = new Plane(polyline.PointAtStart, polyline.TangentAtStart);
-                    PlaneSurface planeStart_surface = new PlaneSurface(planeStart,
-                      new Interval(-30, 30),
-                      new Interval(-30, 30));
 
-                    Plane planeEnd = new Plane(polyline.PointAtEnd, polyline.TangentAtEnd);
-                    PlaneSurface planeEnd_surface = new PlaneSurface(planeEnd,
-                      new Interval(-30, 30),
-                      new Interval(-30, 30));
-
-                    Brep startPlane = Brep.CreateFromSurface(planeStart_surface);
-                    Brep endPlane = Brep.CreateFromSurface(planeEnd_surface);
-
-                    if (startPlane != null && endPlane != null)
-                    {
-                        if (sGuid != Guid.Empty && eGuid != Guid.Empty)
-                        {
-                            Util.removeSceneNode(ref mScene, sGuid);
-                            Util.removeSceneNode(ref mScene, eGuid);
-
-                        }
-                        sGuid = Util.addSceneNode(ref mScene, startPlane, ref mesh_m, "planeStart");
-                        eGuid = Util.addSceneNode(ref mScene, endPlane, ref mesh_m, "planeEnd");
-
-                    }
+                    generatePlane();
                 }
 
                 currentState = State.Start;
             }
 
         }
+
+        private void generatePlane()
+        {
+            Curve[] overlap_curves;
+            Point3d[] inter_points;
+            List<Vector3d> normals = new List<Vector3d>();
+            List<Point3d> planePoints = new List<Point3d>();
+            Rhino.DocObjects.ObjectEnumeratorSettings settings = new Rhino.DocObjects.ObjectEnumeratorSettings();
+            settings.ObjectTypeFilter = Rhino.DocObjects.ObjectType.Brep;
+            foreach (Rhino.DocObjects.RhinoObject rhObj in mScene.rhinoDoc.Objects.GetObjectList(settings))
+            {
+                if (rhObj.Attributes.Name.Contains("plane"))
+                {
+                    continue;
+                }
+
+                if (Intersection.CurveBrep(closedCurve, rhObj.Geometry as Brep, mScene.rhinoDoc.ModelAbsoluteTolerance, out overlap_curves, out inter_points))
+                {
+                    if (overlap_curves.Length > 0 || inter_points.Length > 0)
+                    {
+                        foreach (Point3d interPoint in inter_points)
+                        {
+                            planePoints.Add(interPoint);
+                            foreach (Surface surface in ((Brep)rhObj.Geometry).Surfaces)
+                            {
+                                double u, v;
+                                if (surface.ClosestPoint(interPoint, out u, out v))
+                                {
+                                    normals.Add(((Brep)rhObj.Geometry).Surfaces[0].NormalAt(u, v));
+                                }
+                            }
+
+                        }
+
+                    }
+                }
+            }
+            Rhino.RhinoApp.WriteLine("normal counts: " + normals.Count);
+
+            //if there is not intersect, then init the normal 
+            if (normals.Count == 0)
+            {
+                planePoints.Add(polyline.PointAtStart);
+                normals.Add(polyline.TangentAtStart);
+                planePoints.Add(polyline.PointAtEnd);
+                normals.Add(polyline.TangentAtEnd);
+
+            }
+            else if (normals.Count == 1)
+            {
+                planePoints.Add(polyline.PointAtEnd);
+                normals.Add(polyline.TangentAtEnd);
+            }
+
+            //covert from Nurbcurvie to curve                 
+            Plane planeStart = new Plane(planePoints[0], normals[0]);
+            PlaneSurface planeStart_surface = new PlaneSurface(planeStart,
+              new Interval(-30, 30),
+              new Interval(-30, 30));
+
+            Plane planeEnd = new Plane(planePoints[1], normals[1]);
+            PlaneSurface planeEnd_surface = new PlaneSurface(planeEnd,
+              new Interval(-30, 30),
+              new Interval(-30, 30));
+
+            Brep startPlane = Brep.CreateFromSurface(planeStart_surface);
+            Brep endPlane = Brep.CreateFromSurface(planeEnd_surface);
+
+            if (startPlane != null && endPlane != null)
+            {
+                if (sGuid != Guid.Empty && eGuid != Guid.Empty)
+                {
+                    Util.removeSceneNode(ref mScene, sGuid);
+                    Util.removeSceneNode(ref mScene, eGuid);
+
+                }
+                sGuid = Util.addSceneNode(ref mScene, startPlane, ref mesh_m, "planeStart");
+                eGuid = Util.addSceneNode(ref mScene, endPlane, ref mesh_m, "planeEnd");
+
+            }
+        }
+    
 
         public override void draw(bool inTop)
         {
@@ -318,32 +377,7 @@ namespace SparrowHawk.Interaction
                 }
                 else if (type == "Sweep-rail")
                 {
-                    //covert from Nurbcurvie to curve                 
-                    Plane planeStart = new Plane(polyline.PointAtStart, polyline.TangentAtStart);
-                    PlaneSurface planeStart_surface = new PlaneSurface(planeStart,
-                      new Interval(-30, 30),
-                      new Interval(-30, 30));
-
-                    Plane planeEnd = new Plane(polyline.PointAtEnd, polyline.TangentAtEnd);
-                    PlaneSurface planeEnd_surface = new PlaneSurface(planeEnd,
-                      new Interval(-30, 30),
-                      new Interval(-30, 30));
-
-                    Brep startPlane = Brep.CreateFromSurface(planeStart_surface);
-                    Brep endPlane = Brep.CreateFromSurface(planeEnd_surface);
-
-                    if (startPlane != null && endPlane != null)
-                    {
-                        if(sGuid != Guid.Empty && eGuid != Guid.Empty)
-                        {
-                            Util.removeSceneNode(ref mScene, sGuid);
-                            Util.removeSceneNode(ref mScene, eGuid);
-
-                        }
-                        sGuid = Util.addSceneNode(ref mScene, startPlane, ref mesh_m, "planeStart");
-                        eGuid = Util.addSceneNode(ref mScene, endPlane, ref mesh_m, "planeEnd");
-
-                    }
+                    generatePlane();
                 }
 
                 isSnap = false;
