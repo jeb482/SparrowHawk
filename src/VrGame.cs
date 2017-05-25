@@ -135,6 +135,8 @@ namespace SparrowHawk
 
         protected void updateControllerCallibration()
         {
+            if (mHMD == null)
+                return;
             if (mLeftControllerPoses.Count >= 4 && mLeftControllerPoses.Count > lastNumLeftControllerPoses)
             {
                 lastNumLeftControllerPoses = mLeftControllerPoses.Count;
@@ -151,7 +153,8 @@ namespace SparrowHawk
 
         protected void handleInteractions()
         {
-
+            if (mHMD == null)
+                return;
             //default interaction
             if (mScene.interactionStackEmpty())
                 mScene.pushInteraction(new Interaction.PickPoint(ref mScene));
@@ -351,8 +354,12 @@ namespace SparrowHawk
         {
             mScene = new Scene(ref mDoc, ref mHMD);
             mScene.mIsLefty = mIsLefty;
+
+
             if (mStrDriver.Contains("oculus")) mScene.isOculus = true; else mScene.isOculus = false;
-            mHMD.GetRecommendedRenderTargetSize(ref mRenderWidth, ref mRenderHeight);
+
+            if (mHMD != null)
+                mHMD.GetRecommendedRenderTargetSize(ref mRenderWidth, ref mRenderHeight);
 
             Geometry.Geometry g = new Geometry.Geometry("C:/workspace/Kestrel/resources/meshes/bunny.obj");
 
@@ -427,35 +434,33 @@ namespace SparrowHawk
             EVRInitError eError = EVRInitError.None;
             mHMD = OpenVR.Init(ref eError, EVRApplicationType.VRApplication_Scene);
 
-
-            bool can = OpenVR.Compositor.CanRenderScene();
-
             if (eError == EVRInitError.None)
+            {
                 Rhino.RhinoApp.WriteLine("Booted VR System");
+                renderPoseArray = new TrackedDevicePose_t[Valve.VR.OpenVR.k_unMaxTrackedDeviceCount];
+                gamePoseArray = new TrackedDevicePose_t[Valve.VR.OpenVR.k_unMaxTrackedDeviceCount];
+            }
             else
             {
                 Rhino.RhinoApp.WriteLine("Failed to boot");
-                return false;
+                mTitleBase = "SparrowHawk (No VR Detected)";
             }
 
-            // Get render models
-            renderPoseArray = new TrackedDevicePose_t[Valve.VR.OpenVR.k_unMaxTrackedDeviceCount];
-            gamePoseArray = new TrackedDevicePose_t[Valve.VR.OpenVR.k_unMaxTrackedDeviceCount];
-            // mRenderModels = OpenVR.GetGenericInterface(OpenVR.IVRRenderModels_Version, ref eError);
-
+            
             // Window Setup Info
             mStrDriver = Util.GetTrackedDeviceString(ref mHMD, OpenVR.k_unTrackedDeviceIndex_Hmd, ETrackedDeviceProperty.Prop_TrackingSystemName_String);
             mStrDisplay = Util.GetTrackedDeviceString(ref mHMD, OpenVR.k_unTrackedDeviceIndex_Hmd, ETrackedDeviceProperty.Prop_SerialNumber_String);
             mTitleBase = "SparrowHawk - " + mStrDriver + " " + mStrDisplay;
             Title = mTitleBase;
-
-
             MakeCurrent();
-
             setupScene();
-            
 
-            mRenderer = new VrRenderer(ref mHMD, ref mScene, mRenderWidth, mRenderHeight);
+
+            if (eError == EVRInitError.None)
+                mRenderer = new VrRenderer(ref mHMD, ref mScene, mRenderWidth, mRenderHeight);
+            else
+                mRenderer = new VrRenderer(ref mHMD, ref mScene, mRenderWidth, mRenderHeight);
+
 
             //use other 8 points for calibrartion
             robotCallibrationPointsTest.Add(new Vector3(22, 15, -100) / 1000);
@@ -491,9 +496,7 @@ namespace SparrowHawk
             printStroke = new Geometry.GeometryStroke(ref mScene);
             printStroke_m = new Material.SingleColorMaterial(1, 1, 0, 1);
 
-            return true;
-
-            
+            return (eError == EVRInitError.None);
         }
 
         List<Point3d> curvePoints = new List<Point3d>();

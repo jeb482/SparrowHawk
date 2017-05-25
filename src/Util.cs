@@ -16,6 +16,8 @@ namespace SparrowHawk
         // Directly from OpenVr's openGL starter code.
         public static string GetTrackedDeviceString(ref Valve.VR.CVRSystem Hmd, uint unDevice, Valve.VR.ETrackedDeviceProperty prop)
         {
+            if (Hmd == null)
+                return "?";
             Valve.VR.ETrackedPropertyError eError = Valve.VR.ETrackedPropertyError.TrackedProp_Success;
             uint unRequiredBufferLen = Hmd.GetStringTrackedDeviceProperty(unDevice, prop, null, 0, ref eError);
             if (unRequiredBufferLen == 0)
