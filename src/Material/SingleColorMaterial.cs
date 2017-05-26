@@ -22,6 +22,7 @@ namespace SparrowHawk.Material
 
         public override void draw(ref Geometry.Geometry g, ref Matrix4 model, ref Matrix4 vp)
         {
+            GL.Disable(EnableCap.DepthTest);
             GL.BlendFunc(BlendingFactorSrc.SrcAlpha, BlendingFactorDest.OneMinusSrcAlpha);
             GL.Enable(EnableCap.Blend);
             int dim;
@@ -34,6 +35,7 @@ namespace SparrowHawk.Material
             GL.UniformMatrix4(mShader.uniform("viewProjTransform"), false, ref vp); // TODO: Fix this 
             mShader.drawIndexed(g.primitiveType, 0, g.mNumPrimitives);
             GL.Disable(EnableCap.Blend);
+            GL.Enable(EnableCap.DepthTest);
         }
     }
 }

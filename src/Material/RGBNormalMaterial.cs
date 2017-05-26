@@ -17,7 +17,9 @@ namespace SparrowHawk.Material
 
         public RGBNormalMaterial(float alpha)
         {
-            mAlpha = alpha;
+            //mAlpha = alpha;
+            // Ignore and set a global alpha
+            mAlpha = 0.5f;
             mShader = new GLShader();
             mShader.init("RGBNormalMaterial", ShaderSource.RGBNormalVertShader, ShaderSource.RGBNormalFragShader);
         }
@@ -25,6 +27,7 @@ namespace SparrowHawk.Material
         override public void draw(ref Geometry.Geometry g, ref Matrix4 model, ref Matrix4 vp)
         {
             // bind shader
+            GL.Disable(EnableCap.DepthTest);
             GL.BlendFunc(BlendingFactorSrc.SrcAlpha, BlendingFactorDest.OneMinusSrcAlpha);
             mShader.bind();
 
@@ -45,6 +48,7 @@ namespace SparrowHawk.Material
 
             mShader.drawIndexed(g.primitiveType, 0, g.mNumPrimitives);
             GL.Disable(EnableCap.Blend);
+            GL.Disable(EnableCap.DepthTest);
         }
 
     }

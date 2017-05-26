@@ -77,6 +77,7 @@ namespace SparrowHawk.Material
             mShader.bind();
             GL.ActiveTexture(TextureUnit.Texture0);
             GL.BindTexture(TextureTarget.Texture2D, m_iTexture);
+            GL.DepthFunc(DepthFunction.Always);
 
             //TODO- what's is dim for? compSize is because UnsignedInt 4 bytes?
             mShader.uploadAttrib<int>("indices", g.mGeometryIndices.Length, 3, 4, VertexAttribPointerType.UnsignedInt, false, ref g.mGeometryIndices, 0);
@@ -97,6 +98,7 @@ namespace SparrowHawk.Material
             e = GL.GetError();
             
             mShader.drawIndexed(g.primitiveType, 0, g.mNumPrimitives);
+            GL.DepthFunc(DepthFunction.Less);
         }
 
         public void updateTexture(IntPtr texture)
