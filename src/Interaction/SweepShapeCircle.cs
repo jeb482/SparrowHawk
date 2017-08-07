@@ -76,7 +76,10 @@ namespace SparrowHawk.Interaction
                 mScene.tableGeometry.add(ref drawPoint);
 
                 //TODO-support both controllers
-                primaryDeviceIndex = mScene.leftControllerIdx;
+                if(mScene.mIsLefty)
+                    primaryDeviceIndex = mScene.leftControllerIdx;
+                else
+                    primaryDeviceIndex = mScene.rightControllerIdx;
             }
 
         }
@@ -232,6 +235,7 @@ namespace SparrowHawk.Interaction
         {
             switch (mState)
             {
+                //we assume that the origin will be always in the center of plane so we remove this state
                 case State.PickOrigin:
                     if (onPlane)
                     {

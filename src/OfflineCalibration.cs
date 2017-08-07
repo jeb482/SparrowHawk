@@ -52,16 +52,28 @@ namespace SparrowHawk
             //output.Add(new Tuple<float, float, float, float, float, float>(60.976f,  -5.135f, - 80.921f,   83.162f,    63.4f, -39.106f));
 
             // 4/27/2017 New calibration after mechanics of robot were calibrated
-            output.Add(new Tuple<float, float, float, float, float, float>(  5.764f,  -27.95f, -87.044f,     -180f,      90f,       0f));
-            output.Add(new Tuple<float, float, float, float, float, float>( -0.513f,  -5.888f, -87.044f, -149.143f,      90f,       0f));
-            output.Add(new Tuple<float, float, float, float, float, float>( 14.586f, -24.972f, -82.839f, -135.522f,  87.463f,   20.08f));
-            output.Add(new Tuple<float, float, float, float, float, float>(  40.93f,  -29.66f, -62.683f, -163.449f, 110.482f,  13.713f));
-            output.Add(new Tuple<float, float, float, float, float, float>( 23.574f,  40.465f, -46.633f,  -141.12f, 122.524f,   -9.16f));
-            output.Add(new Tuple<float, float, float, float, float, float>(-22.539f,  41.003f, -70.615f, -147.997f,  93.258f, -30.571f));
-            output.Add(new Tuple<float, float, float, float, float, float>(-19.883f, -18.616f, -94.696f,  118.883f,  66.136f, -11.186f));
-            output.Add(new Tuple<float, float, float, float, float, float>(  0.086f, -93.504f, -65.296f,  123.105f, 110.347f,   2.459f));
-            output.Add(new Tuple<float, float, float, float, float, float>( 30.048f, -52.154f, -68.464f,  153.323f, 107.467f,  -5.152f));
-            
+            //output.Add(new Tuple<float, float, float, float, float, float>(  5.764f,  -27.95f, -87.044f,     -180f,      90f,       0f));
+            //output.Add(new Tuple<float, float, float, float, float, float>( -0.513f,  -5.888f, -87.044f, -149.143f,      90f,       0f));
+            //output.Add(new Tuple<float, float, float, float, float, float>( 14.586f, -24.972f, -82.839f, -135.522f,  87.463f,   20.08f));
+            //output.Add(new Tuple<float, float, float, float, float, float>(  40.93f,  -29.66f, -62.683f, -163.449f, 110.482f,  13.713f));
+            //output.Add(new Tuple<float, float, float, float, float, float>( 23.574f,  40.465f, -46.633f,  -141.12f, 122.524f,   -9.16f));
+            //output.Add(new Tuple<float, float, float, float, float, float>(-22.539f,  41.003f, -70.615f, -147.997f,  93.258f, -30.571f));
+            //output.Add(new Tuple<float, float, float, float, float, float>(-19.883f, -18.616f, -94.696f,  118.883f,  66.136f, -11.186f));
+            //output.Add(new Tuple<float, float, float, float, float, float>(  0.086f, -93.504f, -65.296f,  123.105f, 110.347f,   2.459f));
+            //output.Add(new Tuple<float, float, float, float, float, float>( 30.048f, -52.154f, -68.464f,  153.323f, 107.467f,  -5.152f));
+
+
+            // 7/19/2017 New calibration after mechanics of robot were calibrated
+            output.Add(new Tuple<float, float, float, float, float, float>(91.312f, -14.167f, -49.829f, 1.153f, 10.238f, -7.337f));
+            output.Add(new Tuple<float, float, float, float, float, float>(74.465f, 62.216f, -40.086f, -16.422f, 8.39f, 54.972f));
+            output.Add(new Tuple<float, float, float, float, float, float>(77.306f, 60.804f, -39.819f, -83.856f, 101.673f, 53.805f));
+            output.Add(new Tuple<float, float, float, float, float, float>(58.453f, 30.304f, -76.445f, -147.242f, 104.154f, 2.985f));
+            output.Add(new Tuple<float, float, float, float, float, float>(59.834f, 40.92f, -70.768f, -172.188f, 104.108f, -19.447f));
+            output.Add(new Tuple<float, float, float, float, float, float>(91.021f, 36.871f, -37.286f, 178.151f, 126.422f, -23.658f));
+            output.Add(new Tuple<float, float, float, float, float, float>(86.406f, -22.144f, -53.729f, 162.347f, 120.802f, -3.238f));
+            output.Add(new Tuple<float, float, float, float, float, float>(38.974f, -12.704f, -91.096f, 163.048f, 88.584f, -0.012f));
+            output.Add(new Tuple<float, float, float, float, float, float>(34.434f, -46.09f, -84.15f, 160.272f, 92.266f, 17.604f));
+            output.Add(new Tuple<float, float, float, float, float, float>(-29.038f, -38.909f, -88.22f, 147.115f, 61.519f, 28.424f));
 
 
 

@@ -733,7 +733,8 @@ namespace SparrowHawk
 
         public static OpenTK.Matrix4 getControllerTipPosition(ref Scene scene, bool left)
         {
-            if (left)
+            //mScene.mIsLefty decide whether it's right hand or left hand
+            if (scene.mIsLefty)
             {
                 return scene.mDevicePose[scene.leftControllerIdx] * scene.mLeftControllerOffset;
             }

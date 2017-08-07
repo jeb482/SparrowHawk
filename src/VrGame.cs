@@ -461,7 +461,6 @@ namespace SparrowHawk
             else
                 mRenderer = new VrRenderer(ref mHMD, ref mScene, mRenderWidth, mRenderHeight);
 
-
             //use other 8 points for calibrartion
             robotCallibrationPointsTest.Add(new Vector3(22, 15, -100) / 1000);
             robotCallibrationPointsTest.Add(new Vector3(-10, 40, -153) / 1000);
@@ -475,7 +474,11 @@ namespace SparrowHawk
             }
             robotCallibrationPointsTest.Clear();
 
-            //testing - rotate rhino object as well                   
+            //set default matrix
+            mRenderer.ovrvision_controller.setDefaultMatrixHC();
+
+            //testing - rotate rhino object as well
+            /*                   
             Transform transM = new Transform();
             for (int row = 0; row < 4; row++)
             {
@@ -491,6 +494,7 @@ namespace SparrowHawk
                 mDoc.Objects.Transform(rhObj.Id, transM, true);
             }
             mScene.rhinoDoc.Views.Redraw();
+            */
 
             //testing visualize printStroke
             printStroke = new Geometry.GeometryStroke(ref mScene);
@@ -505,7 +509,7 @@ namespace SparrowHawk
         {
             if (e.KeyChar == 'C' || e.KeyChar == 'c')
             {
-                //mRenderer.ovrvision_controller.getMatrixHeadtoCamera();
+                ((VrRenderer) mRenderer).ovrvision_controller.getMatrixHeadtoCamera(0);
                 mScene.popInteraction();
                 mScene.pushInteraction(new Interaction.CalibrationAR(ref mScene, ref mRenderer.ovrvision_controller));
             }
@@ -682,7 +686,7 @@ namespace SparrowHawk
             if (e.KeyChar == ']' || e.KeyChar == '}')
             {
                 mScene.popInteraction();
-                mScene.pushInteraction(new Interaction.PickPoint(ref mScene, ref mLeftControllerPoses));
+                mScene.pushInteraction(new Interaction.PickPoint(ref mScene, ref mRightControllerPoses));
             }
 
         }

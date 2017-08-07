@@ -119,7 +119,8 @@ namespace SparrowHawk
         public Matrix4 mLeftControllerOffset = Util.createTranslationMatrix(0.001457473f+ 0.005344f, -0.02422076f - 0.0013317f, -0.00521365f + 0.00124466f);
         //public Matrix4 mLeftControllerOffset = Util.createTranslationMatrix(0.001885863f, -0.02479392f,-0.0003346408f);
         //public Matrix4 mLeftControllerOffset = Util.createTranslationMatrix(0.00134759f, -0.02559454f, -0.005455005f);//Util.createTranslationMatrix(0,0,0);//Util.createTranslationMatrix(0.0006068f, -.02383642f, -0.00026948f);
-        public Matrix4 mRightControllerOffset = Util.createTranslationMatrix(0, 0, 0);//Util.createTranslationMatrix(-0.0006068f, -.02383642f, -0.00026948f);
+        public Matrix4 mRightControllerOffset = Util.createTranslationMatrix(-0.03205855f+ 0.0001097674f, -0.02689967f+ -0.0008004899f, 0.006957637f+ -0.0005140541f);//Util.createTranslationMatrix(0, 0, 0);//Util.createTranslationMatrix(-0.03205855f, -0.02689967f, 0.006957637f); 
+        //0.0001097674, -0.0008004899, -0.0005140541
         private double leftControllerEndVibrateTime;
         private double rightControllerEndVibrateTime;
         public bool mIsLefty;
@@ -145,11 +146,16 @@ namespace SparrowHawk
                                                1.015694f, -0.01724754f, 0.06361949f, 0.02786883f,
                                                -0.02152945f, -1.000105f, -0.007235864f, 1.449791f,
                                                0, 0, 0, 1);*/
-
+        /*
         public Matrix4 vrToRobot = new Matrix4(-61.6759f, 17.15416f, -996.1694f, -519.5059f,
                                                1028.861f, -29.56195f, -60.25785f, 30.58262f,
                                                -23.20242f, -994.0332f, -6.043113f, 1380.783f,
-                                               0, 0, 0, 1);
+                                               0, 0, 0, 1);*/
+
+        public Matrix4 vrToRobot = new Matrix4(-73.75329f, 5.317113f, -1014.19f, -648.4235f,
+                                              1041.725f, -33.75403f, 5.131614f, 225.3151f,
+                                              -47.29917f, -989.9028f, -31.35188f, 689.702f,
+                                              0, 0, 0, 1);
 
 
         // Interactions
