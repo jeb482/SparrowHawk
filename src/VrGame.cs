@@ -287,7 +287,8 @@ namespace SparrowHawk
                     settings.ObjectTypeFilter = Rhino.DocObjects.ObjectType.Brep;
                     foreach (Rhino.DocObjects.RhinoObject rhObj in mScene.rhinoDoc.Objects.GetObjectList(settings))
                     {
-                        if (mScene.brepToSceneNodeDic.ContainsKey(rhObj.Id))
+                        if (mScene.brepToSceneNodeDic.ContainsKey(rhObj.Id) && rhObj.Attributes.Name != "planeXY" && rhObj.Attributes.Name != "planeXZ"
+                                                                            && rhObj.Attributes.Name != "planeYZ")
                         {
                             SceneNode sn = mScene.brepToSceneNodeDic[rhObj.Id];
                             mScene.brepToSceneNodeDic.Remove(rhObj.Id);
@@ -375,6 +376,32 @@ namespace SparrowHawk
             SceneNode point = new SceneNode("Point 1", ref g, ref m);
             mScene.staticGeometry.add(ref point);
             point.transform = new Matrix4(1, 0, 0, 0, 0, 1, 0, 1, 0, 0, 1, 0, 0, 0, 0, 1);
+
+            //visualizing axises
+            OpenTK.Vector3 x0 = Util.platformToVRPoint(ref mScene, new OpenTK.Vector3(-240, 0, 0));
+            OpenTK.Vector3 x1 = Util.platformToVRPoint(ref mScene, new OpenTK.Vector3(240, 0, 0));
+            OpenTK.Vector3 y0 = Util.platformToVRPoint(ref mScene, new OpenTK.Vector3(0, -240, 0));
+            OpenTK.Vector3 y1 = Util.platformToVRPoint(ref mScene, new OpenTK.Vector3(0, 240, 0));
+            OpenTK.Vector3 z0 = Util.platformToVRPoint(ref mScene, new OpenTK.Vector3(0, 0, -240));
+            OpenTK.Vector3 z1 = Util.platformToVRPoint(ref mScene, new OpenTK.Vector3(0, 0, 240));
+            g = new Geometry.GeometryStroke(ref mScene);
+            ((Geometry.GeometryStroke)g).addPoint(x0);
+            ((Geometry.GeometryStroke)g).addPoint(x1);
+            SceneNode xAxis = new SceneNode("xAxis", ref g, ref m);
+            mScene.staticGeometry.add(ref xAxis);
+
+            g = new Geometry.GeometryStroke(ref mScene);
+            ((Geometry.GeometryStroke)g).addPoint(y0);
+            ((Geometry.GeometryStroke)g).addPoint(y1);
+            SceneNode yAxis = new SceneNode("yAxis", ref g, ref m);
+            mScene.staticGeometry.add(ref yAxis);
+            
+            g = new Geometry.GeometryStroke(ref mScene);
+            ((Geometry.GeometryStroke)g).addPoint(z0);
+            ((Geometry.GeometryStroke)g).addPoint(z1);
+            SceneNode zAxis = new SceneNode("zAxis", ref g, ref m);
+            mScene.staticGeometry.add(ref zAxis);
+           
 
             // Left
             //g = new Geometry.Geometry("C:/workspace/Kestrel/resources/meshes/bunny.obj");

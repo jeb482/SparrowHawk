@@ -28,6 +28,12 @@ namespace SparrowHawk.Interaction
             mesh_m = new Material.RGBNormalMaterial(.5f);
             currentState = State.READY;
 
+            //TODO-support both controllers
+            if (mScene.mIsLefty)
+                primaryDeviceIndex = (uint)mScene.leftControllerIdx;
+            else
+                primaryDeviceIndex = (uint)mScene.rightControllerIdx;
+
         }
 
         public CreatePatch(ref Scene s, bool drawOnP) : base(ref s)
@@ -46,9 +52,13 @@ namespace SparrowHawk.Interaction
                 drawPoint = new SceneNode("Point", ref geo, ref m);
                 drawPoint.transform = new OpenTK.Matrix4(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1);
                 mScene.tableGeometry.add(ref drawPoint);
-                
+
                 //TODO-support both controllers
-                primaryDeviceIndex = (uint)mScene.leftControllerIdx;
+                if (mScene.mIsLefty)
+                    primaryDeviceIndex = (uint)mScene.leftControllerIdx;
+                else
+                    primaryDeviceIndex = (uint)mScene.rightControllerIdx;
+
             }
 
         }
@@ -64,7 +74,7 @@ namespace SparrowHawk.Interaction
             //Brep patchSurface = Brep.CreatePatch(curvelist, 4, 4, mScene.rhinoDoc.ModelAbsoluteTolerance);
             Brep patchSurface = Brep.CreatePatch(allPoints, 10, 10, mScene.rhinoDoc.ModelAbsoluteTolerance);
 
-            planGuid = Util.addSceneNode(ref mScene, patchSurface, ref mesh_m);
+            planGuid = Util.addSceneNode(ref mScene, patchSurface, ref mesh_m, "patchSurface");
             mScene.rhinoDoc.Views.Redraw();
 
             foreach (Guid id in curveGuids)
@@ -105,15 +115,15 @@ namespace SparrowHawk.Interaction
             }
         }
 
-        protected override void onClickOculusGrip(ref VREvent_t vrEvent)
+        protected override void onClickOculusTrigger(ref VREvent_t vrEvent)
         {
             curvePoints = new List<Point3d>();
-            base.onClickOculusGrip(ref vrEvent);
+            base.onClickOculusTrigger(ref vrEvent);
 
 
         }
 
-        protected override void onReleaseOculusGrip(ref VREvent_t vrEvent)
+        protected override void onReleaseOculusTrigger(ref VREvent_t vrEvent)
         {
             Rhino.RhinoApp.WriteLine("oculus grip release event test");
             if (currentState == State.PAINT)
@@ -141,8 +151,8 @@ namespace SparrowHawk.Interaction
                 currentState = State.READY;
 
                 //psuh sweep interation
-                mScene.popInteraction();
-                mScene.pushInteraction(new Sweep(ref mScene, planGuid));
+                //mScene.popInteraction();
+                //mScene.pushInteraction(new Sweep(ref mScene, planGuid));
             }
         }
 

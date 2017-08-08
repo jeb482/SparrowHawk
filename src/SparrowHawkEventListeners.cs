@@ -97,15 +97,18 @@ namespace SparrowHawk
                 case "init:":
                     RhinoApp.WriteLine("Calibration point recieved");
                     s.type = SparrowHawkSignal.ESparrowHawkSigalType.InitType;
+                    mSignalQueue.Enqueue(s);
                     break;
                 case "angle:":
                     s.type = SparrowHawkSignal.ESparrowHawkSigalType.EncoderType;
+                    mSignalQueue.Enqueue(s);
                     break;
                 case "stroke:":
                     s.type = SparrowHawkSignal.ESparrowHawkSigalType.LineType;
+                    mSignalQueue.Enqueue(s);
                     break;
             }
-            mSignalQueue.Enqueue(s);
+            //mSignalQueue.Enqueue(s);
 
         }
 

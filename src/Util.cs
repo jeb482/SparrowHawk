@@ -593,7 +593,6 @@ namespace SparrowHawk
                 Geometry.Geometry meshStroke_g = new Geometry.RhinoMesh(ref mScene, mScene.platformRotation);
                 ((Geometry.RhinoMesh)meshStroke_g).setMesh(ref base_mesh);
 
-
                 SceneNode ccMeshSN = new SceneNode(name, ref meshStroke_g, ref mesh_m);
                 mScene.tableGeometry.add(ref ccMeshSN);
 
@@ -628,11 +627,13 @@ namespace SparrowHawk
                 mScene.rhinoDoc.Views.Redraw();
 
                 Geometry.Geometry meshStroke_g = new Geometry.RhinoMesh2(ref mScene, t);
-
                 ((Geometry.RhinoMesh2)meshStroke_g).setMesh(ref base_mesh);
 
                 SceneNode ccMeshSN = new SceneNode(name, ref meshStroke_g, ref mesh_m,renderLate);
-                mScene.tableGeometry.add(ref ccMeshSN);
+                if(name == "planeXY" || name == "planeYZ" || name == "planeXZ")
+                    mScene.staticGeometry.add(ref ccMeshSN);
+                else
+                    mScene.tableGeometry.add(ref ccMeshSN);
 
                 //add reference SceneNode to brep and vice versa
                 mScene.brepToSceneNodeDic.Add(guid, ccMeshSN);

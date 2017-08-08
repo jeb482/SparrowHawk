@@ -52,7 +52,10 @@ namespace SparrowHawk.Interaction
                 mScene.tableGeometry.add(ref drawPoint);
 
                 //TODO-support both controllers
-                primaryDeviceIndex = mScene.leftControllerIdx;
+                if (mScene.mIsLefty)
+                    primaryDeviceIndex = mScene.leftControllerIdx;
+                else
+                    primaryDeviceIndex = mScene.rightControllerIdx;
             }
 
 

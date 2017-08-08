@@ -99,6 +99,7 @@
     <Compile Include="Interaction\EditPoint.cs" />
     <Compile Include="Interaction\Grip.cs" />
     <Compile Include="Interaction\Loft.cs" />
+    <Compile Include="Interaction\Loft2.cs" />
     <Compile Include="Interaction\Revolve.cs" />
     <Compile Include="Interaction\RotatePlane.cs" />
     <Compile Include="Interaction\Selection.cs" />

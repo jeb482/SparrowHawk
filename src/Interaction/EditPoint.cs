@@ -71,13 +71,19 @@ namespace SparrowHawk.Interaction
                 }
 
                 Geometry.Geometry geo = new Geometry.PointMarker(new OpenTK.Vector3(0, 0, 0));
-                Material.Material m = new Material.SingleColorMaterial(250 / 255, 128 / 255, 128 / 255, 1);
+                //Material.Material m = new Material.SingleColorMaterial(250 / 255, 128 / 255, 128 / 255, 1);
+                //prject point color
+                Material.Material m = new Material.SingleColorMaterial(1, 1, 1, 1);
                 drawPoint = new SceneNode("drawPoint", ref geo, ref m);
                 drawPoint.transform = new OpenTK.Matrix4(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1);
                 mScene.tableGeometry.add(ref drawPoint);
 
                 //TODO-support both controllers
-                primaryDeviceIndex = mScene.leftControllerIdx;
+                if (mScene.mIsLefty)
+                    primaryDeviceIndex = mScene.leftControllerIdx;
+                else
+                    primaryDeviceIndex = mScene.rightControllerIdx;
+
 
                 rhinoPlane = rp;
                 // closedCurve = curve;
