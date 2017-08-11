@@ -322,20 +322,50 @@ namespace SparrowHawk.Interaction
                     switch (interactionNumber)
                     {
                         case 0:
-                            mScene.popInteraction();
-                            mScene.pushInteraction(new CreatePatch(ref mScene));
+                            //mScene.popInteraction();
+                            //mScene.pushInteraction(new CreatePatch(ref mScene));
+                            while(!mScene.interactionStackEmpty())
+                                mScene.popInteraction();
+                            Util.clearPlanePoints(ref mScene);
+                            Util.clearCurveTargetRhObj(ref mScene);
+                            //mScene.pushInteraction(new Loft2(ref mScene));
+                            mScene.pushInteraction(new EditPoint2(ref mScene, false, "Loft"));
+                            mScene.pushInteraction(new CreateCurve(ref mScene, 0, false));
+                            mScene.pushInteraction(new EditPoint2(ref mScene, true));
+                            mScene.pushInteraction(new CreateCurve(ref mScene, 2, false));
                             break;
                         case 1:
-                            mScene.popInteraction();
-                            mScene.pushInteraction(new CreatePatch(ref mScene));
+                            while (!mScene.interactionStackEmpty())
+                                mScene.popInteraction();
+                            Util.clearPlanePoints(ref mScene);
+                            Util.clearCurveTargetRhObj(ref mScene);
+                            //mScene.pushInteraction(new Sweep3(ref mScene));
+                            mScene.pushInteraction(new EditPoint2(ref mScene, true, "Sweep"));
+                            mScene.pushInteraction(new CreateCurve(ref mScene, 1, false));
+                            mScene.pushInteraction(new CreateCircle2(ref mScene));
+                            mScene.pushInteraction(new AddPoint(ref mScene, 3, 2));
+                            mScene.pushInteraction(new CreatePlane(ref mScene));
+                            mScene.peekInteraction().init();
                             break;
                         case 2:
-                            mScene.popInteraction();
-                            mScene.pushInteraction(new Revolve(ref mScene, true));
+                            while (!mScene.interactionStackEmpty())
+                                mScene.popInteraction();
+                            Util.clearPlanePoints(ref mScene);
+                            Util.clearCurveTargetRhObj(ref mScene);
+                            mScene.pushInteraction(new EditPoint2(ref mScene, true, "Revolve"));
+                            mScene.pushInteraction(new CreateCurve(ref mScene, 1, false));
                             break;
                         case 3:
-                            mScene.popInteraction();
-                            mScene.pushInteraction(new Sweep2(ref mScene, true));
+                            while (!mScene.interactionStackEmpty())
+                                mScene.popInteraction();
+                            Util.clearPlanePoints(ref mScene);
+                            Util.clearCurveTargetRhObj(ref mScene);
+                            mScene.pushInteraction(new Extrusion(ref mScene));
+                            mScene.pushInteraction(new CreateCurve(ref mScene, 0, false));
+                            mScene.pushInteraction(new CreateRect(ref mScene));
+                            mScene.pushInteraction(new AddPoint(ref mScene, 3, 2));
+                            mScene.pushInteraction(new CreatePlane(ref mScene));
+                            mScene.peekInteraction().init();
                             break;
                     }
                     break;
@@ -344,7 +374,7 @@ namespace SparrowHawk.Interaction
                     {
                         case 0:
                             mScene.popInteraction();
-                            mScene.pushInteraction(new Closedcurve(ref mScene));
+                            mScene.pushInteraction(new CreatePatch(ref mScene));
                             break;
                         case 1:
                             mScene.popInteraction();

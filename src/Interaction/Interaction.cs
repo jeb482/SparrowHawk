@@ -149,6 +149,7 @@ namespace SparrowHawk.Interaction
             }
         }
 
+        public virtual void init() { }
 
         /// <summary>
         /// Called every frame while this interaction is in the interaction stack.

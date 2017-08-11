@@ -3,49 +3,32 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using Valve.VR;
 
 namespace SparrowHawk.Interaction
 {
-    class Loft2 : Interaction
+    class Revolve2 : Interaction
     {
-        private List<Curve> loftcurves = new List<Curve>();
         private Material.Material mesh_m;
 
-        public Loft2(ref Scene scene) : base(ref scene)
+        public Revolve2(ref Scene scene) : base(ref scene)
         {
             mesh_m = new Material.RGBNormalMaterial(0.5f);
         }
 
         public override void init()
         {
-
-            foreach (Curve curve in mScene.iCurveList)
-            {
-                loftcurves.Add(curve);
-            }
-
-            renderLoft();
+            renderRevolve();
             mScene.popInteraction();
-
         }
 
         //Curve-EditPoint-Revolve
-        private void renderLoft()
+        private void renderRevolve()
         {
-            Brep[] loftBreps = Brep.CreateFromLoft(loftcurves, Point3d.Unset, Point3d.Unset, LoftType.Tight, false);
-            Brep brep = new Brep();
-            foreach (Brep bp in loftBreps)
-            {
-                brep.Append(bp);
-            }
+            Line axis = new Line(new Point3d(0, 0, 0), new Point3d(0, 0, 1));
+            RevSurface revsrf = RevSurface.Create(mScene.iCurveList[0], axis);
 
-            Mesh base_mesh = new Mesh();
-            // TODO: fix the issue that sometimes the brep is empty. Check the directions of open curves or the seams of closed curves. 
-            if (brep != null && brep.Edges.Count != 0)
-            {
-                Util.addSceneNode(ref mScene, brep, ref mesh_m, "aprint");
-            }
+            Brep brepRevolve = Brep.CreateFromRevSurface(revsrf, false, false);
+            Util.addSceneNode(ref mScene, brepRevolve, ref mesh_m, "aprint");
 
             clearDrawing();
             Util.clearPlanePoints(ref mScene);

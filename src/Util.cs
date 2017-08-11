@@ -204,6 +204,16 @@ namespace SparrowHawk
             solveForAffineTransform(xs, bs, ref M, true);
         }
 
+        public static SceneNode MarkProjectionPoint(ref Scene mScene, OpenTK.Vector3 p, float r, float g, float b)
+        {
+            Geometry.Geometry geo = new Geometry.DrawPointMarker(new OpenTK.Vector3(0, 0, 0));
+            Material.Material m = new Material.SingleColorMaterial(1, 1, 1, 1);//prject point color
+            SceneNode drawPoint = new SceneNode("drawPoint", ref geo, ref m);
+            drawPoint.transform = new OpenTK.Matrix4(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1);
+            mScene.tableGeometry.add(ref drawPoint);
+            return drawPoint;
+        }
+
         public static void MarkPoint(ref SceneNode node, OpenTK.Vector3 p, float r, float g, float b)
         {
             Geometry.Geometry geo = new Geometry.PointMarker(p);
@@ -216,7 +226,7 @@ namespace SparrowHawk
         public static SceneNode MarkPointSN(ref SceneNode node, OpenTK.Vector3 p, float r, float g, float b)
         {
             // p is already rotation inverted.
-            Geometry.Geometry geo = new Geometry.PointMarker(p);
+            Geometry.Geometry geo = new Geometry.DrawPointMarker(p);
             Material.Material m = new Material.SingleColorMaterial(r, g, b, 1);
             SceneNode child = new SceneNode("EditPoint", ref geo, ref m);
             child.transform = new OpenTK.Matrix4(1, 0, 0, p.X, 0, 1, 0, p.Y, 0, 0, 1, p.Z, 0, 0, 0, 1);
@@ -664,6 +674,18 @@ namespace SparrowHawk
                 }
             }
 
+        }
+
+        public static void clearPlanePoints(ref Scene mScene)
+        {
+            mScene.iPlaneList.Clear();
+            mScene.iPointList.Clear();
+        }
+
+        public static void clearCurveTargetRhObj(ref Scene mScene)
+        {
+            mScene.iCurveList.Clear();
+            mScene.iRhObjList.Clear();
         }
 
         public static OpenTK.Matrix4 getCoordinateTransM(OpenTK.Vector3 startO, OpenTK.Vector3 targetO, OpenTK.Vector3 normal1, OpenTK.Vector3 normal2)

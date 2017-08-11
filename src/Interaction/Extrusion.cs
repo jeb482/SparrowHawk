@@ -3,53 +3,41 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using Valve.VR;
 
 namespace SparrowHawk.Interaction
 {
-    class Loft2 : Interaction
+    class Extrusion : Interaction
     {
-        private List<Curve> loftcurves = new List<Curve>();
         private Material.Material mesh_m;
+        private Rhino.Geometry.NurbsCurve extrudeCurve;
+        private Rhino.Geometry.Brep extrudeBrep;
 
-        public Loft2(ref Scene scene) : base(ref scene)
+        public Extrusion(ref Scene scene) : base(ref scene)
         {
             mesh_m = new Material.RGBNormalMaterial(0.5f);
         }
 
         public override void init()
         {
-
-            foreach (Curve curve in mScene.iCurveList)
-            {
-                loftcurves.Add(curve);
-            }
-
-            renderLoft();
+            renderExtrusion();
             mScene.popInteraction();
-
         }
 
         //Curve-EditPoint-Revolve
-        private void renderLoft()
+        private void renderExtrusion()
         {
-            Brep[] loftBreps = Brep.CreateFromLoft(loftcurves, Point3d.Unset, Point3d.Unset, LoftType.Tight, false);
-            Brep brep = new Brep();
-            foreach (Brep bp in loftBreps)
-            {
-                brep.Append(bp);
-            }
+            Curve railCurve = mScene.iCurveList[1];
+            double height = Math.Abs(railCurve.PointAtStart.Z - railCurve.PointAtEnd.Z);
 
-            Mesh base_mesh = new Mesh();
-            // TODO: fix the issue that sometimes the brep is empty. Check the directions of open curves or the seams of closed curves. 
-            if (brep != null && brep.Edges.Count != 0)
-            {
-                Util.addSceneNode(ref mScene, brep, ref mesh_m, "aprint");
-            }
+            Rhino.Geometry.Extrusion extrusion = Rhino.Geometry.Extrusion.Create(mScene.iCurveList[0], height, false);
+            extrudeBrep = extrusion.ToBrep();
+
+            Util.addSceneNode(ref mScene, extrudeBrep, ref mesh_m, "extrude");
 
             clearDrawing();
             Util.clearPlanePoints(ref mScene);
             Util.clearCurveTargetRhObj(ref mScene);
+
         }
 
         private void clearDrawing()
@@ -67,6 +55,5 @@ namespace SparrowHawk.Interaction
                 }
             }
         }
-
     }
 }

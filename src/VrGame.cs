@@ -547,15 +547,31 @@ namespace SparrowHawk
             if (e.KeyChar == 'S' || e.KeyChar == 's')
             {
                 // i.GetType() == typeof(Interaction.Closedcurve) if we want to combine closedcurve and sweep as an interaction
-                mScene.popInteraction();
-                mScene.pushInteraction(new Interaction.Sweep(ref mScene));
+                mScene.pushInteraction(new Interaction.Sweep3(ref mScene));
+                mScene.pushInteraction(new Interaction.CreateCurve(ref mScene, 1, false));
+                mScene.pushInteraction(new Interaction.CreateCircle2(ref mScene));
+                mScene.pushInteraction(new Interaction.AddPoint(ref mScene, 3, 2));
+                mScene.pushInteraction(new Interaction.CreatePlane(ref mScene));
+                mScene.peekInteraction().init();
             }
 
-            //rhino extrude and curve testing
             if (e.KeyChar == 'R' || e.KeyChar == 'r')
             {
                 mScene.popInteraction();
-                mScene.pushInteraction(new Interaction.Closedcurve(ref mScene));
+                //mScene.pushInteraction(new Interaction.Revolve2(ref mScene));
+                mScene.pushInteraction(new Interaction.EditPoint2(ref mScene, true, "Revolve"));
+                mScene.pushInteraction(new Interaction.CreateCurve(ref mScene, 1, false));
+            }
+
+            if (e.KeyChar == 'E' || e.KeyChar == 'e')
+            {
+                mScene.popInteraction();
+                mScene.pushInteraction(new Interaction.Extrusion(ref mScene));
+                mScene.pushInteraction(new Interaction.CreateCurve(ref mScene, 0, false));
+                mScene.pushInteraction(new Interaction.CreateRect(ref mScene));
+                mScene.pushInteraction(new Interaction.AddPoint(ref mScene, 3, 2));
+                mScene.pushInteraction(new Interaction.CreatePlane(ref mScene));
+                mScene.peekInteraction().init();
             }
 
             if (e.KeyChar == 'G' || e.KeyChar == 'g')
@@ -597,7 +613,11 @@ namespace SparrowHawk
             if (e.KeyChar == 'L' || e.KeyChar == 'l')
             {
                 mScene.popInteraction();
-                mScene.pushInteraction(new Interaction.Loft(ref mScene));
+                mScene.pushInteraction(new Interaction.Loft2(ref mScene));
+                mScene.pushInteraction(new Interaction.EditPoint2(ref mScene, false));
+                mScene.pushInteraction(new Interaction.CreateCurve(ref mScene, 0, false));
+                mScene.pushInteraction(new Interaction.EditPoint2(ref mScene, true));
+                mScene.pushInteraction(new Interaction.CreateCurve(ref mScene, 2, false));
             }
 
             if (e.KeyChar == 'B' || e.KeyChar == 'b')

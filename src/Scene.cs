@@ -126,6 +126,13 @@ namespace SparrowHawk
         private double rightControllerEndVibrateTime;
         public bool mIsLefty;
 
+        //for interaction chain
+        public List<Rhino.DocObjects.RhinoObject> iRhObjList = new List<Rhino.DocObjects.RhinoObject>();
+        public List<Rhino.Geometry.Curve> iCurveList = new List<Rhino.Geometry.Curve>();
+        public List<OpenTK.Vector3> iPointList = new List<OpenTK.Vector3>();
+        public List<Interaction.Interaction> interactioChain = new List<Interaction.Interaction>();
+        public List<Rhino.Geometry.Plane> iPlaneList = new List<Rhino.Geometry.Plane>(); //temporary solution for circle, rect
+
         // For rhino positioning
         public Rhino.RhinoDoc rhinoDoc;
         public Matrix4 robotToPlatform = new Matrix4(1,  0,  0, 0,
