@@ -333,6 +333,7 @@ namespace SparrowHawk.Interaction
                             mScene.pushInteraction(new CreateCurve(ref mScene, 0, false));
                             mScene.pushInteraction(new EditPoint2(ref mScene, true));
                             mScene.pushInteraction(new CreateCurve(ref mScene, 2, false));
+                            mScene.peekInteraction().init();
                             break;
                         case 1:
                             while (!mScene.interactionStackEmpty())
@@ -342,9 +343,11 @@ namespace SparrowHawk.Interaction
                             //mScene.pushInteraction(new Sweep3(ref mScene));
                             mScene.pushInteraction(new EditPoint2(ref mScene, true, "Sweep"));
                             mScene.pushInteraction(new CreateCurve(ref mScene, 1, false));
-                            mScene.pushInteraction(new CreateCircle2(ref mScene));
-                            mScene.pushInteraction(new AddPoint(ref mScene, 3, 2));
-                            mScene.pushInteraction(new CreatePlane(ref mScene));
+                            //mScene.pushInteraction(new CreateCircle2(ref mScene));
+                            //mScene.pushInteraction(new AddPoint(ref mScene, 3, 2));
+                            //mScene.pushInteraction(new CreatePlane(ref mScene));
+                            mScene.pushInteraction(new EditPoint2(ref mScene, true));
+                            mScene.pushInteraction(new CreateCurve(ref mScene, 2, false));
                             mScene.peekInteraction().init();
                             break;
                         case 2:
@@ -354,6 +357,7 @@ namespace SparrowHawk.Interaction
                             Util.clearCurveTargetRhObj(ref mScene);
                             mScene.pushInteraction(new EditPoint2(ref mScene, true, "Revolve"));
                             mScene.pushInteraction(new CreateCurve(ref mScene, 1, false));
+                            mScene.peekInteraction().init();
                             break;
                         case 3:
                             while (!mScene.interactionStackEmpty())

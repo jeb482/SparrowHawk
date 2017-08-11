@@ -303,6 +303,12 @@ namespace SparrowHawk
 
                     }
 
+                    //rotate the current interaction curve as well
+                    foreach(Curve iCurve in mScene.iCurveList)
+                    {
+                        iCurve.Transform(transM);
+                    }
+
                     break;
             }
         }

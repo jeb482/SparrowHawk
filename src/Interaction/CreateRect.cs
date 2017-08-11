@@ -32,6 +32,19 @@ namespace SparrowHawk.Interaction
 
             //plane - testing Rectangle3d
             Rectangle3d rect = new Rectangle3d(mScene.iPlaneList[mScene.iPlaneList.Count - 1], topLeftP, bottomRightP);
+
+            //testing transfrom
+            /*
+            Point3d c = rect.Center;
+            OpenTK.Vector3 normal = new OpenTK.Vector3((float)mScene.iPlaneList[mScene.iPlaneList.Count - 1].Normal.X,
+                                                       (float)mScene.iPlaneList[mScene.iPlaneList.Count - 1].Normal.Y,
+                                                       (float)mScene.iPlaneList[mScene.iPlaneList.Count - 1].Normal.Z);
+
+            OpenTK.Matrix4 transM = Util.getCoordinateTransM(new OpenTK.Vector3((float)c.X,(float)c.Y,(float)c.Z), new OpenTK.Vector3(0, 0, 0), normal, new OpenTK.Vector3(0,1,0));
+            Transform t = Util.OpenTKToRhinoTransform(transM);
+            rect.Transform(t);
+            */
+
             rectCurve = rect.ToNurbsCurve();
             Brep[] shapes = Brep.CreatePlanarBreps(rectCurve);
             rectBrep = shapes[0];

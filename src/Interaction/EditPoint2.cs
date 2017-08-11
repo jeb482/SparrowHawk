@@ -84,6 +84,14 @@ namespace SparrowHawk.Interaction
 
             editCurve = (NurbsCurve)mScene.iCurveList.ElementAt(mScene.iCurveList.Count - 1);
 
+            //null check
+            if (editCurve == null)
+            {
+                while (!mScene.interactionStackEmpty())
+                    mScene.popInteraction();
+                return;
+            }
+
             d = new generateModel_Delegate(generateModel);
 
             renderEditCurve();
@@ -188,19 +196,37 @@ namespace SparrowHawk.Interaction
                 //update the curve, noiticed that we can't update editCurve.Points[snapIndex] directly
                 OpenTK.Vector3 ep = Util.vrToPlatformPoint(ref mScene, pos);
                 curvePoints[snapIndex] = Util.openTkToRhinoPoint(ep);
-
+                int order = 3;
                 if (editCurve.IsClosed)
                 {
-                    editCurve = Rhino.Geometry.NurbsCurve.Create(true, 3, curvePoints.ToArray());
+                    //null check
+                    while (order >= 1)
+                    {
+                        editCurve = Rhino.Geometry.NurbsCurve.Create(true, order, curvePoints.ToArray());
+                        if (editCurve != null)
+                            break;
+                        order--;
+                    }
                 }
                 else
                 {
-                    editCurve = Rhino.Geometry.NurbsCurve.Create(false, 3, curvePoints.ToArray());
+                    //null check
+                    while (order >= 1)
+                    {
+                        editCurve = Rhino.Geometry.NurbsCurve.Create(false, order, curvePoints.ToArray());
+                        if (editCurve != null)
+                            break;
+                        order--;
+                    }
                 }
 
                 //prevent crash
                 if (editCurve == null)
+                {
+                    while (!mScene.interactionStackEmpty())
+                        mScene.popInteraction();
                     return;
+                }
 
                 //remove and visualize the new control points
                 for (int i = 0; i < pointMarkers.Count; i++)
@@ -326,10 +352,19 @@ namespace SparrowHawk.Interaction
                 // need to remove rerverse since the list update dynamically
                 foreach (SceneNode sn in mScene.tableGeometry.children.Reverse<SceneNode>())
                 {
-                                            
-                    if (sn.name == "EditCurve" || sn.name == "drawPoint" || sn.name == "EditPoint" || sn.name == "panel" || sn.name == "circle"|| sn.name == "rect")
+                    if (dynamicRender != "none")
                     {
-                        mScene.tableGeometry.children.Remove(sn);
+                        if (sn.name == "EditCurve" || sn.name == "drawPoint" || sn.name == "EditPoint" || sn.name == "panel" || sn.name == "circle" || sn.name == "rect")
+                        {
+                            mScene.tableGeometry.children.Remove(sn);
+                        }
+                    }else
+                    {
+                        //keep editcurve, circle, rect
+                        if (sn.name == "drawPoint" || sn.name == "EditPoint" || sn.name == "panel")
+                        {
+                            mScene.tableGeometry.children.Remove(sn);
+                        }
                     }
                 }
             }
@@ -428,16 +463,36 @@ namespace SparrowHawk.Interaction
                 OpenTK.Vector3 railStartPoint = new OpenTK.Vector3((float)railPL.PointAtStart.X, (float)railPL.PointAtStart.Y, (float)railPL.PointAtStart.Z);
                 OpenTK.Vector3 railNormal = new OpenTK.Vector3((float)railPL.TangentAtStart.X, (float)railPL.TangentAtStart.Y, (float)railPL.TangentAtStart.Z);
 
-                OpenTK.Vector3 shapeCenter = mScene.iPointList[0];
-                OpenTK.Vector3 shapeNormal = new OpenTK.Vector3((float)mScene.iPlaneList[0].Normal.X, (float)mScene.iPlaneList[0].Normal.Y, (float)mScene.iPlaneList[0].Normal.Z);
+                //need to calculate the center and normal from curve
+                //OpenTK.Vector3 shapeCenter = Util.vrToPlatformPoint(ref mScene, mScene.iPointList[0]);
+                //OpenTK.Vector3 shapeNormal = new OpenTK.Vector3((float)mScene.iPlaneList[0].Normal.X, (float)mScene.iPlaneList[0].Normal.Y, (float)mScene.iPlaneList[0].Normal.Z);
+                OpenTK.Vector3 shapeCenter = new Vector3((float)mScene.iCurveList[0].GetBoundingBox(true).Center.X, (float)mScene.iCurveList[0].GetBoundingBox(true).Center.Y, (float)mScene.iCurveList[0].GetBoundingBox(true).Center.Z);
+                Plane curvePlane;
+                OpenTK.Vector3 shapeNormal = new Vector3(0, 0, 0);
+                Double tolerance = 0;
+                while (tolerance < 100) {
+                    if (mScene.iCurveList[0].TryGetPlane(out curvePlane, tolerance))
+                    {
+                        shapeNormal = new OpenTK.Vector3((float)curvePlane.Normal.X, (float)curvePlane.Normal.Y, (float)curvePlane.Normal.Z);
+                        break;
+                    }
+                    tolerance++;
+                }              
+
+                OpenTK.Matrix4 transM = Util.getCoordinateTransM(shapeCenter, railStartPoint, shapeNormal, railNormal);
+                Transform t = Util.OpenTKToRhinoTransform(transM);
+                ((NurbsCurve)mScene.iCurveList[0]).Transform(t);
+                NurbsCurve circleCurve = (NurbsCurve)mScene.iCurveList[0];
 
                 //another solution-create a new circle at startpoint
+                /*
                 Plane plane = new Plane(railPL.PointAtStart, railPL.TangentAtStart);
                 Point3d origin = Util.openTkToRhinoPoint(Util.vrToPlatformPoint(ref mScene, mScene.iPointList[0]));
                 Point3d circleP = Util.openTkToRhinoPoint(Util.vrToPlatformPoint(ref mScene, mScene.iPointList[1]));
                 float radius = (float)Math.Sqrt(Math.Pow(circleP.X - origin.X, 2) + Math.Pow(circleP.Y - origin.Y, 2) + Math.Pow(circleP.Z - origin.Z, 2));
                 Rhino.Geometry.Circle circle = new Rhino.Geometry.Circle(plane, railPL.PointAtStart, radius);
                 NurbsCurve circleCurve = circle.ToNurbsCurve();
+                */
 
                 //remove the current model
                 if (renderObjId != Guid.Empty)
@@ -450,6 +505,11 @@ namespace SparrowHawk.Interaction
                 {
                     renderObjId = Util.addSceneNode(ref mScene, brep, ref mesh_m, modelName);
                 }
+
+                //reverse transfrom the curvelist
+                Transform invT;
+                if(t.TryGetInverse(out invT))
+                    ((NurbsCurve)mScene.iCurveList[0]).Transform(invT);
             }
         }
 

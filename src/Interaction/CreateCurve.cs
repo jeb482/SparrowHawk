@@ -261,42 +261,81 @@ namespace SparrowHawk.Interaction
                 //simplfy the curve first before doing next interaction
                 if (((Geometry.GeometryStroke)(stroke_g)).mPoints.Count >= 2)
                 {
+                    //TODO-testing Rhino simplfying---debug
+                    /*
+                    Curve c = (rhinoCurve.Simplify(CurveSimplifyOptions.All, 0.1, Math.PI / 2));
+                    if(c != null){
+                        NurbsCurve newCurve = (rhinoCurve.Simplify(CurveSimplifyOptions.None, 0.1, Math.PI / 2)).ToNurbsCurve();                     
+                        //add to Scene curve object ,targetRhobj and check the next interaction
+                        mScene.iCurveList.Add(newCurve);
+                        if (type != 0 && curveOnObj != null)
+                        {
+                           mScene.iRhObjList.Add(curveOnObj);
+                        }
+
+                        clearDrawing();
+                        mScene.popInteraction();
+                        mScene.peekInteraction().init();
+                        
+                    }*/
+                    
+
                     simplifyCurve(ref ((Geometry.GeometryStroke)(stroke_g)).mPoints);
 
                     //intialize the rhino points of curve
+                    /*                   
                     foreach (OpenTK.Vector3 point in reducePoints)
                     {
+
                         simplifiedCurvePoints.Add(Util.openTkToRhinoPoint(Util.vrToPlatformPoint(ref mScene, point)));
                         //Util.MarkPoint(ref mScene.staticGeometry, new Vector3(point.X, point.Y, point.Z), 1, 1, 1);
-                    }
-
-                    if (rhinoCurvePoints.Count >= 2) //TODO: might need 8 for closecurve check
+                    }*/
+                    //intialize the rhino points of curve
+                    
+                    for (int i =0; i< reducePoints.Count; i++)
                     {
-                        //clear the stroke and the drawPoint
-                        foreach (SceneNode sn in mScene.tableGeometry.children.Reverse<SceneNode>())
+                        if (i == 0)
                         {
-                            if (sn.guid == strokeId)
-                            {
-                                mScene.tableGeometry.children.Remove(sn);
-
-                            }
-                            else if (sn.name == "drawPoint")
-                            {
-                                mScene.tableGeometry.children.Remove(sn);
-
-                            }
+                            simplifiedCurvePoints.Add(Util.openTkToRhinoPoint(Util.vrToPlatformPoint(ref mScene, reducePoints[i])));
                         }
-                        //mScene.tableGeometry.children.RemoveAll(item => item.guid == strokeId);
-                        //mScene.tableGeometry.children.RemoveAll(item => item.name == "drawPoint");
-
-                        if (isClosed)
+                        else if(reducePoints.Count == 2)
                         {
-                            simplifiedCurve = Rhino.Geometry.NurbsCurve.Create(true, 3, simplifiedCurvePoints.ToArray());
+                            simplifiedCurvePoints.Add(Util.openTkToRhinoPoint(Util.vrToPlatformPoint(ref mScene, reducePoints[i])));
                         }
                         else
                         {
-                            simplifiedCurve = Rhino.Geometry.NurbsCurve.Create(false, 3, simplifiedCurvePoints.ToArray());
-
+                            float distance = (float)Math.Sqrt(Math.Pow(reducePoints[i].X - reducePoints[i - 1].X, 2) + Math.Pow(reducePoints[i].Y - reducePoints[i - 1].Y, 2) + Math.Pow(reducePoints[i].Z - reducePoints[i - 1].Z, 2));
+                            if(distance > 0.01)
+                            {
+                                simplifiedCurvePoints.Add(Util.openTkToRhinoPoint(Util.vrToPlatformPoint(ref mScene, reducePoints[i])));
+                            }
+                        }
+                    }
+                    
+                    if (simplifiedCurvePoints.Count >= 2) //TODO: might need 8 for closecurve check
+                    {
+                        int order = 3;
+                        if (isClosed)
+                        {
+                            while (order >= 1)
+                            {
+                                simplifiedCurve = Rhino.Geometry.NurbsCurve.Create(true, order, simplifiedCurvePoints.ToArray());
+                                if (simplifiedCurve != null)
+                                    break;
+                                order--;
+                            }
+                        }
+                        else
+                        {
+                            //null check
+                            while(order >= 1)
+                            {
+                                simplifiedCurve = Rhino.Geometry.NurbsCurve.Create(false, order, simplifiedCurvePoints.ToArray());
+                                if (simplifiedCurve != null)
+                                    break;
+                                order--;
+                            }                                              
+                           
                         }
 
                         //add to Scene curve object ,targetRhobj and check the next interaction
@@ -306,19 +345,9 @@ namespace SparrowHawk.Interaction
                             mScene.iRhObjList.Add(curveOnObj);
                         }
 
-                        //update the interaction chain
-                        /*
-                        mScene.iIndex++;
-
-                        if (mScene.iChain.ElementAt(mScene.iIndex) == "EditPointOnP")
-                        {
-                            mScene.popInteraction();
-                            mScene.pushInteraction(new EditPoint2(ref mScene, true));
-                        }*/
+                        clearDrawing();
                         mScene.popInteraction();
                         mScene.peekInteraction().init();
-
-
 
                     }
 
@@ -329,12 +358,33 @@ namespace SparrowHawk.Interaction
             }
         }
 
+        private void clearDrawing()
+        {
+            //clear the curve and points
+            if (mScene.tableGeometry.children.Count > 0)
+            {
+                // need to remove rerverse since the list update dynamically
+                foreach (SceneNode sn in mScene.tableGeometry.children.Reverse<SceneNode>())
+                {
+                    if (sn.guid == strokeId)
+                    {
+                        mScene.tableGeometry.children.Remove(sn);
+
+                    }
+                    else if (sn.name == "drawPoint")
+                    {
+                        mScene.tableGeometry.children.Remove(sn);
+
+                    }
+                }
+            }
+        }
 
         public void simplifyCurve(ref List<Vector3> curvePoints)
         {
-            float pointReductionTubeWidth = 0.002f;
+            float pointReductionTubeWidth = 0.002f; //0.002
             reducePoints = DouglasPeucker(ref curvePoints, 0, curvePoints.Count - 1, pointReductionTubeWidth);
-            Rhino.RhinoApp.WriteLine("reduce points from" + curvePoints.Count + " to " + curvePoints.Count);
+            Rhino.RhinoApp.WriteLine("reduce points from" + curvePoints.Count + " to " + reducePoints.Count);
         }
 
         //Quick test about Douglas-Peucker for rhino points, return point3d with rhino coordinate system
