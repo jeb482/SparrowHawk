@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using Valve.VR;
 
 namespace SparrowHawk.Interaction
 {
@@ -48,6 +49,15 @@ namespace SparrowHawk.Interaction
                 mScene.iPlaneList.Add(plane);
             }
 
+        }
+
+        protected override void onClickOculusTrigger(ref VREvent_t vrEvent)
+        {
+            init();
+        }
+
+        protected override void onReleaseOculusTrigger(ref VREvent_t vrEvent)
+        {
             mScene.popInteraction();
             mScene.peekInteraction().init();
         }

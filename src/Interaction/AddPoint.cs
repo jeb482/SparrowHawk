@@ -25,6 +25,7 @@ namespace SparrowHawk.Interaction
         protected SceneNode drawPoint;
         protected OpenTK.Vector3 projectP;
         Vector3 pos = new Vector3();
+        protected RhinoObject pointOnObj;
 
         List<SceneNode> pointMarkers = new List<SceneNode>();
 
@@ -64,7 +65,7 @@ namespace SparrowHawk.Interaction
 
         public override void init()
         {
-            if (type == 3 && mScene.iRhObjList.Count != 0)
+            if ((type == 3) && mScene.iRhObjList.Count != 0)
             {
                 foreach (Rhino.DocObjects.RhinoObject RhObj in mScene.iRhObjList)
                 {
@@ -160,6 +161,8 @@ namespace SparrowHawk.Interaction
                     projectP = new OpenTK.Vector3(100, 100, 100); //make it invisable
                 }
 
+                pointOnObj = targetPRhObj;
+
                 //visualize the projection points
                 // inverted rotation first
 
@@ -201,6 +204,11 @@ namespace SparrowHawk.Interaction
 
             if (maxNumPoint == pointMarkers.Count)
             {
+                if (type != 0 && pointOnObj != null)
+                {
+                    mScene.iRhObjList.Add(pointOnObj);
+                }
+
                 clearDrawing();
                 mScene.popInteraction();
                 if (!mScene.interactionStackEmpty())

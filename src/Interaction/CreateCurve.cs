@@ -122,7 +122,7 @@ namespace SparrowHawk.Interaction
                     {
                         //check for different drawing curve types
                         bool b1 = (type == 1) && rhObj.Attributes.Name.Contains("plane");
-                        bool b2 = (type == 2) && (rhObj.Attributes.Name.Contains("brepMesh") || rhObj.Attributes.Name.Contains("aprint"));
+                        bool b2 = (type == 2) && (rhObj.Attributes.Name.Contains("brepMesh") || rhObj.Attributes.Name.Contains("aprint") || rhObj.Attributes.Name.Contains("patchSurface"));
                         bool b3 = (type == 3) && ListTargets.Contains(rhObj.Id);
 
                         //only drawing on planes for now rhObj.Attributes.Name.Contains("brepMesh") || rhObj.Attributes.Name.Contains("aprint") || rhObj.Attributes.Name.Contains("plane")

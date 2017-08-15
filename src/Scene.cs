@@ -132,6 +132,14 @@ namespace SparrowHawk
         public List<OpenTK.Vector3> iPointList = new List<OpenTK.Vector3>();
         public List<Interaction.Interaction> interactioChain = new List<Interaction.Interaction>();
         public List<Rhino.Geometry.Plane> iPlaneList = new List<Rhino.Geometry.Plane>(); //temporary solution for circle, rect
+        public enum MenuLayout
+        {
+            MainMenu, ExtrudeC1, ExtrudeD1, ExtrudeC2, ExtrudeD2,
+            LoftC1, LoftD1, LoftC2, LoftD2, RevolveC1, RevolveD1, SweepC1, SweepD1, SweepC2, SweepD2
+        };
+        public List<MenuLayout> menuList = new List<MenuLayout>();
+        public List<string> selectionList = new List<string>();
+        public int menuIndex = 0;
 
         // For rhino positioning
         public Rhino.RhinoDoc rhinoDoc;

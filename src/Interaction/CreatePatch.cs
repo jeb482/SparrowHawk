@@ -75,6 +75,7 @@ namespace SparrowHawk.Interaction
             Brep patchSurface = Brep.CreatePatch(allPoints, 10, 10, mScene.rhinoDoc.ModelAbsoluteTolerance);
 
             planGuid = Util.addSceneNode(ref mScene, patchSurface, ref mesh_m, "patchSurface");
+            mScene.iRhObjList.Add(mScene.rhinoDoc.Objects.Find(planGuid));
             mScene.rhinoDoc.Views.Redraw();
 
             foreach (Guid id in curveGuids)

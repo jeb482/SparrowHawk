@@ -20,7 +20,8 @@ namespace SparrowHawk.Interaction
             {
                 primaryControllerIdx = mScene.leftControllerIdx;
                 secondaryControllerIdx = mScene.rightControllerIdx;
-            } else
+            }
+            else
             {
                 primaryControllerIdx = mScene.rightControllerIdx;
                 secondaryControllerIdx = mScene.leftControllerIdx;
@@ -30,8 +31,10 @@ namespace SparrowHawk.Interaction
         public void handleInput()
         {
             VREvent_t vrEvent = new VREvent_t();
-            unsafe {
-                while (mScene.mHMD.PollNextEvent(ref vrEvent, (uint)sizeof(VREvent_t))){
+            unsafe
+            {
+                while (mScene.mHMD.PollNextEvent(ref vrEvent, (uint)sizeof(VREvent_t)))
+                {
                     if (mScene.isOculus)
                         oculusInput(ref vrEvent);
                     else
@@ -100,12 +103,12 @@ namespace SparrowHawk.Interaction
 
         protected void viveInput(ref VREvent_t vrEvent)
         {
-            if (vrEvent.eventType == (uint) EVREventType.VREvent_ButtonPress)
+            if (vrEvent.eventType == (uint)EVREventType.VREvent_ButtonPress)
             {
                 Rhino.RhinoApp.WriteLine("Pressed a button");
                 switch (vrEvent.data.controller.button)
                 {
-                    case (uint) EVRButtonId.k_EButton_SteamVR_Trigger:
+                    case (uint)EVRButtonId.k_EButton_SteamVR_Trigger:
                         onClickViveTrigger(ref vrEvent);
                         break;
                     case (uint)EVRButtonId.k_EButton_SteamVR_Touchpad:
@@ -142,7 +145,7 @@ namespace SparrowHawk.Interaction
             {
                 switch (vrEvent.data.controller.button)
                 {
-                    case (uint) EVRButtonId.k_EButton_SteamVR_Touchpad:
+                    case (uint)EVRButtonId.k_EButton_SteamVR_Touchpad:
                         onUntouchViveTouchpad(ref vrEvent);
                         break;
                 }
@@ -157,30 +160,41 @@ namespace SparrowHawk.Interaction
         /// Otherwise, isTop will evaluate to false. This allows us to 
         /// </summary>
         /// <param name="isTop"> True iff this is the top interaction in the stack.</param>
-        public virtual void draw(bool isTop) {}
+        public virtual void draw(bool isTop) { }
 
         /// <summary>
         /// Gets called whenever this interaction is placed on the 
         /// top of the stack.
         /// </summary>
-        public virtual void activate() {}
+        public virtual void activate() { }
 
         /// <summary>
         /// Gets called when this interaction is removed from the stack.
         /// </summary>
-        public virtual void deactivate() {}
+        public virtual void deactivate() { }
 
-        protected virtual void onClickViveTrigger(ref VREvent_t vrEvent) {}
+        protected virtual void onClickViveTrigger(ref VREvent_t vrEvent) { }
         protected virtual void onClickViveTouchpad(ref VREvent_t vrEvent) { }
         protected virtual void onClickViveGrip(ref VREvent_t vrEvent) { }
-        protected virtual void onClickViveAppMenu(ref VREvent_t vrEvent) { mScene.pushInteraction(new MarkingMenu(ref mScene)); }
+        protected virtual void onClickViveAppMenu(ref VREvent_t vrEvent)
+        {
+            mScene.pushInteraction(new MarkingMenu(ref mScene, mScene.menuList[mScene
+.menuIndex]));
+        }
         protected virtual void onReleaseViveTrigger(ref VREvent_t vrEvent) { }
         protected virtual void onReleaseViveTouchpad(ref VREvent_t vrEvent) { }
         protected virtual void onReleaseViveGrip(ref VREvent_t vrEvent) { }
         protected virtual void onReleaseViveAppMenu(ref VREvent_t vrEvent) { }
-        protected virtual void onUntouchViveTouchpad(ref VREvent_t vrEvent) {}
+        protected virtual void onUntouchViveTouchpad(ref VREvent_t vrEvent) { }
         protected virtual void onClickOculusTrigger(ref VREvent_t vrEvent) { }
-        protected virtual void onClickOculusStick(ref VREvent_t vrEvent) { mScene.pushInteraction(new MarkingMenu(ref mScene));}
+        protected virtual void onClickOculusStick(ref VREvent_t vrEvent)
+        {
+            if (mScene.menuList.Count == 0)
+            {
+                mScene.menuList.Add(Scene.MenuLayout.MainMenu);
+            }
+            mScene.pushInteraction(new MarkingMenu(ref mScene, mScene.menuList[mScene.menuIndex]));
+        }
         protected virtual void onClickOculusGrip(ref VREvent_t vrEvent) { }
         protected virtual void onClickOculusAX(ref VREvent_t vrEvent) { }
         protected virtual void onClickOculusBY(ref VREvent_t vrEvent) { }
@@ -190,7 +204,7 @@ namespace SparrowHawk.Interaction
         protected virtual void onReleaseOculusAX(ref VREvent_t vrEvent) { }
         protected virtual void onReleaseOculusBY(ref VREvent_t vrEvent) { }
         protected virtual void onUntouchOculusStick(ref VREvent_t vrEvent) { }
-        
+
 
 
         /// <summary>
@@ -204,7 +218,8 @@ namespace SparrowHawk.Interaction
         {
             VRControllerState_t controllerState = new VRControllerState_t();
             VRControllerAxis_t axis = new VRControllerAxis_t();
-            unsafe {
+            unsafe
+            {
                 mScene.mHMD.GetControllerState(deviceIndex, ref controllerState, (uint)sizeof(VRControllerState_t));
             }
             axis = controllerState.rAxis0;
@@ -222,7 +237,8 @@ namespace SparrowHawk.Interaction
         /// <param name="deviceIndex">Index of the controller</param>
         /// <param name="r">the tilt magnitude [0,1]</param>
         /// <param name="theta">the angle made with the x-axis</param>
-        protected void getOculusJoystickPoint(uint deviceIndex, out float r, out float theta) {
+        protected void getOculusJoystickPoint(uint deviceIndex, out float r, out float theta)
+        {
             getViveTouchpadPoint(deviceIndex, out r, out theta);
         }
     }
