@@ -290,15 +290,15 @@ namespace SparrowHawk
                         if (mScene.brepToSceneNodeDic.ContainsKey(rhObj.Id) && rhObj.Attributes.Name != "planeXY" && rhObj.Attributes.Name != "planeXZ"
                                                                             && rhObj.Attributes.Name != "planeYZ")
                         {
-                            SceneNode sn = mScene.brepToSceneNodeDic[rhObj.Id];
-                            mScene.brepToSceneNodeDic.Remove(rhObj.Id);
+                            //SceneNode sn = mScene.brepToSceneNodeDic[rhObj.Id];
+                            //mScene.brepToSceneNodeDic.Remove(rhObj.Id);
 
                             Guid newGuid = mScene.rhinoDoc.Objects.Transform(rhObj.Id, transM, true);
                             Rhino.RhinoApp.WriteLine("transM " + transM.ToString());
                             mScene.rhinoDoc.Views.Redraw();
 
-                            mScene.brepToSceneNodeDic.Add(newGuid, sn);
-                            mScene.SceneNodeToBrepDic[sn.guid] = mScene.rhinoDoc.Objects.Find(newGuid);
+                            //mScene.brepToSceneNodeDic.Add(newGuid, sn);
+                            //mScene.SceneNodeToBrepDic[sn.guid] = mScene.rhinoDoc.Objects.Find(newGuid);
                         }
 
                     }
@@ -307,6 +307,11 @@ namespace SparrowHawk
                     foreach(Curve iCurve in mScene.iCurveList)
                     {
                         iCurve.Transform(transM);
+                        
+                    }
+                    if (mScene.peekInteraction().GetType() == typeof(Interaction.EditPoint2))
+                    {
+                        mScene.peekInteraction().init();
                     }
 
                     break;
@@ -683,18 +688,18 @@ namespace SparrowHawk
                 }
                 settings.ObjectTypeFilter = Rhino.DocObjects.ObjectType.Brep;
                 foreach (Rhino.DocObjects.RhinoObject rhObj in mScene.rhinoDoc.Objects.GetObjectList(settings))
-                {                    
-                    if (mScene.brepToSceneNodeDic.ContainsKey(rhObj.Id))
+                {
+                    if (mScene.brepToSceneNodeDic.ContainsKey(rhObj.Id) && rhObj.Attributes.Name != "planeXY" && rhObj.Attributes.Name != "planeXZ"
+                                                                            && rhObj.Attributes.Name != "planeYZ")
                     {
-                        SceneNode sn = mScene.brepToSceneNodeDic[rhObj.Id];
-                        mScene.brepToSceneNodeDic.Remove(rhObj.Id);
-
+                        //SceneNode sn = mScene.brepToSceneNodeDic[rhObj.Id];
+                        //mScene.brepToSceneNodeDic.Remove(rhObj.Id);
                         Guid newGuid = mScene.rhinoDoc.Objects.Transform(rhObj.Id, transM, true);
                         Rhino.RhinoApp.WriteLine("transM " + transM.ToString());
                         mScene.rhinoDoc.Views.Redraw();
 
-                        mScene.brepToSceneNodeDic.Add(newGuid, sn);
-                        mScene.SceneNodeToBrepDic[sn.guid] = mScene.rhinoDoc.Objects.Find(newGuid);
+                        //mScene.brepToSceneNodeDic.Add(newGuid, sn);
+                        //mScene.SceneNodeToBrepDic[sn.guid] = mScene.rhinoDoc.Objects.Find(newGuid);
                     }
                     
                 }

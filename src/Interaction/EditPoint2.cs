@@ -108,7 +108,9 @@ namespace SparrowHawk.Interaction
                 float radius = (float)Math.Sqrt(Math.Pow(circleP.X - origin.X, 2) + Math.Pow(circleP.Y - origin.Y, 2) + Math.Pow(circleP.Z - origin.Z, 2));
 
                 //compute the plane from RhinoObj
-                Brep targetBrep = (Brep)(mScene.iRhObjList[mScene.iRhObjList.Count - 1].Geometry);
+                //testing debug
+                RhinoObject newObj = mScene.rhinoDoc.Objects.Find(mScene.iRhObjList[mScene.iRhObjList.Count - 1].Id);
+                Brep targetBrep = (Brep)(newObj.Geometry);
                 //compute the brepFace where the curve is on
                 //Surface s = targetBrep.Faces[0];
                 int faceIndex = -1;
@@ -116,12 +118,14 @@ namespace SparrowHawk.Interaction
                 {
                     //cast BrepFace to Brep for ClosestPoint(P) menthod
                     double dist = targetBrep.Faces[i].DuplicateFace(false).ClosestPoint(origin).DistanceTo(origin);
+                    //tolerance mScene.rhinoDoc.ModelAbsoluteTolerance too low
                     if (dist < mScene.rhinoDoc.ModelAbsoluteTolerance)
                     {
                         faceIndex = i;
                         break;
                     }
                 }
+
                 Surface s = targetBrep.Faces[faceIndex];
                 //Curve planeCurve = ((Brep)mScene.iRhObjList[mScene.iRhObjList.Count - 1].Geometry).Curves3D.ElementAt(0); //somehow incorrect result
                 Plane circlePlane;

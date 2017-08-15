@@ -196,11 +196,13 @@ namespace SparrowHawk.Interaction
 
         protected override void onClickOculusTrigger(ref VREvent_t vrEvent)
         {
+            //testing
+            mScene.iPointList.Add(pos);
             OpenTK.Vector3 p = Util.transformPoint(mScene.tableGeometry.transform.Inverted(), pos);
             SceneNode sn = Util.MarkPointSN(ref mScene.tableGeometry, p, 0, 1, 0);
             pointMarkers.Add(sn);
 
-            mScene.iPointList.Add(p);
+            //mScene.iPointList.Add(p);
 
             if (maxNumPoint == pointMarkers.Count)
             {
