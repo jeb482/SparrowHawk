@@ -545,6 +545,47 @@ namespace SparrowHawk
                                                              -1, 0, 0, 0,
                                                              0, 0, 0, 1);
 
+
+        public static Guid addStaticNode(ref Scene mScene, Brep brep, ref Material.Material mesh_m, string name)
+        {
+            //TODO: detect the # of faces
+            Mesh base_mesh = new Mesh();
+            if (brep != null)
+            {
+                Mesh[] meshes = Mesh.CreateFromBrep(brep, MeshingParameters.Default);
+
+                foreach (Mesh mesh in meshes)
+                    base_mesh.Append(mesh);
+
+                long ticks = DateTime.Now.Ticks;
+                byte[] bytes = BitConverter.GetBytes(ticks);
+                string timeuid = Convert.ToBase64String(bytes).Replace('+', '_').Replace('/', '-').TrimEnd('=');
+
+                Rhino.DocObjects.ObjectAttributes attr = new Rhino.DocObjects.ObjectAttributes();
+                attr.Name = name + timeuid;
+                Guid guid = mScene.rhinoDoc.Objects.AddBrep(brep, attr);
+                mScene.rhinoDoc.Views.Redraw();
+
+                //testing rotation
+                Geometry.Geometry meshStroke_g = new Geometry.RhinoMesh(ref mScene, mScene.platformRotation);
+                ((Geometry.RhinoMesh)meshStroke_g).setMesh(ref base_mesh);
+
+                SceneNode ccMeshSN = new SceneNode(name, ref meshStroke_g, ref mesh_m);
+                mScene.staticGeometry.add(ref ccMeshSN);
+
+                //add reference SceneNode to brep and vice versa
+                mScene.brepToSceneNodeDic.Add(guid, ccMeshSN);
+                mScene.SceneNodeToBrepDic.Add(ccMeshSN.guid, mScene.rhinoDoc.Objects.Find(guid));
+
+                return guid;
+
+            }
+            else
+            {
+                return Guid.Empty;
+            }
+        }
+
         public static Guid addSceneNode(ref Scene mScene, Brep brep, ref Material.Material mesh_m)
         {
             //TODO: detect the # of faces
@@ -559,6 +600,7 @@ namespace SparrowHawk
                 Rhino.DocObjects.ObjectAttributes attr = new Rhino.DocObjects.ObjectAttributes();
                 attr.Name = "brepMesh";
                 Guid guid = mScene.rhinoDoc.Objects.AddBrep(brep, attr);
+                //mScene.rhinoDoc.Objects.Transform(guid, mScene.transM, true);
                 mScene.rhinoDoc.Views.Redraw();
 
                 //testing platform rotation

@@ -49,7 +49,7 @@ namespace SparrowHawk
 
         bool manualCallibration = false;
 
-        DesignPlane xzPlane, xyPlane, yzPlane;
+        DesignPlane3 xzPlane, xyPlane, yzPlane;
         DesignPlane2 xzPlane2, xyPlane2, yzPlane2;
 
         Geometry.Geometry printStroke;
@@ -274,36 +274,38 @@ namespace SparrowHawk
 
                     //rotate Rhino objects
                     OpenTK.Matrix4 rotMRhino = mScene.platformRotation * currentRotation.Inverted();
-                    Transform transM = new Transform();
+                    mScene.transM = new Transform();
                     for (int row = 0; row < 4; row++)
                     {
                         for (int col = 0; col < 4; col++)
                         {
-                            transM[row, col] = rotMRhino[row, col];
+                            mScene.transM[row, col] = rotMRhino[row, col];
                         }
                     }
 
+                    /*
                     Rhino.DocObjects.ObjectEnumeratorSettings settings = new Rhino.DocObjects.ObjectEnumeratorSettings();
                     settings.ObjectTypeFilter = Rhino.DocObjects.ObjectType.Brep;
                     foreach (Rhino.DocObjects.RhinoObject rhObj in mScene.rhinoDoc.Objects.GetObjectList(settings))
                     {
-                        if (mScene.brepToSceneNodeDic.ContainsKey(rhObj.Id) && rhObj.Attributes.Name != "planeXY" && rhObj.Attributes.Name != "planeXZ"
-                                                                            && rhObj.Attributes.Name != "planeYZ")
+                        if (mScene.brepToSceneNodeDic.ContainsKey(rhObj.Id) && !rhObj.Attributes.Name.Contains("planeXY") && !rhObj.Attributes.Name.Contains("planeXZ")
+                                                                                && !rhObj.Attributes.Name.Contains("planeYZ"))
                         {
                             //SceneNode sn = mScene.brepToSceneNodeDic[rhObj.Id];
                             //mScene.brepToSceneNodeDic.Remove(rhObj.Id);
 
-                            Guid newGuid = mScene.rhinoDoc.Objects.Transform(rhObj.Id, transM, true);
-                            Rhino.RhinoApp.WriteLine("transM " + transM.ToString());
+                            Guid newGuid = mScene.rhinoDoc.Objects.Transform(rhObj.Id, mScene.transM, true);
+                            Rhino.RhinoApp.WriteLine("transM " + mScene.transM.ToString());
                             mScene.rhinoDoc.Views.Redraw();
 
                             //mScene.brepToSceneNodeDic.Add(newGuid, sn);
                             //mScene.SceneNodeToBrepDic[sn.guid] = mScene.rhinoDoc.Objects.Find(newGuid);
                         }
 
-                    }
+                    }*/
 
                     //rotate the current interaction curve as well
+                    /*
                     foreach(Curve iCurve in mScene.iCurveList)
                     {
                         iCurve.Transform(transM);
@@ -312,7 +314,7 @@ namespace SparrowHawk
                     if (mScene.peekInteraction().GetType() == typeof(Interaction.EditPoint2))
                     {
                         mScene.peekInteraction().init();
-                    }
+                    }*/
 
                     break;
             }
@@ -440,9 +442,14 @@ namespace SparrowHawk
             point.transform = new Matrix4(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1);
 
 
-            xzPlane = new DesignPlane(ref mScene, 1);
-            xyPlane = new DesignPlane(ref mScene, 2);
-            yzPlane = new DesignPlane(ref mScene, 0);
+            xzPlane = new DesignPlane3(ref mScene, 1);
+            xyPlane = new DesignPlane3(ref mScene, 2);
+            yzPlane = new DesignPlane3(ref mScene, 0);
+
+
+            //xzPlane = new DesignPlane(ref mScene, 1);
+            //xyPlane = new DesignPlane(ref mScene, 2);
+            //yzPlane = new DesignPlane(ref mScene, 0);
 
             //xzPlane2 = new DesignPlane2(ref mScene, "XZ");
             //xyPlane2 = new DesignPlane2(ref mScene, "XY");
@@ -594,7 +601,7 @@ namespace SparrowHawk
             if (e.KeyChar == 'H' || e.KeyChar == 'h')
             {
                 mScene.popInteraction();
-                mScene.pushInteraction(new Interaction.EditPlane(ref mScene, ref xyPlane, ref xzPlane, ref yzPlane));
+                //mScene.pushInteraction(new Interaction.EditPlane(ref mScene, ref xyPlane, ref xzPlane, ref yzPlane));
                 //mScene.pushInteraction(new Interaction.EditPlane2(ref mScene, ref xyPlane2, ref xzPlane2, ref yzPlane2));
             }
 
@@ -670,7 +677,7 @@ namespace SparrowHawk
                 //for rhino object
                 OpenTK.Matrix4 currentRotation =  mScene.platformRotation;
 
-                float theta = (float)(45.0f / 360f * 2 * Math.PI);
+                float theta = (float)(90.0f / 360f * 2 * Math.PI);
                 Rhino.RhinoApp.WriteLine("Theta = " + theta);
                 Matrix4.CreateRotationZ(theta, out mScene.platformRotation);
                 mScene.platformRotation.Transpose();
@@ -678,24 +685,24 @@ namespace SparrowHawk
                 //rotate Rhino objects
                 OpenTK.Matrix4 rotMRhino =  mScene.platformRotation * currentRotation.Inverted();
                 Rhino.DocObjects.ObjectEnumeratorSettings settings = new Rhino.DocObjects.ObjectEnumeratorSettings();
-                Transform transM = new Transform();
+                mScene.transM = new Transform();
                 for (int row = 0; row < 4; row++)
                 {
                     for (int col = 0; col < 4; col++)
                     {
-                        transM[row, col] = rotMRhino[row, col];
+                        mScene.transM[row, col] = rotMRhino[row, col];
                     }
                 }
                 settings.ObjectTypeFilter = Rhino.DocObjects.ObjectType.Brep;
                 foreach (Rhino.DocObjects.RhinoObject rhObj in mScene.rhinoDoc.Objects.GetObjectList(settings))
                 {
-                    if (mScene.brepToSceneNodeDic.ContainsKey(rhObj.Id) && rhObj.Attributes.Name != "planeXY" && rhObj.Attributes.Name != "planeXZ"
-                                                                            && rhObj.Attributes.Name != "planeYZ")
+                    if (mScene.brepToSceneNodeDic.ContainsKey(rhObj.Id) && !rhObj.Attributes.Name.Contains("planeXY") && !rhObj.Attributes.Name.Contains("planeXZ")
+                                                                            && !rhObj.Attributes.Name.Contains("planeYZ"))
                     {
                         //SceneNode sn = mScene.brepToSceneNodeDic[rhObj.Id];
                         //mScene.brepToSceneNodeDic.Remove(rhObj.Id);
-                        Guid newGuid = mScene.rhinoDoc.Objects.Transform(rhObj.Id, transM, true);
-                        Rhino.RhinoApp.WriteLine("transM " + transM.ToString());
+                        Guid newGuid = mScene.rhinoDoc.Objects.Transform(rhObj.Id, mScene.transM, true);
+                        Rhino.RhinoApp.WriteLine("transM " + mScene.transM.ToString());
                         mScene.rhinoDoc.Views.Redraw();
 
                         //mScene.brepToSceneNodeDic.Add(newGuid, sn);

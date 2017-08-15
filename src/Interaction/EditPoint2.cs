@@ -634,6 +634,7 @@ namespace SparrowHawk.Interaction
             }
             else if (renderType == "Extrude")
             {
+                //TODO-using Sweep fnction to do and find the intersect point
                 Curve railCurve = mScene.iCurveList[mScene.iCurveList.Count - 1];
                 Plane curvePlane;
                 double height = 0;
@@ -702,12 +703,14 @@ namespace SparrowHawk.Interaction
                     Util.removeSceneNode(ref mScene, renderObjId);
 
                 //cruves coordinate are in rhino
-                Brep[] breps = Brep.CreateFromSweep(mScene.iCurveList[mScene.iCurveList.Count - 1], circleCurve, true, mScene.rhinoDoc.ModelAbsoluteTolerance);
+                Brep[] breps = Brep.CreateFromSweep(mScene.iCurveList[mScene.iCurveList.Count - 1], circleCurve, false, mScene.rhinoDoc.ModelAbsoluteTolerance);
                 Brep brep = breps[0];
                 if (brep != null)
                 {
                     renderObjId = Util.addSceneNode(ref mScene, brep, ref mesh_m, modelName);
                 }
+
+                //TODO-find the end circle cirve and add to iCurveList. add Sweep2 dynamic type and init the new iCurveList
 
                 //reverse transfrom the curvelist
                 Transform invT;

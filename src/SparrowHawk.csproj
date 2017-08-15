@@ -85,6 +85,8 @@
   <ItemGroup>
     <Compile Include="DesignPlane.cs" />
     <Compile Include="DesignPlane2.cs" />
+    <Compile Include="DesignPlane3.cs" />
+    <Compile Include="Geometry\DesignPlaneMesh.cs" />
     <Compile Include="Geometry\DrawPointMarker.cs" />
     <Compile Include="Geometry\GeometryStroke.cs" />
     <Compile Include="Geometry\PlaneRep.cs" />

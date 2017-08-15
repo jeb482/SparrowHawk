@@ -119,7 +119,7 @@ namespace SparrowHawk.Interaction
             int sector = (int)Math.Floor((((theta + 2 * Math.PI) % (2 * Math.PI)) - mFirstSectorOffsetAngle) * mNumSectors / (2 * Math.PI));
             ;
 
-            Rhino.RhinoApp.WriteLine("r = " + mCurrentRadius);
+            //Rhino.RhinoApp.WriteLine("r = " + mCurrentRadius);
 
             // Update the shader
             if (mCurrentRadius > mMinSelectionRadius)
@@ -245,7 +245,8 @@ namespace SparrowHawk.Interaction
                     {
                         //Loft
                         case 0:
-                            //clear selectionList here to make sure Editpoint can access it  
+                            //clear selectionList here to make sure Editpoint can access it
+                            
                             mScene.selectionList.Clear();
                             mScene.popInteraction();
                             mScene.menuList.Add(MenuLayout.LoftC1); //index is 1, 0 is mainMenu
@@ -254,9 +255,11 @@ namespace SparrowHawk.Interaction
                             mScene.menuList.Add(MenuLayout.LoftD2);
                             mScene.selectionList.Add("Loft");
                             mScene.menuIndex++;
+                            
                             break;
                         //Sweep
                         case 1:
+                            
                             mScene.selectionList.Clear();
                             mScene.popInteraction();
 
@@ -266,9 +269,11 @@ namespace SparrowHawk.Interaction
                             mScene.menuList.Add(MenuLayout.SweepD2);
                             mScene.selectionList.Add("Sweep");
                             mScene.menuIndex++;
+                            
                             break;
                         //Revolve
                         case 2:
+                            
                             mScene.selectionList.Clear();
                             mScene.popInteraction();
 
@@ -276,9 +281,11 @@ namespace SparrowHawk.Interaction
                             mScene.menuList.Add(MenuLayout.RevolveD1);
                             mScene.selectionList.Add("Revolve");
                             mScene.menuIndex++;
+                            
                             break;
                         //Extrude
                         case 3:
+                            
                             mScene.selectionList.Clear();
                             mScene.popInteraction();
 
@@ -288,7 +295,9 @@ namespace SparrowHawk.Interaction
                             mScene.menuList.Add(MenuLayout.ExtrudeD2);
                             mScene.selectionList.Add("Extrude");
                             mScene.menuIndex++;
+                            
                             break;
+
                     }
                     break;
 

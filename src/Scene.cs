@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using OpenTK;
 using Valve.VR;
+using Rhino.Geometry;
 
 namespace SparrowHawk
 {
@@ -148,6 +149,7 @@ namespace SparrowHawk
                                                      0,  0, -1, 0, 
                                                      0,  0,  0, 1);
         public Matrix4 platformRotation = new Matrix4(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1);
+        public Transform transM = new Transform();
         //public Matrix4 vrToRobot = new Matrix4(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1);
         //(-1.004264, 0.01445435, -0.07111868, -0.05827864)
         //(0.08518852, -0.02587833, -1.022716, 0.1467833)
