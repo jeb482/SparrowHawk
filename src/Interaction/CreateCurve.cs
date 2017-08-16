@@ -45,6 +45,7 @@ namespace SparrowHawk.Interaction
         private List<Point3d> simplifiedCurvePoints = new List<Point3d>();
         private Rhino.Geometry.NurbsCurve simplifiedCurve;
         protected RhinoObject curveOnObj;
+        private Guid renderObjId;
 
 
         public CreateCurve(ref Scene scene) : base(ref scene)
@@ -232,7 +233,28 @@ namespace SparrowHawk.Interaction
             }
             else if (rhinoCurvePoints.Count > 2)
             {
-                rhinoCurve.Extend(Rhino.Geometry.CurveEnd.End, Rhino.Geometry.CurveExtensionStyle.Line, rhinoCurvePoints[rhinoCurvePoints.Count - 1]);
+                rhinoCurve = Rhino.Geometry.Curve.CreateInterpolatedCurve(rhinoCurvePoints.ToArray(), 3);
+                /*
+                //TODO-Debug why it fail
+                //rhinoCurve = rhinoCurve.Extend(Rhino.Geometry.CurveEnd.End, Rhino.Geometry.CurveExtensionStyle.Line, rhinoCurvePoints[rhinoCurvePoints.Count - 1]);
+
+                rhinoCurve = Rhino.Geometry.Curve.CreateInterpolatedCurve(rhinoCurvePoints.ToArray(), 3);
+
+                //TODO: using circle, get point tangent, calculate transform, apply transform 
+                Rhino.RhinoApp.WriteLine(rhinoCurve.PointAtEnd.ToString());
+                Plane plane = new Rhino.Geometry.Plane(rhinoCurve.PointAtEnd, rhinoCurve.TangentAtEnd);
+                Rhino.Geometry.Circle circle = new Rhino.Geometry.Circle(plane, rhinoCurve.PointAtEnd, 20);
+                Curve circleCurve = circle.ToNurbsCurve();
+                Brep[] shapes = Brep.CreatePlanarBreps(circleCurve);
+                Brep circle_s = shapes[0];
+                Brep circleBrep = circle_s;
+                //remove the current model
+                
+                if (renderObjId != Guid.Empty)
+                    Util.removeSceneNode(ref mScene, renderObjId);
+                 
+                renderObjId = Util.addSceneNode(ref mScene, circleBrep, ref stroke_m, "circle");
+                */
             }
 
         }
@@ -262,12 +284,11 @@ namespace SparrowHawk.Interaction
                 if (((Geometry.GeometryStroke)(stroke_g)).mPoints.Count >= 2)
                 {
                     //TODO-testing Rhino simplfying---debug
-                    /*
-                    Curve c = (rhinoCurve.Simplify(CurveSimplifyOptions.All, 0.1, Math.PI / 2));
+                    
+                    Curve c = (rhinoCurve.Simplify(CurveSimplifyOptions.All, 1, Math.PI/10));
                     if(c != null){
-                        NurbsCurve newCurve = (rhinoCurve.Simplify(CurveSimplifyOptions.None, 0.1, Math.PI / 2)).ToNurbsCurve();                     
                         //add to Scene curve object ,targetRhobj and check the next interaction
-                        mScene.iCurveList.Add(newCurve);
+                        mScene.iCurveList.Add(c.ToNurbsCurve());
                         if (type != 0 && curveOnObj != null)
                         {
                            mScene.iRhObjList.Add(curveOnObj);
@@ -277,20 +298,10 @@ namespace SparrowHawk.Interaction
                         mScene.popInteraction();
                         mScene.peekInteraction().init();
                         
-                    }*/
+                    }
                     
-
+                    /*
                     simplifyCurve(ref ((Geometry.GeometryStroke)(stroke_g)).mPoints);
-
-                    //intialize the rhino points of curve
-                    /*                   
-                    foreach (OpenTK.Vector3 point in reducePoints)
-                    {
-
-                        simplifiedCurvePoints.Add(Util.openTkToRhinoPoint(Util.vrToPlatformPoint(ref mScene, point)));
-                        //Util.MarkPoint(ref mScene.staticGeometry, new Vector3(point.X, point.Y, point.Z), 1, 1, 1);
-                    }*/
-                    //intialize the rhino points of curve
                     
                     for (int i =0; i< reducePoints.Count; i++)
                     {
@@ -350,6 +361,7 @@ namespace SparrowHawk.Interaction
                         mScene.peekInteraction().init();
 
                     }
+                    */
 
                     currentState = State.READY;
                     curveOnObj = null;

@@ -52,6 +52,7 @@ namespace SparrowHawk.Interaction
         private NurbsCurve circleCurve;
         private NurbsCurve rectCurve;
 
+
         public EditPoint2(ref Scene scene) : base(ref scene)
         {
             stroke_g2 = new Geometry.GeometryStroke(ref mScene);
@@ -85,6 +86,7 @@ namespace SparrowHawk.Interaction
             }
 
             //TODO-generate 2 cp curvev for extrudsion, circle, rect
+            //TODO-generate 2 cp for Sweep endCurve 
             if (dynamicRender == "Extrude")
             {
                 List<Point3d> extrudeCurveP = new List<Point3d>();
@@ -94,7 +96,7 @@ namespace SparrowHawk.Interaction
                 mScene.iCurveList[mScene.iCurveList.Count - 1] = Rhino.Geometry.NurbsCurve.Create(false, 1, extrudeCurveP.ToArray());
                 editCurve = (NurbsCurve)mScene.iCurveList.ElementAt(mScene.iCurveList.Count - 1);
             }
-            else if (mScene.selectionList[mScene.selectionList.Count - 1] == "Circle")
+            else if (mScene.selectionList[mScene.selectionList.Count - 1] == "Circle" || dynamicRender == "Sweep-Circle")
             {
                 List<Point3d> extrudeCurveP = new List<Point3d>();
                 Point3d origin = Util.openTkToRhinoPoint(Util.vrToPlatformPoint(ref mScene, mScene.iPointList[mScene.iPointList.Count - 2]));
@@ -113,6 +115,7 @@ namespace SparrowHawk.Interaction
                 Brep targetBrep = (Brep)(newObj.Geometry);
                 //compute the brepFace where the curve is on
                 //Surface s = targetBrep.Faces[0];
+                //TODO: check if targetBrep have many faces as expect
                 int faceIndex = -1;
                 for (int i =0; i < targetBrep.Faces.Count; i++)
                 {
@@ -257,6 +260,7 @@ namespace SparrowHawk.Interaction
                 OpenTK.Vector3 snapP = new OpenTK.Vector3();
                 for (int i = 0; i < editCurve.Points.Count; i++)
                 {
+                    //TODO-force not to move the center in Circle or topleft in Rect
                     ControlPoint cp = editCurve.Points.ElementAt(i);
                     OpenTK.Vector3 pVR = Util.platformToVRPoint(ref mScene, new OpenTK.Vector3((float)cp.Location.X, (float)cp.Location.Y, (float)cp.Location.Z));
                     float distance = (float)Math.Sqrt(Math.Pow(pos.X - pVR.X, 2) + Math.Pow(pos.Y - pVR.Y, 2) + Math.Pow(pos.Z - pVR.Z, 2));
@@ -415,9 +419,9 @@ namespace SparrowHawk.Interaction
             {
                 R = d.BeginInvoke(new AsyncCallback(modelCompleted), null);
             }*/
-            /*
-            DynamicRender(dynamicRender, "tprint");
-            */
+            
+            //DynamicRender(dynamicRender, "tprint");
+            
         }
 
         Brep brepRevolve;
@@ -435,12 +439,8 @@ namespace SparrowHawk.Interaction
         public void modelCompleted(IAsyncResult R)
         {
             //TODO: remove can't find guid
-
-            if (renderObjId != Guid.Empty)
-                Util.removeSceneNode(ref mScene, renderObjId);
-
-            renderObjId = Util.addSceneNode(ref mScene, brepRevolve, ref mesh_m, "aprint");
-
+            //DynamicRender(dynamicRender, "tprint");
+            //R = d.BeginInvoke(new AsyncCallback(modelCompleted), null);
         }
 
         protected override void onClickOculusTrigger(ref VREvent_t vrEvent)
@@ -449,6 +449,7 @@ namespace SparrowHawk.Interaction
             if (isSnap)
             {
                 currentState = State.Snap;
+
             }
         }
 
@@ -511,7 +512,26 @@ namespace SparrowHawk.Interaction
             clearDrawing();
             mScene.popInteraction();
 
-            if (dynamicRender == "Revolve" || dynamicRender == "Loft" || dynamicRender == "Sweep" || dynamicRender == "Extrude")
+            if (dynamicRender == "Revolve" || dynamicRender == "Loft" || dynamicRender == "Extrude")
+            {
+                DynamicRender(dynamicRender, "aprint");
+                Util.clearPlanePoints(ref mScene);
+                Util.clearCurveTargetRhObj(ref mScene);
+            }
+            else if (dynamicRender == "Sweep") //TODO-implement edit endCurve
+            {
+                /*
+                DynamicRender(dynamicRender, "aprint");
+                Util.clearPlanePoints(ref mScene);
+                Util.clearCurveTargetRhObj(ref mScene);
+                */
+
+                //TODO- Sweep add endCapCurve to iCurveList
+                //Using Selection List to push interaction with correct type
+                generateEndCap();
+
+            }
+            else if(dynamicRender == "Sweep-Circle")
             {
                 DynamicRender(dynamicRender, "aprint");
                 Util.clearPlanePoints(ref mScene);
@@ -522,12 +542,14 @@ namespace SparrowHawk.Interaction
                 DynamicRender(dynamicRender, "tprint");
             }
 
+            
+            
         }
 
         private void DynamicRender(string renderType, string modelName)
         {
             //render Cirle and Rect
-            if (mScene.selectionList[mScene.selectionList.Count - 1] == "Circle")
+            if (mScene.selectionList[mScene.selectionList.Count - 1] == "Circle" || dynamicRender == "Sweep-Circle")
             {
                 Point3d circleP = editCurve.PointAtEnd;
                 Point3d origin = editCurve.PointAtStart;
@@ -575,7 +597,7 @@ namespace SparrowHawk.Interaction
 
 
             //update the current interaction curve
-            if (dynamicRender == "Circle" || mScene.selectionList[mScene.selectionList.Count - 1] == "Circle")
+            if (dynamicRender == "Circle" || mScene.selectionList[mScene.selectionList.Count - 1] == "Circle" || dynamicRender == "Sweep-Circle")
             {
                 mScene.iCurveList[mScene.iCurveList.Count - 1] = circleCurve;
             }
@@ -600,10 +622,13 @@ namespace SparrowHawk.Interaction
                 Brep brepRevolve = Brep.CreateFromRevSurface(revsrf, false, false);
 
                 //remove the current model
+                
                 if (renderObjId != Guid.Empty)
                     Util.removeSceneNode(ref mScene, renderObjId);
 
                 renderObjId = Util.addSceneNode(ref mScene, brepRevolve, ref mesh_m, modelName);
+                
+                //renderObjId = Util.addSceneNodeWithoutDraw(ref mScene, brepRevolve, ref mesh_m, modelName);
 
             }
             else if (renderType == "Loft")
@@ -688,35 +713,152 @@ namespace SparrowHawk.Interaction
                 ((NurbsCurve)mScene.iCurveList[mScene.iCurveList.Count - 2]).Transform(t);
                 NurbsCurve circleCurve = (NurbsCurve)mScene.iCurveList[mScene.iCurveList.Count - 2];
 
-                //another solution-create a new circle at startpoint
+                //cruves coordinate are in rhino, somehow cap didn't work and need to call CapPlanarHoles
+                Brep[] breps = Brep.CreateFromSweep(mScene.iCurveList[mScene.iCurveList.Count - 1], circleCurve, false, mScene.rhinoDoc.ModelAbsoluteTolerance);
+                Brep brep = breps[0];
+                Brep capBrep = brep.CapPlanarHoles(mScene.rhinoDoc.ModelAbsoluteTolerance);
+
+                //remove the current model
+                
+                if (renderObjId != Guid.Empty)
+                    Util.removeSceneNode(ref mScene, renderObjId);
+                if (brep != null)
+                {
+                    renderObjId = Util.addSceneNode(ref mScene, brep, ref mesh_m, modelName);
+                }
+                
+                //renderObjId = Util.addSceneNodeWithoutDraw(ref mScene, brep, ref mesh_m, modelName);
+
+                //TODO-find the end circle cirve and add to iCurveList. add Sweep2 dynamic type and init the new iCurveList
+                //TODO-if profile curve is open then find the Brepedge contains the end point
+                //Brep CapPlanarHoles method might be useful
                 /*
-                Plane plane = new Plane(railPL.PointAtStart, railPL.TangentAtStart);
-                Point3d origin = Util.openTkToRhinoPoint(Util.vrToPlatformPoint(ref mScene, mScene.iPointList[0]));
-                Point3d circleP = Util.openTkToRhinoPoint(Util.vrToPlatformPoint(ref mScene, mScene.iPointList[1]));
-                float radius = (float)Math.Sqrt(Math.Pow(circleP.X - origin.X, 2) + Math.Pow(circleP.Y - origin.Y, 2) + Math.Pow(circleP.Z - origin.Z, 2));
-                Rhino.Geometry.Circle circle = new Rhino.Geometry.Circle(plane, railPL.PointAtStart, radius);
-                NurbsCurve circleCurve = circle.ToNurbsCurve();
+                Point3d railEndP = mScene.iCurveList[mScene.iCurveList.Count - 1].PointAtEnd;
+                int faceIndex = -1;
+                for (int i = 0; i < capBrep.Faces.Count; i++)
+                {
+                    //cast BrepFace to Brep for ClosestPoint(P) menthod
+                    double dist = capBrep.Faces[i].DuplicateFace(false).ClosestPoint(railEndP).DistanceTo(railEndP);
+                    //tolerance mScene.rhinoDoc.ModelAbsoluteTolerance too low
+                    if (dist < mScene.rhinoDoc.ModelAbsoluteTolerance)
+                    {
+                        faceIndex = i;
+                        break;
+                    }
+                }
+
+                Brep endCap = capBrep.Faces[faceIndex].DuplicateFace(false);
+                Curve[] CapCurves = Rhino.Geometry.Curve.JoinCurves(endCap.Edges);
+                endCapCurve = CapCurves[0].ToNurbsCurve();
                 */
+
+                //another soultion. transform the orginal plan to pointAtEnd and use selectionList to check the type
+                //call the generateEndCap function when press AX button
+
+
+                //reverse transfrom the curvelist
+                Transform invT;
+                if (t.TryGetInverse(out invT))
+                    ((NurbsCurve)mScene.iCurveList[mScene.iCurveList.Count - 2]).Transform(invT);
+
+            }else if (renderType == "Sweep-Circle")
+            {
+                //Count-1: endCurve, Count - 2: rail, Count-3: startCurve
+                NurbsCurve rail = (NurbsCurve)mScene.iCurveList[mScene.iCurveList.Count - 2];
+                PolylineCurve railPL = rail.ToPolyline(0, 0, 0, 0, 0, 1, 1, 0, true);
+                OpenTK.Vector3 railStartPoint = new OpenTK.Vector3((float)railPL.PointAtStart.X, (float)railPL.PointAtStart.Y, (float)railPL.PointAtStart.Z);
+                OpenTK.Vector3 railNormal = new OpenTK.Vector3((float)railPL.TangentAtStart.X, (float)railPL.TangentAtStart.Y, (float)railPL.TangentAtStart.Z);
+
+                OpenTK.Vector3 shapeCenter = new Vector3((float)mScene.iCurveList[mScene.iCurveList.Count - 3].GetBoundingBox(true).Center.X, (float)mScene.iCurveList[mScene.iCurveList.Count - 3].GetBoundingBox(true).Center.Y, (float)mScene.iCurveList[mScene.iCurveList.Count - 3].GetBoundingBox(true).Center.Z);
+                Plane curvePlane;
+                OpenTK.Vector3 shapeNormal = new Vector3(0, 0, 0);
+                Double tolerance = 0;
+                while (tolerance < 100)
+                {
+                    if (mScene.iCurveList[mScene.iCurveList.Count - 3].TryGetPlane(out curvePlane, tolerance))
+                    {
+                        shapeNormal = new OpenTK.Vector3((float)curvePlane.Normal.X, (float)curvePlane.Normal.Y, (float)curvePlane.Normal.Z);
+                        break;
+                    }
+                    tolerance++;
+                }
+
+                OpenTK.Matrix4 transM = Util.getCoordinateTransM(shapeCenter, railStartPoint, shapeNormal, railNormal);
+                Transform t = Util.OpenTKToRhinoTransform(transM);
+                ((NurbsCurve)mScene.iCurveList[mScene.iCurveList.Count - 3]).Transform(t);
+                NurbsCurve circleCurve = (NurbsCurve)mScene.iCurveList[mScene.iCurveList.Count - 3];
 
                 //remove the current model
                 if (renderObjId != Guid.Empty)
                     Util.removeSceneNode(ref mScene, renderObjId);
 
-                //cruves coordinate are in rhino
-                Brep[] breps = Brep.CreateFromSweep(mScene.iCurveList[mScene.iCurveList.Count - 1], circleCurve, false, mScene.rhinoDoc.ModelAbsoluteTolerance);
+                List<Curve> profileCurves = new List<Curve>();
+                profileCurves.Add(circleCurve);
+                profileCurves.Add(mScene.iCurveList[mScene.iCurveList.Count - 1]);
+
+                Brep[] breps = Brep.CreateFromSweep(mScene.iCurveList[mScene.iCurveList.Count - 2], profileCurves, false, mScene.rhinoDoc.ModelAbsoluteTolerance);
                 Brep brep = breps[0];
                 if (brep != null)
                 {
                     renderObjId = Util.addSceneNode(ref mScene, brep, ref mesh_m, modelName);
                 }
 
-                //TODO-find the end circle cirve and add to iCurveList. add Sweep2 dynamic type and init the new iCurveList
-
                 //reverse transfrom the curvelist
                 Transform invT;
                 if (t.TryGetInverse(out invT))
-                    ((NurbsCurve)mScene.iCurveList[mScene.iCurveList.Count - 2]).Transform(invT);
+                    ((NurbsCurve)mScene.iCurveList[mScene.iCurveList.Count - 3]).Transform(invT);
             }
+
+        }
+
+        private void generateEndCap()
+        {
+            NurbsCurve rail = (NurbsCurve)mScene.iCurveList[mScene.iCurveList.Count - 1];
+            PolylineCurve railPL = rail.ToPolyline(0, 0, 0, 0, 0, 1, 1, 0, true);
+            OpenTK.Vector3 shapeCenter = new Vector3((float)mScene.iCurveList[mScene.iCurveList.Count - 2].GetBoundingBox(true).Center.X, (float)mScene.iCurveList[mScene.iCurveList.Count - 2].GetBoundingBox(true).Center.Y, (float)mScene.iCurveList[mScene.iCurveList.Count - 2].GetBoundingBox(true).Center.Z);
+            OpenTK.Vector3 shapeP = new Vector3((float)mScene.iCurveList[mScene.iCurveList.Count - 2].PointAtStart.X, (float)mScene.iCurveList[mScene.iCurveList.Count - 2].PointAtStart.Y, (float)mScene.iCurveList[mScene.iCurveList.Count - 2].PointAtStart.Z);
+            OpenTK.Vector3 shapeNormal = new Vector3(0, 0, 0);
+            Plane curvePlane;
+            Double tolerance = 0;
+            while (tolerance < 100)
+            {
+                if (mScene.iCurveList[mScene.iCurveList.Count - 2].TryGetPlane(out curvePlane, tolerance))
+                {
+                    shapeNormal = new OpenTK.Vector3((float)curvePlane.Normal.X, (float)curvePlane.Normal.Y, (float)curvePlane.Normal.Z);
+                    break;
+                }
+                tolerance++;
+            }
+
+            OpenTK.Vector3 railEndPoint = new OpenTK.Vector3((float)railPL.PointAtEnd.X, (float)railPL.PointAtEnd.Y, (float)railPL.PointAtEnd.Z);
+            OpenTK.Vector3 railEndNormal = new OpenTK.Vector3((float)railPL.TangentAtEnd.X, (float)railPL.TangentAtEnd.Y, (float)railPL.TangentAtEnd.Z);
+            OpenTK.Matrix4 transMEnd = Util.getCoordinateTransM(shapeCenter, railEndPoint, shapeNormal, railEndNormal);
+
+            // index need to improve
+            if (mScene.selectionList[1] == "Circle")
+            {
+                
+                OpenTK.Vector3 newCenter = Util.transformPoint(transMEnd, shapeCenter);
+                OpenTK.Vector3 newCircleP = Util.transformPoint(transMEnd, shapeP);
+                //Rhino to VR
+                mScene.iPointList.Add(Util.platformToVRPoint(ref mScene, newCenter));
+                mScene.iPointList.Add(Util.platformToVRPoint(ref mScene, newCircleP));
+
+                //TODO-add endPlane Rhino Object
+                Plane endPlane = new Plane(railPL.PointAtEnd, railPL.TangentAtEnd);
+                PlaneSurface plane_surface = new PlaneSurface(endPlane, new Interval(-120, 120), new Interval(-120, 120));
+
+                Brep designPlane = Brep.CreateFromSurface(plane_surface);
+
+                if (designPlane != null)
+                {
+                    Guid guid = Util.addSceneNode(ref mScene, designPlane, ref mesh_m, "panel");
+                    mScene.iRhObjList.Add(mScene.rhinoDoc.Objects.Find(guid));
+                }
+            }
+           
+            mScene.pushInteraction(new EditPoint2(ref mScene, true, "Sweep-Circle"));
+            mScene.peekInteraction().init();
 
         }
 

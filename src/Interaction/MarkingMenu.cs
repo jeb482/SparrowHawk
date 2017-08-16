@@ -21,6 +21,8 @@ namespace SparrowHawk.Interaction
         float mOuterSelectionRadius;
         float mCurrentRadius;
 
+        float thetaDebug = 0;
+
         public int getNumSectors(MenuLayout layout)
         {
             switch (layout)
@@ -119,7 +121,8 @@ namespace SparrowHawk.Interaction
             int sector = (int)Math.Floor((((theta + 2 * Math.PI) % (2 * Math.PI)) - mFirstSectorOffsetAngle) * mNumSectors / (2 * Math.PI));
             ;
 
-            //Rhino.RhinoApp.WriteLine("r = " + mCurrentRadius);
+            //Rhino.RhinoApp.WriteLine("theta = " + theta);
+            thetaDebug = theta;
 
             // Update the shader
             if (mCurrentRadius > mMinSelectionRadius)
@@ -256,6 +259,8 @@ namespace SparrowHawk.Interaction
                             mScene.selectionList.Add("Loft");
                             mScene.menuIndex++;
                             
+                            //Rhino.RhinoApp.WriteLine("section 0 : " + thetaDebug / Math.PI * 180);
+                            
                             break;
                         //Sweep
                         case 1:
@@ -270,6 +275,8 @@ namespace SparrowHawk.Interaction
                             mScene.selectionList.Add("Sweep");
                             mScene.menuIndex++;
                             
+                            //Rhino.RhinoApp.WriteLine("section 1 : " + thetaDebug / Math.PI * 180);
+
                             break;
                         //Revolve
                         case 2:
@@ -282,6 +289,7 @@ namespace SparrowHawk.Interaction
                             mScene.selectionList.Add("Revolve");
                             mScene.menuIndex++;
                             
+                            //Rhino.RhinoApp.WriteLine("section 2 : "+ thetaDebug / Math.PI * 180);
                             break;
                         //Extrude
                         case 3:
@@ -296,7 +304,12 @@ namespace SparrowHawk.Interaction
                             mScene.selectionList.Add("Extrude");
                             mScene.menuIndex++;
                             
+                            //Rhino.RhinoApp.WriteLine("section 3: "+ thetaDebug / Math.PI * 180);
                             break;
+                            /*
+                        case 4:
+                            Rhino.RhinoApp.WriteLine("section 4 : " + thetaDebug / Math.PI * 180);
+                            break;*/
 
                     }
                     break;

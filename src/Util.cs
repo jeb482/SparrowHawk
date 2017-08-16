@@ -545,6 +545,46 @@ namespace SparrowHawk
                                                              -1, 0, 0, 0,
                                                              0, 0, 0, 1);
 
+        public static Guid addSceneNodeWithoutDraw(ref Scene mScene, Brep brep, ref Material.Material mesh_m, string name)
+        {
+            //TODO: detect the # of faces
+            Mesh base_mesh = new Mesh();
+            if (brep != null)
+            {
+                Mesh[] meshes = Mesh.CreateFromBrep(brep, MeshingParameters.Default);
+
+                foreach (Mesh mesh in meshes)
+                    base_mesh.Append(mesh);
+
+                long ticks = DateTime.Now.Ticks;
+                byte[] bytes = BitConverter.GetBytes(ticks);
+                string timeuid = Convert.ToBase64String(bytes).Replace('+', '_').Replace('/', '-').TrimEnd('=');
+
+                //testing rotation
+                Geometry.Geometry meshStroke_g = new Geometry.RhinoMesh(ref mScene, mScene.platformRotation);
+                ((Geometry.RhinoMesh)meshStroke_g).setMesh(ref base_mesh);
+
+                foreach (SceneNode sn in mScene.tableGeometry.children.Reverse<SceneNode>())
+                {
+                    if (sn.name == name)
+                    {
+                        mScene.tableGeometry.children.Remove(sn);
+                        break;
+                    }
+                }
+
+                SceneNode ccMeshSN = new SceneNode(name, ref meshStroke_g, ref mesh_m);
+                mScene.tableGeometry.add(ref ccMeshSN);
+
+                return ccMeshSN.guid;
+
+            }
+            else
+            {
+                return Guid.Empty;
+            }
+        }
+
 
         public static Guid addStaticNode(ref Scene mScene, Brep brep, ref Material.Material mesh_m, string name)
         {
@@ -707,7 +747,7 @@ namespace SparrowHawk
             mScene.SceneNodeToBrepDic.Remove(deleteSN.guid);
 
             mScene.rhinoDoc.Objects.Delete(guid, true);
-            foreach (SceneNode sn in mScene.tableGeometry.children)
+            foreach (SceneNode sn in mScene.tableGeometry.children.Reverse<SceneNode>())
             {
                 if (sn.guid == deleteSN.guid)
                 {

@@ -60,7 +60,8 @@ namespace SparrowHawk
             {
                 material.draw(ref geometry, ref model, ref vp);
             }
-            foreach (SceneNode n in children)
+            //testing
+            foreach (SceneNode n in children.Reverse<SceneNode>())
             {
                 n.render(ref vp, model);
             }
