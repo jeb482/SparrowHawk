@@ -284,7 +284,7 @@ namespace SparrowHawk.Interaction
                 if (((Geometry.GeometryStroke)(stroke_g)).mPoints.Count >= 2)
                 {
                     //TODO-testing Rhino simplfying---debug
-                    
+                    /*
                     Curve c = (rhinoCurve.Simplify(CurveSimplifyOptions.All, 1, Math.PI/10));
                     if(c != null){
                         //add to Scene curve object ,targetRhobj and check the next interaction
@@ -299,8 +299,8 @@ namespace SparrowHawk.Interaction
                         mScene.peekInteraction().init();
                         
                     }
+                    */
                     
-                    /*
                     simplifyCurve(ref ((Geometry.GeometryStroke)(stroke_g)).mPoints);
                     
                     for (int i =0; i< reducePoints.Count; i++)
@@ -361,7 +361,7 @@ namespace SparrowHawk.Interaction
                         mScene.peekInteraction().init();
 
                     }
-                    */
+                    
 
                     currentState = State.READY;
                     curveOnObj = null;
