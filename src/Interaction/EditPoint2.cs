@@ -52,6 +52,9 @@ namespace SparrowHawk.Interaction
         private NurbsCurve circleCurve;
         private NurbsCurve rectCurve;
 
+        private bool backgroundStart = false;
+        private float displacement =0;
+
 
         public EditPoint2(ref Scene scene) : base(ref scene)
         {
@@ -307,7 +310,11 @@ namespace SparrowHawk.Interaction
 
                 //update the curve, noiticed that we can't update editCurve.Points[snapIndex] directly
                 OpenTK.Vector3 ep = Util.vrToPlatformPoint(ref mScene, pos);
+                //accumulate displacement
+                displacement = displacement + (float)Math.Sqrt(Math.Pow(ep.X - curvePoints[snapIndex].X, 2) + Math.Pow(ep.Y - curvePoints[snapIndex].Y, 2) + Math.Pow(ep.Z - curvePoints[snapIndex].Z, 2));
                 curvePoints[snapIndex] = Util.openTkToRhinoPoint(ep);
+                
+
                 int order = 3;
                 if (editCurve.IsClosed)
                 {
@@ -415,8 +422,9 @@ namespace SparrowHawk.Interaction
 
             //TODO: dynamic render- fix effiency
             /*
-            if (dynamicRender == "Revolve")
+            if (dynamicRender == "Revolve" && backgroundStart == false && displacement > 10)
             {
+                backgroundStart = true;
                 R = d.BeginInvoke(new AsyncCallback(modelCompleted), null);
             }*/
             
@@ -430,17 +438,33 @@ namespace SparrowHawk.Interaction
         generateModel_Delegate d = null;
         public void generateModel()
         {
+            //might need to detect the movement threshold to start rebuild
+
             Line axis = new Line(new Point3d(0, 0, 0), new Point3d(0, 0, 1));
             RevSurface revsrf = RevSurface.Create(editCurve, axis);
             brepRevolve = Brep.CreateFromRevSurface(revsrf, false, false);
-
+            
+            //DynamicRender(dynamicRender, "tprint");
         }
 
         public void modelCompleted(IAsyncResult R)
         {
             //TODO: remove can't find guid
-            //DynamicRender(dynamicRender, "tprint");
-            //R = d.BeginInvoke(new AsyncCallback(modelCompleted), null);
+            /*
+            if (renderObjId != Guid.Empty)
+                Util.removeSceneNode(ref mScene, renderObjId);
+            */
+            renderObjId = Util.addSceneNodeWithoutDraw(ref mScene, brepRevolve, ref mesh_m, "tprint");
+
+            /*
+            if (currentState == State.Snap && displacement > 10)
+            {
+                R = d.BeginInvoke(new AsyncCallback(modelCompleted), null);
+            }*/
+            backgroundStart = false;
+            displacement = 0;
+
+
         }
 
         protected override void onClickOculusTrigger(ref VREvent_t vrEvent)
@@ -462,7 +486,7 @@ namespace SparrowHawk.Interaction
                 foreach (SceneNode sn in mScene.tableGeometry.children.Reverse<SceneNode>())
                 {
 
-                    if (dynamicRender == "Revolve" || dynamicRender == "Loft" || dynamicRender == "Sweep" || dynamicRender == "Extrude")
+                    if (dynamicRender == "Revolve" || dynamicRender == "Loft" || dynamicRender == "Sweep-Circle" || dynamicRender == "Extrude")
                     {
                         if (sn.name == "EditCurve" || sn.name == "drawPoint" || sn.name == "EditPoint" || sn.name == "panel" || sn.name == "circle" || sn.name == "rect")
                         {
@@ -480,6 +504,14 @@ namespace SparrowHawk.Interaction
                     }
                     else
                     {
+                        if (dynamicRender == "Sweep")
+                        {
+                            if (sn.name == "Sweep")
+                            {
+                                RhinoObject delObj = mScene.SceneNodeToBrepDic[sn.guid];
+                                Util.removeSceneNode(ref mScene, delObj.Id);
+                            }
+                        }
                         //only clear the drawpoint, editpoint
                         if (sn.name == "drawPoint" || sn.name == "EditPoint")
                         {
@@ -509,8 +541,11 @@ namespace SparrowHawk.Interaction
         {
             //TODO- need to consider this might be the first time editpoint.
             //start slicing model by changing the name of the model
-            clearDrawing();
             mScene.popInteraction();
+            
+            //still need panel to render
+            if(dynamicRender != "Sweep-Circle")
+                clearDrawing();
 
             if (dynamicRender == "Revolve" || dynamicRender == "Loft" || dynamicRender == "Extrude")
             {
@@ -536,14 +571,17 @@ namespace SparrowHawk.Interaction
                 DynamicRender(dynamicRender, "aprint");
                 Util.clearPlanePoints(ref mScene);
                 Util.clearCurveTargetRhObj(ref mScene);
+                clearDrawing();
+                currentState = State.End;
+
+
             }
             else
             {
                 DynamicRender(dynamicRender, "tprint");
             }
 
-            
-            
+
         }
 
         private void DynamicRender(string renderType, string modelName)
@@ -616,6 +654,7 @@ namespace SparrowHawk.Interaction
             }
             else if (renderType == "Revolve")
             {
+                
                 Line axis = new Line(new Point3d(0, 0, 0), new Point3d(0, 0, 1));
                 RevSurface revsrf = RevSurface.Create(mScene.iCurveList[mScene.iCurveList.Count - 1], axis);
 
@@ -627,6 +666,7 @@ namespace SparrowHawk.Interaction
                     Util.removeSceneNode(ref mScene, renderObjId);
 
                 renderObjId = Util.addSceneNode(ref mScene, brepRevolve, ref mesh_m, modelName);
+                
                 
                 //renderObjId = Util.addSceneNodeWithoutDraw(ref mScene, brepRevolve, ref mesh_m, modelName);
 
@@ -724,7 +764,7 @@ namespace SparrowHawk.Interaction
                     Util.removeSceneNode(ref mScene, renderObjId);
                 if (brep != null)
                 {
-                    renderObjId = Util.addSceneNode(ref mScene, brep, ref mesh_m, modelName);
+                    renderObjId = Util.addSceneNode(ref mScene, brep, ref mesh_m, "Sweep");
                 }
                 
                 //renderObjId = Util.addSceneNodeWithoutDraw(ref mScene, brep, ref mesh_m, modelName);
@@ -856,7 +896,7 @@ namespace SparrowHawk.Interaction
                     mScene.iRhObjList.Add(mScene.rhinoDoc.Objects.Find(guid));
                 }
             }
-           
+            mScene.popInteraction();
             mScene.pushInteraction(new EditPoint2(ref mScene, true, "Sweep-Circle"));
             mScene.peekInteraction().init();
 
