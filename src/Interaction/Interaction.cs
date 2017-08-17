@@ -48,7 +48,7 @@ namespace SparrowHawk.Interaction
         {
             if (vrEvent.eventType == (uint)EVREventType.VREvent_ButtonPress)
             {
-                Rhino.RhinoApp.WriteLine("Pressed an oculus button");
+                //Rhino.RhinoApp.WriteLine("Pressed an oculus button");
                 switch (vrEvent.data.controller.button)
                 {
                     case (uint)Util.OculusButtonId.k_EButton_Oculus_AX:
@@ -105,7 +105,7 @@ namespace SparrowHawk.Interaction
         {
             if (vrEvent.eventType == (uint)EVREventType.VREvent_ButtonPress)
             {
-                Rhino.RhinoApp.WriteLine("Pressed a button");
+                //Rhino.RhinoApp.WriteLine("Pressed a button");
                 switch (vrEvent.data.controller.button)
                 {
                     case (uint)EVRButtonId.k_EButton_SteamVR_Trigger:

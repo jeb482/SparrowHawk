@@ -51,6 +51,11 @@ namespace SparrowHawk.Interaction
         private Rhino.Geometry.NurbsCurve editCurve;
         private NurbsCurve circleCurve;
         private NurbsCurve rectCurve;
+        //Sweep debug
+        private List<Curve> profileCurves = new List<Curve>();
+        double angle = 0;
+        double curveT = 0;
+        Point3d startP;
 
         private bool backgroundStart = false;
         private float displacement =0;
@@ -469,7 +474,7 @@ namespace SparrowHawk.Interaction
 
         protected override void onClickOculusTrigger(ref VREvent_t vrEvent)
         {
-            Rhino.RhinoApp.WriteLine("mim D: " + mimD);
+            //Rhino.RhinoApp.WriteLine("mim D: " + mimD);
             if (isSnap)
             {
                 currentState = State.Snap;
@@ -526,7 +531,7 @@ namespace SparrowHawk.Interaction
 
         protected override void onReleaseOculusTrigger(ref VREvent_t vrEvent)
         {
-            Rhino.RhinoApp.WriteLine("oculus grip release event test");
+            //Rhino.RhinoApp.WriteLine("oculus grip release event test");
             if (currentState == State.Snap)
             {
 
@@ -542,10 +547,7 @@ namespace SparrowHawk.Interaction
             //TODO- need to consider this might be the first time editpoint.
             //start slicing model by changing the name of the model
             mScene.popInteraction();
-            
-            //still need panel to render
-            if(dynamicRender != "Sweep-Circle")
-                clearDrawing();
+            clearDrawing();
 
             if (dynamicRender == "Revolve" || dynamicRender == "Loft" || dynamicRender == "Extrude")
             {
@@ -571,9 +573,6 @@ namespace SparrowHawk.Interaction
                 DynamicRender(dynamicRender, "aprint");
                 Util.clearPlanePoints(ref mScene);
                 Util.clearCurveTargetRhObj(ref mScene);
-                clearDrawing();
-                currentState = State.End;
-
 
             }
             else
@@ -581,7 +580,7 @@ namespace SparrowHawk.Interaction
                 DynamicRender(dynamicRender, "tprint");
             }
 
-
+            currentState = State.End;
         }
 
         private void DynamicRender(string renderType, string modelName)
@@ -803,6 +802,7 @@ namespace SparrowHawk.Interaction
 
             }else if (renderType == "Sweep-Circle")
             {
+                //TODO-Normal of two curve plane can't over 180 and curve direction should be the same
                 //Count-1: endCurve, Count - 2: rail, Count-3: startCurve
                 NurbsCurve rail = (NurbsCurve)mScene.iCurveList[mScene.iCurveList.Count - 2];
                 PolylineCurve railPL = rail.ToPolyline(0, 0, 0, 0, 0, 1, 1, 0, true);
@@ -823,18 +823,74 @@ namespace SparrowHawk.Interaction
                     tolerance++;
                 }
 
+               
                 OpenTK.Matrix4 transM = Util.getCoordinateTransM(shapeCenter, railStartPoint, shapeNormal, railNormal);
                 Transform t = Util.OpenTKToRhinoTransform(transM);
                 ((NurbsCurve)mScene.iCurveList[mScene.iCurveList.Count - 3]).Transform(t);
                 NurbsCurve circleCurve = (NurbsCurve)mScene.iCurveList[mScene.iCurveList.Count - 3];
 
+                //calculate the new starting point at end plane
+                OpenTK.Vector3 railEndPoint = new OpenTK.Vector3((float)railPL.PointAtEnd.X, (float)railPL.PointAtEnd.Y, (float)railPL.PointAtEnd.Z);
+                OpenTK.Vector3 railEndNormal = new OpenTK.Vector3((float)railPL.TangentAtEnd.X, (float)railPL.TangentAtEnd.Y, (float)railPL.TangentAtEnd.Z);
+                OpenTK.Matrix4 transMEnd = Util.getCoordinateTransM(shapeCenter, railEndPoint, shapeNormal, railEndNormal);
+                //store the starting point first
+                startP = new Point3d(mScene.iCurveList[mScene.iCurveList.Count - 2].PointAtStart);
+                Transform tEnd = Util.OpenTKToRhinoTransform(transMEnd);
+                startP.Transform(tEnd);
+
+
                 //remove the current model
                 if (renderObjId != Guid.Empty)
                     Util.removeSceneNode(ref mScene, renderObjId);
 
-                List<Curve> profileCurves = new List<Curve>();
+                //List<Curve> profileCurves = new List<Curve>();
+                profileCurves.Clear();
                 profileCurves.Add(circleCurve);
                 profileCurves.Add(mScene.iCurveList[mScene.iCurveList.Count - 1]);
+
+                //checking curve direction-it might be affected by the plane
+                /*
+                if (!Curve.DoDirectionsMatch(profileCurves.ElementAt(0), profileCurves.ElementAt(1)))
+                {
+                    //whether curve is open or closed
+                    profileCurves.ElementAt(1).Reverse();
+
+                }*/
+                Plane curvePlane1;
+                Plane curvePlane2;
+                if(circleCurve.TryGetPlane(out curvePlane1) && mScene.iCurveList[mScene.iCurveList.Count - 1].TryGetPlane(out curvePlane2))
+                {
+                    OpenTK.Vector3 n1 = new Vector3((float)curvePlane1.Normal.X, (float)curvePlane1.Normal.Y, (float)curvePlane1.Normal.Z);
+                    OpenTK.Vector3 n2 = new Vector3((float)curvePlane2.Normal.X, (float)curvePlane2.Normal.Y, (float)curvePlane2.Normal.Z);
+
+                    n1.Normalize();
+                    n2.Normalize();
+
+                    //angle = atan2(norm(cross(a,b)), dot(a,b))
+                    angle = Vector3.Dot(n1, n2);
+                    CurveOrientation dir = profileCurves.ElementAt(0).ClosedCurveOrientation(Util.openTkToRhinoVector(new Vector3(0,0,1)));
+                    CurveOrientation dir2 = profileCurves.ElementAt(1).ClosedCurveOrientation(Util.openTkToRhinoVector(new Vector3(0, 0, 1)));
+                    Rhino.RhinoApp.WriteLine("Dot: " + angle);
+                    Rhino.RhinoApp.WriteLine("c1 dir: " + dir.ToString());
+                    Rhino.RhinoApp.WriteLine("c2 dir: " + dir2.ToString());
+                    if(angle < 0)
+                    {
+                        profileCurves.ElementAt(1).Reverse();
+                    }
+                    /*
+                    if (!Curve.DoDirectionsMatch(profileCurves.ElementAt(0), profileCurves.ElementAt(1)))
+                    {
+                        //whether curve is open or closed
+                        //Rhino.RhinoApp.WriteLine("angle: " + angle);
+                        profileCurves.ElementAt(0).Reverse();
+                        
+                    }*/
+                    profileCurves.ElementAt(1).ClosestPoint(startP,out curveT);
+                    profileCurves.ElementAt(1).ChangeClosedCurveSeam(curveT);
+                }
+               
+                
+
 
                 Brep[] breps = Brep.CreateFromSweep(mScene.iCurveList[mScene.iCurveList.Count - 2], profileCurves, false, mScene.rhinoDoc.ModelAbsoluteTolerance);
                 Brep brep = breps[0];
@@ -874,6 +930,8 @@ namespace SparrowHawk.Interaction
             OpenTK.Vector3 railEndNormal = new OpenTK.Vector3((float)railPL.TangentAtEnd.X, (float)railPL.TangentAtEnd.Y, (float)railPL.TangentAtEnd.Z);
             OpenTK.Matrix4 transMEnd = Util.getCoordinateTransM(shapeCenter, railEndPoint, shapeNormal, railEndNormal);
 
+
+
             // index need to improve
             if (mScene.selectionList[1] == "Circle")
             {
@@ -900,6 +958,17 @@ namespace SparrowHawk.Interaction
             mScene.pushInteraction(new EditPoint2(ref mScene, true, "Sweep-Circle"));
             mScene.peekInteraction().init();
 
+        }
+
+        protected override void onClickOculusGrip(ref VREvent_t vrEvent)
+        {
+            //mScene.iCurveList[mScene.iCurveList.Count - 1].Reverse();
+            curveT += 0.1;
+
+            DynamicRender(dynamicRender, "tprint");
+            
+            //profileCurves.ElementAt(1).Reverse();
+            //DynamicRender(dynamicRender, "tprint");
         }
 
     }
