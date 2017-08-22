@@ -185,6 +185,9 @@ namespace SparrowHawk
         private Stack<Interaction.Interaction> mInteractionStack = new Stack<Interaction.Interaction>();
         public bool isOculus = false;
 
+        //SweepCapFun Debugging
+        public float angleD;
+        public string c1D,c2D;
 
         public Interaction.Interaction popInteraction()
         {

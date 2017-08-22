@@ -349,6 +349,12 @@ namespace SparrowHawk.Interaction
                            
                         }
 
+                        //reduced control points 
+                        if(simplifiedCurve.Points.Count > 5)
+                        {
+                            simplifiedCurve = simplifiedCurve.Rebuild(5, simplifiedCurve.Degree, false);
+                        }
+
                         //add to Scene curve object ,targetRhobj and check the next interaction
                         mScene.iCurveList.Add(simplifiedCurve);
                         if (type != 0 && curveOnObj != null)
