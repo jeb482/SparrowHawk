@@ -47,6 +47,16 @@ namespace SparrowHawk.Interaction
         protected RhinoObject curveOnObj;
         private Guid renderObjId;
 
+        //dynamic rendering
+        private bool backgroundStart = false;
+        private float displacement = 0;
+        Brep dynamicBrep;
+        IAsyncResult R;
+        public delegate void generateModel_Delegate();
+        generateModel_Delegate d = null;
+        private string modelName = "tprint";
+        public string dynamicRender = "none";
+        private Material.Material mesh_m;
 
         public CreateCurve(ref Scene scene) : base(ref scene)
         {
@@ -68,15 +78,30 @@ namespace SparrowHawk.Interaction
 
                 // visualizing projection point with white color
                 drawPoint = Util.MarkProjectionPoint(ref mScene, new OpenTK.Vector3(0, 0, 0), 1, 1, 1);
-                /*
-                Geometry.Geometry geo = new Geometry.PointMarker(new OpenTK.Vector3(0, 0, 0));
-                Material.Material m = new Material.SingleColorMaterial(1, 1, 1, 1);
-                drawPoint = new SceneNode("drawPoint", ref geo, ref m);
-                drawPoint.transform = new OpenTK.Matrix4(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1);
-                mScene.tableGeometry.add(ref drawPoint);*/
 
             }
 
+        }
+
+        public CreateCurve(ref Scene scene, int _type, bool _isClosed, string renderType) : base(ref scene)
+        {
+            mScene = scene;
+            stroke_g = new Geometry.GeometryStroke(ref mScene);
+            stroke_m = new Material.SingleColorMaterial(1, 0, 0, 1);
+            currentState = State.READY;
+            type = _type;
+            isClosed = _isClosed;
+            dynamicRender = renderType;
+            mesh_m = new Material.RGBNormalMaterial(0.5f);
+
+            if (type != 0)
+            {
+
+                // visualizing projection point with white color
+                drawPoint = Util.MarkProjectionPoint(ref mScene, new OpenTK.Vector3(0, 0, 0), 1, 1, 1);
+
+            }
+            d = new generateModel_Delegate(generateModel);
         }
 
         public CreateCurve(ref Scene scene, uint devIndex) : base(ref scene)
@@ -89,6 +114,7 @@ namespace SparrowHawk.Interaction
 
         public override void init()
         {
+
             if (type != 0)
             {
                 // visualizing projection point with white color
@@ -143,7 +169,7 @@ namespace SparrowHawk.Interaction
                                 if (distance < mimD)
                                 {
                                     hitPlane = true;
-                                    targetPSN = mScene.brepToSceneNodeDic[rhObj.Id];
+                                    // = mScene.brepToSceneNodeDic[rhObj.Id];
                                     targetPRhObj = rhObj;
                                     mimD = distance;
                                     projectP = Util.platformToVRPoint(ref mScene, new OpenTK.Vector3((float)rayIntersections[0].X, (float)rayIntersections[0].Y, (float)rayIntersections[0].Z));
@@ -178,7 +204,7 @@ namespace SparrowHawk.Interaction
 
                 if (!hitPlane)
                 {
-                    targetPSN = null;
+                    //targetPSN = null;
                     targetPRhObj = null;
                     projectP = new OpenTK.Vector3(100, 100, 100); //make it invisable
                 }
@@ -233,35 +259,155 @@ namespace SparrowHawk.Interaction
             }
             else if (rhinoCurvePoints.Count > 2)
             {
+                double length1 = rhinoCurve.GetLength();
                 rhinoCurve = Rhino.Geometry.Curve.CreateInterpolatedCurve(rhinoCurvePoints.ToArray(), 3);
-                /*
+                double length2 = rhinoCurve.GetLength();
+                displacement = displacement + (float)Math.Abs(length2 - length1);
+
                 //TODO-Debug why it fail
                 //rhinoCurve = rhinoCurve.Extend(Rhino.Geometry.CurveEnd.End, Rhino.Geometry.CurveExtensionStyle.Line, rhinoCurvePoints[rhinoCurvePoints.Count - 1]);
 
-                rhinoCurve = Rhino.Geometry.Curve.CreateInterpolatedCurve(rhinoCurvePoints.ToArray(), 3);
-
-                //TODO: using circle, get point tangent, calculate transform, apply transform 
-                Rhino.RhinoApp.WriteLine(rhinoCurve.PointAtEnd.ToString());
-                Plane plane = new Rhino.Geometry.Plane(rhinoCurve.PointAtEnd, rhinoCurve.TangentAtEnd);
-                Rhino.Geometry.Circle circle = new Rhino.Geometry.Circle(plane, rhinoCurve.PointAtEnd, 20);
-                Curve circleCurve = circle.ToNurbsCurve();
-                Brep[] shapes = Brep.CreatePlanarBreps(circleCurve);
-                Brep circle_s = shapes[0];
-                Brep circleBrep = circle_s;
-                //remove the current model
-                
-                if (renderObjId != Guid.Empty)
-                    Util.removeSceneNode(ref mScene, renderObjId);
-                 
-                renderObjId = Util.addSceneNode(ref mScene, circleBrep, ref stroke_m, "circle");
-                */
+                //dynamic render model
+                //TODO: finding the right curve
+                if (dynamicRender != "none" && backgroundStart == false && displacement > 10)
+                {
+                    backgroundStart = true;
+                    R = d.BeginInvoke(new AsyncCallback(modelCompleted), null);
+                }
             }
+
+        }
+
+        public void generateModel()
+        {
+
+            //TODO-simplify the curve and pass to model function
+            simplifyCurve(ref ((Geometry.GeometryStroke)(stroke_g)).mPoints); //result curve is simplifiedCurve
+
+            if (dynamicRender == "none" || simplifiedCurve == null)
+            {
+                return;
+            }
+            else if (dynamicRender == "Revolve")
+            {
+                if (mScene.iCurveList.Count == 0)
+                {
+                    mScene.iCurveList.Add(simplifiedCurve);
+                    if (type != 0 && curveOnObj != null)
+                    {
+                        mScene.iRhObjList.Add(curveOnObj);
+                    }
+                }
+                else
+                {
+                    mScene.iCurveList[0] = simplifiedCurve;
+                    if (type != 0 && curveOnObj != null)
+                    {
+                        mScene.iRhObjList[mScene.iRhObjList.Count - 1] = curveOnObj;
+                    }
+                }
+
+                dynamicBrep = Util.RevolveFunc(ref mScene, ref mScene.iCurveList);
+            }
+            else if (dynamicRender == "Loft")
+            {
+                if (mScene.iCurveList.Count == 1)
+                {
+                    mScene.iCurveList.Add(simplifiedCurve);
+                    if (type != 0 && curveOnObj != null)
+                    {
+                        mScene.iRhObjList.Add(curveOnObj);
+                    }
+                }
+                else
+                {
+                    mScene.iCurveList[1] = simplifiedCurve;
+                    if (type != 0 && curveOnObj != null)
+                    {
+                        mScene.iRhObjList[mScene.iRhObjList.Count - 1] = curveOnObj;
+                    }
+                }
+
+                dynamicBrep = Util.LoftFunc(ref mScene, ref mScene.iCurveList);
+            }
+            else if (dynamicRender == "Extrude")
+            {
+                if (mScene.iCurveList.Count == 1)
+                {
+                    mScene.iCurveList.Add(simplifiedCurve);
+                    if (type != 0 && curveOnObj != null)
+                    {
+                        mScene.iRhObjList.Add(curveOnObj);
+                    }
+                }
+                else
+                {
+                    mScene.iCurveList[1] = simplifiedCurve;
+                    if (type != 0 && curveOnObj != null)
+                    {
+                        mScene.iRhObjList[mScene.iRhObjList.Count - 1] = curveOnObj;
+                    }
+                }
+
+                //TODO-using Sweep fnction to do and find the intersect point             
+                dynamicBrep = Util.ExtrudeFunc(ref mScene, ref mScene.iCurveList);
+            }
+            else if (dynamicRender == "Sweep")
+            {
+                if (mScene.iCurveList.Count == 1)
+                {
+                    mScene.iCurveList.Add(simplifiedCurve);
+                    if (type != 0 && curveOnObj != null)
+                    {
+                        mScene.iRhObjList.Add(curveOnObj);
+                    }
+                }
+                else
+                {
+                    mScene.iCurveList[1] = simplifiedCurve;
+                    if (type != 0 && curveOnObj != null)
+                    {
+                        mScene.iRhObjList[mScene.iRhObjList.Count - 1] = curveOnObj;
+                    }
+                }
+
+                dynamicBrep = Util.SweepFun(ref mScene, ref mScene.iCurveList);
+            }
+            /*
+            else if (dynamicRender == "Sweep-Circle")
+            {
+                dynamicBrep = Util.SweepCapFun(ref mScene, ref mScene.iCurveList);
+            }*/
+
+        }
+
+        public void modelCompleted(IAsyncResult R)
+        {
+            if (dynamicBrep != null)
+            {
+                if (modelName == "tprint")
+                {
+                    renderObjId = Util.addSceneNodeWithoutDraw(ref mScene, dynamicBrep, ref mesh_m, modelName);
+                }
+                /*
+                else if (modelName == "aprint")
+                {
+                    renderObjId = Util.addSceneNode(ref mScene, dynamicBrep, ref mesh_m, modelName);
+
+                    clearDrawing();
+                    Util.clearPlanePoints(ref mScene);
+                    Util.clearCurveTargetRhObj(ref mScene);
+                }*/
+            }
+            dynamicBrep = null;
+            backgroundStart = false;
+            displacement = 0;
 
         }
 
         protected override void onClickOculusTrigger(ref VREvent_t vrEvent)
         {
-            Rhino.RhinoApp.WriteLine("oculus grip click event test");
+            //Rhino.RhinoApp.WriteLine("oculus grip click event test");
             primaryDeviceIndex = vrEvent.trackedDeviceIndex;
             if (currentState == State.READY)
             {
@@ -275,7 +421,7 @@ namespace SparrowHawk.Interaction
 
         protected override void onReleaseOculusTrigger(ref VREvent_t vrEvent)
         {
-            Rhino.RhinoApp.WriteLine("oculus grip release event test");
+
             if (currentState == State.PAINT)
             {
                 lockPlane = false;
@@ -283,91 +429,34 @@ namespace SparrowHawk.Interaction
                 //simplfy the curve first before doing next interaction
                 if (((Geometry.GeometryStroke)(stroke_g)).mPoints.Count >= 2)
                 {
-                    //TODO-testing Rhino simplfying---debug
-                    /*
-                    Curve c = (rhinoCurve.Simplify(CurveSimplifyOptions.All, 1, Math.PI/10));
-                    if(c != null){
-                        //add to Scene curve object ,targetRhobj and check the next interaction
-                        mScene.iCurveList.Add(c.ToNurbsCurve());
-                        if (type != 0 && curveOnObj != null)
-                        {
-                           mScene.iRhObjList.Add(curveOnObj);
-                        }
 
-                        clearDrawing();
-                        mScene.popInteraction();
-                        mScene.peekInteraction().init();
-                        
-                    }
-                    */
-                    
                     simplifyCurve(ref ((Geometry.GeometryStroke)(stroke_g)).mPoints);
-                    
-                    for (int i =0; i< reducePoints.Count; i++)
-                    {
-                        if (i == 0)
-                        {
-                            simplifiedCurvePoints.Add(Util.openTkToRhinoPoint(Util.vrToPlatformPoint(ref mScene, reducePoints[i])));
-                        }
-                        else if(reducePoints.Count == 2)
-                        {
-                            simplifiedCurvePoints.Add(Util.openTkToRhinoPoint(Util.vrToPlatformPoint(ref mScene, reducePoints[i])));
-                        }
-                        else
-                        {
-                            float distance = (float)Math.Sqrt(Math.Pow(reducePoints[i].X - reducePoints[i - 1].X, 2) + Math.Pow(reducePoints[i].Y - reducePoints[i - 1].Y, 2) + Math.Pow(reducePoints[i].Z - reducePoints[i - 1].Z, 2));
-                            if(distance > 0.01)
-                            {
-                                simplifiedCurvePoints.Add(Util.openTkToRhinoPoint(Util.vrToPlatformPoint(ref mScene, reducePoints[i])));
-                            }
-                        }
-                    }
-                    
-                    if (simplifiedCurvePoints.Count >= 2) //TODO: might need 8 for closecurve check
-                    {
-                        int order = 3;
-                        if (isClosed)
-                        {
-                            while (order >= 1)
-                            {
-                                simplifiedCurve = Rhino.Geometry.NurbsCurve.Create(true, order, simplifiedCurvePoints.ToArray());
-                                if (simplifiedCurve != null)
-                                    break;
-                                order--;
-                            }
-                        }
-                        else
-                        {
-                            //null check
-                            while(order >= 1)
-                            {
-                                simplifiedCurve = Rhino.Geometry.NurbsCurve.Create(false, order, simplifiedCurvePoints.ToArray());
-                                if (simplifiedCurve != null)
-                                    break;
-                                order--;
-                            }                                              
-                           
-                        }
 
-                        //reduced control points 
-                        if(simplifiedCurve.Points.Count > 5)
-                        {
-                            simplifiedCurve = simplifiedCurve.Rebuild(5, simplifiedCurve.Degree, false);
-                        }
+                    //add to Scene curve object ,targetRhobj and check the next interaction
 
-                        //add to Scene curve object ,targetRhobj and check the next interaction
+                    if (dynamicRender == "none")
+                    {
                         mScene.iCurveList.Add(simplifiedCurve);
                         if (type != 0 && curveOnObj != null)
                         {
                             mScene.iRhObjList.Add(curveOnObj);
                         }
 
-                        clearDrawing();
-                        mScene.popInteraction();
-                        mScene.peekInteraction().init();
-
                     }
-                    
+                    else
+                    {
+                        mScene.iCurveList[mScene.iCurveList.Count - 1] = simplifiedCurve;
+                        if (type != 0 && curveOnObj != null)
+                        {
+                            mScene.iRhObjList[mScene.iRhObjList.Count - 1] = curveOnObj;
+                        }
+                    }
+
+
+
+                    clearDrawing();
+                    mScene.popInteraction();
+                    mScene.peekInteraction().init();
 
                     currentState = State.READY;
                     curveOnObj = null;
@@ -400,9 +489,52 @@ namespace SparrowHawk.Interaction
 
         public void simplifyCurve(ref List<Vector3> curvePoints)
         {
+            //clear list first
+            simplifiedCurvePoints.Clear();
+            reducePoints.Clear();
+
             float pointReductionTubeWidth = 0.002f; //0.002
             reducePoints = DouglasPeucker(ref curvePoints, 0, curvePoints.Count - 1, pointReductionTubeWidth);
-            Rhino.RhinoApp.WriteLine("reduce points from" + curvePoints.Count + " to " + reducePoints.Count);
+            //Rhino.RhinoApp.WriteLine("reduce points from" + curvePoints.Count + " to " + reducePoints.Count);
+
+            //TODO- the curve isn't correct while drawing
+            for (int i = 0; i < reducePoints.Count; i++)
+            {
+                simplifiedCurvePoints.Add(Util.openTkToRhinoPoint(Util.vrToPlatformPoint(ref mScene, reducePoints[i])));
+            }
+
+            if (simplifiedCurvePoints.Count >= 2) //TODO: might need 8 for closecurve check
+            {
+                int order = 3;
+                if (isClosed)
+                {
+                    while (order >= 1)
+                    {
+                        simplifiedCurve = Rhino.Geometry.NurbsCurve.Create(true, order, simplifiedCurvePoints.ToArray());
+                        if (simplifiedCurve != null)
+                            break;
+                        order--;
+                    }
+                }
+                else
+                {
+                    //null check
+                    while (order >= 1)
+                    {
+                        simplifiedCurve = Rhino.Geometry.NurbsCurve.Create(false, order, simplifiedCurvePoints.ToArray());
+                        if (simplifiedCurve != null)
+                            break;
+                        order--;
+                    }
+
+                }
+
+                //reduced control points 
+                if (simplifiedCurve.Points.Count > 5)
+                {
+                    simplifiedCurve = simplifiedCurve.Rebuild(5, simplifiedCurve.Degree, false);
+                }
+            }
         }
 
         //Quick test about Douglas-Peucker for rhino points, return point3d with rhino coordinate system

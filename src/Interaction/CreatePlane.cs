@@ -13,10 +13,17 @@ namespace SparrowHawk.Interaction
         private Material.Material mesh_m;
         private Brep designPlane;
         private Guid guid;
+        private string renderType = "none";
 
         public CreatePlane(ref Scene scene) : base(ref scene)
         {
             mesh_m = new Material.SingleColorMaterial(0.5f, 0, 0, 0.4f);
+        }
+
+        public CreatePlane(ref Scene scene, string type) : base(ref scene)
+        {
+            mesh_m = new Material.SingleColorMaterial(0.5f, 0, 0, 0.4f);
+            renderType = type;
         }
 
         public override void init()
@@ -47,11 +54,36 @@ namespace SparrowHawk.Interaction
 
             if (designPlane != null)
             {
-                guid = Util.addSceneNode(ref mScene, designPlane, ref mesh_m, "panel");
+                guid = Util.addSceneNodeWithoutVR(ref mScene, designPlane, ref mesh_m, "panel");
                 mScene.iRhObjList.Add(mScene.rhinoDoc.Objects.Find(guid));
                 //TODO- bad solution. constriant the next interaction
                 mScene.iPlaneList.Add(plane);
+
+                if (renderType == "Circle")
+                {
+                    OpenTK.Vector3 origin = new Vector3(controller_p.X, controller_p.Y, controller_p.Z);
+                    mScene.iPointList.Add(origin);
+                    float radius = 20;
+                    Rhino.Geometry.Circle circle = new Rhino.Geometry.Circle(plane, controller_pRhino, radius);
+                    Point3d circleP = circle.ToNurbsCurve().PointAtStart;
+                    mScene.iPointList.Add(Util.platformToVRPoint(ref mScene, new Vector3((float)circleP.X, (float)circleP.Y, (float)circleP.Z)));
+
+                }
+                else if (renderType == "Rect")
+                {
+                    float width = 40;
+                    float height = 30;
+                    Rectangle3d rect = new Rectangle3d(plane, width, height);
+
+                    Point3d topLeftP = rect.Corner(3);
+                    Point3d bottomRightP = rect.Corner(1);
+                    mScene.iPointList.Add(Util.platformToVRPoint(ref mScene, new Vector3((float)topLeftP.X, (float)topLeftP.Y, (float)topLeftP.Z)));
+                    mScene.iPointList.Add(Util.platformToVRPoint(ref mScene, new Vector3((float)bottomRightP.X, (float)bottomRightP.Y, (float)bottomRightP.Z)));
+
+                }
+
             }
+            
 
         }
 

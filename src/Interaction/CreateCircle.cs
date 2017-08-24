@@ -100,7 +100,7 @@ namespace SparrowHawk.Interaction
                         OpenTK.Matrix4 t = OpenTK.Matrix4.CreateTranslation(projectP);
                         t.Transpose();
                         drawPoint.transform = t;
-                        targetPSN = mScene.brepToSceneNodeDic[rhObj.Id];
+                        //targetPSN = mScene.brepToSceneNodeDic[rhObj.Id];
                         targetPRhObj = rhObj;
                         break;
                     }

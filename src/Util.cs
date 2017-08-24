@@ -93,7 +93,7 @@ namespace SparrowHawk
             M = new OpenTK.Matrix4(
                 (float)OpenCvM[0, 0], (float)OpenCvM[0, 1], (float)OpenCvM[0, 2], (float)OpenCvM[0, 3],
                 (float)OpenCvM[1, 0], (float)OpenCvM[1, 1], (float)OpenCvM[1, 2], (float)OpenCvM[1, 3],
-                (float)OpenCvM[2, 0], (float)OpenCvM[2, 1], (float)OpenCvM[2, 2], (float)OpenCvM[2, 3],                
+                (float)OpenCvM[2, 0], (float)OpenCvM[2, 1], (float)OpenCvM[2, 2], (float)OpenCvM[2, 3],
                 0, 0, 0, 1
             );
         }
@@ -124,8 +124,8 @@ namespace SparrowHawk
             foreach (OpenTK.Vector3 x in xs)
             {
                 A.SetRow(3 * i + 0, new float[] { x.X, x.Y, x.Z, 1, 0, 0, 0, 0, 0, 0, 0, 0 });
-                A.SetRow(3 * i + 1, new float[] { 0, 0, 0, 0, x.X, x.Y, x.Z, 1, 0, 0, 0, 0});
-                A.SetRow(3 * i + 2, new float[] { 0, 0, 0, 0, 0, 0, 0, 0, x.X, x.Y, x.Z, 1});
+                A.SetRow(3 * i + 1, new float[] { 0, 0, 0, 0, x.X, x.Y, x.Z, 1, 0, 0, 0, 0 });
+                A.SetRow(3 * i + 2, new float[] { 0, 0, 0, 0, 0, 0, 0, 0, x.X, x.Y, x.Z, 1 });
                 i++;
             }
             i = 0;
@@ -145,26 +145,26 @@ namespace SparrowHawk
             if (getOrthogonal)
             {
                 var normalized = MathNet.Numerics.LinearAlgebra.CreateMatrix.Dense<float>(3, 3);
-                normalized[0, 0] = MVec[0,0];
-                normalized[0, 1] = MVec[1,0];
-                normalized[0, 2] = MVec[2,0];
-                normalized[1, 0] = MVec[4,0];
-                normalized[1, 1] = MVec[5,0];
-                normalized[1, 2] = MVec[6,0];
-                normalized[2, 0] = MVec[8,0];
-                normalized[2, 1] = MVec[9,0];
-                normalized[2, 2] = MVec[10,0];
+                normalized[0, 0] = MVec[0, 0];
+                normalized[0, 1] = MVec[1, 0];
+                normalized[0, 2] = MVec[2, 0];
+                normalized[1, 0] = MVec[4, 0];
+                normalized[1, 1] = MVec[5, 0];
+                normalized[1, 2] = MVec[6, 0];
+                normalized[2, 0] = MVec[8, 0];
+                normalized[2, 1] = MVec[9, 0];
+                normalized[2, 2] = MVec[10, 0];
                 // TODO: If this doesn't work out, try out the built-in Grahm-Schmidt method.
                 normalized = normalized.GramSchmidt().Q;
-                MVec[0,0] = normalized[0, 0];
-                MVec[1,0] = normalized[0, 1];
-                MVec[2,0] = normalized[0, 2];
-                MVec[4,0] = normalized[1, 0];
-                MVec[5,0] = normalized[1, 1];
-                MVec[6,0] = normalized[1, 2];
-                MVec[8,0] = normalized[2, 0];
-                MVec[9,0] = normalized[2, 1];
-                MVec[10,0] = normalized[2, 2];
+                MVec[0, 0] = normalized[0, 0];
+                MVec[1, 0] = normalized[0, 1];
+                MVec[2, 0] = normalized[0, 2];
+                MVec[4, 0] = normalized[1, 0];
+                MVec[5, 0] = normalized[1, 1];
+                MVec[6, 0] = normalized[1, 2];
+                MVec[8, 0] = normalized[2, 0];
+                MVec[9, 0] = normalized[2, 1];
+                MVec[10, 0] = normalized[2, 2];
             }
 
             for (i = 0; i < 3; i++)
@@ -200,7 +200,7 @@ namespace SparrowHawk
             // Rotation 
             xs.Clear(); bs.Clear();
             xs.Add(new OpenTK.Vector3(1, 0, 0)); xs.Add(new OpenTK.Vector3(0, 1, 0)); xs.Add(new OpenTK.Vector3(0, 0, 1)); xs.Add(new OpenTK.Vector3(2, 2, 2));
-            bs.Add(new OpenTK.Vector3(0,1,0)); bs.Add(new OpenTK.Vector3(-1, 0, 0)); bs.Add(new OpenTK.Vector3(0, 0, 1)); bs.Add(new OpenTK.Vector3(-2, 2, 2));
+            bs.Add(new OpenTK.Vector3(0, 1, 0)); bs.Add(new OpenTK.Vector3(-1, 0, 0)); bs.Add(new OpenTK.Vector3(0, 0, 1)); bs.Add(new OpenTK.Vector3(-2, 2, 2));
             solveForAffineTransform(xs, bs, ref M, false);
             solveForAffineTransform(xs, bs, ref M, true);
         }
@@ -235,9 +235,20 @@ namespace SparrowHawk
             return child;
         }
 
-        public static OpenTK.Vector3 vrToPlatformVector(ref Scene scene, OpenTK.Vector3 v) 
+        public static SceneNode MarkDebugPoint(ref SceneNode node, OpenTK.Vector3 p, float r, float g, float b)
         {
-            
+            // p is already rotation inverted.
+            Geometry.Geometry geo = new Geometry.DrawPointMarker(p);
+            Material.Material m = new Material.SingleColorMaterial(r, g, b, 1);
+            SceneNode child = new SceneNode("DebugPoint", ref geo, ref m);
+            child.transform = new OpenTK.Matrix4(1, 0, 0, p.X, 0, 1, 0, p.Y, 0, 0, 1, p.Z, 0, 0, 0, 1);
+            node.add(ref child);
+            return child;
+        }
+
+        public static OpenTK.Vector3 vrToPlatformVector(ref Scene scene, OpenTK.Vector3 v)
+        {
+
             if (scene.vrToRobot.Equals(OpenTK.Matrix4.Identity))
             {
                 v = Util.transformVec(Util.mGLToRhino, v);
@@ -256,11 +267,11 @@ namespace SparrowHawk
 
         public static OpenTK.Vector3 vrToPlatformPoint(ref Scene scene, OpenTK.Vector3 p)
         {
-            
+
             if (scene.vrToRobot.Equals(OpenTK.Matrix4.Identity))
             {
                 p = Util.transformPoint(Util.mGLToRhino, p);
-               // p *= 1000;
+                // p *= 1000;
             }
             else
             {
@@ -312,7 +323,7 @@ namespace SparrowHawk
                 //p = Util.transformPoint(scene.tableGeometry.transform.Inverted(), p);
             }
 
-            
+
             return p;
         }
 
@@ -333,7 +344,7 @@ namespace SparrowHawk
                 //v = Util.transformVec(scene.tableGeometry.transform.Inverted(), v);
             }
 
-           
+
             return v;
         }
 
@@ -392,22 +403,22 @@ namespace SparrowHawk
         public static OpenTK.Matrix4 rhinoToOpenTKTransform(Transform t)
         {
             OpenTK.Matrix4 M = new OpenTK.Matrix4();
-            M.M11 = (float) t.M00; 
-            M.M12 = (float) t.M01; 
-            M.M13 = (float) t.M02; 
-            M.M14 = (float) t.M03; 
-            M.M21 = (float) t.M10; 
-            M.M22 = (float) t.M11; 
-            M.M23 = (float) t.M12; 
-            M.M24 = (float) t.M13; 
-            M.M31 = (float) t.M20; 
-            M.M32 = (float) t.M21; 
-            M.M33 = (float) t.M22; 
-            M.M34 = (float) t.M23; 
-            M.M41 = (float) t.M30; 
-            M.M42 = (float) t.M31; 
-            M.M43 = (float) t.M32;
-            M.M44 = (float) t.M33; 
+            M.M11 = (float)t.M00;
+            M.M12 = (float)t.M01;
+            M.M13 = (float)t.M02;
+            M.M14 = (float)t.M03;
+            M.M21 = (float)t.M10;
+            M.M22 = (float)t.M11;
+            M.M23 = (float)t.M12;
+            M.M24 = (float)t.M13;
+            M.M31 = (float)t.M20;
+            M.M32 = (float)t.M21;
+            M.M33 = (float)t.M22;
+            M.M34 = (float)t.M23;
+            M.M41 = (float)t.M30;
+            M.M42 = (float)t.M31;
+            M.M43 = (float)t.M32;
+            M.M44 = (float)t.M33;
             return M;
         }
 
@@ -498,8 +509,8 @@ namespace SparrowHawk
         {
             if (mesh.primitiveType != OpenTK.Graphics.OpenGL4.BeginMode.Triangles)
                 return;
-       
-            float [] mGeometry = new float[3 * 3 * mesh.mNumPrimitives];
+
+            float[] mGeometry = new float[3 * 3 * mesh.mNumPrimitives];
             int[] mGeometryIndices = new int[3 * mesh.mNumPrimitives];
             float[] mNormals = new float[3 * 3 * mesh.mNumPrimitives];
 
@@ -508,22 +519,23 @@ namespace SparrowHawk
             {
                 for (int v = 0; v < 3; v++)
                 {
-                    mGeometry[9 * f + 3 * v + 0] = mesh.mGeometry[3*mesh.mGeometryIndices[3 * f + v] + 0];
-                    mGeometry[9 * f + 3 * v + 1] = mesh.mGeometry[3*mesh.mGeometryIndices[3 * f + v] + 1];
-                    mGeometry[9 * f + 3 * v + 2] = mesh.mGeometry[3*mesh.mGeometryIndices[3 * f + v] + 2];
+                    mGeometry[9 * f + 3 * v + 0] = mesh.mGeometry[3 * mesh.mGeometryIndices[3 * f + v] + 0];
+                    mGeometry[9 * f + 3 * v + 1] = mesh.mGeometry[3 * mesh.mGeometryIndices[3 * f + v] + 1];
+                    mGeometry[9 * f + 3 * v + 2] = mesh.mGeometry[3 * mesh.mGeometryIndices[3 * f + v] + 2];
                     faceVertices[v] = new OpenTK.Vector3(mGeometry[9 * f + 3 * v + 0], mGeometry[9 * f + 3 * v + 1], mGeometry[9 * f + 3 * v + 2]);
                 }
                 OpenTK.Vector3 n = Util.calculateFaceNormal(faceVertices[0], faceVertices[1], faceVertices[2]);
-                for (int v = 0; v < 3; v++) {
+                for (int v = 0; v < 3; v++)
+                {
                     mNormals[9 * f + 3 * v + 0] = n.X;
                     mNormals[9 * f + 3 * v + 1] = n.Y;
                     mNormals[9 * f + 3 * v + 2] = n.Z;
-                }      
+                }
             }
 
             for (int i = 0; i < mGeometryIndices.Count(); i++)
                 mGeometryIndices[i] = i;
-            
+
             mesh.mGeometry = mGeometry;
             mesh.mGeometryIndices = mGeometryIndices;
             mesh.mNormals = mNormals;
@@ -548,37 +560,40 @@ namespace SparrowHawk
 
         public static Guid addSceneNodeWithoutDraw(ref Scene mScene, Brep brep, ref Material.Material mesh_m, string name)
         {
-            //TODO: detect the # of faces
+            //testing update the current sceneNode
             Mesh base_mesh = new Mesh();
             if (brep != null)
             {
                 Mesh[] meshes = Mesh.CreateFromBrep(brep, MeshingParameters.Default);
 
                 foreach (Mesh mesh in meshes)
+                {
                     base_mesh.Append(mesh);
+                }
 
-                long ticks = DateTime.Now.Ticks;
-                byte[] bytes = BitConverter.GetBytes(ticks);
-                string timeuid = Convert.ToBase64String(bytes).Replace('+', '_').Replace('/', '-').TrimEnd('=');
-
-                //testing rotation
                 Geometry.Geometry meshStroke_g = new Geometry.RhinoMesh(ref mScene, mScene.platformRotation);
                 ((Geometry.RhinoMesh)meshStroke_g).setMesh(ref base_mesh);
 
-                foreach (SceneNode sn in mScene.tableGeometry.children.Reverse<SceneNode>())
+                SceneNode modelSN = null;
+                foreach (SceneNode sn in mScene.tableGeometry.children)
                 {
                     if (sn.name == name)
                     {
-                        mScene.tableGeometry.children.Remove(sn);
+                        modelSN = sn;
                         break;
                     }
                 }
-
-                SceneNode ccMeshSN = new SceneNode(name, ref meshStroke_g, ref mesh_m);
-                mScene.tableGeometry.add(ref ccMeshSN);
-
-                return ccMeshSN.guid;
-
+                if (modelSN == null)
+                {
+                    SceneNode ccMeshSN = new SceneNode(name, ref meshStroke_g, ref mesh_m);
+                    mScene.tableGeometry.add(ref ccMeshSN);
+                    return ccMeshSN.guid;
+                }
+                else
+                {
+                    modelSN.geometry = meshStroke_g;
+                    return modelSN.guid;
+                }
             }
             else
             {
@@ -647,19 +662,41 @@ namespace SparrowHawk
                 //testing platform rotation
                 Geometry.Geometry meshStroke_g = new Geometry.RhinoMesh(ref mScene, mScene.platformRotation);
                 ((Geometry.RhinoMesh)meshStroke_g).setMesh(ref base_mesh);
-                
-                SceneNode ccMeshSN = new SceneNode("brepMesh", ref meshStroke_g, ref mesh_m);            
+
+                SceneNode ccMeshSN = new SceneNode("brepMesh", ref meshStroke_g, ref mesh_m);
                 mScene.tableGeometry.add(ref ccMeshSN);
-                
+
                 //add reference SceneNode to brep and vice versa
                 mScene.brepToSceneNodeDic.Add(guid, ccMeshSN);
                 mScene.SceneNodeToBrepDic.Add(ccMeshSN.guid, mScene.rhinoDoc.Objects.Find(guid));
 
                 return guid;
-            }else
+            }
+            else
             {
                 return Guid.Empty;
             }
+        }
+
+        //only used in create plane for invisable edit plane
+        public static Guid addSceneNodeWithoutVR(ref Scene mScene, Brep brep, ref Material.Material mesh_m, string name)
+        {
+            if (brep != null)
+            {
+                long ticks = DateTime.Now.Ticks;
+                byte[] bytes = BitConverter.GetBytes(ticks);
+                string timeuid = Convert.ToBase64String(bytes).Replace('+', '_').Replace('/', '-').TrimEnd('=');
+
+                Rhino.DocObjects.ObjectAttributes attr = new Rhino.DocObjects.ObjectAttributes();
+                attr.Name = name + timeuid;
+                Guid guid = mScene.rhinoDoc.Objects.AddBrep(brep, attr);
+                mScene.rhinoDoc.Views.Redraw();
+
+                return guid;
+            }else
+            {
+                return Guid.Empty;
+            } 
         }
 
         public static Guid addSceneNode(ref Scene mScene, Brep brep, ref Material.Material mesh_m, string name)
@@ -695,7 +732,8 @@ namespace SparrowHawk
 
                 return guid;
 
-            }else
+            }
+            else
             {
                 return Guid.Empty;
             }
@@ -722,8 +760,8 @@ namespace SparrowHawk
                 Geometry.Geometry meshStroke_g = new Geometry.RhinoMesh2(ref mScene, t);
                 ((Geometry.RhinoMesh2)meshStroke_g).setMesh(ref base_mesh);
 
-                SceneNode ccMeshSN = new SceneNode(name, ref meshStroke_g, ref mesh_m,renderLate);
-                if(name == "planeXY" || name == "planeYZ" || name == "planeXZ")
+                SceneNode ccMeshSN = new SceneNode(name, ref meshStroke_g, ref mesh_m, renderLate);
+                if (name == "planeXY" || name == "planeYZ" || name == "planeXZ")
                     mScene.staticGeometry.add(ref ccMeshSN);
                 else
                     mScene.tableGeometry.add(ref ccMeshSN);
@@ -748,7 +786,7 @@ namespace SparrowHawk
             mScene.SceneNodeToBrepDic.Remove(deleteSN.guid);
 
             mScene.rhinoDoc.Objects.Delete(guid, true);
-            foreach (SceneNode sn in mScene.tableGeometry.children.Reverse<SceneNode>())
+            foreach (SceneNode sn in mScene.tableGeometry.children)
             {
                 if (sn.guid == deleteSN.guid)
                 {
@@ -774,7 +812,7 @@ namespace SparrowHawk
         public static Brep RevolveFunc(ref Scene mScene, ref List<Curve> curveList)
         {
             Line axis = new Line(new Point3d(0, 0, 0), new Point3d(0, 0, 1));
-            RevSurface revsrf = RevSurface.Create(curveList[curveList.Count-1], axis);
+            RevSurface revsrf = RevSurface.Create(curveList[curveList.Count - 1], axis);
             return Brep.CreateFromRevSurface(revsrf, false, false);
         }
 
@@ -885,22 +923,27 @@ namespace SparrowHawk
             //calculate the new starting point at end plane
             OpenTK.Vector3 railEndPoint = new OpenTK.Vector3((float)railPL.PointAtEnd.X, (float)railPL.PointAtEnd.Y, (float)railPL.PointAtEnd.Z);
             OpenTK.Vector3 railEndNormal = new OpenTK.Vector3((float)railPL.TangentAtEnd.X, (float)railPL.TangentAtEnd.Y, (float)railPL.TangentAtEnd.Z);
-            OpenTK.Matrix4 transMEnd = Util.getCoordinateTransM(shapeCenter, railEndPoint, shapeNormal, railEndNormal);
+            OpenTK.Matrix4 transMEnd = Util.getCoordinateTransM(railStartPoint, railEndPoint, railNormal, railEndNormal); //be careful about this
 
             List<Curve> profileCurves = new List<Curve>();
             profileCurves.Add(circleCurve);
             profileCurves.Add(curveList[curveList.Count - 1]);
 
             //store the starting point first
-            Point3d startP = new Point3d(circleCurve.PointAtStart);
+            Point3d startP = circleCurve.PointAtStart;
             double curveT0 = 0;
-            profileCurves.ElementAt(0).ClosestPoint(startP, out curveT0);
-            profileCurves.ElementAt(0).ChangeClosedCurveSeam(curveT0);
+            profileCurves[0].ClosestPoint(startP, out curveT0);
+            profileCurves[0].ChangeClosedCurveSeam(curveT0);
+            //debugging
+            //Util.MarkPoint(ref mScene.staticGeometry, platformToVRPoint(ref mScene, new Vector3((float)startP.X,(float)startP.Y,(float)startP.Z)), 1, 1, 1);
+            mScene.sStartP = new Point3d(circleCurve.PointAtStart);
 
+            //TODO-the new point position is incorrect, the circle curve is the one already transform
             Transform tEnd = Util.OpenTKToRhinoTransform(transMEnd);
             startP.Transform(tEnd);
 
-          
+            mScene.eStartP = new Point3d(startP);
+
             Plane curvePlane1;
             Plane curvePlane2;
             if (circleCurve.TryGetPlane(out curvePlane1) && curveList[curveList.Count - 1].TryGetPlane(out curvePlane2))
@@ -908,33 +951,47 @@ namespace SparrowHawk
                 OpenTK.Vector3 n1 = new Vector3((float)curvePlane1.Normal.X, (float)curvePlane1.Normal.Y, (float)curvePlane1.Normal.Z);
                 OpenTK.Vector3 n2 = new Vector3((float)curvePlane2.Normal.X, (float)curvePlane2.Normal.Y, (float)curvePlane2.Normal.Z);
 
+                //n1,n2 should be the same with railNormal and railEndNormal
                 n1.Normalize();
                 n2.Normalize();
 
                 //angle = atan2(norm(cross(a,b)), dot(a,b))
-                float angle = Vector3.Dot(n1, n2);
-                CurveOrientation dir = profileCurves.ElementAt(0).ClosedCurveOrientation(Util.openTkToRhinoVector(n1)); //new Vector3(0,0,1)
-                CurveOrientation dir2 = profileCurves.ElementAt(1).ClosedCurveOrientation(Util.openTkToRhinoVector(n2)); //new Vector3(0,0,1)
+                float angle = Vector3.Dot(railNormal, railEndNormal);
+                CurveOrientation dir = profileCurves[0].ClosedCurveOrientation(Util.openTkToRhinoVector(railNormal)); //new Vector3(0,0,1)
+                CurveOrientation dir2 = profileCurves[1].ClosedCurveOrientation(Util.openTkToRhinoVector(railEndNormal)); //new Vector3(0,0,1)
 
                 //debugging
                 mScene.angleD = angle;
                 mScene.c1D = dir.ToString();
                 mScene.c2D = dir2.ToString();
+                
+                //testing seems bug, try compare by ourselves
+                //if(!Curve.DoDirectionsMatch(profileCurves[0], profileCurves[1]))
+                if(dir != dir2)
+                {
+                    profileCurves[1].Reverse();
+                }
 
                 double curveT = 0;
-                profileCurves.ElementAt(1).ClosestPoint(startP, out curveT);
-                profileCurves.ElementAt(1).ChangeClosedCurveSeam(curveT);
+                profileCurves[1].ClosestPoint(startP, out curveT);
+                profileCurves[1].ChangeClosedCurveSeam(curveT);
+                CurveOrientation dir3 = profileCurves[1].ClosedCurveOrientation(Util.openTkToRhinoVector(railEndNormal)); //new Vector3(0,0,1)
+                mScene.c3D = dir3.ToString();
 
-                if (angle < 0 && Curve.DoDirectionsMatch(profileCurves.ElementAt(0), profileCurves.ElementAt(1)))
-                {
-                    profileCurves.ElementAt(1).Reverse();
-                }
-                else if (angle >= 0 && !Curve.DoDirectionsMatch(profileCurves.ElementAt(0), profileCurves.ElementAt(1)))
-                {
-                    profileCurves.ElementAt(1).Reverse();
-                }
 
-                
+                /*
+                if (angle < 0 && Curve.DoDirectionsMatch(profileCurves[0], profileCurves[1]))
+                {
+                    profileCurves[1].Reverse();
+                }
+                else if (angle >= 0 && !Curve.DoDirectionsMatch(profileCurves[0], profileCurves[1]))
+                {
+                    profileCurves[1].Reverse();
+                }*/
+
+                //debugging
+                //Util.MarkPoint(ref mScene.staticGeometry, platformToVRPoint(ref mScene, new Vector3((float)profileCurves[1].PointAtStart.X, (float)profileCurves[1].PointAtStart.Y, (float)profileCurves[1].PointAtStart.Z)), 1, 1, 1);
+
 
             }
             Brep[] breps = Brep.CreateFromSweep(curveList[curveList.Count - 2], profileCurves, false, mScene.rhinoDoc.ModelAbsoluteTolerance);
@@ -977,28 +1034,28 @@ namespace SparrowHawk
         public static OpenTK.Vector3 solveForOffsetVector(List<OpenTK.Matrix4> matrices)
         {
             OpenTK.Vector3 x = new OpenTK.Vector3();
-            var A = MathNet.Numerics.LinearAlgebra.CreateMatrix.Dense<float>(matrices.Count*(matrices.Count), 3);
+            var A = MathNet.Numerics.LinearAlgebra.CreateMatrix.Dense<float>(matrices.Count * (matrices.Count), 3);
             var B = MathNet.Numerics.LinearAlgebra.CreateMatrix.Dense<float>(matrices.Count * (matrices.Count), 1);
             int row = 0;
-            for (int i = 0; i < matrices.Count-1; i++)
-                {
-                    A.SetRow(row, new float[] {matrices.ElementAt(i).M11 - matrices.ElementAt(i+1).M11,
+            for (int i = 0; i < matrices.Count - 1; i++)
+            {
+                A.SetRow(row, new float[] {matrices.ElementAt(i).M11 - matrices.ElementAt(i+1).M11,
                                                matrices.ElementAt(i).M12 - matrices.ElementAt(i+1).M12,
                                                matrices.ElementAt(i).M13 - matrices.ElementAt(i+1).M13});
 
-                    A.SetRow(row+1, new float[] {matrices.ElementAt(i).M21 - matrices.ElementAt(i+1).M21,
+                A.SetRow(row + 1, new float[] {matrices.ElementAt(i).M21 - matrices.ElementAt(i+1).M21,
                                                  matrices.ElementAt(i).M22 - matrices.ElementAt(i+1).M22,
                                                  matrices.ElementAt(i).M23 - matrices.ElementAt(i+1).M23});
 
-                    A.SetRow(row+2, new float[] {matrices.ElementAt(i).M31 - matrices.ElementAt(i+1).M31,
-                                                 matrices.ElementAt(i).M32 - matrices.ElementAt(i+1).M32, 
+                A.SetRow(row + 2, new float[] {matrices.ElementAt(i).M31 - matrices.ElementAt(i+1).M31,
+                                                 matrices.ElementAt(i).M32 - matrices.ElementAt(i+1).M32,
                                                  matrices.ElementAt(i).M33 - matrices.ElementAt(i+1).M33});
 
-                    B.SetRow(row, new float[] { matrices.ElementAt(i+1).M14 - matrices.ElementAt(i).M14 });
-                    B.SetRow(row+1, new float[] { matrices.ElementAt(i+1).M24 - matrices.ElementAt(i).M24 });
-                    B.SetRow(row+2, new float[] { matrices.ElementAt(i+1).M34 - matrices.ElementAt(i).M34 });
-                    row += 3;
-                }
+                B.SetRow(row, new float[] { matrices.ElementAt(i + 1).M14 - matrices.ElementAt(i).M14 });
+                B.SetRow(row + 1, new float[] { matrices.ElementAt(i + 1).M24 - matrices.ElementAt(i).M24 });
+                B.SetRow(row + 2, new float[] { matrices.ElementAt(i + 1).M34 - matrices.ElementAt(i).M34 });
+                row += 3;
+            }
             var qr = A.QR();
             var matX = qr.R.Solve(qr.Q.Transpose() * B);
             x.X = matX[0, 0];
@@ -1021,7 +1078,7 @@ namespace SparrowHawk
             }
             return scene.mDevicePose[scene.rightControllerIdx] * scene.mRightControllerOffset;
         }
-		
+
         /// <summary>
         /// Returns the integer associated with the dominant axis about which the rotation moves.
         /// Chooses Z in the two degenerate cases.
@@ -1032,21 +1089,22 @@ namespace SparrowHawk
         /// </summary>
         /// <param name="M">The affine matrix with some rotational componenet to analyse.</param>
         /// <returns></returns>
-		public static int getDominantRotationAxis(OpenTK.Matrix4 M) {
+        public static int getDominantRotationAxis(OpenTK.Matrix4 M)
+        {
             OpenTK.Quaternion R = M.ExtractRotation();
             if (Math.Abs(R.X) > Math.Abs(R.Y) && Math.Abs(R.X) > Math.Abs(R.Z))
                 return 0;
             else if (Math.Abs(R.Y) > Math.Abs(R.Z))
                 return 1;
             return 2;
-		}
+        }
 
 
 
 
     }
 
-    
+
 
 
     //public static OpenTK.Matrix4

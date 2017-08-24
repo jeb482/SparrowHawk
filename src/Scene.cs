@@ -187,7 +187,8 @@ namespace SparrowHawk
 
         //SweepCapFun Debugging
         public float angleD;
-        public string c1D,c2D;
+        public string c1D, c2D,c3D;
+        public Point3d sStartP, eStartP;
 
         public Interaction.Interaction popInteraction()
         {

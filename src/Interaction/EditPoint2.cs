@@ -59,7 +59,7 @@ namespace SparrowHawk.Interaction
         Point3d startP;
 
         private bool backgroundStart = false;
-        private float displacement =0;
+        private float displacement = 0;
         Brep dynamicBrep;
         IAsyncResult R;
         public delegate void generateModel_Delegate();
@@ -253,12 +253,12 @@ namespace SparrowHawk.Interaction
                 if (rayIntersections != null)
                 {
                     projectP = Util.platformToVRPoint(ref mScene, new OpenTK.Vector3((float)rayIntersections[0].X, (float)rayIntersections[0].Y, (float)rayIntersections[0].Z));
-                    targetPSN = mScene.brepToSceneNodeDic[rhinoPlane.Id];
+                    //targetPSN = mScene.brepToSceneNodeDic[rhinoPlane.Id];
                     targetPRhObj = rhinoPlane;
                 }
                 else
                 {
-                    targetPSN = null;
+                    //targetPSN = null;
                     targetPRhObj = null;
                     projectP = new OpenTK.Vector3(100, 100, 100); //make it invisable
                 }
@@ -278,6 +278,17 @@ namespace SparrowHawk.Interaction
                 for (int i = 0; i < editCurve.Points.Count; i++)
                 {
                     //TODO-force not to move the center in Circle or topleft in Rect
+                    if(i == 0)
+                    {
+                        if(mScene.selectionList[mScene.selectionList.Count - 1] == "Circle" || dynamicRender == "Sweep-Circle")
+                        {
+                            continue;
+                        }else if (mScene.selectionList[mScene.selectionList.Count - 1] == "Rect")
+                        {
+                            continue;
+                        }
+                    }
+
                     ControlPoint cp = editCurve.Points.ElementAt(i);
                     OpenTK.Vector3 pVR = Util.platformToVRPoint(ref mScene, new OpenTK.Vector3((float)cp.Location.X, (float)cp.Location.Y, (float)cp.Location.Z));
                     float distance = (float)Math.Sqrt(Math.Pow(pos.X - pVR.X, 2) + Math.Pow(pos.Y - pVR.Y, 2) + Math.Pow(pos.Z - pVR.Z, 2));
@@ -295,15 +306,25 @@ namespace SparrowHawk.Interaction
                 {
                     isSnap = true;
                     pos = snapP;
-                    for (int i = 0; i < pointMarkers.Count; i++)
+
+                    if ((mScene.selectionList[mScene.selectionList.Count - 1] == "Circle" || dynamicRender == "Sweep-Circle") || mScene.selectionList[mScene.selectionList.Count - 1] == "Rect")
                     {
-                        if (i == snapIndex)
+                        //only 1 edit point
+                        pointMarkers[0].material = new Material.SingleColorMaterial(1, 1, 1, 1);
+                    }
+                    else
+                    {
+
+                        for (int i = 0; i < pointMarkers.Count; i++)
                         {
-                            pointMarkers[i].material = new Material.SingleColorMaterial(1, 1, 1, 1);
-                        }
-                        else
-                        {
-                            pointMarkers[i].material = new Material.SingleColorMaterial(0, 1, 0, 1);
+                            if (i == snapIndex)
+                            {
+                                pointMarkers[i].material = new Material.SingleColorMaterial(1, 1, 1, 1);
+                            }
+                            else
+                            {
+                                pointMarkers[i].material = new Material.SingleColorMaterial(0, 1, 0, 1);
+                            }
                         }
                     }
 
@@ -327,7 +348,7 @@ namespace SparrowHawk.Interaction
                 //accumulate displacement
                 displacement = displacement + (float)Math.Sqrt(Math.Pow(ep.X - curvePoints[snapIndex].X, 2) + Math.Pow(ep.Y - curvePoints[snapIndex].Y, 2) + Math.Pow(ep.Z - curvePoints[snapIndex].Z, 2));
                 curvePoints[snapIndex] = Util.openTkToRhinoPoint(ep);
-                
+
 
                 int order = 3;
                 if (editCurve.IsClosed)
@@ -361,13 +382,6 @@ namespace SparrowHawk.Interaction
                     return;
                 }
 
-                //remove and visualize the new control points
-                for (int i = 0; i < pointMarkers.Count; i++)
-                {
-                    SceneNode sn = pointMarkers[i];
-                    mScene.tableGeometry.remove(ref sn);
-                }
-                pointMarkers.Clear();
 
                 renderEditCurve();
                 updateEditCurve();
@@ -395,6 +409,7 @@ namespace SparrowHawk.Interaction
 
         private void renderEditCurve()
         {
+
             //init and render control points of curve
             if (curvePoints.Count == 0)
             {
@@ -402,19 +417,55 @@ namespace SparrowHawk.Interaction
                 {
                     Point3d ep = new Point3d(editCurve.Points.ElementAt(i).Location.X, editCurve.Points.ElementAt(i).Location.Y, editCurve.Points.ElementAt(i).Location.Z);
                     curvePoints.Add(ep);
+
+                    //TODO-force not to move the center in Circle or topleft in Rect
+                    if (i == 0)
+                    {
+                        if (mScene.selectionList[mScene.selectionList.Count - 1] == "Circle" || dynamicRender == "Sweep-Circle")
+                        {
+                            continue;
+                        }
+                        else if (mScene.selectionList[mScene.selectionList.Count - 1] == "Rect")
+                        {
+                            continue;
+                        }
+                    }
                     // p is the point before apply tableGeometry.transform inverted so we need to transfrom here
                     SceneNode sn = Util.MarkPointSN(ref mScene.tableGeometry, Util.transformPoint(mScene.tableGeometry.transform.Inverted(), Util.platformToVRPoint(ref mScene, new OpenTK.Vector3((float)ep.X, (float)ep.Y, (float)ep.Z))), 0, 1, 0);
                     pointMarkers.Add(sn);
-
                 }
 
             }
             else
             {
-                foreach (ControlPoint cp in editCurve.Points)
+                //remove and visualize the new control points
+                for (int i = 0; i < pointMarkers.Count; i++)
                 {
+                    SceneNode sn = pointMarkers[i];
+                    mScene.tableGeometry.remove(ref sn);
+                }
+                pointMarkers.Clear();
+
+                for (int i = 0; i < editCurve.Points.Count; i++)
+                {
+                    
+                    //TODO-force not to move the center in Circle or topleft in Rect
+                    if (i == 0)
+                    {
+                        if (mScene.selectionList[mScene.selectionList.Count - 1] == "Circle" || dynamicRender == "Sweep-Circle")
+                        {
+                            continue;
+                        }
+                        else if (mScene.selectionList[mScene.selectionList.Count - 1] == "Rect")
+                        {
+                            continue;
+                        }
+                    }
+
+                    Point3d cp = new Point3d(editCurve.Points.ElementAt(i).Location.X, editCurve.Points.ElementAt(i).Location.Y, editCurve.Points.ElementAt(i).Location.Z);
+
                     //rotation inverted before visualizing
-                    SceneNode sn = Util.MarkPointSN(ref mScene.tableGeometry, Util.transformPoint(mScene.tableGeometry.transform.Inverted(), Util.platformToVRPoint(ref mScene, new OpenTK.Vector3((float)cp.Location.X, (float)cp.Location.Y, (float)cp.Location.Z))), 0, 1, 0);
+                    SceneNode sn = Util.MarkPointSN(ref mScene.tableGeometry, Util.transformPoint(mScene.tableGeometry.transform.Inverted(), Util.platformToVRPoint(ref mScene, new OpenTK.Vector3((float)cp.X, (float)cp.Y, (float)cp.Z))), 0, 1, 0);
                     pointMarkers.Add(sn);
                 }
             }
@@ -486,9 +537,14 @@ namespace SparrowHawk.Interaction
                         Rhino.RhinoApp.WriteLine("Dot: " + mScene.angleD);
                         Rhino.RhinoApp.WriteLine("c1 dir: " + mScene.c1D);
                         Rhino.RhinoApp.WriteLine("c2 dir: " + mScene.c2D);
+                        Rhino.RhinoApp.WriteLine("c2_n dir: " + mScene.c3D);
+
+                        //TODO-can't draw the point here !!!! WHY?
+
                     }
 
-                }else if (modelName == "aprint")
+                }
+                else if (modelName == "aprint")
                 {
                     //don't need to removeSceneNode since we only create rhinoObj when we press button
                     /*
@@ -501,7 +557,8 @@ namespace SparrowHawk.Interaction
                     Util.clearPlanePoints(ref mScene);
                     Util.clearCurveTargetRhObj(ref mScene);
                 }
-            }            
+            }
+            dynamicBrep = null;
             backgroundStart = false;
             displacement = 0;
 
@@ -535,18 +592,20 @@ namespace SparrowHawk.Interaction
             if (mScene.tableGeometry.children.Count > 0)
             {
                 // need to remove rerverse since the list update dynamically
+                //TODO- check if reverse is ok
                 foreach (SceneNode sn in mScene.tableGeometry.children.Reverse<SceneNode>())
                 {
-
                     if (dynamicRender == "Revolve" || dynamicRender == "Loft" || dynamicRender == "Sweep-Circle" || dynamicRender == "Extrude")
                     {
                         if (sn.name.Contains("tprint") || sn.name == "EditCurve" || sn.name == "drawPoint" || sn.name == "EditPoint" || sn.name.Contains("panel") || sn.name.Contains("circle") || sn.name.Contains("rect"))
                         {
                             //only panel will create RhinoObj for ray-tracing
-                            if (sn.name == "panel")
+                            if (sn.name.Contains("panel"))
                             {
-                                RhinoObject delObj = mScene.SceneNodeToBrepDic[sn.guid];
-                                Util.removeSceneNode(ref mScene, delObj.Id);
+                                //panel didn't have the sceneNode in VR.
+                                //delObj = mScene.SceneNodeToBrepDic[sn.guid];
+                                //Util.removeSceneNode(ref mScene, delObj.Id);
+
                             }
                             else
                             {
@@ -573,6 +632,19 @@ namespace SparrowHawk.Interaction
 
                 }
             }
+
+            //find panel and delete it 
+            Rhino.DocObjects.ObjectEnumeratorSettings settings = new Rhino.DocObjects.ObjectEnumeratorSettings();
+            settings.ObjectTypeFilter = Rhino.DocObjects.ObjectType.Brep;
+            foreach (Rhino.DocObjects.RhinoObject rhObj in mScene.rhinoDoc.Objects.GetObjectList(settings))
+            {
+                //check for different drawing curve types
+                if (rhObj.Attributes.Name.Contains("panel"))
+                {
+                    mScene.rhinoDoc.Objects.Delete(rhObj.Id, true);
+                }
+
+            }
         }
 
 
@@ -581,7 +653,7 @@ namespace SparrowHawk.Interaction
             //TODO- need to consider this might be the first time editpoint.
             //start slicing model by changing the name of the model
             mScene.popInteraction();
-            
+
             if (dynamicRender == "Revolve" || dynamicRender == "Loft" || dynamicRender == "Extrude")
             {
                 modelName = "aprint";
@@ -595,7 +667,7 @@ namespace SparrowHawk.Interaction
                 mScene.pushInteraction(new EditPoint2(ref mScene, true, "Sweep-Circle"));
                 mScene.peekInteraction().init();
             }
-            else if(dynamicRender == "Sweep-Circle")
+            else if (dynamicRender == "Sweep-Circle")
             {
                 modelName = "aprint";
                 R = d.BeginInvoke(new AsyncCallback(modelCompleted), null);
@@ -604,12 +676,13 @@ namespace SparrowHawk.Interaction
             else
             {
                 clearDrawing();
-            }  
-                   
+            }
+
             currentState = State.End;
 
         }
 
+        //not in used anymore
         private void DynamicRender(string renderType, string modelName)
         {
             //create and render interaction curve. ex. circle, rect
@@ -643,13 +716,13 @@ namespace SparrowHawk.Interaction
                 brep = Util.SweepCapFun(ref mScene, ref mScene.iCurveList);
             }
 
-            if(brep != null)
+            if (brep != null)
             {
                 if (renderObjId != Guid.Empty)
                     Util.removeSceneNode(ref mScene, renderObjId);
                 renderObjId = Util.addSceneNode(ref mScene, brep, ref mesh_m, modelName);
-            }                
-            
+            }
+
 
         }
 
@@ -671,7 +744,7 @@ namespace SparrowHawk.Interaction
                 Point3d origin = editCurve.PointAtStart;
                 float radius = (float)Math.Sqrt(Math.Pow(circleP.X - origin.X, 2) + Math.Pow(circleP.Y - origin.Y, 2) + Math.Pow(circleP.Z - origin.Z, 2));
 
-                if(curvePlane != null)
+                if (curvePlane != null)
                 {
                     Rhino.Geometry.Circle circle = new Rhino.Geometry.Circle(curvePlane, origin, radius);
                     circleCurve = circle.ToNurbsCurve();
@@ -734,7 +807,7 @@ namespace SparrowHawk.Interaction
             // index need to improve
             if (mScene.selectionList[1] == "Circle")
             {
-                
+
                 OpenTK.Vector3 newCenter = Util.transformPoint(transMEnd, shapeCenter);
                 OpenTK.Vector3 newCircleP = Util.transformPoint(transMEnd, shapeP);
                 //Rhino to VR
@@ -749,7 +822,7 @@ namespace SparrowHawk.Interaction
 
                 if (designPlane != null)
                 {
-                    Guid guid = Util.addSceneNode(ref mScene, designPlane, ref mesh_m, "panel");
+                    Guid guid = Util.addSceneNodeWithoutVR(ref mScene, designPlane, ref mesh_m, "panel");
                     mScene.iRhObjList.Add(mScene.rhinoDoc.Objects.Find(guid));
                 }
             }
@@ -757,14 +830,19 @@ namespace SparrowHawk.Interaction
 
         protected override void onClickOculusGrip(ref VREvent_t vrEvent)
         {
-            mScene.iCurveList[mScene.iCurveList.Count - 1].Reverse();
-            R = d.BeginInvoke(new AsyncCallback(modelCompleted), null);
+            //mScene.iCurveList[mScene.iCurveList.Count - 1].Reverse();
+            //R = d.BeginInvoke(new AsyncCallback(modelCompleted), null);
             //curveT += 0.1;
 
             //DynamicRender(dynamicRender, "tprint");
 
             //profileCurves.ElementAt(1).Reverse();
             //DynamicRender(dynamicRender, "tprint");
+
+            OpenTK.Vector3 p1 = Util.transformPoint(mScene.tableGeometry.transform.Inverted(), Util.platformToVRPoint(ref mScene, new Vector3((float)mScene.eStartP.X, (float)mScene.eStartP.Y, (float)mScene.eStartP.Z)));
+            OpenTK.Vector3 p2 = Util.transformPoint(mScene.tableGeometry.transform.Inverted(), Util.platformToVRPoint(ref mScene, new Vector3((float)mScene.sStartP.X, (float)mScene.sStartP.Y, (float)mScene.sStartP.Z)));
+            Util.MarkDebugPoint(ref mScene.tableGeometry, p1, 0f, 0f, 1f);
+            Util.MarkDebugPoint(ref mScene.tableGeometry, p2, 0f, 0f, 1f);
         }
 
     }

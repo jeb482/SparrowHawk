@@ -90,13 +90,6 @@ namespace SparrowHawk.Geometry
             List<float> vertices_array = new List<float>();
             OpenTK.Matrix4 transToOrigin = new OpenTK.Matrix4();
 
-            // visualize the origin of the platform for debugging
-            if (!mScene.vrToRobot.Equals(OpenTK.Matrix4.Identity))
-            {
-                OpenTK.Vector3 robotO = Util.platformToVRPoint(ref mScene, new OpenTK.Vector3(0, 0, 0));
-                Util.MarkPoint(ref mScene.staticGeometry, robotO, 0, 1, 0);
-            }
-
 
             foreach (Point3d vertex in triMesh.Vertices)
             {

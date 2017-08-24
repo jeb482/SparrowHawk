@@ -26,6 +26,7 @@ namespace SparrowHawk
         {
             mScene = scene;
             mesh_m = new Material.SingleColorMaterial(0, 0, 0, 0.4f);
+
             switch (axis)
             {
                 //Rhino space
