@@ -332,6 +332,7 @@ namespace SparrowHawk.Interaction
             }
             else if (dynamicRender == "Extrude")
             {
+                //TODO-generate perendicular curve and find intersect point
                 if (mScene.iCurveList.Count == 1)
                 {
                     mScene.iCurveList.Add(simplifiedCurve);

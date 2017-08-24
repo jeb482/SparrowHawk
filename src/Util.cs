@@ -994,11 +994,21 @@ namespace SparrowHawk
 
 
             }
+
+            //solving the issue of mutilple faces in Brep by rebuilding curve
+            profileCurves[0] = profileCurves[0].Rebuild(((NurbsCurve)profileCurves[0]).Points.Count, profileCurves[0].Degree, true);
+            profileCurves[1] = profileCurves[1].Rebuild(((NurbsCurve)profileCurves[1]).Points.Count, profileCurves[1].Degree, true);
+
             Brep[] breps = Brep.CreateFromSweep(curveList[curveList.Count - 2], profileCurves, false, mScene.rhinoDoc.ModelAbsoluteTolerance);
 
             Transform invT;
             if (t.TryGetInverse(out invT))
                 ((NurbsCurve)mScene.iCurveList[mScene.iCurveList.Count - 3]).Transform(invT);
+
+            //debuging adding the curve to rhino
+            mScene.rhinoDoc.Objects.AddCurve(profileCurves[0]);
+            mScene.rhinoDoc.Objects.AddCurve(profileCurves[1]);
+            mScene.rhinoDoc.Objects.AddCurve(curveList[curveList.Count - 2]);
 
             return breps[0];
         }
