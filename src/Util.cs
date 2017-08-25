@@ -558,6 +558,27 @@ namespace SparrowHawk
                                                              -1, 0, 0, 0,
                                                              0, 0, 0, 1);
 
+        public static void setPlaneAlpha(ref Scene mScene, float alpha)
+        {
+            mScene.xyPlane.setAlpha(alpha);
+            mScene.yzPlane.setAlpha(alpha);
+            mScene.xzPlane.setAlpha(alpha);
+
+            if (alpha > 0)
+            {
+                mScene.xAxis.material = new Material.SingleColorMaterial(1, 1, 1, 1);
+                mScene.yAxis.material = new Material.SingleColorMaterial(1, 1, 1, 1);
+                mScene.zAxis.material = new Material.SingleColorMaterial(1, 1, 1, 1);
+            }
+            else
+            {
+                mScene.xAxis.material = new Material.SingleColorMaterial(1, 1, 1, 0);
+                mScene.yAxis.material = new Material.SingleColorMaterial(1, 1, 1, 0);
+                mScene.zAxis.material = new Material.SingleColorMaterial(1, 1, 1, 0);
+            }
+        }
+
+
         public static Guid addSceneNodeWithoutDraw(ref Scene mScene, Brep brep, ref Material.Material mesh_m, string name)
         {
             //testing update the current sceneNode
@@ -600,7 +621,6 @@ namespace SparrowHawk
                 return Guid.Empty;
             }
         }
-
 
         public static Guid addStaticNode(ref Scene mScene, Brep brep, ref Material.Material mesh_m, string name)
         {
@@ -693,10 +713,11 @@ namespace SparrowHawk
                 mScene.rhinoDoc.Views.Redraw();
 
                 return guid;
-            }else
+            }
+            else
             {
                 return Guid.Empty;
-            } 
+            }
         }
 
         public static Guid addSceneNode(ref Scene mScene, Brep brep, ref Material.Material mesh_m, string name)
@@ -797,6 +818,20 @@ namespace SparrowHawk
 
         }
 
+        public static void clearAllModel(ref Scene mScene)
+        {
+            Rhino.DocObjects.ObjectEnumeratorSettings settings = new Rhino.DocObjects.ObjectEnumeratorSettings();
+            settings.ObjectTypeFilter = Rhino.DocObjects.ObjectType.Brep;
+
+            foreach (Rhino.DocObjects.RhinoObject rhObj in mScene.rhinoDoc.Objects.GetObjectList(settings))
+            {
+                if(rhObj.Attributes.Name.Contains("aprint") || rhObj.Attributes.Name.Contains("patchSurface"))
+                {
+                    removeSceneNode(ref mScene, rhObj.Id);
+                }
+            }
+        }
+
         public static void clearPlanePoints(ref Scene mScene)
         {
             mScene.iPlaneList.Clear();
@@ -805,6 +840,20 @@ namespace SparrowHawk
 
         public static void clearCurveTargetRhObj(ref Scene mScene)
         {
+            //find panel and delete it
+
+            Rhino.DocObjects.ObjectEnumeratorSettings settings = new Rhino.DocObjects.ObjectEnumeratorSettings();
+            settings.ObjectTypeFilter = Rhino.DocObjects.ObjectType.Brep;
+            foreach (Rhino.DocObjects.RhinoObject rhObj in mScene.rhinoDoc.Objects.GetObjectList(settings))
+            {
+                //check for different drawing curve types
+                if (rhObj.Attributes.Name.Contains("panel"))
+                {
+                    mScene.rhinoDoc.Objects.Delete(rhObj.Id, true);
+                }
+
+            }
+
             mScene.iCurveList.Clear();
             mScene.iRhObjList.Clear();
         }
@@ -828,6 +877,14 @@ namespace SparrowHawk
                 OpenTK.Vector3 planeNormal = new OpenTK.Vector3((float)curvePlane.Normal.X, (float)curvePlane.Normal.Y, (float)curvePlane.Normal.Z);
                 planeNormal.Normalize();
                 height = OpenTK.Vector3.Dot(heightVector, planeNormal) / planeNormal.Length;
+
+                //update rail curve and using sweepCap
+                List<Point3d> extrudeCurveP = new List<Point3d>();
+                extrudeCurveP.Add(railCurve.PointAtStart);
+                Point3d endP = new Point3d(railCurve.PointAtStart.X + height * planeNormal.X, railCurve.PointAtStart.Y + height * planeNormal.Y, railCurve.PointAtStart.Z + height * planeNormal.Z);
+                extrudeCurveP.Add(endP);
+                //update the edit curve
+                curveList[curveList.Count - 1] = Rhino.Geometry.NurbsCurve.Create(false, 1, extrudeCurveP.ToArray());
             }
 
             Rhino.Geometry.Extrusion extrusion = Rhino.Geometry.Extrusion.Create(curveList[curveList.Count - 2], height, true);
@@ -964,10 +1021,10 @@ namespace SparrowHawk
                 mScene.angleD = angle;
                 mScene.c1D = dir.ToString();
                 mScene.c2D = dir2.ToString();
-                
+
                 //testing seems bug, try compare by ourselves
                 //if(!Curve.DoDirectionsMatch(profileCurves[0], profileCurves[1]))
-                if(dir != dir2)
+                if (dir != dir2)
                 {
                     profileCurves[1].Reverse();
                 }
@@ -999,19 +1056,82 @@ namespace SparrowHawk
             profileCurves[0] = profileCurves[0].Rebuild(((NurbsCurve)profileCurves[0]).Points.Count, profileCurves[0].Degree, true);
             profileCurves[1] = profileCurves[1].Rebuild(((NurbsCurve)profileCurves[1]).Points.Count, profileCurves[1].Degree, true);
 
+
             Brep[] breps = Brep.CreateFromSweep(curveList[curveList.Count - 2], profileCurves, false, mScene.rhinoDoc.ModelAbsoluteTolerance);
+
 
             Transform invT;
             if (t.TryGetInverse(out invT))
                 ((NurbsCurve)mScene.iCurveList[mScene.iCurveList.Count - 3]).Transform(invT);
 
             //debuging adding the curve to rhino
-            mScene.rhinoDoc.Objects.AddCurve(profileCurves[0]);
-            mScene.rhinoDoc.Objects.AddCurve(profileCurves[1]);
-            mScene.rhinoDoc.Objects.AddCurve(curveList[curveList.Count - 2]);
-
-            return breps[0];
+            //mScene.rhinoDoc.Objects.AddCurve(profileCurves[0]);
+            //mScene.rhinoDoc.Objects.AddCurve(profileCurves[1]);
+            //mScene.rhinoDoc.Objects.AddCurve(curveList[curveList.Count - 2]);
+            if (mScene.selectionList[0] == "Sweep")
+            {
+                return breps[0];
+            }
+            else
+            {
+                return breps[0].CapPlanarHoles(mScene.rhinoDoc.ModelAbsoluteTolerance);
+            }
         }
+
+        /*
+        public static Brep SweepCapFun2(ref Scene mScene, ref List<Curve> curveList, string type)
+        {
+
+            //Count-1: endCurve, Count - 2: rail, Count-3: startCurve
+            NurbsCurve rail = (NurbsCurve)curveList[curveList.Count - 2];
+            PolylineCurve railPL = rail.ToPolyline(0, 0, 0, 0, 0, 1, 1, 0, true);
+            OpenTK.Vector3 railStartPoint = new OpenTK.Vector3((float)railPL.PointAtStart.X, (float)railPL.PointAtStart.Y, (float)railPL.PointAtStart.Z);
+            OpenTK.Vector3 railNormal = new OpenTK.Vector3((float)railPL.TangentAtStart.X, (float)railPL.TangentAtStart.Y, (float)railPL.TangentAtStart.Z);
+
+            OpenTK.Vector3 shapeCenter = new Vector3((float)curveList[curveList.Count - 3].GetBoundingBox(true).Center.X, (float)curveList[curveList.Count - 3].GetBoundingBox(true).Center.Y, (float)curveList[curveList.Count - 3].GetBoundingBox(true).Center.Z);
+            Plane curvePlane;
+            OpenTK.Vector3 shapeNormal = new Vector3(0, 0, 0);
+            Double tolerance = 0;
+            while (tolerance < 100)
+            {
+                if (curveList[curveList.Count - 3].TryGetPlane(out curvePlane, tolerance))
+                {
+                    shapeNormal = new OpenTK.Vector3((float)curvePlane.Normal.X, (float)curvePlane.Normal.Y, (float)curvePlane.Normal.Z);
+                    break;
+                }
+                tolerance++;
+            }
+
+            OpenTK.Matrix4 transM = Util.getCoordinateTransM(shapeCenter, railStartPoint, shapeNormal, railNormal);
+            Transform t = Util.OpenTKToRhinoTransform(transM);
+
+            if (type == "Circle")
+            {
+                Point3d sOrigin =  Util.openTkToRhinoPoint(Util.vrToPlatformPoint(ref mScene, mScene.iPointList[0]));
+                sOrigin.Transform(t);
+                Point3d sCircleP = Util.openTkToRhinoPoint(Util.vrToPlatformPoint(ref mScene, mScene.iPointList[1]));
+                sCircleP.Transform(t);
+
+                Point3d eOrigin = Util.openTkToRhinoPoint(Util.vrToPlatformPoint(ref mScene, mScene.iPointList[2]));
+                Point3d eCircleP = Util.openTkToRhinoPoint(Util.vrToPlatformPoint(ref mScene, mScene.iPointList[3]));
+
+                float sRadius = (float)Math.Sqrt(Math.Pow(sOrigin.X - sCircleP.X, 2) + Math.Pow(sOrigin.Y - sCircleP.Y, 2) + Math.Pow(sOrigin.Z - sCircleP.Z, 2));
+                float eRadius = (float)Math.Sqrt(Math.Pow(eOrigin.X - eCircleP.X, 2) + Math.Pow(eOrigin.Y - eCircleP.Y, 2) + Math.Pow(eOrigin.Z - eCircleP.Z, 2));
+
+                
+
+            }
+            else if (type == "Rect")
+            {
+
+            }
+            else
+            {
+                return null;
+            }
+
+
+        }*/
 
         public static OpenTK.Matrix4 getCoordinateTransM(OpenTK.Vector3 startO, OpenTK.Vector3 targetO, OpenTK.Vector3 normal1, OpenTK.Vector3 normal2)
         {
@@ -1025,14 +1145,24 @@ namespace SparrowHawk
             transToTarget.Transpose();
 
             //rotation
-            OpenTK.Vector3 rotation_axis = OpenTK.Vector3.Cross(normal1, normal2);
-            rotation_axis.Normalize();
-            float rotation_angles = OpenTK.Vector3.CalculateAngle(normal1, normal2);
-            OpenTK.Matrix4 rotM = new OpenTK.Matrix4();
-            OpenTK.Matrix4.CreateFromAxisAngle(rotation_axis, rotation_angles, out rotM);
-            rotM.Transpose();
+            //parallel
+            float dotV = Math.Abs(Vector3.Dot(normal1, normal2));
+            if (Math.Abs(Vector3.Dot(normal1, normal2)) >= 0.95)
+            {
+                return transToTarget * transToOrigin;
+            }
+            else
+            {
+                OpenTK.Matrix4 rotM = new OpenTK.Matrix4();
+                OpenTK.Vector3 rotation_axis = OpenTK.Vector3.Cross(normal1, normal2);
+                rotation_axis.Normalize();
+                float rotation_angles = OpenTK.Vector3.CalculateAngle(normal1, normal2);
 
-            return transToTarget * rotM * transToOrigin;
+                OpenTK.Matrix4.CreateFromAxisAngle(rotation_axis, rotation_angles, out rotM);
+                rotM.Transpose();
+
+                return transToTarget * rotM * transToOrigin;
+            }
         }
 
         /// <summary>

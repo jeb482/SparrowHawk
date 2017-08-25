@@ -400,26 +400,26 @@ namespace SparrowHawk
             OpenTK.Vector3 z0 = Util.platformToVRPoint(ref mScene, new OpenTK.Vector3(0, 0, -240));
             OpenTK.Vector3 z1 = Util.platformToVRPoint(ref mScene, new OpenTK.Vector3(0, 0, 240));
             Geometry.Geometry xAxis_g = new Geometry.GeometryStroke(ref mScene);
-            Material.Material xAxis_m = new Material.SingleColorMaterial(1, 1, 1, 1);
+            Material.Material xAxis_m = new Material.SingleColorMaterial(1, 1, 1, 0);
             ((Geometry.GeometryStroke)xAxis_g).addPoint(x0);
             ((Geometry.GeometryStroke)xAxis_g).addPoint(x1);
-            SceneNode xAxis = new SceneNode("xAxis", ref xAxis_g, ref xAxis_m);
-            mScene.staticGeometry.add(ref xAxis);
+            mScene.xAxis = new SceneNode("xAxis", ref xAxis_g, ref xAxis_m);
+            mScene.staticGeometry.add(ref mScene.xAxis);
 
             Geometry.Geometry yAxis_g = new Geometry.GeometryStroke(ref mScene);
-            Material.Material yAxis_m = new Material.SingleColorMaterial(1, 1, 1, 1);
+            Material.Material yAxis_m = new Material.SingleColorMaterial(1, 1, 1, 0);
             ((Geometry.GeometryStroke)yAxis_g).addPoint(y0);
             ((Geometry.GeometryStroke)yAxis_g).addPoint(y1);
-            SceneNode yAxis = new SceneNode("yAxis", ref yAxis_g, ref yAxis_m);
-            mScene.staticGeometry.add(ref yAxis);
+            mScene.yAxis = new SceneNode("yAxis", ref yAxis_g, ref yAxis_m);
+            mScene.staticGeometry.add(ref mScene.yAxis);
 
 
             Geometry.Geometry zAxis_g = new Geometry.GeometryStroke(ref mScene);
-            Material.Material zAxis_m = new Material.SingleColorMaterial(1, 1, 1, 1);
+            Material.Material zAxis_m = new Material.SingleColorMaterial(1, 1, 1, 0);
             ((Geometry.GeometryStroke)zAxis_g).addPoint(z0);
             ((Geometry.GeometryStroke)zAxis_g).addPoint(z1);
-            SceneNode zAxis = new SceneNode("zAxis", ref zAxis_g, ref zAxis_m);
-            mScene.staticGeometry.add(ref zAxis);
+            mScene.zAxis = new SceneNode("zAxis", ref zAxis_g, ref zAxis_m);
+            mScene.staticGeometry.add(ref mScene.zAxis);
 
 
             // LeftController Point and Laser
@@ -449,9 +449,9 @@ namespace SparrowHawk
             rayTraceL.transform = new Matrix4(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1);//mScene.mLeftControllerOffset;
 
 
-            xzPlane = new DesignPlane3(ref mScene, 1);
-            xyPlane = new DesignPlane3(ref mScene, 2);
-            yzPlane = new DesignPlane3(ref mScene, 0);
+            mScene.xzPlane = new DesignPlane3(ref mScene, 1);
+            mScene.xyPlane = new DesignPlane3(ref mScene, 2);
+            mScene.yzPlane = new DesignPlane3(ref mScene, 0);
 
 
             //xzPlane = new DesignPlane(ref mScene, 1);
@@ -728,7 +728,7 @@ namespace SparrowHawk
             if (e.KeyChar == 'O' || e.KeyChar == 'o')
             {
                 mScene.popInteraction();
-                mScene.pushInteraction(new Interaction.CreateCylinder(ref mScene));
+                Util.clearAllModel(ref mScene);
             }
 
             if (e.KeyChar == 'Q' || e.KeyChar == 'q')

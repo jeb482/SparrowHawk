@@ -7,7 +7,7 @@ using System.Text;
 namespace SparrowHawk
 {
 
-    class DesignPlane3
+    public class DesignPlane3
     {
 
         private Scene mScene;
@@ -25,7 +25,7 @@ namespace SparrowHawk
         public DesignPlane3(ref Scene scene, int axis)
         {
             mScene = scene;
-            mesh_m = new Material.SingleColorMaterial(0, 0, 0, 0.4f);
+            mesh_m = new Material.SingleColorMaterial(0, 0, 0, 0.0f);
 
             switch (axis)
             {
@@ -47,8 +47,16 @@ namespace SparrowHawk
                     break;
             }
 
-            
+
         }
+
+        public void setAlpha(float alpha)
+        {
+            mesh_m = new Material.SingleColorMaterial(((Material.SingleColorMaterial)mesh_m).mColor.R, ((Material.SingleColorMaterial)mesh_m).mColor.G, ((Material.SingleColorMaterial)mesh_m).mColor.B, alpha);
+            SceneNode planeSN = mScene.brepToSceneNodeDic[guid];
+            planeSN.material = mesh_m;
+        }
+
         private void createRhinoBrep(string type)
         {
             Plane plane = new Plane();
@@ -65,7 +73,7 @@ namespace SparrowHawk
                 plane = new Plane(new Point3d(0, 0, 0), new Vector3d(0, 0, 1));
             }
 
-            PlaneSurface plane_surface = new PlaneSurface(plane,new Interval(-size, size), new Interval(-size, size));
+            PlaneSurface plane_surface = new PlaneSurface(plane, new Interval(-size, size), new Interval(-size, size));
             designPlane = Brep.CreateFromSurface(plane_surface);
 
             if (designPlane != null)

@@ -429,6 +429,7 @@ namespace SparrowHawk.Interaction
 
         private void initInteractionChain(int index, string type)
         {
+            Util.setPlaneAlpha(ref mScene, 0.0f);
             if (type == "Surface")
             {
                 if (mScene.selectionList[index] == "Rect")
@@ -477,6 +478,8 @@ namespace SparrowHawk.Interaction
             }
             else if (type == "Plane")
             {
+                Util.setPlaneAlpha(ref mScene, 0.4f);
+
                 if (mScene.selectionList[index] == "Rect")
                 {
                     mScene.pushInteraction(new EditPoint2(ref mScene, true, "Rect"));
@@ -503,6 +506,7 @@ namespace SparrowHawk.Interaction
         private void renderModel(int index, string type)
         {
             string renderType = mScene.selectionList[0];
+            Util.setPlaneAlpha(ref mScene, 0.0f);
 
             if (type == "Surface")
             {
@@ -554,6 +558,8 @@ namespace SparrowHawk.Interaction
             }
             else if (type == "Plane")
             {
+
+                Util.setPlaneAlpha(ref mScene, 0.4f);
                 if (mScene.selectionList[index] == "Rect")
                 {
                     mScene.pushInteraction(new EditPoint2(ref mScene, true, renderType));

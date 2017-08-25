@@ -1,6 +1,7 @@
 ﻿using OpenTK;
 using Rhino.DocObjects;
 using Rhino.Geometry;
+using Rhino.Geometry.Intersect;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -44,6 +45,7 @@ namespace SparrowHawk.Interaction
         private Plane proj_plane;
         private List<Point3d> simplifiedCurvePoints = new List<Point3d>();
         private Rhino.Geometry.NurbsCurve simplifiedCurve;
+        private Rhino.Geometry.NurbsCurve editCurve; //for extrude
         protected RhinoObject curveOnObj;
         private Guid renderObjId;
 
@@ -332,7 +334,63 @@ namespace SparrowHawk.Interaction
             }
             else if (dynamicRender == "Extrude")
             {
-                //TODO-generate perendicular curve and find intersect point
+                //TODO-generate perendicular curve and find intersect point-following code duplicate in EditPoint2
+                //compute the plane from RhinoObj
+                RhinoObject newObj = mScene.rhinoDoc.Objects.Find(mScene.iRhObjList[mScene.iRhObjList.Count - 1].Id);
+                Brep targetBrep = (Brep)(newObj.Geometry);
+
+                Curve[] overlap_curves;
+                Point3d[] inter_points;
+
+                if (Intersection.CurveBrep(simplifiedCurve, targetBrep, mScene.rhinoDoc.ModelAbsoluteTolerance, out overlap_curves, out inter_points))
+                {
+                    if (overlap_curves.Length > 0 || inter_points.Length > 0)
+                    {
+                        //assume only one intersect point
+                        //compute the brepFace where the intersection is on
+                        int faceIndex = -1;
+                        for (int i = 0; i < targetBrep.Faces.Count; i++)
+                        {
+                            //cast BrepFace to Brep for ClosestPoint(P) menthod
+                            double dist = targetBrep.Faces[i].DuplicateFace(false).ClosestPoint(inter_points[0]).DistanceTo(inter_points[0]);
+                            //tolerance mScene.rhinoDoc.ModelAbsoluteTolerance too low
+                            if (dist < mScene.rhinoDoc.ModelAbsoluteTolerance)
+                            {
+                                faceIndex = i;
+                                break;
+                            }
+                        }
+
+                        List<Point3d> extrudeCurveP = new List<Point3d>();
+                        extrudeCurveP.Add(inter_points[0]);
+                        extrudeCurveP.Add(simplifiedCurve.PointAtEnd);
+                        //update the edit curve
+                        editCurve = Rhino.Geometry.NurbsCurve.Create(false, 1, extrudeCurveP.ToArray());
+
+                        if (mScene.iCurveList.Count == 1)
+                        {
+                            mScene.iCurveList.Add(editCurve);
+                            if (type != 0 && curveOnObj != null)
+                            {
+                                mScene.iRhObjList.Add(curveOnObj);
+                            }
+                        }
+                        else
+                        {
+                            mScene.iCurveList[1] = editCurve;
+                            if (type != 0 && curveOnObj != null)
+                            {
+                                mScene.iRhObjList[mScene.iRhObjList.Count - 1] = curveOnObj;
+                            }
+                        }
+
+                        dynamicBrep = Util.ExtrudeFunc(ref mScene, ref mScene.iCurveList);
+
+                    }
+
+                }
+
+                /*
                 if (mScene.iCurveList.Count == 1)
                 {
                     mScene.iCurveList.Add(simplifiedCurve);
@@ -352,6 +410,7 @@ namespace SparrowHawk.Interaction
 
                 //TODO-using Sweep fnction to do and find the intersect point             
                 dynamicBrep = Util.ExtrudeFunc(ref mScene, ref mScene.iCurveList);
+                */
             }
             else if (dynamicRender == "Sweep")
             {
@@ -446,14 +505,21 @@ namespace SparrowHawk.Interaction
                     }
                     else
                     {
-                        mScene.iCurveList[mScene.iCurveList.Count - 1] = simplifiedCurve;
+                        //TODO-extrude curve isn't the simplifiedCurve
+                        if (dynamicRender == "Extrude")
+                        {
+                            mScene.iCurveList[mScene.iCurveList.Count - 1] = editCurve;
+                        }
+                        else
+                        {
+                            mScene.iCurveList[mScene.iCurveList.Count - 1] = simplifiedCurve;
+                        }
+
                         if (type != 0 && curveOnObj != null)
                         {
                             mScene.iRhObjList[mScene.iRhObjList.Count - 1] = curveOnObj;
                         }
                     }
-
-
 
                     clearDrawing();
                     mScene.popInteraction();

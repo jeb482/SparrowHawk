@@ -157,9 +157,10 @@ namespace SparrowHawk.Interaction
 
 
             }
-            else if (mScene.selectionList[mScene.selectionList.Count - 1] == "Rect")
+            else if (mScene.selectionList[mScene.selectionList.Count - 1] == "Rect" || dynamicRender == "Sweep-Rect")
             {
                 List<Point3d> extrudeCurveP = new List<Point3d>();
+                
                 Point3d topLeftP = Util.openTkToRhinoPoint(Util.vrToPlatformPoint(ref mScene, mScene.iPointList[mScene.iPointList.Count - 2]));
                 Point3d bottomRightP = Util.openTkToRhinoPoint(Util.vrToPlatformPoint(ref mScene, mScene.iPointList[mScene.iPointList.Count - 1]));
                 extrudeCurveP.Add(topLeftP);
@@ -171,6 +172,8 @@ namespace SparrowHawk.Interaction
                 Brep targetBrep = (Brep)(mScene.iRhObjList[mScene.iRhObjList.Count - 1].Geometry);
                 //compute the brepFace where the curve is on
                 //Surface s = targetBrep.Faces[0];
+
+                //TODO- topLeftP won't be on the face in the 3D case. so probably use orgin
                 int faceIndex = -1;
                 for (int i = 0; i < targetBrep.Faces.Count; i++)
                 {
@@ -278,12 +281,13 @@ namespace SparrowHawk.Interaction
                 for (int i = 0; i < editCurve.Points.Count; i++)
                 {
                     //TODO-force not to move the center in Circle or topleft in Rect
-                    if(i == 0)
+                    if (i == 0)
                     {
-                        if(mScene.selectionList[mScene.selectionList.Count - 1] == "Circle" || dynamicRender == "Sweep-Circle")
+                        if (mScene.selectionList[mScene.selectionList.Count - 1] == "Circle" || dynamicRender == "Sweep-Circle")
                         {
                             continue;
-                        }else if (mScene.selectionList[mScene.selectionList.Count - 1] == "Rect")
+                        }
+                        else if (mScene.selectionList[mScene.selectionList.Count - 1] == "Rect" || dynamicRender == "Sweep-Rect")
                         {
                             continue;
                         }
@@ -307,7 +311,7 @@ namespace SparrowHawk.Interaction
                     isSnap = true;
                     pos = snapP;
 
-                    if ((mScene.selectionList[mScene.selectionList.Count - 1] == "Circle" || dynamicRender == "Sweep-Circle") || mScene.selectionList[mScene.selectionList.Count - 1] == "Rect")
+                    if ((mScene.selectionList[mScene.selectionList.Count - 1] == "Circle" || dynamicRender == "Sweep-Circle") || (mScene.selectionList[mScene.selectionList.Count - 1] == "Rect" || dynamicRender == "Sweep-Rect"))
                     {
                         //only 1 edit point
                         pointMarkers[0].material = new Material.SingleColorMaterial(1, 1, 1, 1);
@@ -350,7 +354,7 @@ namespace SparrowHawk.Interaction
                 curvePoints[snapIndex] = Util.openTkToRhinoPoint(ep);
 
 
-                int order = 3;
+                int order = editCurve.Order;
                 if (editCurve.IsClosed)
                 {
                     //null check
@@ -425,7 +429,7 @@ namespace SparrowHawk.Interaction
                         {
                             continue;
                         }
-                        else if (mScene.selectionList[mScene.selectionList.Count - 1] == "Rect")
+                        else if (mScene.selectionList[mScene.selectionList.Count - 1] == "Rect" || dynamicRender == "Sweep-Rect")
                         {
                             continue;
                         }
@@ -448,7 +452,7 @@ namespace SparrowHawk.Interaction
 
                 for (int i = 0; i < editCurve.Points.Count; i++)
                 {
-                    
+
                     //TODO-force not to move the center in Circle or topleft in Rect
                     if (i == 0)
                     {
@@ -456,7 +460,7 @@ namespace SparrowHawk.Interaction
                         {
                             continue;
                         }
-                        else if (mScene.selectionList[mScene.selectionList.Count - 1] == "Rect")
+                        else if (mScene.selectionList[mScene.selectionList.Count - 1] == "Rect" || dynamicRender == "Sweep-Rect")
                         {
                             continue;
                         }
@@ -519,6 +523,9 @@ namespace SparrowHawk.Interaction
             else if (dynamicRender == "Sweep-Circle")
             {
                 dynamicBrep = Util.SweepCapFun(ref mScene, ref mScene.iCurveList);
+            }else if (dynamicRender == "Sweep-Rect")
+            {
+                dynamicBrep = Util.SweepCapFun(ref mScene, ref mScene.iCurveList);
             }
 
         }
@@ -556,6 +563,8 @@ namespace SparrowHawk.Interaction
                     clearDrawing();
                     Util.clearPlanePoints(ref mScene);
                     Util.clearCurveTargetRhObj(ref mScene);
+                    //TODO- OpenGL compile error why?
+                    //Util.setPlaneAlpha(ref mScene, 0.0f);
                 }
             }
             dynamicBrep = null;
@@ -595,7 +604,7 @@ namespace SparrowHawk.Interaction
                 //TODO- check if reverse is ok
                 foreach (SceneNode sn in mScene.tableGeometry.children.Reverse<SceneNode>())
                 {
-                    if (dynamicRender == "Revolve" || dynamicRender == "Loft" || dynamicRender == "Sweep-Circle" || dynamicRender == "Extrude")
+                    if (dynamicRender == "Revolve" || dynamicRender == "Loft" || dynamicRender == "Sweep-Circle" || dynamicRender == "Sweep-Rect" || dynamicRender == "Extrude")
                     {
                         if (sn.name.Contains("tprint") || sn.name == "EditCurve" || sn.name == "drawPoint" || sn.name == "EditPoint" || sn.name.Contains("panel") || sn.name.Contains("circle") || sn.name.Contains("rect"))
                         {
@@ -632,19 +641,6 @@ namespace SparrowHawk.Interaction
 
                 }
             }
-
-            //find panel and delete it 
-            Rhino.DocObjects.ObjectEnumeratorSettings settings = new Rhino.DocObjects.ObjectEnumeratorSettings();
-            settings.ObjectTypeFilter = Rhino.DocObjects.ObjectType.Brep;
-            foreach (Rhino.DocObjects.RhinoObject rhObj in mScene.rhinoDoc.Objects.GetObjectList(settings))
-            {
-                //check for different drawing curve types
-                if (rhObj.Attributes.Name.Contains("panel"))
-                {
-                    mScene.rhinoDoc.Objects.Delete(rhObj.Id, true);
-                }
-
-            }
         }
 
 
@@ -653,21 +649,60 @@ namespace SparrowHawk.Interaction
             //TODO- need to consider this might be the first time editpoint.
             //start slicing model by changing the name of the model
             mScene.popInteraction();
+            Util.setPlaneAlpha(ref mScene, 0.0f);
 
-            if (dynamicRender == "Revolve" || dynamicRender == "Loft" || dynamicRender == "Extrude")
+            if (dynamicRender == "Revolve" || dynamicRender == "Loft")
             {
                 modelName = "aprint";
+                
                 R = d.BeginInvoke(new AsyncCallback(modelCompleted), null);
+            }
+            else if (dynamicRender == "Extrude")
+            {
+                clearDrawing();
+                if (mScene.selectionList[1] == "Circle")
+                {
+                    generateEndCap();
+                    mScene.popInteraction();
+                    mScene.pushInteraction(new EditPoint2(ref mScene, true, "Sweep-Circle"));
+                    mScene.peekInteraction().init();
+                }
+                else if (mScene.selectionList[1] == "Rect")
+                {
+                    generateEndCap();
+                    mScene.popInteraction();
+                    mScene.pushInteraction(new EditPoint2(ref mScene, true, "Sweep-Rect"));
+                    mScene.peekInteraction().init();
+                }
             }
             else if (dynamicRender == "Sweep") //TODO-implement edit endCurve
             {
                 clearDrawing();
-                generateEndCap();
-                mScene.popInteraction();
-                mScene.pushInteraction(new EditPoint2(ref mScene, true, "Sweep-Circle"));
-                mScene.peekInteraction().init();
+                if (mScene.selectionList[1] == "Circle") {
+                    generateEndCap();
+                    mScene.popInteraction();
+                    mScene.pushInteraction(new EditPoint2(ref mScene, true, "Sweep-Circle"));
+                    mScene.peekInteraction().init();
+                }else if (mScene.selectionList[1] == "Rect")
+                {
+                    generateEndCap();
+                    mScene.popInteraction();
+                    mScene.pushInteraction(new EditPoint2(ref mScene, true, "Sweep-Rect"));
+                    mScene.peekInteraction().init();
+                }
+                else
+                {
+                    modelName = "aprint";
+                    R = d.BeginInvoke(new AsyncCallback(modelCompleted), null);
+                }
             }
             else if (dynamicRender == "Sweep-Circle")
+            {
+                modelName = "aprint";
+                R = d.BeginInvoke(new AsyncCallback(modelCompleted), null);
+
+            }
+            else if (dynamicRender == "Sweep-Rect")
             {
                 modelName = "aprint";
                 R = d.BeginInvoke(new AsyncCallback(modelCompleted), null);
@@ -682,61 +717,16 @@ namespace SparrowHawk.Interaction
 
         }
 
-        //not in used anymore
-        private void DynamicRender(string renderType, string modelName)
-        {
-            //create and render interaction curve. ex. circle, rect
-            updateEditCurve();
-
-            //create and render model
-            Brep brep = new Brep();
-            if (renderType == "none")
-            {
-                return;
-            }
-            else if (renderType == "Revolve")
-            {
-                brep = Util.RevolveFunc(ref mScene, ref mScene.iCurveList);
-            }
-            else if (renderType == "Loft")
-            {
-                brep = Util.LoftFunc(ref mScene, ref mScene.iCurveList);
-            }
-            else if (renderType == "Extrude")
-            {
-                //TODO-using Sweep fnction to do and find the intersect point             
-                brep = Util.ExtrudeFunc(ref mScene, ref mScene.iCurveList);
-            }
-            else if (renderType == "Sweep")
-            {
-                brep = Util.SweepFun(ref mScene, ref mScene.iCurveList);
-            }
-            else if (renderType == "Sweep-Circle")
-            {
-                brep = Util.SweepCapFun(ref mScene, ref mScene.iCurveList);
-            }
-
-            if (brep != null)
-            {
-                if (renderObjId != Guid.Empty)
-                    Util.removeSceneNode(ref mScene, renderObjId);
-                renderObjId = Util.addSceneNode(ref mScene, brep, ref mesh_m, modelName);
-            }
-
-
-        }
-
         private void updateEditCurve()
         {
             //create and render interaction curve and editcurve
             if (dynamicRender == "Extrude")
             {
                 List<Point3d> extrudeCurveP = new List<Point3d>();
-                extrudeCurveP.Add(mScene.iCurveList[mScene.iCurveList.Count - 1].PointAtStart);
-                extrudeCurveP.Add(mScene.iCurveList[mScene.iCurveList.Count - 1].PointAtEnd);
+                extrudeCurveP.Add(editCurve.PointAtStart);
+                extrudeCurveP.Add(editCurve.PointAtEnd);
                 //update the curve
                 mScene.iCurveList[mScene.iCurveList.Count - 1] = Rhino.Geometry.NurbsCurve.Create(false, 1, extrudeCurveP.ToArray());
-                editCurve = (NurbsCurve)mScene.iCurveList.ElementAt(mScene.iCurveList.Count - 1);
             }
             else if (mScene.selectionList[mScene.selectionList.Count - 1] == "Circle" || dynamicRender == "Sweep-Circle")
             {
@@ -754,9 +744,14 @@ namespace SparrowHawk.Interaction
                     renderObjId = Util.addSceneNodeWithoutDraw(ref mScene, circle_s, ref mesh_m, "circle");
 
                     mScene.iCurveList[mScene.iCurveList.Count - 1] = circleCurve;
+
+                    //TODO-updating the iPointList
+                    mScene.iPointList[mScene.iPointList.Count - 2] = Util.platformToVRPoint(ref mScene, new Vector3((float)origin.X, (float) origin.Y, (float) origin.Z));
+                    mScene.iPointList[mScene.iPointList.Count - 1] = Util.platformToVRPoint(ref mScene, new Vector3((float)circleP.X, (float)circleP.Y, (float)circleP.Z));
+
                 }
             }
-            else if (mScene.selectionList[mScene.selectionList.Count - 1] == "Rect")
+            else if (mScene.selectionList[mScene.selectionList.Count - 1] == "Rect" || dynamicRender == "Sweep-Rect")
             {
 
                 Point3d topLeftP = editCurve.PointAtStart;
@@ -773,6 +768,11 @@ namespace SparrowHawk.Interaction
                     renderObjId = Util.addSceneNodeWithoutDraw(ref mScene, rectBrep, ref mesh_m, "rect");
 
                     mScene.iCurveList[mScene.iCurveList.Count - 1] = rectCurve;
+
+                    //TODO-updating the iPointList
+                    mScene.iPointList[mScene.iPointList.Count - 2] = Util.platformToVRPoint(ref mScene, new Vector3((float)topLeftP.X, (float)topLeftP.Y, (float)topLeftP.Z));
+                    mScene.iPointList[mScene.iPointList.Count - 1] = Util.platformToVRPoint(ref mScene, new Vector3((float)bottomRightP.X, (float)bottomRightP.Y, (float)bottomRightP.Z));
+
                 }
             }
             else
@@ -802,7 +802,9 @@ namespace SparrowHawk.Interaction
 
             OpenTK.Vector3 railEndPoint = new OpenTK.Vector3((float)railPL.PointAtEnd.X, (float)railPL.PointAtEnd.Y, (float)railPL.PointAtEnd.Z);
             OpenTK.Vector3 railEndNormal = new OpenTK.Vector3((float)railPL.TangentAtEnd.X, (float)railPL.TangentAtEnd.Y, (float)railPL.TangentAtEnd.Z);
-            OpenTK.Matrix4 transMEnd = Util.getCoordinateTransM(shapeCenter, railEndPoint, shapeNormal, railEndNormal);
+            OpenTK.Matrix4 transMEnd = new Matrix4();
+
+            transMEnd = Util.getCoordinateTransM(shapeCenter, railEndPoint, shapeNormal, railEndNormal);
 
             // index need to improve
             if (mScene.selectionList[1] == "Circle")
@@ -825,6 +827,27 @@ namespace SparrowHawk.Interaction
                     Guid guid = Util.addSceneNodeWithoutVR(ref mScene, designPlane, ref mesh_m, "panel");
                     mScene.iRhObjList.Add(mScene.rhinoDoc.Objects.Find(guid));
                 }
+            }else if (mScene.selectionList[1] == "Rect")
+            {
+                OpenTK.Vector3 newTopLeft = Util.transformPoint(transMEnd, mScene.iPointList[mScene.iPointList.Count-2]);
+                OpenTK.Vector3 newBottomRight = Util.transformPoint(transMEnd, mScene.iPointList[mScene.iPointList.Count - 1]);
+
+                //addd the new endRect to iPointList
+                mScene.iPointList.Add(Util.platformToVRPoint(ref mScene, newTopLeft));
+                mScene.iPointList.Add(Util.platformToVRPoint(ref mScene, newBottomRight));
+
+                //TODO-add endPlane Rhino Object
+                Plane endPlane = new Plane(railPL.PointAtEnd, railPL.TangentAtEnd);
+                PlaneSurface plane_surface = new PlaneSurface(endPlane, new Interval(-120, 120), new Interval(-120, 120));
+
+                Brep designPlane = Brep.CreateFromSurface(plane_surface);
+
+                if (designPlane != null)
+                {
+                    Guid guid = Util.addSceneNodeWithoutVR(ref mScene, designPlane, ref mesh_m, "panel");
+                    mScene.iRhObjList.Add(mScene.rhinoDoc.Objects.Find(guid));
+                }
+
             }
         }
 

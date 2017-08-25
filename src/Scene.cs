@@ -190,6 +190,10 @@ namespace SparrowHawk
         public string c1D, c2D,c3D;
         public Point3d sStartP, eStartP;
 
+        //visiable and hide designPlane
+        public DesignPlane3 xzPlane, xyPlane, yzPlane;
+        public SceneNode xAxis, yAxis, zAxis;
+
         public Interaction.Interaction popInteraction()
         {
             Interaction.Interaction i = mInteractionStack.Pop();
