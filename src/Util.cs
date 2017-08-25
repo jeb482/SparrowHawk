@@ -1070,7 +1070,24 @@ namespace SparrowHawk
             //mScene.rhinoDoc.Objects.AddCurve(curveList[curveList.Count - 2]);
             if (mScene.selectionList[0] == "Sweep")
             {
+
+                //testing boolean
+                /*
+                Rhino.DocObjects.ObjectEnumeratorSettings settings = new Rhino.DocObjects.ObjectEnumeratorSettings();
+                settings.ObjectTypeFilter = Rhino.DocObjects.ObjectType.Brep;
+
+                Brep[] boolBrep = null;
+                foreach (Rhino.DocObjects.RhinoObject rhObj in mScene.rhinoDoc.Objects.GetObjectList(settings))
+                {
+                    if (rhObj.Attributes.Name.Contains("aprint"))
+                    {
+                        boolBrep = Rhino.Geometry.Brep.CreateBooleanDifference(rhObj.Geometry as Brep, breps[0], mScene.rhinoDoc.ModelAbsoluteTolerance);
+                        break;
+                    }
+                }*/
+
                 return breps[0];
+                //return boolBrep[0];
             }
             else
             {

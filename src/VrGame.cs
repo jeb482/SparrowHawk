@@ -550,7 +550,7 @@ namespace SparrowHawk
 
             //testing visualize printStroke
             printStroke = new Geometry.GeometryStroke(ref mScene);
-            printStroke_m = new Material.SingleColorMaterial(1, 1, 0, 1);
+            printStroke_m = new Material.SingleColorMaterial(1, 1, 0, 0.95f);
 
             return (eError == EVRInitError.None);
         }
