@@ -82,12 +82,13 @@ void main()
 {
     bool invert = false;
     float theta = atan(.5 - fuvs.y, fuvs.x - .5);
+    float r = distance(fuvs, vec2(.5,.5));
     if (theta < 0) {
         theta = theta + 6.283;    
     }
-    if (theta_min < theta_max && theta > theta_min && theta < theta_max) {
+    if ((theta_min < theta_max && theta > theta_min && theta < theta_max) && r > .15625 ) {
         invert = true;        
-    } else if (theta_min > theta_max && (theta < theta_max || theta > theta_min)) {
+    } else if ((theta_min > theta_max && (theta < theta_max || theta > theta_min) && r > .15625)) {
         invert = true;
     }
 	out_color = vec4(texture2D(tex, fuvs).rgb,1);    
