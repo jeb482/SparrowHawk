@@ -83,15 +83,22 @@ namespace SparrowHawk
             GL.CompileShader(id);
 
             int[] status = new int[1];
+            string info;
             GL.GetShader(id, ShaderParameter.CompileStatus, status);
 
             if (status[0] != 1)
             {
                 Rhino.RhinoApp.WriteLine("Error while compiling shader " + name + ".");
+                GL.GetShaderInfoLog(id, out info);
                 if (type == ShaderType.VertexShader)
-                    Rhino.RhinoApp.WriteLine("Error in vertex shader.");
+                {                    
+                    Rhino.RhinoApp.WriteLine("Error in vertex shader."+ info);
+                }
                 else if (type == ShaderType.FragmentShader)
-                    Rhino.RhinoApp.WriteLine("Error in fragment shader.");
+                {
+                
+                    Rhino.RhinoApp.WriteLine("Error in fragment shader." + info);
+                }
             }
 
             return id;

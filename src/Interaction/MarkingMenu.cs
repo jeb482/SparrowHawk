@@ -249,24 +249,28 @@ namespace SparrowHawk.Interaction
                         //Loft
                         case 0:
                             //clear selectionList here to make sure Editpoint can access it
-                            
+
                             mScene.selectionList.Clear();
-                            mScene.popInteraction();
+                            //deal with when user select wrong at the begining
+                            while (!mScene.interactionStackEmpty())
+                                mScene.popInteraction();
+
                             mScene.menuList.Add(MenuLayout.LoftC1); //index is 1, 0 is mainMenu
                             mScene.menuList.Add(MenuLayout.LoftD1);
                             mScene.menuList.Add(MenuLayout.LoftC2);
                             mScene.menuList.Add(MenuLayout.LoftD2);
                             mScene.selectionList.Add("Loft");
                             mScene.menuIndex++;
-                            
+
                             //Rhino.RhinoApp.WriteLine("section 0 : " + thetaDebug / Math.PI * 180);
-                            
+
                             break;
                         //Sweep
                         case 1:
-                            
+
                             mScene.selectionList.Clear();
-                            mScene.popInteraction();
+                            while (!mScene.interactionStackEmpty())
+                                mScene.popInteraction();
 
                             mScene.menuList.Add(MenuLayout.SweepC1);
                             mScene.menuList.Add(MenuLayout.SweepD1);
@@ -274,28 +278,30 @@ namespace SparrowHawk.Interaction
                             mScene.menuList.Add(MenuLayout.SweepD2);
                             mScene.selectionList.Add("Sweep");
                             mScene.menuIndex++;
-                            
+
                             //Rhino.RhinoApp.WriteLine("section 1 : " + thetaDebug / Math.PI * 180);
 
                             break;
                         //Revolve
                         case 2:
-                            
+
                             mScene.selectionList.Clear();
-                            mScene.popInteraction();
+                            while (!mScene.interactionStackEmpty())
+                                mScene.popInteraction();
 
                             mScene.menuList.Add(MenuLayout.RevolveC1);
                             mScene.menuList.Add(MenuLayout.RevolveD1);
                             mScene.selectionList.Add("Revolve");
                             mScene.menuIndex++;
-                            
+
                             //Rhino.RhinoApp.WriteLine("section 2 : "+ thetaDebug / Math.PI * 180);
                             break;
                         //Extrude
                         case 3:
-                            
+
                             mScene.selectionList.Clear();
-                            mScene.popInteraction();
+                            while (!mScene.interactionStackEmpty())
+                                mScene.popInteraction();
 
                             mScene.menuList.Add(MenuLayout.ExtrudeC1);
                             mScene.menuList.Add(MenuLayout.ExtrudeD1);
@@ -303,7 +309,7 @@ namespace SparrowHawk.Interaction
                             mScene.menuList.Add(MenuLayout.ExtrudeD2);
                             mScene.selectionList.Add("Extrude");
                             mScene.menuIndex++;
-                            
+
                             //Rhino.RhinoApp.WriteLine("section 3: "+ thetaDebug / Math.PI * 180);
                             break;
                             /*
@@ -423,6 +429,7 @@ namespace SparrowHawk.Interaction
 
         private void initInteractionChain(int index, string type)
         {
+            Util.setPlaneAlpha(ref mScene, 0.0f);
             if (type == "Surface")
             {
                 if (mScene.selectionList[index] == "Rect")
@@ -450,14 +457,14 @@ namespace SparrowHawk.Interaction
                 if (mScene.selectionList[index] == "Rect")
                 {
                     mScene.pushInteraction(new EditPoint2(ref mScene, true, "Rect"));
-                    mScene.pushInteraction(new AddPoint(ref mScene, 3, 2));
-                    mScene.pushInteraction(new CreatePlane(ref mScene));
+                    //mScene.pushInteraction(new AddPoint(ref mScene, 3, 2));
+                    mScene.pushInteraction(new CreatePlane(ref mScene, "Rect"));
                 }
                 else if (mScene.selectionList[index] == "Circle")
                 {
                     mScene.pushInteraction(new EditPoint2(ref mScene, true, "Circle"));
-                    mScene.pushInteraction(new AddPoint(ref mScene, 3, 2));
-                    mScene.pushInteraction(new CreatePlane(ref mScene));
+                    //mScene.pushInteraction(new AddPoint(ref mScene, 3, 2));
+                    mScene.pushInteraction(new CreatePlane(ref mScene, "Circle"));
                 }
                 else if (mScene.selectionList[index] == "Curve")
                 {
@@ -471,6 +478,8 @@ namespace SparrowHawk.Interaction
             }
             else if (type == "Plane")
             {
+                Util.setPlaneAlpha(ref mScene, 0.4f);
+
                 if (mScene.selectionList[index] == "Rect")
                 {
                     mScene.pushInteraction(new EditPoint2(ref mScene, true, "Rect"));
@@ -488,7 +497,7 @@ namespace SparrowHawk.Interaction
                 }
                 else if (mScene.selectionList[index] == "Patch")
                 {
-                    mScene.pushInteraction(new CreatePatch(ref mScene,true));
+                    mScene.pushInteraction(new CreatePatch(ref mScene, true));
                 }
             }
 
@@ -497,6 +506,7 @@ namespace SparrowHawk.Interaction
         private void renderModel(int index, string type)
         {
             string renderType = mScene.selectionList[0];
+            Util.setPlaneAlpha(ref mScene, 0.0f);
 
             if (type == "Surface")
             {
@@ -525,19 +535,20 @@ namespace SparrowHawk.Interaction
                 if (mScene.selectionList[index] == "Rect")
                 {
                     mScene.pushInteraction(new EditPoint2(ref mScene, true, renderType));
-                    mScene.pushInteraction(new AddPoint(ref mScene, 3, 2));
-                    mScene.pushInteraction(new CreatePlane(ref mScene));
+                    //mScene.pushInteraction(new AddPoint(ref mScene, 3, 2));
+                    mScene.pushInteraction(new CreatePlane(ref mScene, "Rect"));
                 }
                 else if (mScene.selectionList[index] == "Circle")
                 {
                     mScene.pushInteraction(new EditPoint2(ref mScene, true, renderType));
-                    mScene.pushInteraction(new AddPoint(ref mScene, 3, 2));
-                    mScene.pushInteraction(new CreatePlane(ref mScene));
+                    //mScene.pushInteraction(new AddPoint(ref mScene, 3, 2));
+                    mScene.pushInteraction(new CreatePlane(ref mScene, "Circle"));
                 }
                 else if (mScene.selectionList[index] == "Curve")
                 {
                     mScene.pushInteraction(new EditPoint2(ref mScene, false, renderType));
-                    mScene.pushInteraction(new CreateCurve(ref mScene, 0, false));
+                    //mScene.pushInteraction(new CreateCurve(ref mScene, 0, false));
+                    mScene.pushInteraction(new CreateCurve(ref mScene, 0, false, renderType));
                 }
                 else if (mScene.selectionList[index] == "Patch")
                 {
@@ -547,11 +558,12 @@ namespace SparrowHawk.Interaction
             }
             else if (type == "Plane")
             {
+
+                Util.setPlaneAlpha(ref mScene, 0.4f);
                 if (mScene.selectionList[index] == "Rect")
                 {
                     mScene.pushInteraction(new EditPoint2(ref mScene, true, renderType));
-                    mScene.pushInteraction(new AddPoint(ref mScene, 1, 2));
-                    mScene.pushInteraction(new CreatePlane(ref mScene));
+                    mScene.pushInteraction(new AddPoint(ref mScene, 1, 2));;
                 }
                 else if (mScene.selectionList[index] == "Circle")
                 {
@@ -561,7 +573,8 @@ namespace SparrowHawk.Interaction
                 else if (mScene.selectionList[index] == "Curve")
                 {
                     mScene.pushInteraction(new EditPoint2(ref mScene, true, renderType));
-                    mScene.pushInteraction(new CreateCurve(ref mScene, 1, false));
+                    mScene.pushInteraction(new CreateCurve(ref mScene, 1, false, renderType));
+                    //mScene.pushInteraction(new CreateCurve(ref mScene, 1, false));
                 }
                 else if (mScene.selectionList[index] == "Patch")
                 {

@@ -200,7 +200,11 @@ namespace SparrowHawk.Interaction
         }
         protected virtual void onClickOculusGrip(ref VREvent_t vrEvent) { }
         protected virtual void onClickOculusAX(ref VREvent_t vrEvent) { }
-        protected virtual void onClickOculusBY(ref VREvent_t vrEvent) { }
+        protected virtual void onClickOculusBY(ref VREvent_t vrEvent) {
+            //temporary for testing patch
+            mScene.popInteraction();
+            mScene.pushInteraction(new CreatePatch(ref mScene));
+        }
         protected virtual void onReleaseOculusTrigger(ref VREvent_t vrEvent) { }
         protected virtual void onReleaseOculusStick(ref VREvent_t vrEvent) { }
         protected virtual void onReleaseOculusGrip(ref VREvent_t vrEvent) { }

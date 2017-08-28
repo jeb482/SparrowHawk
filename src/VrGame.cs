@@ -375,8 +375,9 @@ namespace SparrowHawk
             if (mHMD != null)
                 mHMD.GetRecommendedRenderTargetSize(ref mRenderWidth, ref mRenderHeight);
 
+            //TODO: testing passing by ref bug of OpenGL
+            /*
             Geometry.Geometry g = new Geometry.Geometry("C:/workspace/Kestrel/resources/meshes/bunny.obj");
-
             //Material.Material m = new Material.SingleColorMaterial(mDoc,1f,1f,1f,1f);
             Material.Material m = new Material.LambertianMaterial(1,1,1,.5f);
             //Material.Material m = new Material.RGBNormalMaterial(1);
@@ -390,62 +391,68 @@ namespace SparrowHawk
             SceneNode point = new SceneNode("Point 1", ref g, ref m);
             mScene.staticGeometry.add(ref point);
             point.transform = new Matrix4(1, 0, 0, 0, 0, 1, 0, 1, 0, 0, 1, 0, 0, 0, 0, 1);
+            */
 
-            //visualizing axises
+            //visualizing axises        
             OpenTK.Vector3 x0 = Util.platformToVRPoint(ref mScene, new OpenTK.Vector3(-240, 0, 0));
             OpenTK.Vector3 x1 = Util.platformToVRPoint(ref mScene, new OpenTK.Vector3(240, 0, 0));
             OpenTK.Vector3 y0 = Util.platformToVRPoint(ref mScene, new OpenTK.Vector3(0, -240, 0));
             OpenTK.Vector3 y1 = Util.platformToVRPoint(ref mScene, new OpenTK.Vector3(0, 240, 0));
             OpenTK.Vector3 z0 = Util.platformToVRPoint(ref mScene, new OpenTK.Vector3(0, 0, -240));
             OpenTK.Vector3 z1 = Util.platformToVRPoint(ref mScene, new OpenTK.Vector3(0, 0, 240));
-            g = new Geometry.GeometryStroke(ref mScene);
-            ((Geometry.GeometryStroke)g).addPoint(x0);
-            ((Geometry.GeometryStroke)g).addPoint(x1);
-            SceneNode xAxis = new SceneNode("xAxis", ref g, ref m);
-            mScene.staticGeometry.add(ref xAxis);
+            Geometry.Geometry xAxis_g = new Geometry.GeometryStroke(ref mScene);
+            Material.Material xAxis_m = new Material.SingleColorMaterial(1, 1, 1, 0);
+            ((Geometry.GeometryStroke)xAxis_g).addPoint(x0);
+            ((Geometry.GeometryStroke)xAxis_g).addPoint(x1);
+            mScene.xAxis = new SceneNode("xAxis", ref xAxis_g, ref xAxis_m);
+            mScene.staticGeometry.add(ref mScene.xAxis);
 
-            g = new Geometry.GeometryStroke(ref mScene);
-            ((Geometry.GeometryStroke)g).addPoint(y0);
-            ((Geometry.GeometryStroke)g).addPoint(y1);
-            SceneNode yAxis = new SceneNode("yAxis", ref g, ref m);
-            mScene.staticGeometry.add(ref yAxis);
-            
-            g = new Geometry.GeometryStroke(ref mScene);
-            ((Geometry.GeometryStroke)g).addPoint(z0);
-            ((Geometry.GeometryStroke)g).addPoint(z1);
-            SceneNode zAxis = new SceneNode("zAxis", ref g, ref m);
-            mScene.staticGeometry.add(ref zAxis);
-           
+            Geometry.Geometry yAxis_g = new Geometry.GeometryStroke(ref mScene);
+            Material.Material yAxis_m = new Material.SingleColorMaterial(1, 1, 1, 0);
+            ((Geometry.GeometryStroke)yAxis_g).addPoint(y0);
+            ((Geometry.GeometryStroke)yAxis_g).addPoint(y1);
+            mScene.yAxis = new SceneNode("yAxis", ref yAxis_g, ref yAxis_m);
+            mScene.staticGeometry.add(ref mScene.yAxis);
 
-            // Left
+
+            Geometry.Geometry zAxis_g = new Geometry.GeometryStroke(ref mScene);
+            Material.Material zAxis_m = new Material.SingleColorMaterial(1, 1, 1, 0);
+            ((Geometry.GeometryStroke)zAxis_g).addPoint(z0);
+            ((Geometry.GeometryStroke)zAxis_g).addPoint(z1);
+            mScene.zAxis = new SceneNode("zAxis", ref zAxis_g, ref zAxis_m);
+            mScene.staticGeometry.add(ref mScene.zAxis);
+
+
+            // LeftController Point and Laser
             //g = new Geometry.Geometry("C:/workspace/Kestrel/resources/meshes/bunny.obj");
             //m = new Material.RGBNormalMaterial(1);
-            g = new Geometry.PointMarker(new Vector3(0, 0, 0));
-            m = new Material.SingleColorMaterial(1, 0, 0, 1);
-            point = new SceneNode("Left Cursor", ref g, ref m);
-            mScene.rightControllerNode.add(ref point);
-            point.transform = new Matrix4(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1);//mScene.mLeftControllerOffset;
+            Geometry.Geometry controllerL_g = new Geometry.PointMarker(new Vector3(0, 0, 0));
+            Material.Material controllerL_m = new Material.SingleColorMaterial(1, 0, 0, 1);
+            SceneNode controllerL_p = new SceneNode("Left Cursor", ref controllerL_g, ref controllerL_m);
+            mScene.rightControllerNode.add(ref controllerL_p);
+            controllerL_p.transform = new Matrix4(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1);//mScene.mLeftControllerOffset;
 
-            g = new Geometry.GeometryStroke(ref mScene);
-            ((Geometry.GeometryStroke)g).addPoint(new Vector3(0, 0, 0));
-            ((Geometry.GeometryStroke)g).addPoint(new Vector3(0, 0, -1));
-            SceneNode rayTrace = new SceneNode("PrintStroke", ref g, ref m);
+            Geometry.Geometry controllerR_g = new Geometry.PointMarker(new Vector3(0, 0, 0));
+            Material.Material controllerR_m = new Material.SingleColorMaterial(1, 0, 0, 1);
+            SceneNode controllerR_p = new SceneNode("Right Cursor", ref controllerR_g, ref controllerR_m);
+            mScene.rightControllerNode.add(ref controllerR_p);
+            controllerR_p.transform = new Matrix4(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1);
+
+            Geometry.Geometry controllerLRay_g = new Geometry.GeometryStroke(ref mScene);
+            Material.Material controllerLRay_m = new Material.SingleColorMaterial(1, 0, 0, 1);
+            ((Geometry.GeometryStroke)controllerLRay_g).addPoint(new Vector3(0, 0, 0));
+            ((Geometry.GeometryStroke)controllerLRay_g).addPoint(new Vector3(0, 0, -1));
+            SceneNode rayTraceL = new SceneNode("PrintStroke", ref controllerLRay_g, ref controllerLRay_m);
             if (mIsLefty)
-                mScene.leftControllerNode.add(ref rayTrace);
+                mScene.leftControllerNode.add(ref rayTraceL);
             else
-                mScene.rightControllerNode.add(ref rayTrace);
-            rayTrace.transform = new Matrix4(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1);//mScene.mLeftControllerOffset;
-
-            g = new Geometry.PointMarker(new Vector3(0, 0, 0));
-            m = new Material.SingleColorMaterial(0, 0, 1, 1);
-            point = new SceneNode("Right Cursor", ref g, ref m);
-            mScene.rightControllerNode.add(ref point);
-            point.transform = new Matrix4(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1);
+                mScene.rightControllerNode.add(ref rayTraceL);
+            rayTraceL.transform = new Matrix4(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1);//mScene.mLeftControllerOffset;
 
 
-            xzPlane = new DesignPlane3(ref mScene, 1);
-            xyPlane = new DesignPlane3(ref mScene, 2);
-            yzPlane = new DesignPlane3(ref mScene, 0);
+            mScene.xzPlane = new DesignPlane3(ref mScene, 1);
+            mScene.xyPlane = new DesignPlane3(ref mScene, 2);
+            mScene.yzPlane = new DesignPlane3(ref mScene, 0);
 
 
             //xzPlane = new DesignPlane(ref mScene, 1);
@@ -545,7 +552,7 @@ namespace SparrowHawk
 
             //testing visualize printStroke
             printStroke = new Geometry.GeometryStroke(ref mScene);
-            printStroke_m = new Material.SingleColorMaterial(1, 1, 0, 1);
+            printStroke_m = new Material.SingleColorMaterial(1, 1, 0, 0.95f);
 
             return (eError == EVRInitError.None);
         }
@@ -723,7 +730,7 @@ namespace SparrowHawk
             if (e.KeyChar == 'O' || e.KeyChar == 'o')
             {
                 mScene.popInteraction();
-                mScene.pushInteraction(new Interaction.CreateCylinder(ref mScene));
+                Util.clearAllModel(ref mScene);
             }
 
             if (e.KeyChar == 'Q' || e.KeyChar == 'q')

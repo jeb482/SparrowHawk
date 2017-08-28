@@ -185,6 +185,14 @@ namespace SparrowHawk
         private Stack<Interaction.Interaction> mInteractionStack = new Stack<Interaction.Interaction>();
         public bool isOculus = false;
 
+        //SweepCapFun Debugging
+        public float angleD;
+        public string c1D, c2D,c3D;
+        public Point3d sStartP, eStartP;
+
+        //visiable and hide designPlane
+        public DesignPlane3 xzPlane, xyPlane, yzPlane;
+        public SceneNode xAxis, yAxis, zAxis;
 
         public Interaction.Interaction popInteraction()
         {
