@@ -378,7 +378,8 @@ namespace SparrowHawk
             Geometry.Geometry g = new Geometry.Geometry("C:/workspace/Kestrel/resources/meshes/bunny.obj");
 
             //Material.Material m = new Material.SingleColorMaterial(mDoc,1f,1f,1f,1f);
-            Material.Material m = new Material.RGBNormalMaterial(1);
+            Material.Material m = new Material.LambertianMaterial(1,1,1,.5f);
+            //Material.Material m = new Material.RGBNormalMaterial(1);
             //Material.Material m = new Material.SingleColorMaterial(1, 0, 1, 1);
             SceneNode cube = new SceneNode("Triangle", ref g, ref m);
             cube.transform = new Matrix4(1, 0, 0, 0, 0, 1, 0, 1, 0, 0, 1, 0, 0, 0, 0, 1);
@@ -520,7 +521,8 @@ namespace SparrowHawk
             robotCallibrationPointsTest.Clear();
 
             //set default matrix
-            mRenderer.ovrvision_controller.setDefaultMatrixHC();
+            if (mRenderer.ovrvision_controller != null)
+                mRenderer.ovrvision_controller.setDefaultMatrixHC();
 
             //testing - rotate rhino object as well
             /*                   

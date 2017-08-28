@@ -178,8 +178,11 @@ namespace SparrowHawk.Interaction
         protected virtual void onClickViveGrip(ref VREvent_t vrEvent) { }
         protected virtual void onClickViveAppMenu(ref VREvent_t vrEvent)
         {
-            mScene.pushInteraction(new MarkingMenu(ref mScene, mScene.menuList[mScene
-.menuIndex]));
+            if (mScene.menuList.Count == 0)
+            {
+                mScene.menuList.Add(Scene.MenuLayout.MainMenu);
+            }
+            mScene.pushInteraction(new MarkingMenu(ref mScene, mScene.menuList[mScene.menuIndex]));
         }
         protected virtual void onReleaseViveTrigger(ref VREvent_t vrEvent) { }
         protected virtual void onReleaseViveTouchpad(ref VREvent_t vrEvent) { }

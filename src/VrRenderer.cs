@@ -29,21 +29,21 @@ namespace SparrowHawk
 
     public class VrRenderer
     {
-        uint vrRenderWidth;
-        uint vrRenderHeight;
-        float mNearClip = 0.1f;
-        float mFarClip = 90.0f;
-        Matrix4 mEyeProjLeft;
-        Matrix4 mEyeProjRight;
-        Matrix4 mEyePosLeft;
-        Matrix4 mEyePosRight;
-        FramebufferDesc leftEyeDesc;
-        FramebufferDesc rightEyeDesc;
-        Valve.VR.CVRSystem mHMD;
-        Scene mScene;
+        protected uint vrRenderWidth;
+        protected uint vrRenderHeight;
+        protected float mNearClip = 0.1f;
+        protected float mFarClip = 90.0f;
+        protected Matrix4 mEyeProjLeft;
+        protected Matrix4 mEyeProjRight;
+        protected Matrix4 mEyePosLeft;
+        protected Matrix4 mEyePosRight;
+        protected FramebufferDesc leftEyeDesc;
+        protected FramebufferDesc rightEyeDesc;
+        protected Valve.VR.CVRSystem mHMD;
+        protected Scene mScene;
         public OvrvisionController ovrvision_controller;
-        private bool enableAR = true;
-        Geometry.Geometry fullscreenQuad;
+        protected bool enableAR = false;
+        protected Geometry.Geometry fullscreenQuad;
 
 
         public VrRenderer(ref Valve.VR.CVRSystem HMD, ref Scene scene, uint mRenderWidth, uint mRenderHeight)
@@ -51,7 +51,6 @@ namespace SparrowHawk
             mHMD = HMD;
             mScene = scene;
             SetupStereoRenderTargets(ref mHMD);
-            SetupDistortion();
             //1344 * 1600
             vrRenderWidth = mRenderWidth;
             vrRenderHeight = mRenderHeight;
@@ -68,7 +67,7 @@ namespace SparrowHawk
          * that comes with the openvr project.
          * 
          */
-        bool CreateFrameBuffer(int width, int height, out FramebufferDesc framebufferDesc)
+        protected bool CreateFrameBuffer(int width, int height, out FramebufferDesc framebufferDesc)
         {
             framebufferDesc = new FramebufferDesc();
             framebufferDesc.renderFramebufferId = GL.GenFramebuffer();
@@ -109,12 +108,6 @@ namespace SparrowHawk
             HMD.GetRecommendedRenderTargetSize(ref vrRenderWidth, ref vrRenderHeight);
             CreateFrameBuffer((int) vrRenderWidth, (int) vrRenderHeight, out leftEyeDesc);
             CreateFrameBuffer((int) vrRenderWidth, (int) vrRenderHeight, out rightEyeDesc);
-            return true;
-        }
-
-        // TODO: Handle this shit.
-        bool SetupDistortion()
-        {
             return true;
         }
 
