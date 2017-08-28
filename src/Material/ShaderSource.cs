@@ -156,6 +156,41 @@ void main()
 	out_color = vec4((fnormal + 1)/4, alpha);
 }";
 
+public static string LambertianVertShader
+= @"#version 330 core
+uniform mat4 viewProjTransform;
+uniform mat4 modelTransform;
+uniform mat4 modelInvTrans;
+in vec3 position;
+in vec3 normal;
+smooth out vec3 fnormal;
+smooth out vec3 fpos;
+void main()
+{
+	fnormal = (modelInvTrans*vec4(normal,0)).xyz;
+    fpos = (modelTransform * vec4(position,1)).xyz;
+	gl_Position = viewProjTransform * (modelTransform*vec4(position, 1.0));
+}";
+
+public static string LambertianFragShader
+= @"#version 330 core
+uniform vec4 color;
+uniform vec3[12] lightInt;
+uniform vec3[12] lightPos;
+smooth in vec3 fnormal;
+smooth in vec3 fpos;
+out vec4 out_color;
+void main()
+{
+    out_color = vec4(0,0,0,color.a);
+    vec3 N = fnormal / length(fnormal);
+    for (int i = 0; i < 12; i++) {
+        vec3 L = lightPos[i] - fpos;
+        float d = length(L); 
+        out_color.xyz += max(0, dot(L/d, N)) * color.xyz * lightInt[i] / (d*d);
+    }
+}";
+
 // Read the Fragment Shader code from the file
 public static string FragmentShaderCode_Render2
 = @"#version 330 core
