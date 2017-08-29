@@ -87,7 +87,8 @@ namespace SparrowHawk.Interaction
             onPlane = drawOnP;
 
             dynamicRender = render;
-            mesh_m = new Material.RGBNormalMaterial(0.5f);
+            mesh_m = new Material.LambertianMaterial(.7f,.7f,.7f,.3f);
+            //mesh_m = new Material.RGBNormalMaterial(0.5f);
         }
 
         public override void init()

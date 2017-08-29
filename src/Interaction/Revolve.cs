@@ -20,15 +20,16 @@ namespace SparrowHawk.Interaction
         public Revolve(ref Scene scene) : base(ref scene)
         {
             stroke_m = new Material.SingleColorMaterial(1, 0, 0, 1);
-            mesh_m = new Material.RGBNormalMaterial(0.5f);
-
+            //mesh_m = new Material.RGBNormalMaterial(0.5f);
+            mesh_m = new Material.LambertianMaterial(.7f,.7f,.7f,.3f);
         }
 
         public Revolve(ref Scene scene, bool drawOnP) : base(ref scene)
         {
             stroke_g = new Geometry.GeometryStroke(ref mScene);
             stroke_m = new Material.SingleColorMaterial(1, 0, 0, 1);
-            mesh_m = new Material.RGBNormalMaterial(0.5f);
+            //mesh_m = new Material.RGBNormalMaterial(0.5f);
+            mesh_m = new Material.LambertianMaterial(.7f, .7f, .7f, .3f);
             currentState = State.READY;
 
             onPlane = drawOnP;

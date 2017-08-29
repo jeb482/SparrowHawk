@@ -14,7 +14,8 @@ namespace SparrowHawk.Interaction
 
         public Loft2(ref Scene scene) : base(ref scene)
         {
-            mesh_m = new Material.RGBNormalMaterial(0.5f);
+            //mesh_m = new Material.RGBNormalMaterial(0.5f);
+            mesh_m = new Material.LambertianMaterial(.7f, .7f, .7f, .2f);
         }
 
         public override void init()

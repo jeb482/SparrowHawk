@@ -22,13 +22,15 @@ namespace SparrowHawk.Interaction
         public Loft(ref Scene s) : base(ref s)
         {
             stroke_m = new Material.SingleColorMaterial(1, 0, 0, 1);
-            mesh_m = new Material.RGBNormalMaterial(.5f); ;
+            mesh_m = new Material.LambertianMaterial(.7f, .7f, .7f, .2f);
+            //mesh_m = new Material.RGBNormalMaterial(.5f); ;
         }
 
         public Loft(ref Scene s, ref Rhino.Geometry.Brep[] brep) : base(ref s)
         {
             stroke_m = new Material.SingleColorMaterial(1, 0, 0, 1);
-            mesh_m = new Material.RGBNormalMaterial(.5f); ;
+            mesh_m = new Material.LambertianMaterial(.7f, .7f, .7f, .2f);
+            //mesh_m = new Material.RGBNormalMaterial(.5f); ;
 
         }
 
