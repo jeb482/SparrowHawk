@@ -987,24 +987,87 @@ namespace SparrowHawk
             profileCurves.Add(curveList[curveList.Count - 1]);
 
             //store the starting point first
-            Point3d startP = circleCurve.PointAtStart;
-            double curveT0 = 0;
-            profileCurves[0].ClosestPoint(startP, out curveT0);
-            profileCurves[0].ChangeClosedCurveSeam(curveT0);
-            //debugging
-            //Util.MarkPoint(ref mScene.staticGeometry, platformToVRPoint(ref mScene, new Vector3((float)startP.X,(float)startP.Y,(float)startP.Z)), 1, 1, 1);
-            mScene.sStartP = new Point3d(circleCurve.PointAtStart);
+            //TODO- using iPointList to support both cirle and rect
+            if(mScene.selectionList[1] == "Circle")
+            {
+                Point3d startP = circleCurve.PointAtStart;
+                double curveT0 = 0;
+                profileCurves[0].ClosestPoint(startP, out curveT0);
+                profileCurves[0].ChangeClosedCurveSeam(curveT0);
+                mScene.sStartP = new Point3d(circleCurve.PointAtStart);
+                //TODO-the new point position is incorrect, the circle curve is the one already transform
+                Transform tEnd = Util.OpenTKToRhinoTransform(transMEnd);
+                startP.Transform(tEnd);
+                mScene.eStartP = new Point3d(startP);
 
-            //TODO-the new point position is incorrect, the circle curve is the one already transform
-            Transform tEnd = Util.OpenTKToRhinoTransform(transMEnd);
-            startP.Transform(tEnd);
-
-            mScene.eStartP = new Point3d(startP);
+            }
+            else if(mScene.selectionList[1] == "Rect")
+            {
+                //transM is in Rhino coordinate
+                /*
+                Vector3 rectBottomRightRhino = Util.vrToPlatformPoint(ref mScene, mScene.iPointList[1]);
+                Point3d startP = Util.openTkToRhinoPoint(Util.transformPoint(transM, rectBottomRightRhino));
+                double curveT0 = 0;
+                profileCurves[0].ClosestPoint(startP, out curveT0);
+                profileCurves[0].ChangeClosedCurveSeam(curveT0);
+                mScene.sStartP = new Point3d(startP);
+                mScene.eStartP = Util.openTkToRhinoPoint(Util.vrToPlatformPoint(ref mScene, mScene.iPointList[3]));
+                */
+            }
 
             Plane curvePlane1;
             Plane curvePlane2;
-            if (circleCurve.TryGetPlane(out curvePlane1) && curveList[curveList.Count - 1].TryGetPlane(out curvePlane2))
+            if (profileCurves[0].TryGetPlane(out curvePlane1) && profileCurves[1].TryGetPlane(out curvePlane2))
             {
+                //debugging Rect
+                if (mScene.selectionList[1] == "Rect")
+                {
+                    //testing create new rect
+                    //TODO- fixing this issue of the width become height
+                    
+
+                    Vector3 rectCenterRhino1 = Util.vrToPlatformPoint(ref mScene, mScene.iPointList[0]);
+                    rectCenterRhino1 = Util.transformPoint(transM, rectCenterRhino1);
+                    Vector3 rectBottomRightRhino1 = Util.vrToPlatformPoint(ref mScene, mScene.iPointList[1]);
+                    rectBottomRightRhino1 = Util.transformPoint(transM, rectBottomRightRhino1);
+
+                    Vector3 rectDiagonal1 = new Vector3((float)(rectCenterRhino1.X - rectBottomRightRhino1.X), (float)(rectCenterRhino1.Y - rectBottomRightRhino1.Y), (float)(rectCenterRhino1.Z - rectBottomRightRhino1.Z));
+                    float lenDiagonal1 = rectDiagonal1.Length;
+                    Vector3 rectLeftTop = new Vector3((float)rectCenterRhino1.X, (float)rectCenterRhino1.Y, (float)rectCenterRhino1.Z) + lenDiagonal1 * rectDiagonal1.Normalized();
+                    Point3d topLeftP = new Point3d(rectLeftTop.X, rectLeftTop.Y, rectLeftTop.Z);
+
+                    Vector3 rectCenterRhino2 = Util.vrToPlatformPoint(ref mScene, mScene.iPointList[2]);
+                    Vector3 rectBottomRightRhino2 = Util.vrToPlatformPoint(ref mScene, mScene.iPointList[3]);
+
+                    Vector3 rectDiagonal2 = new Vector3((float)(rectCenterRhino2.X - rectBottomRightRhino2.X), (float)(rectCenterRhino2.Y - rectBottomRightRhino2.Y), (float)(rectCenterRhino2.Z - rectBottomRightRhino2.Z));
+                    float lenDiagonal2 = rectDiagonal2.Length;
+                    Vector3 rectLeftTop2 = new Vector3((float)rectCenterRhino2.X, (float)rectCenterRhino2.Y, (float)rectCenterRhino2.Z) + lenDiagonal2 * rectDiagonal2.Normalized();
+                    Point3d topLeftP2 = new Point3d(rectLeftTop2.X, rectLeftTop2.Y, rectLeftTop2.Z);
+
+                    Plane testPlane1 = new Plane(Util.openTkToRhinoPoint(rectCenterRhino1), railPL.TangentAtStart);
+                    Plane testPlane2 = new Plane(Util.openTkToRhinoPoint(rectCenterRhino2), railPL.TangentAtEnd);
+
+                    Rectangle3d tmpRect1 = new Rectangle3d(testPlane1, topLeftP, Util.openTkToRhinoPoint(rectBottomRightRhino1));
+                    Rectangle3d rect1 = new Rectangle3d(testPlane1, tmpRect1.Width, tmpRect1.Height);
+
+                    Rectangle3d tmpRect2 = new Rectangle3d(testPlane2, topLeftP2, Util.openTkToRhinoPoint(rectBottomRightRhino2));
+                    Rectangle3d rect2 = new Rectangle3d(testPlane2, tmpRect2.Width, tmpRect2.Height);
+
+                    profileCurves[0] = rect1.ToNurbsCurve();
+                    double curveT0 = 0;
+                    profileCurves[0].ClosestPoint(rect1.Corner(3), out curveT0);
+                    profileCurves[0].ChangeClosedCurveSeam(curveT0);
+
+
+                    profileCurves[1] = rect2.ToNurbsCurve();
+                    double curveT = 0;
+                    profileCurves[1].ClosestPoint(rect2.Corner(3), out curveT);
+                    profileCurves[1].ChangeClosedCurveSeam(curveT);
+
+                    //testing
+
+                }
+
                 OpenTK.Vector3 n1 = new Vector3((float)curvePlane1.Normal.X, (float)curvePlane1.Normal.Y, (float)curvePlane1.Normal.Z);
                 OpenTK.Vector3 n2 = new Vector3((float)curvePlane2.Normal.X, (float)curvePlane2.Normal.Y, (float)curvePlane2.Normal.Z);
 
@@ -1013,7 +1076,7 @@ namespace SparrowHawk
                 n2.Normalize();
 
                 //angle = atan2(norm(cross(a,b)), dot(a,b))
-                float angle = Vector3.Dot(railNormal, railEndNormal);
+                float angle = Vector3.Dot(n1, n2);
                 CurveOrientation dir = profileCurves[0].ClosedCurveOrientation(Util.openTkToRhinoVector(railNormal)); //new Vector3(0,0,1)
                 CurveOrientation dir2 = profileCurves[1].ClosedCurveOrientation(Util.openTkToRhinoVector(railEndNormal)); //new Vector3(0,0,1)
 
@@ -1028,33 +1091,29 @@ namespace SparrowHawk
                 {
                     profileCurves[1].Reverse();
                 }
-
-                double curveT = 0;
-                profileCurves[1].ClosestPoint(startP, out curveT);
-                profileCurves[1].ChangeClosedCurveSeam(curveT);
+                //debug rect
+                if (mScene.selectionList[1] == "Circle")
+                {
+                    double curveT = 0;
+                    profileCurves[1].ClosestPoint(mScene.eStartP, out curveT);
+                    profileCurves[1].ChangeClosedCurveSeam(curveT);
+                }
                 CurveOrientation dir3 = profileCurves[1].ClosedCurveOrientation(Util.openTkToRhinoVector(railEndNormal)); //new Vector3(0,0,1)
                 mScene.c3D = dir3.ToString();
-
-
-                /*
-                if (angle < 0 && Curve.DoDirectionsMatch(profileCurves[0], profileCurves[1]))
-                {
-                    profileCurves[1].Reverse();
-                }
-                else if (angle >= 0 && !Curve.DoDirectionsMatch(profileCurves[0], profileCurves[1]))
-                {
-                    profileCurves[1].Reverse();
-                }*/
-
-                //debugging
-                //Util.MarkPoint(ref mScene.staticGeometry, platformToVRPoint(ref mScene, new Vector3((float)profileCurves[1].PointAtStart.X, (float)profileCurves[1].PointAtStart.Y, (float)profileCurves[1].PointAtStart.Z)), 1, 1, 1);
-
-
+               
             }
 
             //solving the issue of mutilple faces in Brep by rebuilding curve
-            profileCurves[0] = profileCurves[0].Rebuild(((NurbsCurve)profileCurves[0]).Points.Count, profileCurves[0].Degree, true);
-            profileCurves[1] = profileCurves[1].Rebuild(((NurbsCurve)profileCurves[1]).Points.Count, profileCurves[1].Degree, true);
+            if (mScene.selectionList[1] == "Circle")
+            {
+                profileCurves[0] = profileCurves[0].Rebuild(((NurbsCurve)profileCurves[0]).Points.Count, profileCurves[0].Degree, true);
+                profileCurves[1] = profileCurves[1].Rebuild(((NurbsCurve)profileCurves[1]).Points.Count, profileCurves[1].Degree, true);
+            }else if (mScene.selectionList[1] == "Rect")
+            {
+                //TODO- rebuild will generate non-rect
+                profileCurves[0] = new NurbsCurve((NurbsCurve)profileCurves[0]);
+                profileCurves[1] = new NurbsCurve((NurbsCurve)profileCurves[1]);
+            }
 
 
             Brep[] breps = Brep.CreateFromSweep(curveList[curveList.Count - 2], profileCurves, false, mScene.rhinoDoc.ModelAbsoluteTolerance);
@@ -1065,9 +1124,9 @@ namespace SparrowHawk
                 ((NurbsCurve)mScene.iCurveList[mScene.iCurveList.Count - 3]).Transform(invT);
 
             //debuging adding the curve to rhino
-            //mScene.rhinoDoc.Objects.AddCurve(profileCurves[0]);
-            //mScene.rhinoDoc.Objects.AddCurve(profileCurves[1]);
-            //mScene.rhinoDoc.Objects.AddCurve(curveList[curveList.Count - 2]);
+            mScene.rhinoDoc.Objects.AddCurve(profileCurves[0]);
+            mScene.rhinoDoc.Objects.AddCurve(profileCurves[1]);
+            mScene.rhinoDoc.Objects.AddCurve(curveList[curveList.Count - 2]);
             if (mScene.selectionList[0] == "Sweep")
             {
 

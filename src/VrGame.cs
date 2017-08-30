@@ -536,7 +536,7 @@ namespace SparrowHawk
 
             //detecting whether users in control or left
             Rhino.DocObjects.ObjectAttributes attr = new Rhino.DocObjects.ObjectAttributes();
-            attr.Name = "user";
+            attr.Name = "user:out";
             Point3d userP = new Point3d(0, 0, 0);
             uGuid = mScene.rhinoDoc.Objects.AddPoint(userP, attr);
 
@@ -786,7 +786,7 @@ namespace SparrowHawk
 
             displacement.Y = 0;
 
-            if (displacement.Length > 1.2f && isUserIn == true)
+            if (displacement.Length > 1.0f && isUserIn == true)
             {
                 Rhino.DocObjects.RhinoObject rhobj = mScene.rhinoDoc.Objects.Find(uGuid);
                 rhobj.Attributes.Name = "user:out";
@@ -795,7 +795,7 @@ namespace SparrowHawk
                 isUserIn = false;
                 Rhino.RhinoApp.WriteLine("User out. " + displacement.Length);
             }
-            else if (displacement.Length < 1.2f && isUserIn == false)
+            else if (displacement.Length < 1.0f && isUserIn == false)
             {
                 Rhino.DocObjects.RhinoObject rhobj = mScene.rhinoDoc.Objects.Find(uGuid);
                 rhobj.Attributes.Name = "user:in";
