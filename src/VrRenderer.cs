@@ -264,9 +264,6 @@ namespace SparrowHawk
             GL.BlitFramebuffer(0, 0, (int) vrRenderWidth, (int) vrRenderHeight, 0, 0, (int) vrRenderWidth, (int) vrRenderHeight, ClearBufferMask.ColorBufferBit, BlitFramebufferFilter.Linear);
             GL.BindFramebuffer(FramebufferTarget.ReadFramebuffer, 0);
             GL.BindFramebuffer(FramebufferTarget.DrawFramebuffer, 0);
-
-
-
         }
         
         private void setupCameras()
@@ -309,14 +306,14 @@ namespace SparrowHawk
             }
         }
 
-        public void setupCompanionWindow()
-        {
 
-        }
 
         public void renderCompanionWindow()
         {
-            
+            GL.BindFramebuffer(FramebufferTarget.ReadFramebuffer, rightEyeDesc.renderFramebufferId);
+            GL.BindFramebuffer(FramebufferTarget.DrawFramebuffer, 0);
+            GL.BlitFramebuffer(0, 0, (int)vrRenderWidth, (int)vrRenderHeight, 0, 0, (int)vrRenderWidth, (int)vrRenderHeight, ClearBufferMask.ColorBufferBit, BlitFramebufferFilter.Linear);
+            GL.BindFramebuffer(FramebufferTarget.ReadFramebuffer, 0);
         }
 
         

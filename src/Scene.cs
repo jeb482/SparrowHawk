@@ -108,6 +108,11 @@ namespace SparrowHawk
         DateTime mCurrentFrameTime;
         public double gameTime;
 
+        // Companion window rendering
+        protected int _windowWidth = 0;
+        protected int _windowHeight = 0;
+        public int windowWidth { get { return _windowWidth; } }
+        public int windowHeight { get { return _windowHeight; } }
         // Camera data
         public Matrix4 mHMDPose;
 
@@ -258,6 +263,13 @@ namespace SparrowHawk
         public bool traceRay()
         {
             return false;
+        }
+
+        // Should really only be called by the main game on resize.
+        public void setWindowSize(int width, int height)
+        {
+            this._windowWidth = width;
+            this._windowHeight = height;
         }
     }
 }
