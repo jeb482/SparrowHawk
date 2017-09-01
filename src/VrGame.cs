@@ -370,6 +370,7 @@ namespace SparrowHawk
         protected void setupScene()
         {
             mScene = new Scene(ref mDoc, ref mHMD);
+            mScene.setWindowSize(this.Width, this.Height);
             mScene.mIsLefty = mIsLefty;
 
 
@@ -803,6 +804,15 @@ namespace SparrowHawk
 
                 isUserIn = true;
                 Rhino.RhinoApp.WriteLine("User in. " + displacement.Length);
+            }
+        }
+
+        protected override void OnResize(EventArgs e)
+        {
+            base.OnResize(e);
+            if (mScene != null)
+            {
+                mScene.setWindowSize(Width, Height);
             }
         }
     }
