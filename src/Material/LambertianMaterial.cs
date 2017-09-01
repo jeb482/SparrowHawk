@@ -22,7 +22,7 @@ namespace SparrowHawk.Material
             mShader = new GLShader();
             mShader.init("LambertianMaterial", ShaderSource.LambertianVertShader, ShaderSource.LambertianFragShader);
             lightPositions[0] = new Vector3(0,3,0);
-            lightIntensities[0] = new Vector3(1,1,1);
+            lightIntensities[0] = new Vector3(5,5,5);
             lightPositions[1] = new Vector3(1, 2, 0);
             lightIntensities[1] = new Vector3(.5f, .5f, 1);
             lightPositions[2] = new Vector3(-1, 3, -1);
