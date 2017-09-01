@@ -87,7 +87,8 @@ namespace SparrowHawk.Interaction
             onPlane = drawOnP;
 
             dynamicRender = render;
-            mesh_m = new Material.RGBNormalMaterial(0.5f);
+            mesh_m = new Material.LambertianMaterial(.7f,.7f,.7f,.3f);
+            //mesh_m = new Material.RGBNormalMaterial(0.5f);
         }
 
         public override void init()
@@ -161,9 +162,9 @@ namespace SparrowHawk.Interaction
             {
                 List<Point3d> extrudeCurveP = new List<Point3d>();
                 
-                Point3d topLeftP = Util.openTkToRhinoPoint(Util.vrToPlatformPoint(ref mScene, mScene.iPointList[mScene.iPointList.Count - 2]));
+                Point3d rectCenter = Util.openTkToRhinoPoint(Util.vrToPlatformPoint(ref mScene, mScene.iPointList[mScene.iPointList.Count - 2]));
                 Point3d bottomRightP = Util.openTkToRhinoPoint(Util.vrToPlatformPoint(ref mScene, mScene.iPointList[mScene.iPointList.Count - 1]));
-                extrudeCurveP.Add(topLeftP);
+                extrudeCurveP.Add(rectCenter);
                 extrudeCurveP.Add(bottomRightP);
                 //update the curve
                 editCurve = Rhino.Geometry.NurbsCurve.Create(false, 1, extrudeCurveP.ToArray());
@@ -178,7 +179,8 @@ namespace SparrowHawk.Interaction
                 for (int i = 0; i < targetBrep.Faces.Count; i++)
                 {
                     //cast BrepFace to Brep for ClosestPoint(P) menthod
-                    double dist = targetBrep.Faces[i].DuplicateFace(false).ClosestPoint(topLeftP).DistanceTo(topLeftP);
+                    double dist = targetBrep.Faces[i].DuplicateFace(false).ClosestPoint(rectCenter).DistanceTo(rectCenter);
+                    //debuging mScene.rhinoDoc.ModelAbsoluteTolerance                   
                     if (dist < mScene.rhinoDoc.ModelAbsoluteTolerance)
                     {
                         faceIndex = i;
@@ -189,7 +191,13 @@ namespace SparrowHawk.Interaction
                 Plane rectPlane;
                 if (s.TryGetPlane(out rectPlane))
                 {
-                    //plane - testing Rectangle3d
+                    //plane - testing Rectangle3d, it's center point now instead of topLeftP
+                    //Rectangle3d rect = new Rectangle3d(rectPlane, topLeftP, bottomRightP);
+                    Vector3 rectDiagonalV = new Vector3((float)(rectCenter.X - bottomRightP.X), (float)(rectCenter.Y - bottomRightP.Y), (float)(rectCenter.Z - bottomRightP.Z));
+                    float lenDiagonal = rectDiagonalV.Length;
+                    Vector3 rectLeftTop = new Vector3((float)rectCenter.X, (float)rectCenter.Y, (float)rectCenter.Z) + lenDiagonal * rectDiagonalV.Normalized();
+                    Point3d topLeftP = new Point3d(rectLeftTop.X, rectLeftTop.Y, rectLeftTop.Z);
+
                     Rectangle3d rect = new Rectangle3d(rectPlane, topLeftP, bottomRightP);
 
                     rectCurve = rect.ToNurbsCurve();
@@ -539,7 +547,7 @@ namespace SparrowHawk.Interaction
                     renderObjId = Util.addSceneNodeWithoutDraw(ref mScene, dynamicBrep, ref mesh_m, modelName);
 
                     //SweepCapFun debugging
-                    if (dynamicRender == "Sweep-Circle")
+                    if (dynamicRender == "Sweep-Circle" || dynamicRender == "Sweep-Rect")
                     {
                         Rhino.RhinoApp.WriteLine("Dot: " + mScene.angleD);
                         Rhino.RhinoApp.WriteLine("c1 dir: " + mScene.c1D);
@@ -754,10 +762,15 @@ namespace SparrowHawk.Interaction
             else if (mScene.selectionList[mScene.selectionList.Count - 1] == "Rect" || dynamicRender == "Sweep-Rect")
             {
 
-                Point3d topLeftP = editCurve.PointAtStart;
+                Point3d rectCenter = editCurve.PointAtStart;
                 Point3d bottomRightP = editCurve.PointAtEnd;
                 if (curvePlane != null)
                 {
+                    Vector3 rectDiagonalV = new Vector3((float)(rectCenter.X - bottomRightP.X), (float)(rectCenter.Y - bottomRightP.Y), (float)(rectCenter.Z - bottomRightP.Z));
+                    float lenDiagonal = rectDiagonalV.Length;
+                    Vector3 rectLeftTop = new Vector3((float)rectCenter.X, (float)rectCenter.Y, (float)rectCenter.Z) + lenDiagonal * rectDiagonalV.Normalized();
+                    Point3d topLeftP = new Point3d(rectLeftTop.X, rectLeftTop.Y, rectLeftTop.Z);
+
                     //plane - testing Rectangle3d
                     Rectangle3d rect = new Rectangle3d(curvePlane, topLeftP, bottomRightP);
                     rectCurve = rect.ToNurbsCurve();
@@ -770,7 +783,7 @@ namespace SparrowHawk.Interaction
                     mScene.iCurveList[mScene.iCurveList.Count - 1] = rectCurve;
 
                     //TODO-updating the iPointList
-                    mScene.iPointList[mScene.iPointList.Count - 2] = Util.platformToVRPoint(ref mScene, new Vector3((float)topLeftP.X, (float)topLeftP.Y, (float)topLeftP.Z));
+                    mScene.iPointList[mScene.iPointList.Count - 2] = Util.platformToVRPoint(ref mScene, new Vector3((float)rectCenter.X, (float)rectCenter.Y, (float)rectCenter.Z));
                     mScene.iPointList[mScene.iPointList.Count - 1] = Util.platformToVRPoint(ref mScene, new Vector3((float)bottomRightP.X, (float)bottomRightP.Y, (float)bottomRightP.Z));
 
                 }
@@ -800,15 +813,16 @@ namespace SparrowHawk.Interaction
                 tolerance++;
             }
 
+            OpenTK.Vector3 railStartPoint = new OpenTK.Vector3((float)railPL.PointAtStart.X, (float)railPL.PointAtStart.Y, (float)railPL.PointAtStart.Z);
+            OpenTK.Vector3 railStartNormal = new OpenTK.Vector3((float)railPL.TangentAtStart.X, (float)railPL.TangentAtStart.Y, (float)railPL.TangentAtStart.Z);
             OpenTK.Vector3 railEndPoint = new OpenTK.Vector3((float)railPL.PointAtEnd.X, (float)railPL.PointAtEnd.Y, (float)railPL.PointAtEnd.Z);
             OpenTK.Vector3 railEndNormal = new OpenTK.Vector3((float)railPL.TangentAtEnd.X, (float)railPL.TangentAtEnd.Y, (float)railPL.TangentAtEnd.Z);
-            OpenTK.Matrix4 transMEnd = new Matrix4();
-
-            transMEnd = Util.getCoordinateTransM(shapeCenter, railEndPoint, shapeNormal, railEndNormal);
 
             // index need to improve
             if (mScene.selectionList[1] == "Circle")
             {
+                OpenTK.Matrix4 transMEnd = new Matrix4();
+                transMEnd = Util.getCoordinateTransM(shapeCenter, railEndPoint, shapeNormal, railEndNormal);
 
                 OpenTK.Vector3 newCenter = Util.transformPoint(transMEnd, shapeCenter);
                 OpenTK.Vector3 newCircleP = Util.transformPoint(transMEnd, shapeP);
@@ -829,12 +843,18 @@ namespace SparrowHawk.Interaction
                 }
             }else if (mScene.selectionList[1] == "Rect")
             {
-                OpenTK.Vector3 newTopLeft = Util.transformPoint(transMEnd, mScene.iPointList[mScene.iPointList.Count-2]);
-                OpenTK.Vector3 newBottomRight = Util.transformPoint(transMEnd, mScene.iPointList[mScene.iPointList.Count - 1]);
+
+                Vector3 rectCenterRhino = Util.vrToPlatformPoint(ref mScene, mScene.iPointList[mScene.iPointList.Count - 2]);
+                Vector3 rectBottomRightRhino = Util.vrToPlatformPoint(ref mScene, mScene.iPointList[mScene.iPointList.Count - 1]);
+                OpenTK.Matrix4 transMEnd = new Matrix4();
+                transMEnd = Util.getCoordinateTransM(rectCenterRhino, railEndPoint, shapeNormal, railEndNormal);
+
+                OpenTK.Vector3 newCenterRhino = Util.transformPoint(transMEnd, rectCenterRhino);
+                OpenTK.Vector3 newBottomRightRhino = Util.transformPoint(transMEnd, rectBottomRightRhino);
 
                 //addd the new endRect to iPointList
-                mScene.iPointList.Add(Util.platformToVRPoint(ref mScene, newTopLeft));
-                mScene.iPointList.Add(Util.platformToVRPoint(ref mScene, newBottomRight));
+                mScene.iPointList.Add(Util.platformToVRPoint(ref mScene, newCenterRhino));
+                mScene.iPointList.Add(Util.platformToVRPoint(ref mScene, newBottomRightRhino));
 
                 //TODO-add endPlane Rhino Object
                 Plane endPlane = new Plane(railPL.PointAtEnd, railPL.TangentAtEnd);
@@ -853,19 +873,19 @@ namespace SparrowHawk.Interaction
 
         protected override void onClickOculusGrip(ref VREvent_t vrEvent)
         {
-            //mScene.iCurveList[mScene.iCurveList.Count - 1].Reverse();
-            //R = d.BeginInvoke(new AsyncCallback(modelCompleted), null);
+            mScene.iCurveList[mScene.iCurveList.Count - 1].Reverse();
+            R = d.BeginInvoke(new AsyncCallback(modelCompleted), null);
             //curveT += 0.1;
 
             //DynamicRender(dynamicRender, "tprint");
 
             //profileCurves.ElementAt(1).Reverse();
             //DynamicRender(dynamicRender, "tprint");
-
+            /*
             OpenTK.Vector3 p1 = Util.transformPoint(mScene.tableGeometry.transform.Inverted(), Util.platformToVRPoint(ref mScene, new Vector3((float)mScene.eStartP.X, (float)mScene.eStartP.Y, (float)mScene.eStartP.Z)));
             OpenTK.Vector3 p2 = Util.transformPoint(mScene.tableGeometry.transform.Inverted(), Util.platformToVRPoint(ref mScene, new Vector3((float)mScene.sStartP.X, (float)mScene.sStartP.Y, (float)mScene.sStartP.Z)));
             Util.MarkDebugPoint(ref mScene.tableGeometry, p1, 0f, 0f, 1f);
-            Util.MarkDebugPoint(ref mScene.tableGeometry, p2, 0f, 0f, 1f);
+            Util.MarkDebugPoint(ref mScene.tableGeometry, p2, 0f, 0f, 1f);*/
         }
 
     }

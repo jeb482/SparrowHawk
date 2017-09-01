@@ -77,7 +77,10 @@ namespace SparrowHawk.Interaction
 
                     Point3d topLeftP = rect.Corner(3);
                     Point3d bottomRightP = rect.Corner(1);
-                    mScene.iPointList.Add(Util.platformToVRPoint(ref mScene, new Vector3((float)topLeftP.X, (float)topLeftP.Y, (float)topLeftP.Z)));
+                    Point3d rect_center = rect.Center;
+                    //mScene.iPointList.Add(Util.platformToVRPoint(ref mScene, new Vector3((float)topLeftP.X, (float)topLeftP.Y, (float)topLeftP.Z)));
+                    //changing to add center instead of topLeftP
+                    mScene.iPointList.Add(Util.platformToVRPoint(ref mScene, new Vector3((float)rect_center.X, (float)rect_center.Y, (float)rect_center.Z)));
                     mScene.iPointList.Add(Util.platformToVRPoint(ref mScene, new Vector3((float)bottomRightP.X, (float)bottomRightP.Y, (float)bottomRightP.Z)));
 
                 }

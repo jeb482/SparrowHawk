@@ -26,6 +26,7 @@ namespace SparrowHawk
         TrackedDevicePose_t[] renderPoseArray, gamePoseArray;
         DateTime mLastFrameTime;
         bool mSafeForRobot = false;
+        bool isUserIn = false;
         DateTime mLastTrackingTime;
         int mFrameCount;
         double frameRateTimer = 1;
@@ -54,6 +55,8 @@ namespace SparrowHawk
 
         Geometry.Geometry printStroke;
         Material.Material printStroke_m;
+
+        Guid uGuid;
 
         public VrGame(ref Rhino.RhinoDoc doc, bool isLefty = false)
         {
@@ -532,6 +535,12 @@ namespace SparrowHawk
             if (mRenderer.ovrvision_controller != null)
                 mRenderer.ovrvision_controller.setDefaultMatrixHC();
 
+            //detecting whether users in control or left
+            Rhino.DocObjects.ObjectAttributes attr = new Rhino.DocObjects.ObjectAttributes();
+            attr.Name = "user:out";
+            Point3d userP = new Point3d(0, 0, 0);
+            uGuid = mScene.rhinoDoc.Objects.AddPoint(userP, attr);
+
             //testing - rotate rhino object as well
             /*                   
             Transform transM = new Transform();
@@ -768,19 +777,33 @@ namespace SparrowHawk
 
         protected void notifyRobotIfSafe()
         {
-            Vector3 tableOrigin = Util.transformPoint(mScene.vrToRobot.Inverted(), new Vector3(0, 0, 0));
+            //Vector3 tableOrigin = Util.transformPoint(mScene.vrToRobot.Inverted(), new Vector3(0, 0, 0));
+
+            Vector3 tableOrigin = Util.platformToVRPoint(ref mScene, new Vector3(0, 0, 0));
+
             Vector3 headOrigin = Util.transformPoint(mScene.mHMDPose.Inverted(), new Vector3(0, 0, 0));
+
             Vector3 displacement = tableOrigin - headOrigin;
+
             displacement.Y = 0;
-            if (displacement.Length > 1.5f && mSafeForRobot == false)
+
+            if (displacement.Length > 1.0f && isUserIn == true)
             {
-                mSafeForRobot = true;
-                Rhino.RhinoApp.WriteLine("Go. " + displacement.Length);
+                Rhino.DocObjects.RhinoObject rhobj = mScene.rhinoDoc.Objects.Find(uGuid);
+                rhobj.Attributes.Name = "user:out";
+                rhobj.CommitChanges();
+
+                isUserIn = false;
+                Rhino.RhinoApp.WriteLine("User out. " + displacement.Length);
             }
-            else if (displacement.Length < 1.5f && mSafeForRobot == true)
+            else if (displacement.Length < 1.0f && isUserIn == false)
             {
-                mSafeForRobot = false;
-                Rhino.RhinoApp.WriteLine("Stop. " + displacement.Length);
+                Rhino.DocObjects.RhinoObject rhobj = mScene.rhinoDoc.Objects.Find(uGuid);
+                rhobj.Attributes.Name = "user:in";
+                rhobj.CommitChanges();
+
+                isUserIn = true;
+                Rhino.RhinoApp.WriteLine("User in. " + displacement.Length);
             }
         }
 
