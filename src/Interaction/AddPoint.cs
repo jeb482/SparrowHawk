@@ -26,8 +26,11 @@ namespace SparrowHawk.Interaction
         protected OpenTK.Vector3 projectP;
         Vector3 pos = new Vector3();
         protected RhinoObject pointOnObj;
+        private string renderType = "none";
+        private List<Point3d> pointsList = new List<Point3d>();
 
         List<SceneNode> pointMarkers = new List<SceneNode>();
+        private Material.Material profile_m;
 
         public AddPoint(ref Scene scene) : base(ref scene)
         {
@@ -55,6 +58,22 @@ namespace SparrowHawk.Interaction
             point_g = new Geometry.PointMarker(new Vector3());
             point_m = new Material.SingleColorMaterial(0f, .5f, 1f, 1f);
             type = _type;
+            maxNumPoint = num;
+            if (type != 0)
+            {
+                // visualizing projection point with white color
+                drawPoint = Util.MarkProjectionPoint(ref mScene, new OpenTK.Vector3(0, 0, 0), 1, 1, 1);
+            }
+        }
+
+        public AddPoint(ref Scene scene, int _type, int num, string rtype) : base(ref scene)
+        {
+            mScene = scene;
+            point_g = new Geometry.PointMarker(new Vector3());
+            point_m = new Material.SingleColorMaterial(0f, .5f, 1f, 1f);
+            type = _type;
+            renderType = rtype;
+            profile_m = new Material.SingleColorMaterial(0.5f, 0, 0, 0.4f);
             maxNumPoint = num;
             if (type != 0)
             {
@@ -101,7 +120,7 @@ namespace SparrowHawk.Interaction
                     {
                         //check for different drawing curve types
                         bool b1 = (type == 1) && rhObj.Attributes.Name.Contains("plane");
-                        bool b2 = (type == 2) && (rhObj.Attributes.Name.Contains("brepMesh") || rhObj.Attributes.Name.Contains("aprint"));
+                        bool b2 = (type == 2) && (rhObj.Attributes.Name.Contains("brepMesh") || rhObj.Attributes.Name.Contains("aprint") || rhObj.Attributes.Name.Contains("patchSurface"));
                         bool b3 = (type == 3) && ListTargets.Contains(rhObj.Id);
 
                         //only drawing on planes for now rhObj.Attributes.Name.Contains("brepMesh") || rhObj.Attributes.Name.Contains("aprint") || rhObj.Attributes.Name.Contains("plane")
@@ -192,12 +211,17 @@ namespace SparrowHawk.Interaction
                     }
                 }
             }
+
+            pointsList.Clear();
         }
 
         protected override void onClickOculusTrigger(ref VREvent_t vrEvent)
         {
             //testing
-            mScene.iPointList.Add(pos);
+            mScene.iPointList.Add(pos); //not using iPointList anymore but added here since EditPoint3 still use
+            pointsList.Add(Util.openTkToRhinoPoint(Util.vrToPlatformPoint(ref mScene, pos)));
+
+            //TODO- figure out why here need mScene.tableGeometry.transform.Inverted() but others don't
             OpenTK.Vector3 p = Util.transformPoint(mScene.tableGeometry.transform.Inverted(), pos);
             SceneNode sn = Util.MarkPointSN(ref mScene.tableGeometry, p, 0, 1, 0);
             pointMarkers.Add(sn);
@@ -206,6 +230,77 @@ namespace SparrowHawk.Interaction
 
             if (maxNumPoint == pointMarkers.Count)
             {
+                //detecting plane
+                Brep targetBrep = (Brep)(pointOnObj.Geometry);
+                //compute the brepFace where the curve is on
+                //Surface s = targetBrep.Faces[0];
+
+                //TODO- topLeftP won't be on the face in the 3D case. so probably use orgin
+                int faceIndex = -1;
+                for (int i = 0; i < targetBrep.Faces.Count; i++)
+                {
+                    //cast BrepFace to Brep for ClosestPoint(P) menthod
+                    double dist = targetBrep.Faces[i].DuplicateFace(false).ClosestPoint(pointsList[0]).DistanceTo(pointsList[0]);
+                    //debuging mScene.rhinoDoc.ModelAbsoluteTolerance                   
+                    if (dist < mScene.rhinoDoc.ModelAbsoluteTolerance)
+                    {
+                        faceIndex = i;
+                        break;
+                    }
+                }
+                Surface s = targetBrep.Faces[faceIndex];
+                Plane curvePlane = new Plane() ;
+                NurbsCurve modelcurve = null;
+                Brep modelBrep;
+
+                //surface might not be a perfect planar surface
+                Double tolerance = 0;
+                while (tolerance < 100)
+                {
+                    if (s.TryGetPlane(out curvePlane, tolerance))
+                    {
+                        break;
+                    }
+                    tolerance++;
+                }
+
+                //tolerance < 100 == finding a cvurve plane
+                if (tolerance < 100)
+                {
+                    if (renderType == "Circle")
+                    {
+                        float radius = (float)Math.Sqrt(Math.Pow(pointsList[1].X - pointsList[0].X, 2) + Math.Pow(pointsList[1].Y - pointsList[0].Y, 2) + Math.Pow(pointsList[1].Z - pointsList[0].Z, 2));
+                        Circle circle = new Rhino.Geometry.Circle(curvePlane, pointsList[0], radius);
+                        modelcurve = circle.ToNurbsCurve();
+
+                    }
+                    else if (renderType == "Rect")
+                    {
+                        /*
+                        Vector3 rectDiagonalV = new Vector3((float)(pointsList[0].X - pointsList[1].X), (float)(pointsList[0].Y - pointsList[1].Y), (float)(pointsList[0].Z - pointsList[1].Z));
+                        float lenDiagonal = rectDiagonalV.Length;
+                        Vector3 rectLeftTop = new Vector3((float)pointsList[0].X, (float)pointsList[0].Y, (float)pointsList[0].Z) + lenDiagonal * rectDiagonalV.Normalized();
+                        Point3d topLeftP = new Point3d(rectLeftTop.X, rectLeftTop.Y, rectLeftTop.Z);
+                        
+                        */
+
+                        //using top-left cornel and bottom right
+                        
+                        Rectangle3d rect = new Rectangle3d(curvePlane, pointsList[0], pointsList[1]);
+
+                        modelcurve = rect.ToNurbsCurve();
+                        
+                    }
+
+                    Brep[] shapes = Brep.CreatePlanarBreps(modelcurve);
+                    modelBrep = shapes[0];
+                    Guid renderObjId = Util.addSceneNode(ref mScene, modelBrep, ref profile_m, renderType);
+                    //add icurveList since we don't use EditPoint2 for circle and rect
+                    mScene.iCurveList.Add(modelcurve);
+                    //mScene.iPlaneList.Add(ref curvePlane);
+                }
+
+
                 if (type != 0 && pointOnObj != null)
                 {
                     mScene.iRhObjList.Add(pointOnObj);

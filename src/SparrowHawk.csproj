@@ -99,6 +99,7 @@
     <Compile Include="Interaction\CreateCurve.cs" />
     <Compile Include="Interaction\CreatePatch.cs" />
     <Compile Include="Interaction\CreatePlane.cs" />
+    <Compile Include="Interaction\CreatePlane2.cs" />
     <Compile Include="Interaction\CreatePlaneA.cs" />
     <Compile Include="Interaction\CreateRect.cs" />
     <Compile Include="Interaction\Delete.cs" />
@@ -106,6 +107,7 @@
     <Compile Include="Interaction\EditPlane2.cs" />
     <Compile Include="Interaction\EditPoint.cs" />
     <Compile Include="Interaction\EditPoint2.cs" />
+    <Compile Include="Interaction\EditPoint3.cs" />
     <Compile Include="Interaction\Extrusion.cs" />
     <Compile Include="Interaction\Grip.cs" />
     <Compile Include="Interaction\Loft.cs" />

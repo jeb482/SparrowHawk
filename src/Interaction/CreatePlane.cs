@@ -14,6 +14,10 @@ namespace SparrowHawk.Interaction
         private Brep designPlane;
         private Guid guid;
         private string renderType = "none";
+        private SceneNode selectedSN;
+        private NurbsCurve modelcurve;
+        private Brep modelBrep;
+        private Guid renderObjId = Guid.Empty;
 
         public CreatePlane(ref Scene scene) : base(ref scene)
         {
@@ -26,12 +30,17 @@ namespace SparrowHawk.Interaction
             renderType = type;
         }
 
+        public override void draw(bool isTop)
+        {
+
+        }
+
         public override void init()
         {
 
             //using controller's lazer direction
             Vector3 center = Util.getTranslationVector3(Util.getControllerTipPosition(ref mScene, primaryControllerIdx == mScene.leftControllerIdx));
-            
+
             //offset the point a little bit to make the plane better
             OpenTK.Vector4 controller_p = Util.getControllerTipPosition(ref mScene, primaryControllerIdx == mScene.leftControllerIdx) * new OpenTK.Vector4(0, 0, -0.05f, 1);
             OpenTK.Vector4 controller_pZ = Util.getControllerTipPosition(ref mScene, primaryControllerIdx == mScene.leftControllerIdx) * new OpenTK.Vector4(0, 0, -1, 1);
@@ -61,19 +70,27 @@ namespace SparrowHawk.Interaction
 
                 if (renderType == "Circle")
                 {
+
                     OpenTK.Vector3 origin = new Vector3(controller_p.X, controller_p.Y, controller_p.Z);
                     mScene.iPointList.Add(origin);
                     float radius = 20;
                     Rhino.Geometry.Circle circle = new Rhino.Geometry.Circle(plane, controller_pRhino, radius);
+                    modelcurve = circle.ToNurbsCurve();
+
+
                     Point3d circleP = circle.ToNurbsCurve().PointAtStart;
                     mScene.iPointList.Add(Util.platformToVRPoint(ref mScene, new Vector3((float)circleP.X, (float)circleP.Y, (float)circleP.Z)));
+
 
                 }
                 else if (renderType == "Rect")
                 {
+
                     float width = 40;
                     float height = 30;
-                    Rectangle3d rect = new Rectangle3d(plane, width, height);
+                    //Rectangle3d rect = new Rectangle3d(plane, width, height);
+                    Rectangle3d rect = new Rectangle3d(plane, new Interval(-width / 2, width / 2), new Interval(-height / 2, height / 2));
+                    modelcurve = rect.ToNurbsCurve();
 
                     Point3d topLeftP = rect.Corner(3);
                     Point3d bottomRightP = rect.Corner(1);
@@ -83,16 +100,28 @@ namespace SparrowHawk.Interaction
                     mScene.iPointList.Add(Util.platformToVRPoint(ref mScene, new Vector3((float)rect_center.X, (float)rect_center.Y, (float)rect_center.Z)));
                     mScene.iPointList.Add(Util.platformToVRPoint(ref mScene, new Vector3((float)bottomRightP.X, (float)bottomRightP.Y, (float)bottomRightP.Z)));
 
+
                 }
 
+                Brep[] shapes = Brep.CreatePlanarBreps(modelcurve);
+                modelBrep = shapes[0];
+                renderObjId = Util.addSceneNode(ref mScene, modelBrep, ref mesh_m, renderType);
+                //add icurveList since we don't use EditPoint2 for circle and rect
+                mScene.iCurveList.Add(modelcurve);
+
             }
-            
+
 
         }
 
         protected override void onClickOculusTrigger(ref VREvent_t vrEvent)
         {
             init();
+        }
+
+        protected override void onClickOculusGrip(ref VREvent_t vrEvent)
+        {
+
         }
 
         protected override void onReleaseOculusTrigger(ref VREvent_t vrEvent)

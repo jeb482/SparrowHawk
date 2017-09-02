@@ -269,8 +269,8 @@ namespace SparrowHawk
 
                     //for rhino object
                     OpenTK.Matrix4 currentRotation = mScene.platformRotation;
-
                     float theta = (float)(s.data[0] / 360f * 2 * Math.PI);
+                    mScene.rhinoTheta = theta;
                     Rhino.RhinoApp.WriteLine("Theta = " + theta);
                     Matrix4.CreateRotationZ(-theta, out mScene.platformRotation);
                     mScene.platformRotation.Transpose();                
@@ -458,6 +458,25 @@ namespace SparrowHawk
             mScene.xyPlane = new DesignPlane3(ref mScene, 2);
             mScene.yzPlane = new DesignPlane3(ref mScene, 0);
 
+
+            
+            List<Plane> testPlaneList = new List<Plane>();
+            List<Point3d> testPointList = new List<Point3d>();
+            testPointList.Add(new Point3d(0, 0, 0));
+            testPointList.Add(new Point3d(1, 0, 0));
+            List<Curve> testCurveList = new List<Curve>();
+            PolylineCurve testCurve = new PolylineCurve(testPointList);
+            testCurveList.Add(testCurve);
+            Plane plane1 = new Plane(new Point3d(0, 0, 0), new Rhino.Geometry.Vector3d(0, 0, 1));
+            testPlaneList.Add(plane1);
+            Transform testRot = Transform.Rotation((30f / 360f) * 2 * Math.PI, plane1.Normal, plane1.Origin);
+            //bool done = testPlaneList[0].Transform(testRot);
+            testCurve.Transform(testRot);
+            testCurveList[0].Transform(testRot);
+            Plane plane2 = testPlaneList[0];
+            plane2.Transform(testRot);
+            testPlaneList[0] = plane2;
+            
 
             //xzPlane = new DesignPlane(ref mScene, 1);
             //xyPlane = new DesignPlane(ref mScene, 2);
@@ -734,7 +753,7 @@ namespace SparrowHawk
             if (e.KeyChar == 'W' || e.KeyChar == 'w')
             {
                 mScene.popInteraction();
-                mScene.pushInteraction(new Interaction.CreateCircle(ref mScene));
+                mScene.pushInteraction(new Interaction.CreatePlane2(ref mScene, "circle"));
             }
 
             if (e.KeyChar == 'O' || e.KeyChar == 'o')

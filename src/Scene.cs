@@ -199,6 +199,8 @@ namespace SparrowHawk
         public DesignPlane3 xzPlane, xyPlane, yzPlane;
         public SceneNode xAxis, yAxis, zAxis;
 
+        public float rhinoTheta = 0;
+
         public Interaction.Interaction popInteraction()
         {
             Interaction.Interaction i = mInteractionStack.Pop();
