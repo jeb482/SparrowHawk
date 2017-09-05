@@ -358,6 +358,16 @@ namespace SparrowHawk
             return new Rhino.Geometry.Point3f(p.X, p.Y, p.Z);
         }
 
+        public static Vector3 RhinoToOpenTKPoint(Point3d p)
+        {
+            return new Vector3((float)p.X, (float)p.Y, (float)p.Z);
+        }
+
+        public static Vector3 RhinoToOpenTKPoint(Rhino.Geometry.Vector3d p)
+        {
+            return new Vector3((float)p.X, (float)p.Y, (float)p.Z);
+        }
+
         public static OpenTK.Vector3 transformPoint(OpenTK.Matrix4 M, OpenTK.Vector3 p)
         {
             OpenTK.Vector4 homogenousPoint = new OpenTK.Vector4(p.X, p.Y, p.Z, 1);
@@ -578,6 +588,36 @@ namespace SparrowHawk
             }
         }
 
+        public static void hideOtherPlanes(ref Scene mScene, string name)
+        {
+            if (name.Contains("planeXY"))
+            {
+                mScene.xyPlane.setAlpha(0.4f);
+                mScene.yzPlane.setAlpha(0f);
+                mScene.xzPlane.setAlpha(0f);
+                mScene.xAxis.material = new Material.SingleColorMaterial(1, 1, 1, 1);
+                mScene.yAxis.material = new Material.SingleColorMaterial(1, 1, 1, 1);
+                mScene.zAxis.material = new Material.SingleColorMaterial(1, 1, 1, 0);
+            }
+            else if (name.Contains("planeYZ"))
+            {
+                mScene.xyPlane.setAlpha(0f);
+                mScene.yzPlane.setAlpha(0.4f);
+                mScene.xzPlane.setAlpha(0f);
+                mScene.xAxis.material = new Material.SingleColorMaterial(1, 1, 1, 0);
+                mScene.yAxis.material = new Material.SingleColorMaterial(1, 1, 1, 1);
+                mScene.zAxis.material = new Material.SingleColorMaterial(1, 1, 1, 1);
+            }
+            else if (name.Contains("planeXZ"))
+            {
+                mScene.xyPlane.setAlpha(0f);
+                mScene.yzPlane.setAlpha(0f);
+                mScene.xzPlane.setAlpha(0.4f);
+                mScene.xAxis.material = new Material.SingleColorMaterial(1, 1, 1, 1);
+                mScene.yAxis.material = new Material.SingleColorMaterial(1, 1, 1, 0);
+                mScene.zAxis.material = new Material.SingleColorMaterial(1, 1, 1, 1);
+            }
+        }
 
         public static Guid addSceneNodeWithoutDraw(ref Scene mScene, Brep brep, ref Material.Material mesh_m, string name)
         {
@@ -619,6 +659,18 @@ namespace SparrowHawk
             else
             {
                 return Guid.Empty;
+            }
+        }
+
+        public static void removeSceneNodeWithoutDraw(ref Scene mScene, Guid guid)
+        {
+            foreach (SceneNode sn in mScene.tableGeometry.children)
+            {
+                if (sn.guid == guid)
+                {
+                    mScene.tableGeometry.children.Remove(sn);
+                    break;
+                }
             }
         }
 
@@ -818,6 +870,23 @@ namespace SparrowHawk
 
         }
 
+        public static void removeStaticSceneNode(ref Scene mScene, Guid guid)
+        {
+            SceneNode deleteSN = mScene.brepToSceneNodeDic[guid];
+            mScene.brepToSceneNodeDic.Remove(guid);
+            mScene.SceneNodeToBrepDic.Remove(deleteSN.guid);
+
+            mScene.rhinoDoc.Objects.Delete(guid, true);
+            foreach (SceneNode sn in mScene.staticGeometry.children)
+            {
+                if (sn.guid == deleteSN.guid)
+                {
+                    mScene.staticGeometry.children.Remove(sn);
+                    break;
+                }
+            }
+        }
+
         public static void clearAllModel(ref Scene mScene)
         {
             Rhino.DocObjects.ObjectEnumeratorSettings settings = new Rhino.DocObjects.ObjectEnumeratorSettings();
@@ -908,128 +977,46 @@ namespace SparrowHawk
             return brep;
         }
 
-        public static Brep SweepFun(ref Scene mScene, ref List<Curve> curveList)
+        //using loft function to implement
+        public static Brep ExtrudeCapFunc(ref Scene mScene, ref List<Curve> curveList)
         {
-            //compute the normal of the first point of the rail curve
-            NurbsCurve rail = (NurbsCurve)curveList[curveList.Count - 1];
-            PolylineCurve railPL = rail.ToPolyline(0, 0, 0, 0, 0, 1, 1, 0, true);
-            OpenTK.Vector3 railStartPoint = new OpenTK.Vector3((float)railPL.PointAtStart.X, (float)railPL.PointAtStart.Y, (float)railPL.PointAtStart.Z);
-            OpenTK.Vector3 railNormal = new OpenTK.Vector3((float)railPL.TangentAtStart.X, (float)railPL.TangentAtStart.Y, (float)railPL.TangentAtStart.Z);
-
-            //need to calculate the center and normal from curve
-            //OpenTK.Vector3 shapeCenter = Util.vrToPlatformPoint(ref mScene, mScene.iPointList[0]);
-            //OpenTK.Vector3 shapeNormal = new OpenTK.Vector3((float)mScene.iPlaneList[0].Normal.X, (float)mScene.iPlaneList[0].Normal.Y, (float)mScene.iPlaneList[0].Normal.Z);
-            OpenTK.Vector3 shapeCenter = new Vector3((float)curveList[curveList.Count - 2].GetBoundingBox(true).Center.X, (float)curveList[curveList.Count - 2].GetBoundingBox(true).Center.Y, (float)curveList[curveList.Count - 2].GetBoundingBox(true).Center.Z);
-            Plane curvePlane;
-            OpenTK.Vector3 shapeNormal = new Vector3(0, 0, 0);
-            Double tolerance = 0;
-            while (tolerance < 100)
-            {
-                if (curveList[curveList.Count - 2].TryGetPlane(out curvePlane, tolerance))
-                {
-                    shapeNormal = new OpenTK.Vector3((float)curvePlane.Normal.X, (float)curvePlane.Normal.Y, (float)curvePlane.Normal.Z);
-                    break;
-                }
-                tolerance++;
-            }
-
-            OpenTK.Matrix4 transM = Util.getCoordinateTransM(shapeCenter, railStartPoint, shapeNormal, railNormal);
-            Transform t = Util.OpenTKToRhinoTransform(transM);
-            ((NurbsCurve)curveList[curveList.Count - 2]).Transform(t);
-            NurbsCurve circleCurve = (NurbsCurve)curveList[curveList.Count - 2];
-
-            //cruves coordinate are in rhino, somehow cap didn't work and need to call CapPlanarHoles
-            Brep[] breps = Brep.CreateFromSweep(curveList[curveList.Count - 1], circleCurve, false, mScene.rhinoDoc.ModelAbsoluteTolerance);
-            Brep brep = breps[0];
-            Brep capBrep = brep.CapPlanarHoles(mScene.rhinoDoc.ModelAbsoluteTolerance);
-
-            Transform invT;
-            if (t.TryGetInverse(out invT))
-                ((NurbsCurve)curveList[curveList.Count - 2]).Transform(invT);
-
-            return brep;
-        }
-
-        public static Brep SweepCapFun(ref Scene mScene, ref List<Curve> curveList)
-        {
-            //Count-1: endCurve, Count - 2: rail, Count-3: startCurve
-            NurbsCurve rail = (NurbsCurve)curveList[curveList.Count - 2];
-            PolylineCurve railPL = rail.ToPolyline(0, 0, 0, 0, 0, 1, 1, 0, true);
-            OpenTK.Vector3 railStartPoint = new OpenTK.Vector3((float)railPL.PointAtStart.X, (float)railPL.PointAtStart.Y, (float)railPL.PointAtStart.Z);
-            OpenTK.Vector3 railNormal = new OpenTK.Vector3((float)railPL.TangentAtStart.X, (float)railPL.TangentAtStart.Y, (float)railPL.TangentAtStart.Z);
-
-            OpenTK.Vector3 shapeCenter = new Vector3((float)curveList[curveList.Count - 3].GetBoundingBox(true).Center.X, (float)curveList[curveList.Count - 3].GetBoundingBox(true).Center.Y, (float)curveList[curveList.Count - 3].GetBoundingBox(true).Center.Z);
-            Plane curvePlane;
-            OpenTK.Vector3 shapeNormal = new Vector3(0, 0, 0);
-            Double tolerance = 0;
-            while (tolerance < 100)
-            {
-                if (curveList[curveList.Count - 3].TryGetPlane(out curvePlane, tolerance))
-                {
-                    shapeNormal = new OpenTK.Vector3((float)curvePlane.Normal.X, (float)curvePlane.Normal.Y, (float)curvePlane.Normal.Z);
-                    break;
-                }
-                tolerance++;
-            }
-
-            OpenTK.Matrix4 transM = Util.getCoordinateTransM(shapeCenter, railStartPoint, shapeNormal, railNormal);
-            Transform t = Util.OpenTKToRhinoTransform(transM);
-            ((NurbsCurve)curveList[curveList.Count - 3]).Transform(t);
-            NurbsCurve circleCurve = (NurbsCurve)curveList[curveList.Count - 3];
-
-            //calculate the new starting point at end plane
-            OpenTK.Vector3 railEndPoint = new OpenTK.Vector3((float)railPL.PointAtEnd.X, (float)railPL.PointAtEnd.Y, (float)railPL.PointAtEnd.Z);
-            OpenTK.Vector3 railEndNormal = new OpenTK.Vector3((float)railPL.TangentAtEnd.X, (float)railPL.TangentAtEnd.Y, (float)railPL.TangentAtEnd.Z);
-            OpenTK.Matrix4 transMEnd = Util.getCoordinateTransM(railStartPoint, railEndPoint, railNormal, railEndNormal); //be careful about this
-
             List<Curve> profileCurves = new List<Curve>();
-            profileCurves.Add(circleCurve);
-            profileCurves.Add(curveList[curveList.Count - 1]);
+            profileCurves.Add(curveList[0]);
+            profileCurves.Add(curveList[2]);
 
-            //store the starting point first
-            //TODO- using iPointList to support both cirle and rect
-            if(mScene.selectionList[1] == "Circle")
+            NurbsCurve rail = (NurbsCurve)curveList[1];
+            PolylineCurve railPL = rail.ToPolyline(0, 0, 0, 0, 0, 1, 1, 0, true);
+            OpenTK.Vector3 railStartPoint = Util.RhinoToOpenTKPoint(railPL.PointAtStart);
+            OpenTK.Vector3 railstartNormal = Util.RhinoToOpenTKPoint(railPL.TangentAtStart);
+            OpenTK.Vector3 railEndPoint = Util.RhinoToOpenTKPoint(railPL.PointAtEnd);
+            OpenTK.Vector3 railEndNormal = Util.RhinoToOpenTKPoint(railPL.TangentAtEnd);
+
+            //changing seam
+            OpenTK.Matrix4 transMEnd = Util.getCoordinateTransM(railStartPoint, railEndPoint, railstartNormal, railEndNormal);
+            Transform t = Util.OpenTKToRhinoTransform(transMEnd);
+
+            if (mScene.selectionList[1] == "Circle")
             {
-                Point3d startP = circleCurve.PointAtStart;
+                Point3d startP = profileCurves[0].PointAtStart;
                 double curveT0 = 0;
                 profileCurves[0].ClosestPoint(startP, out curveT0);
                 profileCurves[0].ChangeClosedCurveSeam(curveT0);
-                mScene.sStartP = new Point3d(circleCurve.PointAtStart);
-                //TODO-the new point position is incorrect, the circle curve is the one already transform
-                Transform tEnd = Util.OpenTKToRhinoTransform(transMEnd);
-                startP.Transform(tEnd);
+                mScene.sStartP = new Point3d(profileCurves[0].PointAtStart);
+                startP.Transform(t);
                 mScene.eStartP = new Point3d(startP);
 
-            }
-            else if(mScene.selectionList[1] == "Rect")
-            {
-                //transM is in Rhino coordinate
-                /*
-                Vector3 rectBottomRightRhino = Util.vrToPlatformPoint(ref mScene, mScene.iPointList[1]);
-                Point3d startP = Util.openTkToRhinoPoint(Util.transformPoint(transM, rectBottomRightRhino));
-                double curveT0 = 0;
-                profileCurves[0].ClosestPoint(startP, out curveT0);
-                profileCurves[0].ChangeClosedCurveSeam(curveT0);
-                mScene.sStartP = new Point3d(startP);
-                mScene.eStartP = Util.openTkToRhinoPoint(Util.vrToPlatformPoint(ref mScene, mScene.iPointList[3]));
-                */
             }
 
             Plane curvePlane1;
             Plane curvePlane2;
             if (profileCurves[0].TryGetPlane(out curvePlane1) && profileCurves[1].TryGetPlane(out curvePlane2))
             {
-                //debugging Rect
                 if (mScene.selectionList[1] == "Rect")
                 {
                     //testing create new rect
-                    //TODO- fixing this issue of the width become height
-                    
-
+                    //TODO- don't need to move to the railcurve start unlike sweep
                     Vector3 rectCenterRhino1 = Util.vrToPlatformPoint(ref mScene, mScene.iPointList[0]);
-                    rectCenterRhino1 = Util.transformPoint(transM, rectCenterRhino1);
                     Vector3 rectBottomRightRhino1 = Util.vrToPlatformPoint(ref mScene, mScene.iPointList[1]);
-                    rectBottomRightRhino1 = Util.transformPoint(transM, rectBottomRightRhino1);
 
                     Vector3 rectDiagonal1 = new Vector3((float)(rectCenterRhino1.X - rectBottomRightRhino1.X), (float)(rectCenterRhino1.Y - rectBottomRightRhino1.Y), (float)(rectCenterRhino1.Z - rectBottomRightRhino1.Z));
                     float lenDiagonal1 = rectDiagonal1.Length;
@@ -1048,24 +1035,35 @@ namespace SparrowHawk
                     Plane testPlane2 = new Plane(Util.openTkToRhinoPoint(rectCenterRhino2), railPL.TangentAtEnd);
 
                     Rectangle3d tmpRect1 = new Rectangle3d(testPlane1, topLeftP, Util.openTkToRhinoPoint(rectBottomRightRhino1));
-                    Rectangle3d rect1 = new Rectangle3d(testPlane1, tmpRect1.Width, tmpRect1.Height);
+                    //Rectangle3d rect1 = new Rectangle3d(testPlane1, tmpRect1.Width, tmpRect1.Height);
+                    Rectangle3d rect1 = new Rectangle3d(testPlane1, new Interval(-tmpRect1.Width / 2, tmpRect1.Width / 2), new Interval(-tmpRect1.Height / 2, tmpRect1.Height / 2));
 
+                    //Rectangle3d tmpRect2 = new Rectangle3d(testPlane2, topLeftP2, Util.openTkToRhinoPoint(rectBottomRightRhino2));
+                    //Rectangle3d rect2 = new Rectangle3d(testPlane2, tmpRect2.Width, tmpRect2.Height);
+
+                    //TODO- after chaning the seam, the profile curve will moves
+                    //how we pre-move the profile curves to make it's seam to the orginal center position. only tranlation?
+                    //try create the profile curve on the same plane first to match the cornel points then transform to the end
                     Rectangle3d tmpRect2 = new Rectangle3d(testPlane2, topLeftP2, Util.openTkToRhinoPoint(rectBottomRightRhino2));
-                    Rectangle3d rect2 = new Rectangle3d(testPlane2, tmpRect2.Width, tmpRect2.Height);
-
+                    //Rectangle3d rect2 = new Rectangle3d(testPlane1, tmpRect2.Width, tmpRect2.Height);
+                    Rectangle3d rect2 = new Rectangle3d(testPlane1, new Interval(-tmpRect2.Width / 2, tmpRect2.Width / 2), new Interval(-tmpRect2.Height / 2, tmpRect2.Height / 2));
+                    Transform tEnd = Util.OpenTKToRhinoTransform(transMEnd);
+                    rect2.Transform(tEnd);
                     profileCurves[0] = rect1.ToNurbsCurve();
+                    profileCurves[1] = rect2.ToNurbsCurve();
+
+                    //testing changing seam
+                    /*
                     double curveT0 = 0;
-                    profileCurves[0].ClosestPoint(rect1.Corner(3), out curveT0);
+                    //profileCurves[0].ClosestPoint(rect1.Corner(3), out curveT0);
+                    profileCurves[0].ClosestPoint(profileCurves[0].PointAtStart, out curveT0);
                     profileCurves[0].ChangeClosedCurveSeam(curveT0);
 
-
-                    profileCurves[1] = rect2.ToNurbsCurve();
                     double curveT = 0;
-                    profileCurves[1].ClosestPoint(rect2.Corner(3), out curveT);
+                    //profileCurves[1].ClosestPoint(rect2.Corner(3), out curveT);
+                    profileCurves[1].ClosestPoint(profileCurves[1].PointAtStart, out curveT);
                     profileCurves[1].ChangeClosedCurveSeam(curveT);
-
-                    //testing
-
+                    */
                 }
 
                 OpenTK.Vector3 n1 = new Vector3((float)curvePlane1.Normal.X, (float)curvePlane1.Normal.Y, (float)curvePlane1.Normal.Z);
@@ -1077,7 +1075,7 @@ namespace SparrowHawk
 
                 //angle = atan2(norm(cross(a,b)), dot(a,b))
                 float angle = Vector3.Dot(n1, n2);
-                CurveOrientation dir = profileCurves[0].ClosedCurveOrientation(Util.openTkToRhinoVector(railNormal)); //new Vector3(0,0,1)
+                CurveOrientation dir = profileCurves[0].ClosedCurveOrientation(Util.openTkToRhinoVector(railstartNormal)); //new Vector3(0,0,1)
                 CurveOrientation dir2 = profileCurves[1].ClosedCurveOrientation(Util.openTkToRhinoVector(railEndNormal)); //new Vector3(0,0,1)
 
                 //debugging
@@ -1100,7 +1098,229 @@ namespace SparrowHawk
                 }
                 CurveOrientation dir3 = profileCurves[1].ClosedCurveOrientation(Util.openTkToRhinoVector(railEndNormal)); //new Vector3(0,0,1)
                 mScene.c3D = dir3.ToString();
-               
+            }
+
+
+            Brep[] loftBreps = Brep.CreateFromLoft(profileCurves, Point3d.Unset, Point3d.Unset, LoftType.Tight, false);
+            Brep brep = new Brep();
+            foreach (Brep bp in loftBreps)
+            {
+                brep.Append(bp);
+            }
+
+            return brep;
+
+        }
+
+        public static Brep SweepFun(ref Scene mScene, ref List<Curve> curveList)
+        {
+            //compute the normal of the first point of the rail curve
+            NurbsCurve rail = (NurbsCurve)curveList[curveList.Count - 1];
+            PolylineCurve railPL = rail.ToPolyline(0, 0, 0, 0, 0, 1, 1, 0, true);
+            OpenTK.Vector3 railStartPoint = new OpenTK.Vector3((float)railPL.PointAtStart.X, (float)railPL.PointAtStart.Y, (float)railPL.PointAtStart.Z);
+            OpenTK.Vector3 railNormal = new OpenTK.Vector3((float)railPL.TangentAtStart.X, (float)railPL.TangentAtStart.Y, (float)railPL.TangentAtStart.Z);
+
+            //need to calculate the center and normal from curve
+            //OpenTK.Vector3 shapeCenter = Util.vrToPlatformPoint(ref mScene, mScene.iPointList[0]);
+            //OpenTK.Vector3 shapeNormal = new OpenTK.Vector3((float)mScene.iPlaneList[0].Normal.X, (float)mScene.iPlaneList[0].Normal.Y, (float)mScene.iPlaneList[0].Normal.Z);
+            OpenTK.Vector3 shapeCenter = new Vector3((float)curveList[curveList.Count - 2].GetBoundingBox(true).Center.X, (float)curveList[curveList.Count - 2].GetBoundingBox(true).Center.Y, (float)curveList[curveList.Count - 2].GetBoundingBox(true).Center.Z);
+            Plane curvePlane = new Plane();
+            OpenTK.Vector3 shapeNormal = new Vector3(0, 0, 0);
+            Double tolerance = 0;
+            while (tolerance < 100)
+            {
+                if (curveList[curveList.Count - 2].TryGetPlane(out curvePlane, tolerance))
+                {
+                    shapeNormal = new OpenTK.Vector3((float)curvePlane.Normal.X, (float)curvePlane.Normal.Y, (float)curvePlane.Normal.Z);
+                    break;
+                }
+                tolerance++;
+            }
+
+            //TODO- transM everytime is different in rotation. However, circle is fine since we won't see the roation.
+            OpenTK.Matrix4 transM = Util.getCoordinateTransM(shapeCenter, railStartPoint, shapeNormal, railNormal);
+            //Rhino.RhinoApp.WriteLine("railNormal: " + railNormal.ToString());
+            //Rhino.RhinoApp.WriteLine("transM: " + transM.ToString());
+           
+            Transform t = new Transform();
+            if (mScene.selectionList[1] == "Circle")
+            {
+                 t = Util.OpenTKToRhinoTransform(transM);
+                ((NurbsCurve)curveList[curveList.Count - 2]).Transform(t);
+            }
+            else if (mScene.selectionList[1] == "Rect")
+            {
+                //TODO-rotating to align rect. but need to know the drawplane noraml to allign with
+                curvePlane.Transform(Util.OpenTKToRhinoTransform(transM));
+                OpenTK.Vector3 testAxis = Util.RhinoToOpenTKPoint(curvePlane.XAxis).Normalized();
+                //OpenTK.Matrix4 transM2 = Util.getTransMAroundAxis(railStartPoint, testAxis, new Vector3(1, 0, 0), Util.RhinoToOpenTKPoint(curvePlane.Normal)); //still affect by the different normal
+                OpenTK.Matrix4 transM2 = Util.getCoordinateTransM(railStartPoint, railStartPoint, testAxis, Util.RhinoToOpenTKPoint(mScene.iPlaneList[mScene.iPlaneList.Count-2].Normal));
+                t = Util.OpenTKToRhinoTransform(transM2 * transM);
+                Rhino.RhinoApp.WriteLine("angle: " + OpenTK.Vector3.CalculateAngle(testAxis, new Vector3(1, 0, 0)));
+
+                ////Transform t = Util.OpenTKToRhinoTransform(transM);
+                ((NurbsCurve)curveList[curveList.Count - 2]).Transform(t);
+            }
+        
+
+            NurbsCurve circleCurve = (NurbsCurve)curveList[curveList.Count - 2];
+
+            //cruves coordinate are in rhino, somehow cap didn't work and need to call CapPlanarHoles
+            Brep[] breps = Brep.CreateFromSweep(curveList[curveList.Count - 1], circleCurve, false, mScene.rhinoDoc.ModelAbsoluteTolerance);
+            Brep brep = breps[0];
+            
+
+            Transform invT;
+            if (t.TryGetInverse(out invT))
+                ((NurbsCurve)curveList[curveList.Count - 2]).Transform(invT);
+
+            return brep;
+        }
+
+        public static Brep SweepCapFun(ref Scene mScene, ref List<Curve> curveList)
+        {
+            //Count-1: endCurve, Count - 2: rail, Count-3: startCurve(already at railStart)      
+
+            //compute the transfrom from railStart to railEnd
+            NurbsCurve rail = mScene.iCurveList[mScene.iCurveList.Count - 2].ToNurbsCurve();
+            OpenTK.Vector3 railStartPoint = Util.RhinoToOpenTKPoint(rail.PointAtStart);
+            OpenTK.Vector3 railStartNormal = Util.RhinoToOpenTKPoint(rail.TangentAtStart);
+            OpenTK.Vector3 railEndPoint = Util.RhinoToOpenTKPoint(rail.PointAtEnd);
+            OpenTK.Vector3 railEndNormal = Util.RhinoToOpenTKPoint(rail.TangentAtEnd);
+
+            OpenTK.Matrix4 transMStartEnd = new Matrix4();
+            transMStartEnd = Util.getCoordinateTransM(railStartPoint, railEndPoint, railStartNormal, railEndNormal);
+            Transform tStartEnd = Util.OpenTKToRhinoTransform(transMStartEnd);
+
+            List<Curve> profileCurves = new List<Curve>();
+            profileCurves.Add(curveList[curveList.Count - 3]);
+            profileCurves.Add(curveList[curveList.Count - 1]);
+
+            //debugging
+            //mScene.rhinoDoc.Objects.AddCurve(profileCurves[0]);
+            //mScene.rhinoDoc.Objects.AddCurve(profileCurves[1]);
+
+            Plane curvePlane1;
+            Plane curvePlane2;
+            profileCurves[0].TryGetPlane(out curvePlane1);
+            profileCurves[1].TryGetPlane(out curvePlane2);
+
+            //store the starting point for changing seam laster
+            if (mScene.selectionList[1] == "Circle")
+            {
+                Point3d startP = profileCurves[0].PointAtStart;
+                double curveT0 = 0;
+                profileCurves[0].ClosestPoint(startP, out curveT0);
+                profileCurves[0].ChangeClosedCurveSeam(curveT0);
+                mScene.sStartP = new Point3d(profileCurves[0].PointAtStart);
+                startP.Transform(tStartEnd);
+                mScene.eStartP = new Point3d(startP);
+
+                //OpenTK.Vector3 n1 = new Vector3((float)curvePlane1.Normal.X, (float)curvePlane1.Normal.Y, (float)curvePlane1.Normal.Z);
+                //OpenTK.Vector3 n2 = new Vector3((float)curvePlane2.Normal.X, (float)curvePlane2.Normal.Y, (float)curvePlane2.Normal.Z);
+
+                OpenTK.Vector3 n1 = railStartNormal;
+                OpenTK.Vector3 n2 = railEndNormal;
+
+                //n1,n2 should be the same with railNormal and railEndNormal
+                n1.Normalize();
+                n2.Normalize();
+
+                //angle = atan2(norm(cross(a,b)), dot(a,b))
+                float angle = Vector3.Dot(n1, n2);
+                CurveOrientation dir = profileCurves[0].ClosedCurveOrientation(new Rhino.Geometry.Vector3d(n1.X,n1.Y,n1.Z)); //new Vector3(0,0,1)
+                CurveOrientation dir2 = profileCurves[1].ClosedCurveOrientation(new Rhino.Geometry.Vector3d(n2.X, n2.Y, n2.Z)); //new Vector3(0,0,1)
+
+                //debugging
+                mScene.angleD = angle;
+                mScene.c1D = dir.ToString();
+                mScene.c2D = dir2.ToString();
+
+                //testing seems bug, try compare by ourselves
+                //if(!Curve.DoDirectionsMatch(profileCurves[0], profileCurves[1]))
+                //If the dot product is greater than 0 both vectors are pointing in the same direction
+                if (angle >= 0)
+                {
+                    if (dir != dir2)
+                    {
+                        profileCurves[1].Reverse();
+                    }
+                }
+                else
+                {
+                    //TODO- somehow it didn't work
+                    /*
+                    if (dir == dir2)
+                    {
+                        profileCurves[1].Reverse();
+                    }*/
+
+                }
+
+                double curveT = 0;
+                profileCurves[1].ClosestPoint(mScene.eStartP, out curveT);
+                profileCurves[1].ChangeClosedCurveSeam(curveT);
+
+                CurveOrientation dir3 = profileCurves[1].ClosedCurveOrientation(Util.openTkToRhinoVector(railEndNormal)); //new Vector3(0,0,1)
+                mScene.c3D = dir3.ToString();
+
+            }
+            else if (mScene.selectionList[1] == "Rect")
+            {
+                //TODO- create the endRect on startPlane to locate the reference corner
+                Rhino.Geometry.Polyline polylineStart;
+                Rhino.Geometry.Polyline polylineEnd;
+                if (profileCurves[0].TryGetPolyline(out polylineStart) && profileCurves[1].TryGetPolyline(out polylineEnd))
+                {
+                    //method 1- rebuild rect but sometimes it rotate 90 degrees so width become height
+                    /*
+                    Rectangle3d startRect = Rectangle3d.CreateFromPolyline(polylineStart);
+                    Rectangle3d endRect = Rectangle3d.CreateFromPolyline(polylineEnd);                   
+                    Rectangle3d startRect2 = new Rectangle3d(curvePlane1, new Interval(-startRect.Width / 2, startRect.Width / 2), new Interval(-startRect.Height / 2, startRect.Height / 2));
+                    Rectangle3d endRect2 = new Rectangle3d(curvePlane2, new Interval(-endRect.Width / 2, endRect.Width / 2), new Interval(-endRect.Height / 2, endRect.Height / 2));
+                    */
+
+                    //Method 2 - using iPointList
+                    /*
+                    Vector3 rectCenterRhino1 = Util.vrToPlatformPoint(ref mScene, mScene.iPointList[0]);
+                    Vector3 rectCenterRhino2 = Util.vrToPlatformPoint(ref mScene, mScene.iPointList[2]);
+                    Vector3 rectBottomRightRhino2 = Util.vrToPlatformPoint(ref mScene, mScene.iPointList[3]);
+
+                    Vector3 rectDiagonal2 = new Vector3((float)(rectCenterRhino2.X - rectBottomRightRhino2.X), (float)(rectCenterRhino2.Y - rectBottomRightRhino2.Y), (float)(rectCenterRhino2.Z - rectBottomRightRhino2.Z));
+                    float lenDiagonal2 = rectDiagonal2.Length;
+                    Vector3 rectLeftTop2 = new Vector3((float)rectCenterRhino2.X, (float)rectCenterRhino2.Y, (float)rectCenterRhino2.Z) + lenDiagonal2 * rectDiagonal2.Normalized();
+                    Point3d topLeftP2 = new Point3d(rectLeftTop2.X, rectLeftTop2.Y, rectLeftTop2.Z);
+
+                    Rectangle3d tmpRect2 = new Rectangle3d(curvePlane1, new Interval(-endRect.Width / 2, endRect.Width / 2), new Interval(-endRect.Height / 2, endRect.Height / 2));
+                    Point3d referencePoint = new Point3d(tmpRect2.Corner(3));
+                    OpenTK.Matrix4 transMTest = Util.getCoordinateTransM(Util.RhinoToOpenTKPoint(curvePlane1.Origin), Util.RhinoToOpenTKPoint(curvePlane2.Origin), Util.RhinoToOpenTKPoint(curvePlane1.Normal), Util.RhinoToOpenTKPoint(curvePlane2.Normal));
+                    Transform tEndTest = Util.OpenTKToRhinoTransform(transMTest);
+                    referencePoint.Transform(tEndTest);
+
+                    //Rectangle3d endRect2 = new Rectangle3d(curvePlane2, topLeftP2, Util.openTkToRhinoPoint(rectBottomRightRhino2));
+                    */
+
+                    /*
+                    profileCurves[0] = startRect.ToNurbsCurve();
+                    profileCurves[1] = endRect.ToNurbsCurve();
+
+                    //changing seam
+                    double curveT0 = 0;
+                    profileCurves[0].ClosestPoint(startRect.Corner(3), out curveT0);
+                    profileCurves[0].ChangeClosedCurveSeam(curveT0);
+
+                    double curveT = 0;
+                    profileCurves[1].ClosestPoint(referencePoint, out curveT);
+                    profileCurves[1].ChangeClosedCurveSeam(curveT);
+
+
+                    //debugging
+                    mScene.sStartP = new Point3d(startRect.Corner(3));
+                    mScene.eStartP = new Point3d(referencePoint);
+                    */
+
+                }
+
             }
 
             //solving the issue of mutilple faces in Brep by rebuilding curve
@@ -1108,28 +1328,19 @@ namespace SparrowHawk
             {
                 profileCurves[0] = profileCurves[0].Rebuild(((NurbsCurve)profileCurves[0]).Points.Count, profileCurves[0].Degree, true);
                 profileCurves[1] = profileCurves[1].Rebuild(((NurbsCurve)profileCurves[1]).Points.Count, profileCurves[1].Degree, true);
-            }else if (mScene.selectionList[1] == "Rect")
+            }
+            else if (mScene.selectionList[1] == "Rect")
             {
                 //TODO- rebuild will generate non-rect
-                profileCurves[0] = new NurbsCurve((NurbsCurve)profileCurves[0]);
-                profileCurves[1] = new NurbsCurve((NurbsCurve)profileCurves[1]);
+                //profileCurves[0] = new NurbsCurve((NurbsCurve)profileCurves[0]);
+                //profileCurves[1] = new NurbsCurve((NurbsCurve)profileCurves[1]);
             }
 
 
             Brep[] breps = Brep.CreateFromSweep(curveList[curveList.Count - 2], profileCurves, false, mScene.rhinoDoc.ModelAbsoluteTolerance);
 
-
-            Transform invT;
-            if (t.TryGetInverse(out invT))
-                ((NurbsCurve)mScene.iCurveList[mScene.iCurveList.Count - 3]).Transform(invT);
-
-            //debuging adding the curve to rhino
-            mScene.rhinoDoc.Objects.AddCurve(profileCurves[0]);
-            mScene.rhinoDoc.Objects.AddCurve(profileCurves[1]);
-            mScene.rhinoDoc.Objects.AddCurve(curveList[curveList.Count - 2]);
             if (mScene.selectionList[0] == "Sweep")
             {
-
                 //testing boolean
                 /*
                 Rhino.DocObjects.ObjectEnumeratorSettings settings = new Rhino.DocObjects.ObjectEnumeratorSettings();
@@ -1143,16 +1354,30 @@ namespace SparrowHawk
                         boolBrep = Rhino.Geometry.Brep.CreateBooleanDifference(rhObj.Geometry as Brep, breps[0], mScene.rhinoDoc.ModelAbsoluteTolerance);
                         break;
                     }
-                }*/
+                }
+                return boolBrep[0];
+                */
 
                 return breps[0];
-                //return boolBrep[0];
+
+            }
+            else if (mScene.selectionList[0] == "Extrude")
+            {
+                if (mScene.selectionList[1] == "Rect")
+                {
+                    return breps[0].CapPlanarHoles(mScene.rhinoDoc.ModelAbsoluteTolerance);
+                }
+                else
+                {
+                    return breps[0];
+                }
             }
             else
             {
-                return breps[0].CapPlanarHoles(mScene.rhinoDoc.ModelAbsoluteTolerance);
+                return breps[0];
             }
         }
+
 
         /*
         public static Brep SweepCapFun2(ref Scene mScene, ref List<Curve> curveList, string type)
