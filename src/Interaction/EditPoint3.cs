@@ -71,6 +71,8 @@ namespace SparrowHawk.Interaction
         private bool isEditCircle = false;
         private bool isEditRect = false;
 
+        Circle circle;
+        Rectangle3d rect;
         float radius = 0;
         float width = 0;
         float height = 0;
@@ -126,6 +128,10 @@ namespace SparrowHawk.Interaction
                 drawPoint = Util.MarkProjectionPoint(ref mScene, new OpenTK.Vector3(0, 0, 0), 1, 1, 1);
 
                 rhinoPlane = mScene.iRhObjList.ElementAt(mScene.iRhObjList.Count - 1);
+
+                //testing get curveOnplane here.
+                curvePlane = mScene.iPlaneList[mScene.iPlaneList.Count - 1];
+
             }
 
             //create editcurve, find the curve plane, render circle, rect
@@ -163,7 +169,6 @@ namespace SparrowHawk.Interaction
             }
             else if (isEditCircle)
             {
-                Circle circle;
                 if (mScene.iCurveList[mScene.iCurveList.Count - 1].TryGetCircle(out circle))
                 {
                     List<Point3d> circlePoints = new List<Point3d>();
@@ -171,7 +176,7 @@ namespace SparrowHawk.Interaction
                     circlePoints.Add(mScene.iCurveList[mScene.iCurveList.Count - 1].PointAtStart);
                     editCurve = Rhino.Geometry.NurbsCurve.Create(false, 1, circlePoints.ToArray());
 
-                    curvePlane = circle.Plane;
+                    //curvePlane = circle.Plane;
                     radius = (float)circle.Radius;
                 }
 
@@ -181,14 +186,14 @@ namespace SparrowHawk.Interaction
                 Rhino.Geometry.Polyline polyline;
                 if (mScene.iCurveList[mScene.iCurveList.Count - 1].TryGetPolyline(out polyline))
                 {
-                    Rectangle3d rect = Rectangle3d.CreateFromPolyline(polyline);
+                    rect = Rectangle3d.CreateFromPolyline(polyline);
                     List<Point3d> rectPoints = new List<Point3d>();
                     rectPoints.Add(rect.Center);
                     rectPoints.Add(rect.Corner(3));
                     editCurve = Rhino.Geometry.NurbsCurve.Create(false, 1, rectPoints.ToArray());
                     //rect.Plane's center is incorrect
                     //curvePlane = rect.Plane;
-                    curvePlane = new Plane(rect.Center, rect.Plane.Normal);
+                    //curvePlane = new Plane(rect.Center, rect.Plane.Normal);
 
                     width = (float)rect.Width;
                     height = (float)rect.Height;
@@ -198,7 +203,8 @@ namespace SparrowHawk.Interaction
             else
             {
                 //editCurve might not in a planar surface
-                editCurve = mScene.iCurveList.ElementAt(mScene.iCurveList.Count - 1).ToNurbsCurve();
+                editCurve = mScene.iCurveList[mScene.iCurveList.Count - 1].ToNurbsCurve();
+                /*
                 Plane cPlane = new Plane();
                 Double tolerance = 0;
                 while (tolerance < 400)
@@ -209,7 +215,7 @@ namespace SparrowHawk.Interaction
                         break;
                     }
                     tolerance++;
-                }
+                }*/
             }
 
             //null check
@@ -539,7 +545,7 @@ namespace SparrowHawk.Interaction
 
                 if (curvePlane != null)
                 {
-                    Rhino.Geometry.Circle circle = new Rhino.Geometry.Circle(curvePlane, origin, radius);
+                    circle = new Rhino.Geometry.Circle(curvePlane, origin, radius);
                     circleCurve = circle.ToNurbsCurve();
                     Brep[] shapes = Brep.CreatePlanarBreps(circleCurve);
                     Brep circle_s = shapes[0];
@@ -565,7 +571,7 @@ namespace SparrowHawk.Interaction
                     Vector3 rectLeftTop = new Vector3((float)rectCenter.X, (float)rectCenter.Y, (float)rectCenter.Z) + lenDiagonal * rectDiagonalV.Normalized();
                     Point3d topLeftP = new Point3d(rectLeftTop.X, rectLeftTop.Y, rectLeftTop.Z);
 
-                    Rectangle3d rect = new Rectangle3d(curvePlane, topLeftP, bottomRightP);
+                    rect = new Rectangle3d(curvePlane, topLeftP, bottomRightP);
                     rectCurve = rect.ToNurbsCurve();
                     Brep[] shapes = Brep.CreatePlanarBreps(rectCurve);
                     Brep rectBrep = shapes[0];
@@ -838,6 +844,9 @@ namespace SparrowHawk.Interaction
 
         private void generateEndCap()
         {
+
+            //TODO: using dynamicBrep cap to find endPlane, but endCurve still using the same way or using duplicate surface boarder.
+
             NurbsCurve rail = mScene.iCurveList[mScene.iCurveList.Count - 1].ToNurbsCurve();
 
             //general way to get the center of closed curve
@@ -895,9 +904,10 @@ namespace SparrowHawk.Interaction
                 {
                     Circle endCircle = new Circle(endPlane, circle.Radius);
                     mScene.iCurveList.Add(endCircle.ToNurbsCurve());
+                    mScene.iPlaneList.Add(endPlane);
                 }
 
-                Brep[] shapes = Brep.CreatePlanarBreps(mScene.iCurveList[mScene.iCurveList.Count-1]);
+                Brep[] shapes = Brep.CreatePlanarBreps(mScene.iCurveList[mScene.iCurveList.Count - 1]);
                 //don't need to update the RhinoView
                 renderObjId = Util.addSceneNodeWithoutDraw(ref mScene, shapes[0], ref profile_m, "Circle");
 
@@ -919,6 +929,7 @@ namespace SparrowHawk.Interaction
                 NurbsCurve endCurve = mScene.iCurveList[mScene.iCurveList.Count - 2].DuplicateCurve().ToNurbsCurve();
                 endCurve.Transform(tEnd);
                 mScene.iCurveList.Add(endCurve);
+                mScene.iPlaneList.Add(endPlane);
 
                 //Method 3--create new rect and add curve
                 /*
@@ -949,7 +960,18 @@ namespace SparrowHawk.Interaction
                 {
                     Brep[] shapes = Brep.CreatePlanarBreps(mScene.iCurveList[mScene.iCurveList.Count - 1]);
                     //don't need to update the RhinoView
-                    renderObjId = Util.addSceneNodeWithoutDraw(ref mScene, shapes[0], ref profile_m, "Circle");
+                    renderObjId = Util.addSceneNodeWithoutDraw(ref mScene, shapes[0], ref profile_m, "ClosedCurve");
+                    mScene.iPlaneList.Add(endPlane);
+                }
+
+                if (mScene.iCurveList[mScene.iCurveList.Count - 1].IsPlanar())
+                {
+                    mScene.iPlaneList.Add(endPlane);
+                }
+                else
+                {
+                    Plane plane = new Plane(new Point3d(-100, -100, -100), new Rhino.Geometry.Vector3d(0, 0, 0));
+                    mScene.iPlaneList.Add(plane);
                 }
 
             }
@@ -1040,7 +1062,8 @@ namespace SparrowHawk.Interaction
                     }
                 }
 
-                Circle newCircle = new Circle(curvePlane, radius);
+                Plane newPlane = new Plane(circle.Center, curvePlane.Normal);
+                Circle newCircle = new Circle(newPlane, radius);
                 List<Point3d> circlePoints = new List<Point3d>();
                 circlePoints.Add(newCircle.Center);
                 circlePoints.Add(newCircle.ToNurbsCurve().PointAtStart);
@@ -1079,7 +1102,9 @@ namespace SparrowHawk.Interaction
                 }
 
                 //Rectangle3d newRect = new Rectangle3d(curvePlane, width, height);
-                Rectangle3d newRect = new Rectangle3d(curvePlane, new Interval(-width / 2, width / 2), new Interval(-height / 2, height / 2));
+                //fix-origin change so we can't use the curvePlane directly
+                Plane newPlane = new Plane(rect.Center, curvePlane.Normal);                 
+                Rectangle3d newRect = new Rectangle3d(newPlane, new Interval(-width / 2, width / 2), new Interval(-height / 2, height / 2));
                 List<Point3d> rectPoints = new List<Point3d>();
                 rectPoints.Add(newRect.Center);
                 rectPoints.Add(newRect.Corner(3));
@@ -1114,9 +1139,10 @@ namespace SparrowHawk.Interaction
                     R = d.BeginInvoke(new AsyncCallback(modelCompleted), null);
                 }
 
-            }else if ((mScene.selectionList[1] == "Circle") && (dynamicRender == "Sweep-Circle" || dynamicRender == "Extrude-Circle"))
+            }
+            else if ((mScene.selectionList[1] == "Circle") && (dynamicRender == "Sweep-Circle" || dynamicRender == "Extrude-Circle"))
             {
-                
+
                 OpenTK.Vector3 p1 = Util.transformPoint(mScene.tableGeometry.transform.Inverted(), Util.platformToVRPoint(ref mScene, new Vector3((float)mScene.eStartP.X, (float)mScene.eStartP.Y, (float)mScene.eStartP.Z)));
                 OpenTK.Vector3 p2 = Util.transformPoint(mScene.tableGeometry.transform.Inverted(), Util.platformToVRPoint(ref mScene, new Vector3((float)mScene.sStartP.X, (float)mScene.sStartP.Y, (float)mScene.sStartP.Z)));
                 Util.MarkDebugPoint(ref mScene.tableGeometry, p1, 0f, 0f, 1f);

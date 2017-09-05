@@ -459,7 +459,7 @@ namespace SparrowHawk
             mScene.yzPlane = new DesignPlane3(ref mScene, 0);
 
 
-            
+            /*
             List<Plane> testPlaneList = new List<Plane>();
             List<Point3d> testPointList = new List<Point3d>();
             testPointList.Add(new Point3d(0, 0, 0));
@@ -476,7 +476,7 @@ namespace SparrowHawk
             Plane plane2 = testPlaneList[0];
             plane2.Transform(testRot);
             testPlaneList[0] = plane2;
-            
+            */
 
             //xzPlane = new DesignPlane(ref mScene, 1);
             //xyPlane = new DesignPlane(ref mScene, 2);

@@ -588,6 +588,36 @@ namespace SparrowHawk
             }
         }
 
+        public static void hideOtherPlanes(ref Scene mScene, string name)
+        {
+            if (name.Contains("planeXY"))
+            {
+                mScene.xyPlane.setAlpha(0.4f);
+                mScene.yzPlane.setAlpha(0f);
+                mScene.xzPlane.setAlpha(0f);
+                mScene.xAxis.material = new Material.SingleColorMaterial(1, 1, 1, 1);
+                mScene.yAxis.material = new Material.SingleColorMaterial(1, 1, 1, 1);
+                mScene.zAxis.material = new Material.SingleColorMaterial(1, 1, 1, 0);
+            }
+            else if (name.Contains("planeYZ"))
+            {
+                mScene.xyPlane.setAlpha(0f);
+                mScene.yzPlane.setAlpha(0.4f);
+                mScene.xzPlane.setAlpha(0f);
+                mScene.xAxis.material = new Material.SingleColorMaterial(1, 1, 1, 0);
+                mScene.yAxis.material = new Material.SingleColorMaterial(1, 1, 1, 1);
+                mScene.zAxis.material = new Material.SingleColorMaterial(1, 1, 1, 1);
+            }
+            else if (name.Contains("planeXZ"))
+            {
+                mScene.xyPlane.setAlpha(0f);
+                mScene.yzPlane.setAlpha(0f);
+                mScene.xzPlane.setAlpha(0.4f);
+                mScene.xAxis.material = new Material.SingleColorMaterial(1, 1, 1, 1);
+                mScene.yAxis.material = new Material.SingleColorMaterial(1, 1, 1, 0);
+                mScene.zAxis.material = new Material.SingleColorMaterial(1, 1, 1, 1);
+            }
+        }
 
         public static Guid addSceneNodeWithoutDraw(ref Scene mScene, Brep brep, ref Material.Material mesh_m, string name)
         {
@@ -629,6 +659,18 @@ namespace SparrowHawk
             else
             {
                 return Guid.Empty;
+            }
+        }
+
+        public static void removeSceneNodeWithoutDraw(ref Scene mScene, Guid guid)
+        {
+            foreach (SceneNode sn in mScene.tableGeometry.children)
+            {
+                if (sn.guid == guid)
+                {
+                    mScene.tableGeometry.children.Remove(sn);
+                    break;
+                }
             }
         }
 
@@ -826,6 +868,23 @@ namespace SparrowHawk
                 }
             }
 
+        }
+
+        public static void removeStaticSceneNode(ref Scene mScene, Guid guid)
+        {
+            SceneNode deleteSN = mScene.brepToSceneNodeDic[guid];
+            mScene.brepToSceneNodeDic.Remove(guid);
+            mScene.SceneNodeToBrepDic.Remove(deleteSN.guid);
+
+            mScene.rhinoDoc.Objects.Delete(guid, true);
+            foreach (SceneNode sn in mScene.staticGeometry.children)
+            {
+                if (sn.guid == deleteSN.guid)
+                {
+                    mScene.staticGeometry.children.Remove(sn);
+                    break;
+                }
+            }
         }
 
         public static void clearAllModel(ref Scene mScene)
