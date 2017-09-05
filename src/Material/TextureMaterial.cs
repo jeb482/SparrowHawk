@@ -71,6 +71,30 @@ namespace SparrowHawk.Material
             GL.BindTexture(TextureTarget.Texture2D, 0);
         }
 
+        /**
+         * Create a texture material from a framebuffer object. It will need to be updated
+         */
+        public TextureMaterial(Rhino.RhinoDoc doc, int framebufferId, int width, int height)
+        {
+            texWidth = width;
+            texHeight = height;
+
+            mDoc = doc;
+            mShader = new GLShader();
+            mShader.init("TextureMaterial", ShaderSource.TextureVertShader, ShaderSource.TextureFragShader);
+            mShader.bind();
+
+            m_iTexture = GL.GenTexture();
+            GL.BindFramebuffer(FramebufferTarget.ReadFramebuffer, framebufferId);
+            GL.BindTexture(TextureTarget.Texture2D, m_iTexture);
+            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Linear);
+            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Linear);
+            GL.CopyTexSubImage2D(TextureTarget.Texture2D, 0, 0, 0, 0, 0, width, height);
+
+            GL.BindTexture(TextureTarget.Texture2D, 0);
+            GL.BindFramebuffer(FramebufferTarget.ReadFramebuffer, 0);
+        }
+
         public override void draw(ref Geometry.Geometry g, ref Matrix4 model, ref Matrix4 vp)
         {
             ErrorCode e;
@@ -109,6 +133,16 @@ namespace SparrowHawk.Material
             GL.ActiveTexture(TextureUnit.Texture0);
             GL.BindTexture(TextureTarget.Texture2D, m_iTexture);
             GL.TexSubImage2D(TextureTarget.Texture2D, 0, 0, 0, texWidth, texHeight, OpenTK.Graphics.OpenGL4.PixelFormat.Bgr, PixelType.UnsignedByte, texture);
+        }
+
+        public void updateTextureFromFramebuffer(int framebufferId)
+        {
+            GL.BindFramebuffer(FramebufferTarget.ReadFramebuffer, framebufferId);
+            GL.BindTexture(TextureTarget.Texture2D, m_iTexture);
+            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Linear);
+            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Linear);
+            GL.CopyTexSubImage2D(TextureTarget.Texture2D, 0, 0, 0, 0, 0, texWidth, texHeight);
+            GL.BindFramebuffer(FramebufferTarget.ReadFramebuffer, 0);
         }
 
     }
