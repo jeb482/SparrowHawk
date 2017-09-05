@@ -310,10 +310,57 @@ namespace SparrowHawk
 
         public void renderCompanionWindow()
         {
+            //// Temp: move it to a single startup method. 
+            //Geometry.Geometry fs_quad_g = new Geometry.Geometry();
+            //fs_quad_g.mGeometry = new float[12] {-1.0f, 1.0f, 0.0f,
+            //                                                 1.0f,  1.0f, 0.0f,
+            //                                                 1.0f, -1.0f, 0.0f,
+            //                                                 -1.0f, -1.0f, 0.0f};
+            //
+            //fs_quad_g.mGeometryIndices = new int[6]{ 0, 1, 2,
+            //                                                 2, 3, 0};
+            //fs_quad_g.mUvs = new float[8] { 0.0f, 0.0f,
+            //                                    1.0f, 0.0f,
+            //                                    1.0f, 1.0f,
+            //                                    0.0f, 1.0f};
+            //
+            //fs_quad_g.mNumPrimitives = 2;
+            //fs_quad_g.primitiveType = BeginMode.Triangles;
+            //
+            //
+            //
+            //GL.BindFramebuffer(FramebufferTarget.ReadFramebuffer, rightEyeDesc.renderFramebufferId);
+            ////Material.TextureMaterial mat = new Material.TextureMaterial(mScene.rhinoDoc, rightEyeDesc.renderFramebufferId, (int) vrRenderWidth, (int) vrRenderHeight);
+            //
+            ////mat.updateTextureFromFramebuffer(rightEyeDesc.renderFramebufferId);
+            ////GL.Disable(EnableCap.DepthTest);
+            ////Matrix4 model = new Matrix4(Vector4.UnitX, Vector4.UnitY, Vector4.UnitZ, Vector4.UnitW);
+            ////Matrix4 vp = new Matrix4(Vector4.UnitX, Vector4.UnitY, Vector4.UnitZ, Vector4.UnitW*.000000000000001f);
+            ////Material.SingleColorMaterial mat = new Material.SingleColorMaterial(1, 1, 0, 1);
+            //
+            //var mat = new Material.NaiveMaterial(mScene.rhinoDoc);
+            //GL.BindFramebuffer(FramebufferTarget.DrawFramebuffer, 0);
+            //GL.BindFramebuffer(FramebufferTarget.Framebuffer, 0);
+            //GL.BindFramebuffer(FramebufferTarget.ReadFramebuffer, 0);
+            //GL.BindFramebuffer(FramebufferTarget.FramebufferExt, 0);
+            //GL.ClearColor(0, 0, 1,1);
+            //GL.Clear( ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
+            //var m = new Matrix4(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1);
+            //var vp = new Matrix4(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1);
+            //mat.draw(ref fs_quad_g, ref m, ref vp);
+            
             GL.BindFramebuffer(FramebufferTarget.ReadFramebuffer, rightEyeDesc.renderFramebufferId);
             GL.BindFramebuffer(FramebufferTarget.DrawFramebuffer, 0);
-            GL.BlitFramebuffer(0, 0, (int)vrRenderWidth, (int)vrRenderHeight, 0, 0, (int)vrRenderWidth, (int)vrRenderHeight, ClearBufferMask.ColorBufferBit, BlitFramebufferFilter.Linear);
+            if (enableAR)
+            {
+                int ox = ((int)vrRenderWidth - ovrvision_controller.camWidth) / 2;
+                int oy = ((int)vrRenderHeight - ovrvision_controller.camHeight) / 2;
+                GL.BlitFramebuffer(ox + 100, oy, ovrvision_controller.camWidth, ovrvision_controller.camHeight, 0, 0, ovrvision_controller.camWidth, ovrvision_controller.camHeight, ClearBufferMask.ColorBufferBit, BlitFramebufferFilter.Linear);
+            } 
+            else
+                GL.BlitFramebuffer(0, 0, (int)vrRenderWidth, (int)vrRenderHeight, 0, 0, (int)vrRenderWidth, (int)vrRenderHeight, ClearBufferMask.ColorBufferBit, BlitFramebufferFilter.Linear);
             GL.BindFramebuffer(FramebufferTarget.ReadFramebuffer, 0);
+            
         }
 
         
