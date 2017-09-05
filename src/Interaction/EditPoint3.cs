@@ -76,7 +76,7 @@ namespace SparrowHawk.Interaction
         float radius = 0;
         float width = 0;
         float height = 0;
-        float delta = 10;
+        float delta = 2;
 
         float mCurrentRadius;
         float mMinSelectionRadius;
@@ -1032,15 +1032,18 @@ namespace SparrowHawk.Interaction
                     selectedSector = 0;
                 }
 
+                editCircleRect(selectedSector);
+
             }
-            else
+            else // //trigger change size. discrete changing
             {
                 //trigger change size. discrete changing
+                /*
                 if (selectedSector != 0)
                 {
                     editCircleRect(selectedSector);
                     selectedSector = 0;
-                }
+                }*/
             }
         }
 

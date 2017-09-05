@@ -36,6 +36,7 @@ namespace SparrowHawk.Interaction
         float radius = 20;
         float width = 40;
         float height = 30;
+        private float delta = 5;
 
         private Plane modelPlane;
         private float planeSize = 240;
@@ -130,15 +131,16 @@ namespace SparrowHawk.Interaction
                     selectedSector = 0;
                 }
 
+                changeSize(selectedSector);
             }
-            else
+            else //trigger change size. discrete changing
             {
-                //trigger change size. discrete changing
+                /*
                 if (selectedSector != 0)
                 {
                     changeSize(selectedSector);
                     selectedSector = 0;
-                }
+                }*/
             }
 
             createModel();
@@ -153,11 +155,11 @@ namespace SparrowHawk.Interaction
             {
                 if (sector == 1)
                 {
-                    radius += 20;
+                    radius += delta;
                 }
                 else if (sector == 3)
                 {
-                    radius -= 20;
+                    radius -= delta;
                     if (radius <= 0)
                     {
                         radius = 0;
@@ -168,11 +170,11 @@ namespace SparrowHawk.Interaction
             {
                 if (sector == 1)
                 {
-                    width += 20;
+                    width += delta;
                 }
                 else if (sector == 3)
                 {
-                    width -= 20;
+                    width -= delta;
                     if (width <= 0)
                     {
                         width = 0;
@@ -180,11 +182,11 @@ namespace SparrowHawk.Interaction
                 }
                 else if (sector == 2)
                 {
-                    height += 20;
+                    height += delta;
                 }
                 else if (sector == 4)
                 {
-                    height -= 20;
+                    height -= delta;
                     if (height <= 0)
                     {
                         height = 0;
@@ -247,10 +249,13 @@ namespace SparrowHawk.Interaction
                 modelcurve = rect.ToNurbsCurve();
             }
 
-            Brep[] shapes = Brep.CreatePlanarBreps(modelcurve);
-            modelBrep = shapes[0];
+            if (modelcurve != null)
+            {
+                Brep[] shapes = Brep.CreatePlanarBreps(modelcurve);
+                modelBrep = shapes[0];
 
-            renderObjId = Util.addSceneNodeWithoutDraw(ref mScene, modelBrep, ref mesh_m, "3D-" + renderType);
+                renderObjId = Util.addSceneNodeWithoutDraw(ref mScene, modelBrep, ref mesh_m, "3D-" + renderType);
+            }
 
         }
 
