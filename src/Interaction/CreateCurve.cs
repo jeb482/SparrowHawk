@@ -60,6 +60,8 @@ namespace SparrowHawk.Interaction
         public string dynamicRender = "none";
         private Material.Material mesh_m;
 
+        private List<Vector3> snapPointsList = new List<Vector3>();
+
         public CreateCurve(ref Scene scene) : base(ref scene)
         {
             stroke_g = new Geometry.GeometryStroke(ref mScene);
@@ -96,6 +98,8 @@ namespace SparrowHawk.Interaction
             dynamicRender = renderType;
             mesh_m = new Material.RGBNormalMaterial(0.5f);
 
+            snapPointsList.Clear();
+
             if (type != 0)
             {
 
@@ -109,6 +113,8 @@ namespace SparrowHawk.Interaction
                     PlaneSurface plane_surface2 = new PlaneSurface(mScene.iPlaneList[mScene.iPlaneList.Count - 1], new Interval(-planeSize, planeSize), new Interval(-planeSize, planeSize));
                     Brep railPlane2 = Brep.CreateFromSurface(plane_surface2);
                     Util.addSceneNode(ref mScene, railPlane2, ref mesh_m, "railPlane");
+
+                    snapPointsList.Add(Util.platformToVRPoint(ref mScene, Util.RhinoToOpenTKPoint(railPlane2.GetBoundingBox(true).Center)));
                 }
 
             }
@@ -136,6 +142,7 @@ namespace SparrowHawk.Interaction
                     //render the object plane
                     float planeSize = 240;
                     PlaneSurface plane_surface2 = new PlaneSurface(mScene.iPlaneList[mScene.iPlaneList.Count - 1], new Interval(-planeSize, planeSize), new Interval(-planeSize, planeSize));
+                    
                     Brep railPlane2 = Brep.CreateFromSurface(plane_surface2);
                     Util.addSceneNode(ref mScene, railPlane2, ref mesh_m, "railPlane");
                 }
@@ -197,6 +204,8 @@ namespace SparrowHawk.Interaction
                             }
                         }
                     }
+
+                    projectP = snapToPoints(projectP, snapPointsList);
                 }
                 else
                 {
@@ -528,6 +537,23 @@ namespace SparrowHawk.Interaction
             backgroundStart = false;
             displacement = 0;
 
+        }
+
+        private Vector3 snapToPoints(Vector3 projectP, List<Vector3> pointsList)
+        {
+            bool snap = false;
+            foreach (Vector3 p in pointsList)
+            {
+                //snap to origin
+                if (Math.Sqrt(Math.Pow(projectP.X - p.X, 2) + Math.Pow(projectP.Y - p.Y, 2) + Math.Pow(projectP.Z - p.Z, 2)) < 0.02)
+                {
+                    projectP = p;
+                    snap = true;
+                    break;
+                }
+            }
+
+            return projectP;
         }
 
         protected override void onClickOculusTrigger(ref VREvent_t vrEvent)
