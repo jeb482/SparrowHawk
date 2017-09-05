@@ -1139,19 +1139,29 @@ namespace SparrowHawk
 
             //TODO- transM everytime is different in rotation. However, circle is fine since we won't see the roation.
             OpenTK.Matrix4 transM = Util.getCoordinateTransM(shapeCenter, railStartPoint, shapeNormal, railNormal);
-            Rhino.RhinoApp.WriteLine("railNormal: " + railNormal.ToString());
-            Rhino.RhinoApp.WriteLine("transM: " + transM.ToString());
-            //TODO-rotating to align rect. but need to know the drawplane noraml to allign with
-            //testing
-            curvePlane.Transform(Util.OpenTKToRhinoTransform(transM));
-            OpenTK.Vector3 testAxis = Util.RhinoToOpenTKPoint(curvePlane.XAxis).Normalized();
-            //OpenTK.Matrix4 transM2 = Util.getTransMAroundAxis(railStartPoint, testAxis, new Vector3(1, 0, 0), Util.RhinoToOpenTKPoint(curvePlane.Normal)); //still affect by the different normal
-            OpenTK.Matrix4 transM2 = Util.getCoordinateTransM(railStartPoint, railStartPoint, testAxis, new Vector3(1, 0, 0));
-            Transform t = Util.OpenTKToRhinoTransform(transM2 * transM);
-            Rhino.RhinoApp.WriteLine("angle: " + OpenTK.Vector3.CalculateAngle(testAxis, new Vector3(1, 0, 0)));
+            //Rhino.RhinoApp.WriteLine("railNormal: " + railNormal.ToString());
+            //Rhino.RhinoApp.WriteLine("transM: " + transM.ToString());
+           
+            Transform t = new Transform();
+            if (mScene.selectionList[1] == "Circle")
+            {
+                 t = Util.OpenTKToRhinoTransform(transM);
+                ((NurbsCurve)curveList[curveList.Count - 2]).Transform(t);
+            }
+            else if (mScene.selectionList[1] == "Rect")
+            {
+                //TODO-rotating to align rect. but need to know the drawplane noraml to allign with
+                curvePlane.Transform(Util.OpenTKToRhinoTransform(transM));
+                OpenTK.Vector3 testAxis = Util.RhinoToOpenTKPoint(curvePlane.XAxis).Normalized();
+                //OpenTK.Matrix4 transM2 = Util.getTransMAroundAxis(railStartPoint, testAxis, new Vector3(1, 0, 0), Util.RhinoToOpenTKPoint(curvePlane.Normal)); //still affect by the different normal
+                OpenTK.Matrix4 transM2 = Util.getCoordinateTransM(railStartPoint, railStartPoint, testAxis, Util.RhinoToOpenTKPoint(mScene.iPlaneList[mScene.iPlaneList.Count-2].Normal));
+                t = Util.OpenTKToRhinoTransform(transM2 * transM);
+                Rhino.RhinoApp.WriteLine("angle: " + OpenTK.Vector3.CalculateAngle(testAxis, new Vector3(1, 0, 0)));
 
-            ////Transform t = Util.OpenTKToRhinoTransform(transM);
-            ((NurbsCurve)curveList[curveList.Count - 2]).Transform(t);
+                ////Transform t = Util.OpenTKToRhinoTransform(transM);
+                ((NurbsCurve)curveList[curveList.Count - 2]).Transform(t);
+            }
+        
 
             NurbsCurve circleCurve = (NurbsCurve)curveList[curveList.Count - 2];
 
@@ -1206,8 +1216,11 @@ namespace SparrowHawk
                 startP.Transform(tStartEnd);
                 mScene.eStartP = new Point3d(startP);
 
-                OpenTK.Vector3 n1 = new Vector3((float)curvePlane1.Normal.X, (float)curvePlane1.Normal.Y, (float)curvePlane1.Normal.Z);
-                OpenTK.Vector3 n2 = new Vector3((float)curvePlane2.Normal.X, (float)curvePlane2.Normal.Y, (float)curvePlane2.Normal.Z);
+                //OpenTK.Vector3 n1 = new Vector3((float)curvePlane1.Normal.X, (float)curvePlane1.Normal.Y, (float)curvePlane1.Normal.Z);
+                //OpenTK.Vector3 n2 = new Vector3((float)curvePlane2.Normal.X, (float)curvePlane2.Normal.Y, (float)curvePlane2.Normal.Z);
+
+                OpenTK.Vector3 n1 = railStartNormal;
+                OpenTK.Vector3 n2 = railEndNormal;
 
                 //n1,n2 should be the same with railNormal and railEndNormal
                 n1.Normalize();
@@ -1215,8 +1228,8 @@ namespace SparrowHawk
 
                 //angle = atan2(norm(cross(a,b)), dot(a,b))
                 float angle = Vector3.Dot(n1, n2);
-                CurveOrientation dir = profileCurves[0].ClosedCurveOrientation(curvePlane1.Normal); //new Vector3(0,0,1)
-                CurveOrientation dir2 = profileCurves[1].ClosedCurveOrientation(curvePlane2.Normal); //new Vector3(0,0,1)
+                CurveOrientation dir = profileCurves[0].ClosedCurveOrientation(new Rhino.Geometry.Vector3d(n1.X,n1.Y,n1.Z)); //new Vector3(0,0,1)
+                CurveOrientation dir2 = profileCurves[1].ClosedCurveOrientation(new Rhino.Geometry.Vector3d(n2.X, n2.Y, n2.Z)); //new Vector3(0,0,1)
 
                 //debugging
                 mScene.angleD = angle;
@@ -1235,10 +1248,12 @@ namespace SparrowHawk
                 }
                 else
                 {
+                    //TODO- somehow it didn't work
+                    /*
                     if (dir == dir2)
                     {
                         profileCurves[1].Reverse();
-                    }
+                    }*/
 
                 }
 
@@ -1346,7 +1361,7 @@ namespace SparrowHawk
                 return breps[0];
 
             }
-            else if(mScene.selectionList[0] == "Extrude")
+            else if (mScene.selectionList[0] == "Extrude")
             {
                 if (mScene.selectionList[1] == "Rect")
                 {

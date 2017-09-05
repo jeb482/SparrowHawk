@@ -290,18 +290,23 @@ namespace SparrowHawk.Interaction
             OpenTK.Vector3 worldUpAxis = new Vector3(0, 0, 1); //in Rhino z axis is up
             OpenTK.Vector3 planeXAxis = Util.RhinoToOpenTKPoint(modelPlane.XAxis);
             OpenTK.Vector3 planeYAxis = Util.RhinoToOpenTKPoint(modelPlane.YAxis);
-            float xAngle = Math.Abs(OpenTK.Vector3.CalculateAngle(planeXAxis, worldUpAxis));
-            float yAngle = Math.Abs(OpenTK.Vector3.CalculateAngle(planeYAxis, worldUpAxis));
+
+            Plane planeX = new Plane(modelPlane.Origin, modelPlane.XAxis);
+            Plane planeY = new Plane(modelPlane.Origin, modelPlane.YAxis);
+
+            float xAngle = OpenTK.Vector3.CalculateAngle(Util.RhinoToOpenTKPoint(planeX.Normal), worldUpAxis);
+            float yAngle = OpenTK.Vector3.CalculateAngle(Util.RhinoToOpenTKPoint(planeY.Normal), worldUpAxis);
             Rhino.Geometry.Vector3d normal2;
+            Plane plane2;
             if (xAngle < yAngle)
             {
-                normal2 = modelPlane.YAxis;
+                plane2 = planeY;
             }
             else
             {
-                normal2 = modelPlane.XAxis;
+                plane2 = planeX;
             }
-            Plane plane2 = new Plane(modelPlane.Origin, normal2);
+
             PlaneSurface plane_surface2 = new PlaneSurface(plane2, new Interval(-planeSize, planeSize), new Interval(-planeSize, planeSize));
             Brep railPlane = Brep.CreateFromSurface(plane_surface2);
             Util.addSceneNode(ref mScene, railPlane, ref mesh_m, "railPlane");

@@ -220,6 +220,8 @@ namespace SparrowHawk.Interaction
                 OpenTK.Matrix4 t = OpenTK.Matrix4.CreateTranslation(Util.transformPoint(mScene.tableGeometry.transform.Inverted(), projectP));
                 t.Transpose();
                 drawPoint.transform = t;
+
+                curveOnObj = targetPRhObj;
             }
 
             if (currentState != State.PAINT || !isTop)
@@ -238,7 +240,7 @@ namespace SparrowHawk.Interaction
                     ((Geometry.GeometryStroke)stroke_g).addPoint(pos);
                     rhinoCurvePoints.Add(Util.openTkToRhinoPoint(Util.vrToPlatformPoint(ref mScene, pos)));
                     //store the targeObj
-                    curveOnObj = targetPRhObj;
+                    //curveOnObj = targetPRhObj;
                 }
 
             }
@@ -478,6 +480,56 @@ namespace SparrowHawk.Interaction
                 stroke_g = new Geometry.GeometryStroke(ref mScene);
                 reducePoints = new List<Vector3>();
                 currentState = State.PAINT;
+
+                //hide two other design plane
+                if (curveOnObj != null && type == 1)
+                {
+                    Util.hideOtherPlanes(ref mScene, curveOnObj.Attributes.Name);
+                }
+
+                //detecting plane
+                Double tolerance = 0;
+                Plane curvePlane = new Plane();
+                if (type != 0)
+                {
+                    Brep targetBrep = (Brep)(curveOnObj.Geometry);
+
+                    //TODO- topLeftP won't be on the face in the 3D case. so probably use orgin
+                    Point3d projectPRhino = Util.openTkToRhinoPoint(Util.vrToPlatformPoint(ref mScene, projectP));
+                    int faceIndex = -1;
+                    for (int i = 0; i < targetBrep.Faces.Count; i++)
+                    {
+                        //cast BrepFace to Brep for ClosestPoint(P) menthod
+                        double dist = targetBrep.Faces[i].DuplicateFace(false).ClosestPoint(projectPRhino).DistanceTo(projectPRhino);
+                        //debuging mScene.rhinoDoc.ModelAbsoluteTolerance                   
+                        if (dist < mScene.rhinoDoc.ModelAbsoluteTolerance)
+                        {
+                            faceIndex = i;
+                            break;
+                        }
+                    }
+                    Surface s = targetBrep.Faces[faceIndex];
+                    //surface might not be a perfect planar surface                     
+                    while (tolerance < 100)
+                    {
+                        if (s.TryGetPlane(out curvePlane, tolerance))
+                        {
+                            break;
+                        }
+                        tolerance++;
+                    }
+                }
+
+                //add plane to iPlaneList since Sweep fun need it's info
+                if (tolerance < 100)
+                {
+                    mScene.iPlaneList.Add(curvePlane);
+                }
+                else
+                {
+                    curvePlane = new Plane(new Point3d(-100, -100, -100), new Rhino.Geometry.Vector3d(0, 0, 0));
+                    mScene.iPlaneList.Add(curvePlane);
+                }
             }
 
         }
@@ -497,48 +549,13 @@ namespace SparrowHawk.Interaction
 
                     //add to Scene curve object ,targetRhobj and check the next interaction
 
-                    //detecting plane
-                    Double tolerance = 0;
-                    Plane curvePlane = new Plane();
-                    if (type != 0)
-                    {
-                        Brep targetBrep = (Brep)(curveOnObj.Geometry);
-
-                        //TODO- topLeftP won't be on the face in the 3D case. so probably use orgin
-                        int faceIndex = -1;
-                        for (int i = 0; i < targetBrep.Faces.Count; i++)
-                        {
-                            //cast BrepFace to Brep for ClosestPoint(P) menthod
-                            double dist = targetBrep.Faces[i].DuplicateFace(false).ClosestPoint(simplifiedCurve.PointAtStart).DistanceTo(simplifiedCurve.PointAtStart);
-                            //debuging mScene.rhinoDoc.ModelAbsoluteTolerance                   
-                            if (dist < mScene.rhinoDoc.ModelAbsoluteTolerance)
-                            {
-                                faceIndex = i;
-                                break;
-                            }
-                        }
-                        Surface s = targetBrep.Faces[faceIndex];                        
-                        //surface might not be a perfect planar surface                     
-                        while (tolerance < 100)
-                        {
-                            if (s.TryGetPlane(out curvePlane, tolerance))
-                            {
-                                break;
-                            }
-                            tolerance++;
-                        }
-                    }
-
+                   
                     if (dynamicRender == "none")
                     {
                         mScene.iCurveList.Add(simplifiedCurve);
                         if (type != 0 && curveOnObj != null)
                         {
                             mScene.iRhObjList.Add(curveOnObj);
-                            if (tolerance < 100)
-                            {
-                                mScene.iPlaneList.Add(curvePlane);
-                            }
                         }
 
                     }
@@ -558,20 +575,8 @@ namespace SparrowHawk.Interaction
                         {
                             mScene.iRhObjList[mScene.iRhObjList.Count - 1] = curveOnObj;
 
-                            if (tolerance < 100)
-                            {
-                                mScene.iPlaneList.Add(curvePlane);
-                            }
-
                         }
-                        else
-                        {
-                            curvePlane = new Plane(new Point3d(-100, -100, -100), new Rhino.Geometry.Vector3d(0, 0, 0));
-                            mScene.iPlaneList.Add(curvePlane);
-                        }
-
-
-
+                        
                     }
 
                     //go to editcurve interaction

@@ -447,8 +447,6 @@ namespace SparrowHawk.Interaction
                 {
                     curvePlane = new Plane(new Point3d(-100, -100, -100), new Rhino.Geometry.Vector3d(0, 0, 0));
                     mScene.iPlaneList.Add(curvePlane);
-
-
                 }
 
                 lockPlane = false;
