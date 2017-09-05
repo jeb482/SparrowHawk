@@ -717,7 +717,7 @@ namespace SparrowHawk.Interaction
                 {
                     if (dynamicRender == "Revolve" || dynamicRender == "Loft" || dynamicRender == "Sweep-Circle" || dynamicRender == "Sweep-Rect" || dynamicRender == "Extrude-Circle" || dynamicRender == "Extrude-Rect")
                     {
-                        if (sn.name.Contains("tprint") || sn.name == "EditCurve" || sn.name == "drawPoint" || sn.name == "EditPoint" || sn.name.Contains("panel") || sn.name.Contains("Circle") || sn.name.Contains("Rect"))
+                        if (sn.name.Contains("tprint") || sn.name == "EditCurve" || sn.name == "drawPoint" || sn.name == "EditPoint" || sn.name.Contains("panel") || sn.name.Contains("Circle") || sn.name.Contains("Rect") || sn.name.Contains("railPlane"))
                         {
                             //only panel will create RhinoObj for ray-tracing
                             if (sn.name.Contains("panel"))
@@ -900,11 +900,13 @@ namespace SparrowHawk.Interaction
                 //Method 3--create new circle and add curve
 
                 Circle circle;
-                if (mScene.iCurveList[mScene.iCurveList.Count - 2].TryGetCircle(out circle))
+                if (mScene.iCurveList[mScene.iCurveList.Count - 2].TryGetCircle(out circle, mScene.rhinoDoc.ModelAbsoluteTolerance * 2.1))
                 {
                     Circle endCircle = new Circle(endPlane, circle.Radius);
                     mScene.iCurveList.Add(endCircle.ToNurbsCurve());
                     mScene.iPlaneList.Add(endPlane);
+                    mScene.iPointList.Add(Util.platformToVRPoint(ref mScene, Util.RhinoToOpenTKPoint(endCircle.Center)));
+                    mScene.iPointList.Add(Util.platformToVRPoint(ref mScene, Util.RhinoToOpenTKPoint(endCircle.PointAt(0))));
                 }
 
                 Brep[] shapes = Brep.CreatePlanarBreps(mScene.iCurveList[mScene.iCurveList.Count - 1]);
@@ -930,6 +932,14 @@ namespace SparrowHawk.Interaction
                 endCurve.Transform(tEnd);
                 mScene.iCurveList.Add(endCurve);
                 mScene.iPlaneList.Add(endPlane);
+
+                Rhino.Geometry.Polyline polyline;
+                if (endCurve.TryGetPolyline(out polyline))
+                {
+                    Rectangle3d endRect = Rectangle3d.CreateFromPolyline(polyline);
+                    mScene.iPointList.Add(Util.platformToVRPoint(ref mScene, Util.RhinoToOpenTKPoint(endRect.Center)));
+                    mScene.iPointList.Add(Util.platformToVRPoint(ref mScene, Util.RhinoToOpenTKPoint(endRect.Corner(3))));
+                }
 
                 //Method 3--create new rect and add curve
                 /*

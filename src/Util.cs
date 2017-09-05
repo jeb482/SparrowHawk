@@ -1154,7 +1154,7 @@ namespace SparrowHawk
                 curvePlane.Transform(Util.OpenTKToRhinoTransform(transM));
                 OpenTK.Vector3 testAxis = Util.RhinoToOpenTKPoint(curvePlane.XAxis).Normalized();
                 //OpenTK.Matrix4 transM2 = Util.getTransMAroundAxis(railStartPoint, testAxis, new Vector3(1, 0, 0), Util.RhinoToOpenTKPoint(curvePlane.Normal)); //still affect by the different normal
-                OpenTK.Matrix4 transM2 = Util.getCoordinateTransM(railStartPoint, railStartPoint, testAxis, Util.RhinoToOpenTKPoint(mScene.iPlaneList[mScene.iPlaneList.Count-2].Normal));
+                OpenTK.Matrix4 transM2 = Util.getCoordinateTransM(railStartPoint, railStartPoint, testAxis, Util.RhinoToOpenTKPoint(mScene.iPlaneList[mScene.iPlaneList.Count-1].Normal));
                 t = Util.OpenTKToRhinoTransform(transM2 * transM);
                 Rhino.RhinoApp.WriteLine("angle: " + OpenTK.Vector3.CalculateAngle(testAxis, new Vector3(1, 0, 0)));
 
@@ -1254,6 +1254,11 @@ namespace SparrowHawk
                     {
                         profileCurves[1].Reverse();
                     }*/
+
+                    if (dir != dir2)
+                    {
+                        profileCurves[1].Reverse();
+                    }
 
                 }
 

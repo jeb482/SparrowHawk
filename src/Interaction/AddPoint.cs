@@ -78,6 +78,8 @@ namespace SparrowHawk.Interaction
             {
                 // visualizing projection point with white color
                 drawPoint = Util.MarkProjectionPoint(ref mScene, new OpenTK.Vector3(0, 0, 0), 1, 1, 1);
+                contourCurve = null;
+                snapPointsList.Clear();
             }
         }
 
@@ -94,6 +96,8 @@ namespace SparrowHawk.Interaction
             {
                 // visualizing projection point with white color
                 drawPoint = Util.MarkProjectionPoint(ref mScene, new OpenTK.Vector3(0, 0, 0), 1, 1, 1);
+                contourCurve = null;
+                snapPointsList.Clear();
             }
         }
 
@@ -246,7 +250,7 @@ namespace SparrowHawk.Interaction
                 if (hitPlane && type != 0)
                 {
                     //create contour curve and snap points
-                    if(contourCurve == null)
+                    if(!lockPlane)
                         computeContourCurve();
                     projectP = snapToPoints(projectP, snapPointsList);
 
@@ -451,6 +455,33 @@ namespace SparrowHawk.Interaction
 
                 lockPlane = false;
                 clearDrawing();
+
+                //reset predefined plane position and delete the old one
+                //need to careful about rhinoObjList. update it before we delete it
+                DesignPlane3 tempXY = new DesignPlane3(ref mScene, 2);
+                DesignPlane3 tempYZ = new DesignPlane3(ref mScene, 0);
+                DesignPlane3 tempXZ = new DesignPlane3(ref mScene, 1);
+                for (int i = 0; i < mScene.iRhObjList.Count; i++)
+                {
+                    if (mScene.iRhObjList[i].Id == mScene.xyPlane.guid)
+                    {
+                        mScene.iRhObjList[i] = mScene.rhinoDoc.Objects.Find(tempXY.guid);
+                    } else if (mScene.iRhObjList[i].Id == mScene.yzPlane.guid)
+                    {
+                        mScene.iRhObjList[i] = mScene.rhinoDoc.Objects.Find(tempYZ.guid);
+                    } else if (mScene.iRhObjList[i].Id == mScene.xzPlane.guid)
+                    {
+                        mScene.iRhObjList[i] = mScene.rhinoDoc.Objects.Find(tempXZ.guid);
+                    }
+                }                
+                Util.removeStaticSceneNode(ref mScene, mScene.xyPlane.guid);
+                Util.removeStaticSceneNode(ref mScene, mScene.yzPlane.guid);
+                Util.removeStaticSceneNode(ref mScene, mScene.xzPlane.guid);
+                mScene.xyPlane = tempXY;
+                mScene.yzPlane = tempYZ;
+                mScene.xzPlane = tempXZ;
+
+
                 mScene.popInteraction();
                 if (!mScene.interactionStackEmpty())
                     mScene.peekInteraction().init();

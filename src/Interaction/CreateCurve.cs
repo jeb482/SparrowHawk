@@ -102,6 +102,15 @@ namespace SparrowHawk.Interaction
                 // visualizing projection point with white color
                 drawPoint = Util.MarkProjectionPoint(ref mScene, new OpenTK.Vector3(0, 0, 0), 1, 1, 1);
 
+                if (type == 3)
+                {
+                    //render the object plane
+                    float planeSize = 240;
+                    PlaneSurface plane_surface2 = new PlaneSurface(mScene.iPlaneList[mScene.iPlaneList.Count - 1], new Interval(-planeSize, planeSize), new Interval(-planeSize, planeSize));
+                    Brep railPlane2 = Brep.CreateFromSurface(plane_surface2);
+                    Util.addSceneNode(ref mScene, railPlane2, ref mesh_m, "railPlane");
+                }
+
             }
             d = new generateModel_Delegate(generateModel);
         }
@@ -121,6 +130,15 @@ namespace SparrowHawk.Interaction
             {
                 // visualizing projection point with white color
                 drawPoint = Util.MarkProjectionPoint(ref mScene, new OpenTK.Vector3(0, 0, 0), 1, 1, 1);
+
+                if (type == 3)
+                {
+                    //render the object plane
+                    float planeSize = 240;
+                    PlaneSurface plane_surface2 = new PlaneSurface(mScene.iPlaneList[mScene.iPlaneList.Count - 1], new Interval(-planeSize, planeSize), new Interval(-planeSize, planeSize));
+                    Brep railPlane2 = Brep.CreateFromSurface(plane_surface2);
+                    Util.addSceneNode(ref mScene, railPlane2, ref mesh_m, "railPlane");
+                }
             }
         }
 
@@ -391,6 +409,48 @@ namespace SparrowHawk.Interaction
 
                         dynamicBrep = Util.ExtrudeFunc(ref mScene, ref mScene.iCurveList);
 
+                    }else
+                    {
+                        //assume only one intersect point
+                        //compute the brepFace where the intersection is on
+                        int faceIndex = -1;
+                        float mimD = 1000000f;
+                        for (int i = 0; i < targetBrep.Faces.Count; i++)
+                        {
+                            //cast BrepFace to Brep for ClosestPoint(P) menthod
+                            double dist = targetBrep.Faces[i].DuplicateFace(false).ClosestPoint(simplifiedCurve.PointAtStart).DistanceTo(simplifiedCurve.PointAtStart);
+                            //tolerance mScene.rhinoDoc.ModelAbsoluteTolerance too low
+                            if (dist < mimD)
+                            {
+                                mimD = (float)dist;
+                                faceIndex = i;
+                            }
+                        }
+
+                        List<Point3d> extrudeCurveP = new List<Point3d>();
+                        extrudeCurveP.Add(((Surface)targetBrep.Faces[faceIndex]).GetBoundingBox(true).Center);
+                        extrudeCurveP.Add(simplifiedCurve.PointAtEnd);
+                        //update the edit curve
+                        editCurve = Rhino.Geometry.NurbsCurve.Create(false, 1, extrudeCurveP.ToArray());
+
+                        if (mScene.iCurveList.Count == 1)
+                        {
+                            mScene.iCurveList.Add(editCurve);
+                            if (type != 0 && curveOnObj != null)
+                            {
+                                mScene.iRhObjList.Add(curveOnObj);
+                            }
+                        }
+                        else
+                        {
+                            mScene.iCurveList[1] = editCurve;
+                            if (type != 0 && curveOnObj != null)
+                            {
+                                mScene.iRhObjList[mScene.iRhObjList.Count - 1] = curveOnObj;
+                            }
+                        }
+
+                        dynamicBrep = Util.ExtrudeFunc(ref mScene, ref mScene.iCurveList);
                     }
 
                 }
@@ -523,7 +583,9 @@ namespace SparrowHawk.Interaction
                 //add plane to iPlaneList since Sweep fun need it's info
                 if (tolerance < 100)
                 {
-                    mScene.iPlaneList.Add(curvePlane);
+                    //type 3 already add a plane
+                    if(type != 3) 
+                        mScene.iPlaneList.Add(curvePlane);
                 }
                 else
                 {
