@@ -522,6 +522,13 @@ namespace SparrowHawk
                 mTitleBase = "SparrowHawk (No VR Detected)";
             }
 
+            // // THIS IS FOR UNCLIPPED
+            // Width = 864;
+            // Height = 820; 
+
+            // THIS IS FOR CLIPPED RECTANGLE
+            Width = 691;
+            Height = 692;
             
             // Window Setup Info
             mStrDriver = Util.GetTrackedDeviceString(ref mHMD, OpenVR.k_unTrackedDeviceIndex_Hmd, ETrackedDeviceProperty.Prop_TrackingSystemName_String);
