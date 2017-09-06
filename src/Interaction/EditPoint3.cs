@@ -652,7 +652,7 @@ namespace SparrowHawk.Interaction
                     renderObjId = Util.addSceneNodeWithoutDraw(ref mScene, dynamicBrep, ref mesh_m, modelName);
 
                     //SweepCapFun debugging
-                    if (dynamicRender == "Sweep-Circle" || dynamicRender == "Sweep-Rect" || dynamicRender == "Extrude-Circle")
+                    if (dynamicRender == "Sweep-Circle" || dynamicRender == "Sweep-Rect" || dynamicRender == "Extrude-Circle" || dynamicRender == "Loft")
                     {
                         Rhino.RhinoApp.WriteLine("Dot: " + mScene.angleD);
                         Rhino.RhinoApp.WriteLine("c1 dir: " + mScene.c1D);
@@ -1160,7 +1160,7 @@ namespace SparrowHawk.Interaction
                 }
 
             }
-            else if ((mScene.selectionList[1] == "Circle") && (dynamicRender == "Sweep-Circle" || dynamicRender == "Extrude-Circle"))
+            else if ((mScene.selectionList[1] == "Circle") && (dynamicRender == "Sweep-Circle" || dynamicRender == "Extrude-Circle") || dynamicRender == "Loft")
             {
 
                 OpenTK.Vector3 p1 = Util.transformPoint(mScene.tableGeometry.transform.Inverted(), Util.platformToVRPoint(ref mScene, new Vector3((float)mScene.eStartP.X, (float)mScene.eStartP.Y, (float)mScene.eStartP.Z)));

@@ -41,7 +41,7 @@ namespace SparrowHawk.Interaction
         protected void registerPositon(uint deviceIndex)
         {
             // Find and record position of controller
-            Matrix4 M = Util.getControllerTipPosition(ref mScene, mScene.leftControllerIdx == deviceIndex);
+            Matrix4 M = Util.getLeftControllerTipPosition(ref mScene, mScene.leftControllerIdx == deviceIndex);
 
             Vector3 origin = Util.transformPoint(M, new Vector3(0, 0, 0));
  

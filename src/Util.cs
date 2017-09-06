@@ -962,12 +962,102 @@ namespace SparrowHawk
 
         public static Brep LoftFunc(ref Scene mScene, ref List<Curve> curveList)
         {
-            List<Curve> loftcurves = new List<Curve>();
+            List<Curve> profileCurves = new List<Curve>();
+
+            //in our scenario only 2 curves
             foreach (Curve curve in curveList)
             {
-                loftcurves.Add(curve);
+                profileCurves.Add(curve);
             }
-            Brep[] loftBreps = Brep.CreateFromLoft(loftcurves, Point3d.Unset, Point3d.Unset, LoftType.Tight, false);
+
+            //need to project to the first RhinoObj, but need to translate profile curve along it's normal first and project -normal
+
+            Transform projectTranslate = Transform.Translation(50 * mScene.iPlaneList[0].Normal);
+            profileCurves[0].Transform(projectTranslate);
+            Curve projectCurve = Curve.ProjectToBrep(profileCurves[0], (Brep) mScene.iRhObjList[0].Geometry, -mScene.iPlaneList[0].Normal, mScene.rhinoDoc.ModelAbsoluteTolerance)[0].ToNurbsCurve();
+            profileCurves[0] = projectCurve;
+
+            if (mScene.selectionList[1] == "Circle")
+            {
+                
+                Point3d startP = profileCurves[0].PointAtStart;
+                double curveT0 = 0;
+                profileCurves[0].ClosestPoint(startP, out curveT0);
+                mScene.sStartP = new Point3d(profileCurves[0].PointAt(curveT0));
+                //profileCurves[0].ChangeClosedCurveSeam(curveT0);
+               
+                double curveT1 = 0;
+                profileCurves[1].ClosestPoint(startP, out curveT1);
+                mScene.eStartP = new Point3d(profileCurves[1].PointAt(curveT1));
+                //profileCurves[1].ChangeClosedCurveSeam(curveT1);
+                
+
+                OpenTK.Vector3 n1 = Util.RhinoToOpenTKPoint(mScene.iPlaneList[0].Normal);
+                OpenTK.Vector3 n2 = Util.RhinoToOpenTKPoint(mScene.iPlaneList[1].Normal);
+
+                //n1,n2 should be the same with railNormal and railEndNormal
+                n1.Normalize();
+                n2.Normalize();
+
+                //angle = atan2(norm(cross(a,b)), dot(a,b))
+                float angle = Vector3.Dot(n1, n2);
+                CurveOrientation dir = profileCurves[0].ClosedCurveOrientation(new Rhino.Geometry.Vector3d(n1.X, n1.Y, n1.Z)); //new Vector3(0,0,1)
+                CurveOrientation dir2 = profileCurves[1].ClosedCurveOrientation(new Rhino.Geometry.Vector3d(n2.X, n2.Y, n2.Z)); //new Vector3(0,0,1)
+
+                //debugging
+                mScene.angleD = angle;
+                mScene.c1D = dir.ToString();
+                mScene.c2D = dir2.ToString();
+
+                //testing seems bug, try compare by ourselves
+                //if(!Curve.DoDirectionsMatch(profileCurves[0], profileCurves[1]))
+                //If the dot product is greater than 0 both vectors are pointing in the same direction
+                if (angle >= 0)
+                {
+                    if (dir != dir2)
+                    {
+                        profileCurves[1].Reverse();
+                    }
+                }
+                else
+                {
+                    if (dir == dir2)
+                    {
+                        profileCurves[1].Reverse();
+                    }
+                }
+
+            }
+            else if(mScene.selectionList[1] == "Rect")
+            {
+                Rhino.Geometry.Polyline polylineStart;
+                Rhino.Geometry.Polyline polylineEnd;
+                if (profileCurves[0].TryGetPolyline(out polylineStart) && profileCurves[1].TryGetPolyline(out polylineEnd))
+                {
+                    //testing changing seam
+                    Rectangle3d startRect = Rectangle3d.CreateFromPolyline(polylineStart);
+                    Rectangle3d endRect = Rectangle3d.CreateFromPolyline(polylineEnd);
+
+                    //finding the corner seam
+                    float d0 = (float)Math.Sqrt(Math.Pow(startRect.Corner(0).X - endRect.Corner(0).X, 2) + Math.Pow(startRect.Corner(0).Y - endRect.Corner(0).Y, 2) + Math.Pow(startRect.Corner(0).Z - endRect.Corner(0).Z, 2));
+                    float d1 = (float)Math.Sqrt(Math.Pow(startRect.Corner(0).X - endRect.Corner(1).X, 2) + Math.Pow(startRect.Corner(0).Y - endRect.Corner(1).Y, 2) + Math.Pow(startRect.Corner(0).Z - endRect.Corner(1).Z, 2));
+                    float d2 = (float)Math.Sqrt(Math.Pow(startRect.Corner(0).X - endRect.Corner(2).X, 2) + Math.Pow(startRect.Corner(0).Y - endRect.Corner(2).Y, 2) + Math.Pow(startRect.Corner(0).Z - endRect.Corner(2).Z, 2));
+                    float d3 = (float)Math.Sqrt(Math.Pow(startRect.Corner(0).X - endRect.Corner(3).X, 2) + Math.Pow(startRect.Corner(0).Y - endRect.Corner(3).Y, 2) + Math.Pow(startRect.Corner(0).Z - endRect.Corner(3).Z, 2));
+
+                    float[] distaneArr = { d0, d1, d2, d3 };
+                    int minIndex = Array.IndexOf(distaneArr, distaneArr.Min());
+
+                    double curveT0 = 0;
+                    profileCurves[0].ClosestPoint(startRect.Corner(0), out curveT0);
+                    profileCurves[0].ChangeClosedCurveSeam(curveT0);
+
+                    double curveT = 0;
+                    profileCurves[1].ClosestPoint(endRect.Corner(minIndex), out curveT);
+                    profileCurves[1].ChangeClosedCurveSeam(curveT);
+                }
+            }
+
+            Brep[] loftBreps = Brep.CreateFromLoft(profileCurves, Point3d.Unset, Point3d.Unset, LoftType.Tight, false);
             Brep brep = new Brep();
             foreach (Brep bp in loftBreps)
             {
@@ -1004,6 +1094,8 @@ namespace SparrowHawk
                 mScene.sStartP = new Point3d(profileCurves[0].PointAtStart);
                 startP.Transform(t);
                 mScene.eStartP = new Point3d(startP);
+
+
 
             }
 
@@ -1546,9 +1638,16 @@ namespace SparrowHawk
             return scene.mDevicePose[scene.rightControllerIdx] * scene.mRightControllerOffset;
         }
 
-        public static OpenTK.Matrix4 getLeftControllerTipPosition(ref Scene scene)
-        {            
-            return scene.mDevicePose[scene.leftControllerIdx] * scene.mLeftControllerOffset;            
+        public static OpenTK.Matrix4 getLeftControllerTipPosition(ref Scene scene, bool isLeft)
+        {
+            if (isLeft)
+            {
+                return scene.mDevicePose[scene.leftControllerIdx] * scene.mLeftControllerOffset;
+            }
+            else
+            {
+                return scene.mDevicePose[scene.rightControllerIdx] * scene.mRightControllerOffset;
+            }            
         }
 
         /// <summary>

@@ -456,7 +456,7 @@ namespace SparrowHawk
             Geometry.Geometry controllerL_g = new Geometry.PointMarker(new Vector3(0, 0, 0));
             Material.Material controllerL_m = new Material.SingleColorMaterial(1, 0, 0, 1);
             SceneNode controllerL_p = new SceneNode("Left Cursor", ref controllerL_g, ref controllerL_m);
-            mScene.rightControllerNode.add(ref controllerL_p);
+            mScene.leftControllerNode.add(ref controllerL_p);
             controllerL_p.transform = new Matrix4(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1);//mScene.mLeftControllerOffset;
 
             Geometry.Geometry controllerR_g = new Geometry.PointMarker(new Vector3(0, 0, 0));

@@ -563,7 +563,7 @@ namespace SparrowHawk.Interaction
                     renderObjId = Util.addSceneNodeWithoutDraw(ref mScene, dynamicBrep, ref mesh_m, modelName);
 
                     //SweepCapFun debugging
-                    if (dynamicRender == "Sweep-Circle" || dynamicRender == "Sweep-Rect")
+                    if (dynamicRender == "Sweep-Circle" || dynamicRender == "Sweep-Rect" || dynamicRender == "Loft")
                     {
                         Rhino.RhinoApp.WriteLine("Dot: " + mScene.angleD);
                         Rhino.RhinoApp.WriteLine("c1 dir: " + mScene.c1D);
