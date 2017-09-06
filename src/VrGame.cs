@@ -58,6 +58,7 @@ namespace SparrowHawk
 
         Guid uGuid;
         Interaction.Interaction current_i,last_i;
+        Guid cutPGuid;
 
         public VrGame(ref Rhino.RhinoDoc doc, bool isLefty = false)
         {
@@ -280,6 +281,13 @@ namespace SparrowHawk
                         }
                     }
                     break;
+                case SparrowHawkSignal.ESparrowHawkSigalType.CutType:
+                    string guidStr = s.strData;
+                    Guid delId = new Guid(guidStr);
+                    Util.removeSceneNode(ref mScene, delId);
+                    mScene.rhinoDoc.Views.Redraw();
+                    break;
+
                 case SparrowHawkSignal.ESparrowHawkSigalType.EncoderType:
 
                     //for rhino object

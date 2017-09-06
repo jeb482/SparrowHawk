@@ -178,11 +178,14 @@ namespace SparrowHawk.Interaction
         protected virtual void onClickViveGrip(ref VREvent_t vrEvent) { }
         protected virtual void onClickViveAppMenu(ref VREvent_t vrEvent)
         {
-            if (mScene.menuList.Count == 0)
+            if (vrEvent.trackedDeviceIndex == mScene.rightControllerIdx)
             {
-                mScene.menuList.Add(Scene.MenuLayout.MainMenu);
+                if (mScene.menuList.Count == 0)
+                {
+                    mScene.menuList.Add(Scene.MenuLayout.MainMenu);
+                }
+                mScene.pushInteraction(new MarkingMenu(ref mScene, mScene.menuList[mScene.menuIndex]));
             }
-            mScene.pushInteraction(new MarkingMenu(ref mScene, mScene.menuList[mScene.menuIndex]));
         }
         protected virtual void onReleaseViveTrigger(ref VREvent_t vrEvent) { }
         protected virtual void onReleaseViveTouchpad(ref VREvent_t vrEvent) { }
@@ -192,18 +195,31 @@ namespace SparrowHawk.Interaction
         protected virtual void onClickOculusTrigger(ref VREvent_t vrEvent) { }
         protected virtual void onClickOculusStick(ref VREvent_t vrEvent)
         {
-            if (mScene.menuList.Count == 0)
+            if (vrEvent.trackedDeviceIndex == mScene.rightControllerIdx)
             {
-                mScene.menuList.Add(Scene.MenuLayout.MainMenu);
+                if (mScene.menuList.Count == 0)
+                {
+                    mScene.menuList.Add(Scene.MenuLayout.MainMenu);
+                }
+                mScene.pushInteraction(new MarkingMenu(ref mScene, mScene.menuList[mScene.menuIndex]));
             }
-            mScene.pushInteraction(new MarkingMenu(ref mScene, mScene.menuList[mScene.menuIndex]));
         }
         protected virtual void onClickOculusGrip(ref VREvent_t vrEvent) { }
-        protected virtual void onClickOculusAX(ref VREvent_t vrEvent) { }
+        protected virtual void onClickOculusAX(ref VREvent_t vrEvent) {
+
+            if (vrEvent.trackedDeviceIndex == mScene.leftControllerIdx)
+            {
+                mScene.popInteraction();
+                mScene.pushInteraction(new Cut(ref mScene));
+            }
+        }
         protected virtual void onClickOculusBY(ref VREvent_t vrEvent) {
             //temporary for testing patch
-            mScene.popInteraction();
-            mScene.pushInteraction(new CreatePatch(ref mScene));
+            if (vrEvent.trackedDeviceIndex == mScene.rightControllerIdx)
+            {
+                mScene.popInteraction();
+                mScene.pushInteraction(new CreatePatch(ref mScene));
+            }
         }
         protected virtual void onReleaseOculusTrigger(ref VREvent_t vrEvent) { }
         protected virtual void onReleaseOculusStick(ref VREvent_t vrEvent) { }

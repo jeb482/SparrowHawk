@@ -1546,6 +1546,11 @@ namespace SparrowHawk
             return scene.mDevicePose[scene.rightControllerIdx] * scene.mRightControllerOffset;
         }
 
+        public static OpenTK.Matrix4 getLeftControllerTipPosition(ref Scene scene)
+        {            
+            return scene.mDevicePose[scene.leftControllerIdx] * scene.mLeftControllerOffset;            
+        }
+
         /// <summary>
         /// Returns the integer associated with the dominant axis about which the rotation moves.
         /// Chooses Z in the two degenerate cases.

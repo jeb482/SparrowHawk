@@ -102,6 +102,7 @@
     <Compile Include="Interaction\CreatePlane2.cs" />
     <Compile Include="Interaction\CreatePlaneA.cs" />
     <Compile Include="Interaction\CreateRect.cs" />
+    <Compile Include="Interaction\Cut.cs" />
     <Compile Include="Interaction\Delete.cs" />
     <Compile Include="Interaction\EditPlane.cs" />
     <Compile Include="Interaction\EditPlane2.cs" />

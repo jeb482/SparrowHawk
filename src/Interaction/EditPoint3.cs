@@ -278,7 +278,9 @@ namespace SparrowHawk.Interaction
                 {
                     //targetPSN = null;
                     targetPRhObj = null;
-                    projectP = new OpenTK.Vector3(100, 100, 100); //make it invisable
+                    //projectP = new OpenTK.Vector3(100, 100, 100); //make it invisable
+                    //testng using last frame position
+                    projectP = projectP;
                 }
 
                 pos = projectP;

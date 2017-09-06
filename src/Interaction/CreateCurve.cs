@@ -244,6 +244,7 @@ namespace SparrowHawk.Interaction
                         targetPRhObj = null;
                     }
                     projectP = new OpenTK.Vector3(100, 100, 100); //make it invisable
+
                 }
 
                 //visualize the projection points

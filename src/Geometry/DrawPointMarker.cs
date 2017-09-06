@@ -9,7 +9,7 @@ namespace SparrowHawk.Geometry
 
     public class DrawPointMarker : Geometry
     {
-        private const float l = .005f;
+        private const float l = .003f; //.005f
         private const float sqrt3 = 1.73205080757f;
         /**
          *  Creates a point marker centered at p, where p is in VR-World-space.
