@@ -57,6 +57,7 @@ namespace SparrowHawk
         Material.Material printStroke_m;
 
         Guid uGuid;
+        Interaction.Interaction current_i,last_i;
 
         public VrGame(ref Rhino.RhinoDoc doc, bool isLefty = false)
         {
@@ -161,9 +162,23 @@ namespace SparrowHawk
             //default interaction
             if (mScene.interactionStackEmpty())
                 mScene.pushInteraction(new Interaction.PickPoint(ref mScene));
-         
 
-            Interaction.Interaction current_i = mScene.peekInteraction();
+            if (current_i != null)
+            {
+                last_i = current_i;
+                current_i = mScene.peekInteraction();
+
+                //testing init()
+                if (last_i.GetType() != current_i.GetType())
+                {
+                    current_i.init();
+                }
+            }else
+            {
+                current_i = mScene.peekInteraction();
+                current_i.init();
+            }
+
             current_i.handleInput();
             current_i.draw(true);
 
@@ -760,7 +775,15 @@ namespace SparrowHawk
             if (e.KeyChar == 'W' || e.KeyChar == 'w')
             {
                 mScene.popInteraction();
-                mScene.pushInteraction(new Interaction.CreatePlane2(ref mScene, "circle"));
+                //mScene.pushInteraction(new Interaction.CreatePlane2(ref mScene, "circle"));
+                mScene.selectionList.Add("Sweep");
+                mScene.selectionList.Add("Circle");
+                mScene.selectionList.Add("Curve");
+
+                mScene.pushInteraction(new Interaction.EditPoint3(ref mScene, true, "Sweep"));
+                mScene.pushInteraction(new Interaction.CreateCurve(ref mScene, 3, false, "Sweep"));
+                mScene.pushInteraction(new Interaction.CreatePlane2(ref mScene, "Circle"));
+
             }
 
             if (e.KeyChar == 'O' || e.KeyChar == 'o')

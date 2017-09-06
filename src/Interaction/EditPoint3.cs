@@ -717,14 +717,14 @@ namespace SparrowHawk.Interaction
                 {
                     if (dynamicRender == "Revolve" || dynamicRender == "Loft" || dynamicRender == "Sweep-Circle" || dynamicRender == "Sweep-Rect" || dynamicRender == "Extrude-Circle" || dynamicRender == "Extrude-Rect")
                     {
-                        if (sn.name.Contains("tprint") || sn.name == "EditCurve" || sn.name == "drawPoint" || sn.name == "EditPoint" || sn.name.Contains("panel") || sn.name.Contains("Circle") || sn.name.Contains("Rect") || sn.name.Contains("railPlane"))
+                        if (sn.name.Contains("tprint") || sn.name == "EditCurve" || sn.name == "drawPoint" || sn.name == "EditPoint" || sn.name.Contains("panel") || sn.name.Contains("Circle") || sn.name.Contains("Rect") || sn.name.Contains("railPlane") || sn.name.Contains("patchSurface"))
                         {
-                            //only panel will create RhinoObj for ray-tracing
-                            if (sn.name.Contains("panel"))
+                            //We don't delete the patch surface for later use
+                            if (sn.name.Contains("railPlane"))
                             {
                                 //panel didn't have the sceneNode in VR.
-                                //delObj = mScene.SceneNodeToBrepDic[sn.guid];
-                                //Util.removeSceneNode(ref mScene, delObj.Id);
+                                RhinoObject delObj = mScene.SceneNodeToBrepDic[sn.guid];
+                                Util.removeSceneNode(ref mScene, delObj.Id);
 
                             }
                             else
@@ -774,14 +774,14 @@ namespace SparrowHawk.Interaction
                 if (mScene.selectionList[1] == "Circle")
                 {
                     generateEndCap();
-                    mScene.popInteraction();
+                    //mScene.popInteraction();
                     mScene.pushInteraction(new EditPoint3(ref mScene, true, "Extrude-Circle"));
                     mScene.peekInteraction().init();
                 }
                 else if (mScene.selectionList[1] == "Rect")
                 {
                     generateEndCap();
-                    mScene.popInteraction();
+                    //mScene.popInteraction();
                     mScene.pushInteraction(new EditPoint3(ref mScene, true, "Extrude-Rect"));
                     mScene.peekInteraction().init();
                 }
@@ -792,14 +792,14 @@ namespace SparrowHawk.Interaction
                 if (mScene.selectionList[1] == "Circle")
                 {
                     generateEndCap();
-                    mScene.popInteraction();
+                    //mScene.popInteraction();
                     mScene.pushInteraction(new EditPoint3(ref mScene, true, "Sweep-Circle"));
                     mScene.peekInteraction().init();
                 }
                 else if (mScene.selectionList[1] == "Rect")
                 {
                     generateEndCap();
-                    mScene.popInteraction();
+                    //mScene.popInteraction();
                     mScene.pushInteraction(new EditPoint3(ref mScene, true, "Sweep-Rect"));
                     mScene.peekInteraction().init();
                 }
@@ -1059,7 +1059,7 @@ namespace SparrowHawk.Interaction
 
         private void editCircleRect(int sector)
         {
-            Rhino.RhinoApp.WriteLine("sector:" + sector);
+            //Rhino.RhinoApp.WriteLine("sector:" + sector);
             if (isEditCircle)
             {
                 if (sector == 1)
@@ -1075,7 +1075,10 @@ namespace SparrowHawk.Interaction
                     }
                 }
 
+                //using the original x-axis and y-axis align, but adjust the center of the plane
                 Plane newPlane = new Plane(circle.Center, curvePlane.Normal);
+                newPlane.XAxis = curvePlane.XAxis;
+                newPlane.YAxis = curvePlane.YAxis;
                 Circle newCircle = new Circle(newPlane, radius);
                 List<Point3d> circlePoints = new List<Point3d>();
                 circlePoints.Add(newCircle.Center);
@@ -1116,7 +1119,9 @@ namespace SparrowHawk.Interaction
 
                 //Rectangle3d newRect = new Rectangle3d(curvePlane, width, height);
                 //fix-origin change so we can't use the curvePlane directly
-                Plane newPlane = new Plane(rect.Center, curvePlane.Normal);                 
+                Plane newPlane = new Plane(rect.Center, curvePlane.Normal);
+                newPlane.XAxis = curvePlane.XAxis;
+                newPlane.YAxis = curvePlane.YAxis;
                 Rectangle3d newRect = new Rectangle3d(newPlane, new Interval(-width / 2, width / 2), new Interval(-height / 2, height / 2));
                 List<Point3d> rectPoints = new List<Point3d>();
                 rectPoints.Add(newRect.Center);

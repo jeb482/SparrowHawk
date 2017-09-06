@@ -100,6 +100,7 @@ namespace SparrowHawk.Interaction
 
             snapPointsList.Clear();
 
+            /*
             if (type != 0)
             {
 
@@ -119,6 +120,7 @@ namespace SparrowHawk.Interaction
 
             }
             d = new generateModel_Delegate(generateModel);
+            */
         }
 
         public CreateCurve(ref Scene scene, uint devIndex) : base(ref scene)
@@ -142,11 +144,14 @@ namespace SparrowHawk.Interaction
                     //render the object plane
                     float planeSize = 240;
                     PlaneSurface plane_surface2 = new PlaneSurface(mScene.iPlaneList[mScene.iPlaneList.Count - 1], new Interval(-planeSize, planeSize), new Interval(-planeSize, planeSize));
-                    
                     Brep railPlane2 = Brep.CreateFromSurface(plane_surface2);
                     Util.addSceneNode(ref mScene, railPlane2, ref mesh_m, "railPlane");
+
+                    snapPointsList.Add(Util.platformToVRPoint(ref mScene, Util.RhinoToOpenTKPoint(railPlane2.GetBoundingBox(true).Center)));
                 }
             }
+
+            d = new generateModel_Delegate(generateModel);
         }
 
         public override void draw(bool isTop)

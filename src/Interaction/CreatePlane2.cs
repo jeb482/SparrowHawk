@@ -325,11 +325,12 @@ namespace SparrowHawk.Interaction
 
             float xAngle = OpenTK.Vector3.CalculateAngle(Util.RhinoToOpenTKPoint(planeX.Normal), worldUpAxis);
             float yAngle = OpenTK.Vector3.CalculateAngle(Util.RhinoToOpenTKPoint(planeY.Normal), worldUpAxis);
+            Rhino.RhinoApp.WriteLine("xAngle: " + xAngle + " yAngle: " + yAngle);
             Rhino.Geometry.Vector3d normal2;
             Plane plane2;
             if (yAngle > xAngle)
             {
-                if (yAngle < Math.PI / 2)
+                if (yAngle <= Math.PI / 2)
                     plane2 = planeY;
                 else
                     plane2 = planeX;
@@ -434,8 +435,10 @@ namespace SparrowHawk.Interaction
             //mScene.peekInteraction().init();
 
             mScene.popInteraction();
+            /*
             if (!mScene.interactionStackEmpty())
                 mScene.peekInteraction().init();
+            */
 
         }
 

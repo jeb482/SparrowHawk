@@ -459,12 +459,14 @@ namespace SparrowHawk.Interaction
                     mScene.pushInteraction(new EditPoint3(ref mScene, true, "Rect"));
                     //mScene.pushInteraction(new AddPoint(ref mScene, 3, 2));
                     mScene.pushInteraction(new CreatePlane(ref mScene, "Rect"));
+                    //mScene.pushInteraction(new CreatePlane2(ref mScene, "Rect"));
                 }
                 else if (mScene.selectionList[index] == "Circle")
                 {
                     mScene.pushInteraction(new EditPoint3(ref mScene, true, "Circle"));
                     //mScene.pushInteraction(new AddPoint(ref mScene, 3, 2));
                     mScene.pushInteraction(new CreatePlane(ref mScene, "Circle"));
+                    //mScene.pushInteraction(new CreatePlane2(ref mScene, "Circle"));
                 }
                 else if (mScene.selectionList[index] == "Curve")
                 {
@@ -545,15 +547,15 @@ namespace SparrowHawk.Interaction
             {
                 if (mScene.selectionList[index] == "Rect")
                 {
-                    mScene.pushInteraction(new EditPoint3(ref mScene, true, renderType));
+                    //mScene.pushInteraction(new EditPoint3(ref mScene, true, renderType));
                     //mScene.pushInteraction(new AddPoint(ref mScene, 3, 2));
-                    mScene.pushInteraction(new CreatePlane(ref mScene, "Rect"));
+                    mScene.pushInteraction(new CreatePlane2(ref mScene, "Rect"));
                 }
                 else if (mScene.selectionList[index] == "Circle")
                 {
-                    mScene.pushInteraction(new EditPoint3(ref mScene, true, renderType));
+                    //mScene.pushInteraction(new EditPoint3(ref mScene, true, renderType));
                     //mScene.pushInteraction(new AddPoint(ref mScene, 3, 2));
-                    mScene.pushInteraction(new CreatePlane(ref mScene, "Circle"));
+                    mScene.pushInteraction(new CreatePlane2(ref mScene, "Circle"));
                 }
                 else if (mScene.selectionList[index] == "Curve")
                 {

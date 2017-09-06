@@ -372,6 +372,10 @@ namespace SparrowHawk.Interaction
 
         protected override void onClickOculusTrigger(ref VREvent_t vrEvent)
         {
+
+            if (projectP.X == 100 && projectP.Y == 100 && projectP.Z == 100)
+                return;
+
             lockPlane = true;
 
             //testing
@@ -481,6 +485,7 @@ namespace SparrowHawk.Interaction
                 mScene.yzPlane = tempYZ;
                 mScene.xzPlane = tempXZ;
 
+                Util.setPlaneAlpha(ref mScene, 0.0f);
 
                 mScene.popInteraction();
                 if (!mScene.interactionStackEmpty())

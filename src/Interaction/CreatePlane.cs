@@ -109,6 +109,10 @@ namespace SparrowHawk.Interaction
                 //add icurveList since we don't use EditPoint2 for circle and rect
                 mScene.iCurveList.Add(modelcurve);
 
+                //now it will call the init() automatically
+                mScene.popInteraction();
+                mScene.peekInteraction().init();
+
             }
 
 

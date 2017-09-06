@@ -1277,6 +1277,27 @@ namespace SparrowHawk
                 Rhino.Geometry.Polyline polylineEnd;
                 if (profileCurves[0].TryGetPolyline(out polylineStart) && profileCurves[1].TryGetPolyline(out polylineEnd))
                 {
+                    //testing changing seam
+                    Rectangle3d startRect = Rectangle3d.CreateFromPolyline(polylineStart);
+                    Rectangle3d endRect = Rectangle3d.CreateFromPolyline(polylineEnd);
+
+                    //finding the corner seam
+                    float d0 = (float)Math.Sqrt(Math.Pow(startRect.Corner(0).X - endRect.Corner(0).X, 2) + Math.Pow(startRect.Corner(0).Y - endRect.Corner(0).Y, 2) + Math.Pow(startRect.Corner(0).Z - endRect.Corner(0).Z, 2));
+                    float d1 = (float)Math.Sqrt(Math.Pow(startRect.Corner(0).X - endRect.Corner(1).X, 2) + Math.Pow(startRect.Corner(0).Y - endRect.Corner(1).Y, 2) + Math.Pow(startRect.Corner(0).Z - endRect.Corner(1).Z, 2));
+                    float d2 = (float)Math.Sqrt(Math.Pow(startRect.Corner(0).X - endRect.Corner(2).X, 2) + Math.Pow(startRect.Corner(0).Y - endRect.Corner(2).Y, 2) + Math.Pow(startRect.Corner(0).Z - endRect.Corner(2).Z, 2));
+                    float d3 = (float)Math.Sqrt(Math.Pow(startRect.Corner(0).X - endRect.Corner(3).X, 2) + Math.Pow(startRect.Corner(0).Y - endRect.Corner(3).Y, 2) + Math.Pow(startRect.Corner(0).Z - endRect.Corner(3).Z, 2));
+
+                    float[] distaneArr = { d0, d1, d2, d3 };
+                    int minIndex = Array.IndexOf(distaneArr, distaneArr.Min());
+
+                    double curveT0 = 0;
+                    profileCurves[0].ClosestPoint(startRect.Corner(0), out curveT0);
+                    profileCurves[0].ChangeClosedCurveSeam(curveT0);
+
+                    double curveT = 0;
+                    profileCurves[1].ClosestPoint(endRect.Corner(minIndex), out curveT);
+                    profileCurves[1].ChangeClosedCurveSeam(curveT);
+
                     //method 1- rebuild rect but sometimes it rotate 90 degrees so width become height
                     /*
                     Rectangle3d startRect = Rectangle3d.CreateFromPolyline(polylineStart);
