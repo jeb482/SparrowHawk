@@ -868,7 +868,7 @@ namespace SparrowHawk.Interaction
 
                 if (designPlane != null)
                 {
-                    Guid guid = Util.addSceneNodeWithoutVR(ref mScene, designPlane, ref mesh_m, "panel");
+                    Guid guid = Util.addSceneNodeWithoutVR(ref mScene, designPlane, "panel");
                     mScene.iRhObjList.Add(mScene.rhinoDoc.Objects.Find(guid));
                 }
             }
@@ -945,7 +945,7 @@ namespace SparrowHawk.Interaction
 
                         if (designPlane != null)
                         {
-                            Guid guid = Util.addSceneNodeWithoutVR(ref mScene, designPlane, ref mesh_m, "panel");
+                            Guid guid = Util.addSceneNodeWithoutVR(ref mScene, designPlane, "panel");
                             mScene.iRhObjList.Add(mScene.rhinoDoc.Objects.Find(guid));
                         }
                     }

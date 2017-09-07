@@ -296,7 +296,7 @@ namespace SparrowHawk.Interaction
             foreach (Vector3 p in pointsList)
             {
                 //snap to origin
-                if (Math.Sqrt(Math.Pow(projectP.X - p.X, 2) + Math.Pow(projectP.Y - p.Y, 2) + Math.Pow(projectP.Z - p.Z, 2)) < 0.02)
+                if (Math.Sqrt(Math.Pow(projectP.X - p.X, 2) + Math.Pow(projectP.Y - p.Y, 2) + Math.Pow(projectP.Z - p.Z, 2)) < 0.01)
                 {
                     projectP = p;
                     snap = true;
@@ -356,6 +356,13 @@ namespace SparrowHawk.Interaction
                 snapPointsList.Add(Util.platformToVRPoint(ref mScene, Util.RhinoToOpenTKPoint(rect.Corner(2))));
                 snapPointsList.Add(Util.platformToVRPoint(ref mScene, Util.RhinoToOpenTKPoint(rect.Corner(3))));
             }
+            else
+            {
+                double u = 0;
+                double v = 0;
+                s.ClosestPoint(s.GetBoundingBox(true).Center, out u, out v);
+                snapPointsList.Add(Util.platformToVRPoint(ref mScene, Util.RhinoToOpenTKPoint(s.PointAt(u, v))));
+            }
 
             curvePlane = new Plane();
             //surface might not be a perfect planar surface
@@ -368,6 +375,36 @@ namespace SparrowHawk.Interaction
                 }
                 tolerance++;
             }
+        }
+
+        private void createCustomPlane(string type, Point3d origin)
+        {
+            Guid planeId = Guid.Empty;
+            int size = 240;
+            Plane plane = new Plane();
+            if (type == "YZ")
+            {
+                plane = new Plane(origin, new Rhino.Geometry.Vector3d(1, 0, 0));
+            }
+            else if (type == "XZ")
+            {
+                plane = new Plane(origin, new Rhino.Geometry.Vector3d(0, 1, 0));
+            }
+            else if (type == "XY")
+            {
+                plane = new Plane(origin, new Rhino.Geometry.Vector3d(0, 0, 1));
+            }
+
+            PlaneSurface plane_surface = new PlaneSurface(plane, new Interval(-size, size), new Interval(-size, size));
+            designPlane = Brep.CreateFromSurface(plane_surface);
+
+            if (designPlane != null)
+            {
+                planeId =Util.addSceneNodeWithoutVR(ref mScene, designPlane, "plane" + type);
+            }
+
+
+
         }
 
         protected override void onClickOculusTrigger(ref VREvent_t vrEvent)
@@ -447,7 +484,7 @@ namespace SparrowHawk.Interaction
 
                 if (type != 0 && pointOnObj != null)
                 {
-                    mScene.iRhObjList.Add(pointOnObj);
+                    mScene.iRhObjList.Add(pointOnObj); //pointOnObj is new plane after we move
                     mScene.iPlaneList.Add(curvePlane);
 
                 }
@@ -462,30 +499,61 @@ namespace SparrowHawk.Interaction
 
                 //reset predefined plane position and delete the old one
                 //need to careful about rhinoObjList. update it before we delete it
-                DesignPlane3 tempXY = new DesignPlane3(ref mScene, 2);
-                DesignPlane3 tempYZ = new DesignPlane3(ref mScene, 0);
-                DesignPlane3 tempXZ = new DesignPlane3(ref mScene, 1);
-                for (int i = 0; i < mScene.iRhObjList.Count; i++)
+                //reset it;
+                if (movePlane != null)
                 {
-                    if (mScene.iRhObjList[i].Id == mScene.xyPlane.guid)
-                    {
-                        mScene.iRhObjList[i] = mScene.rhinoDoc.Objects.Find(tempXY.guid);
-                    } else if (mScene.iRhObjList[i].Id == mScene.yzPlane.guid)
-                    {
-                        mScene.iRhObjList[i] = mScene.rhinoDoc.Objects.Find(tempYZ.guid);
-                    } else if (mScene.iRhObjList[i].Id == mScene.xzPlane.guid)
-                    {
-                        mScene.iRhObjList[i] = mScene.rhinoDoc.Objects.Find(tempXZ.guid);
-                    }
-                }                
-                Util.removeStaticSceneNode(ref mScene, mScene.xyPlane.guid);
-                Util.removeStaticSceneNode(ref mScene, mScene.yzPlane.guid);
-                Util.removeStaticSceneNode(ref mScene, mScene.xzPlane.guid);
-                mScene.xyPlane = tempXY;
-                mScene.yzPlane = tempYZ;
-                mScene.xzPlane = tempXZ;
+                    DesignPlane3 tempXY = new DesignPlane3(ref mScene, 2);
+                    DesignPlane3 tempYZ = new DesignPlane3(ref mScene, 0);
+                    DesignPlane3 tempXZ = new DesignPlane3(ref mScene, 1);
+                    string name = movePlane.Attributes.Name;
 
-                Util.setPlaneAlpha(ref mScene, 0.0f);
+                    for (int i = 0; i < mScene.iRhObjList.Count; i++)
+                    {
+                        if (mScene.iRhObjList[i].Id == mScene.xyPlane.guid && !name.Contains("planeXY"))
+                        {
+                            mScene.iRhObjList[i] = mScene.rhinoDoc.Objects.Find(tempXY.guid);
+                        }
+                        else if (mScene.iRhObjList[i].Id == mScene.yzPlane.guid && !name.Contains("planeYZ"))
+                        {
+                            mScene.iRhObjList[i] = mScene.rhinoDoc.Objects.Find(tempYZ.guid);
+                        }
+                        else if (mScene.iRhObjList[i].Id == mScene.xzPlane.guid && !name.Contains("planeXZ"))
+                        {
+                            mScene.iRhObjList[i] = mScene.rhinoDoc.Objects.Find(tempXZ.guid);
+                        }
+                    }
+                    if (name.Contains("planeXY"))
+                    {
+                        Util.removeStaticSceneNodeKeepRhio(ref mScene, mScene.xyPlane.guid);
+                    }
+                    else
+                    {
+                        Util.removeStaticSceneNode(ref mScene, mScene.xyPlane.guid);
+                    }
+                    if (name.Contains("planeYZ"))
+                    {
+                        Util.removeStaticSceneNodeKeepRhio(ref mScene, mScene.yzPlane.guid);
+                    }
+                    else
+                    {
+                        Util.removeStaticSceneNode(ref mScene, mScene.yzPlane.guid);
+                    }
+
+                    if (name.Contains("planeXZ"))
+                    {
+                        Util.removeStaticSceneNodeKeepRhio(ref mScene, mScene.xzPlane.guid);
+                    }
+                    else
+                    {
+                        Util.removeStaticSceneNode(ref mScene, mScene.xzPlane.guid);
+                    }
+
+                    mScene.xyPlane = tempXY;
+                    mScene.yzPlane = tempYZ;
+                    mScene.xzPlane = tempXZ;
+
+                    Util.setPlaneAlpha(ref mScene, 0.0f);
+                }
 
                 mScene.popInteraction();
                 if (!mScene.interactionStackEmpty())
@@ -568,6 +636,7 @@ namespace SparrowHawk.Interaction
                 mScene.xzPlane = new DesignPlane3(ref mScene, 1, endP);
                 mScene.xzPlane.setAlpha(0.4f);
             }
+
         }
 
     }

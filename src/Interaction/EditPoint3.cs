@@ -649,6 +649,7 @@ namespace SparrowHawk.Interaction
             {
                 if (modelName == "tprint")
                 {
+
                     renderObjId = Util.addSceneNodeWithoutDraw(ref mScene, dynamicBrep, ref mesh_m, modelName);
 
                     //SweepCapFun debugging
@@ -767,9 +768,8 @@ namespace SparrowHawk.Interaction
             Util.setPlaneAlpha(ref mScene, 0.0f);
 
             if (dynamicRender == "Revolve" || dynamicRender == "Loft")
-            {
+            {            
                 modelName = "aprint";
-
                 R = d.BeginInvoke(new AsyncCallback(modelCompleted), null);
             }
             else if (dynamicRender == "Extrude")
@@ -999,7 +999,7 @@ namespace SparrowHawk.Interaction
 
             if (designPlane != null)
             {
-                Guid guid = Util.addSceneNodeWithoutVR(ref mScene, designPlane, ref mesh_m, "panel");
+                Guid guid = Util.addSceneNodeWithoutVR(ref mScene, designPlane, "panel");
                 mScene.iRhObjList.Add(mScene.rhinoDoc.Objects.Find(guid));
             }
         }

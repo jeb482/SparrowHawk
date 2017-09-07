@@ -674,6 +674,7 @@ namespace SparrowHawk
             }
         }
 
+
         public static Guid addStaticNode(ref Scene mScene, Brep brep, ref Material.Material mesh_m, string name)
         {
             //TODO: detect the # of faces
@@ -751,7 +752,7 @@ namespace SparrowHawk
         }
 
         //only used in create plane for invisable edit plane
-        public static Guid addSceneNodeWithoutVR(ref Scene mScene, Brep brep, ref Material.Material mesh_m, string name)
+        public static Guid addSceneNodeWithoutVR(ref Scene mScene, Brep brep, string name)
         {
             if (brep != null)
             {
@@ -948,6 +949,20 @@ namespace SparrowHawk
             }
         }
 
+        public static void removeStaticSceneNodeKeepRhio(ref Scene mScene, Guid guid)
+        {
+            SceneNode deleteSN = mScene.brepToSceneNodeDic[guid];
+            foreach (SceneNode sn in mScene.staticGeometry.children)
+            {
+                if (sn.guid == deleteSN.guid)
+                {
+                    mScene.staticGeometry.children.Remove(sn);
+                    break;
+                }
+            }
+        }
+
+
         public static void clearAllModel(ref Scene mScene)
         {
             Rhino.DocObjects.ObjectEnumeratorSettings settings = new Rhino.DocObjects.ObjectEnumeratorSettings();
@@ -1039,30 +1054,10 @@ namespace SparrowHawk
                 Curve projectCurve = Curve.ProjectToBrep(profileCurves[0], (Brep)mScene.iRhObjList[0].Geometry, -mScene.iPlaneList[0].Normal, mScene.rhinoDoc.ModelAbsoluteTolerance)[0].ToNurbsCurve();
                 profileCurves[0] = projectCurve;
 
-                //calculate the seam point by raycvasting
-                Point3d sPlaneCenter = Util.openTkToRhinoPoint(Util.vrToPlatformPoint(ref mScene, Util.RhinoToOpenTKPoint(profileCurves[0].GetBoundingBox(true).Center)));
-                Point3d ePlaneCenter = Util.openTkToRhinoPoint(Util.vrToPlatformPoint(ref mScene, Util.RhinoToOpenTKPoint(profileCurves[1].GetBoundingBox(true).Center)));
-                Point3d startP = profileCurves[0].PointAtStart;
-                double curveT0 = 0;
-                profileCurves[0].ClosestPoint(startP, out curveT0);
-                profileCurves[0].ChangeClosedCurveSeam(curveT0);
-                mScene.sStartP = new Point3d(profileCurves[0].PointAt(curveT0));
-
+                Point3d sPlaneCenter = profileCurves[0].GetBoundingBox(true).Center;
+                Point3d ePlaneCenter = profileCurves[1].GetBoundingBox(true).Center;
                 Rhino.Geometry.Vector3d direction = new Rhino.Geometry.Vector3d(ePlaneCenter.X - sPlaneCenter.X, ePlaneCenter.Y - sPlaneCenter.Y, ePlaneCenter.Z - sPlaneCenter.Z);
-                Ray3d ray1 = new Ray3d(startP, direction);
-
-                List<GeometryBase> geometries = new List<GeometryBase>();
-                geometries.Add(mScene.iRhObjList[mScene.iRhObjList.Count-1].Geometry);
-                //must be a brep or surface, not mesh
-                Point3d[] rayIntersections = Rhino.Geometry.Intersect.Intersection.RayShoot(ray1, geometries, 1);
-                if (rayIntersections != null)
-                {
-                    //find the closest point on profileCurve2
-                    double curveT1 = 0;
-                    profileCurves[1].ClosestPoint(rayIntersections[0], out curveT1);
-                    profileCurves[1].ChangeClosedCurveSeam(curveT1);
-                    mScene.eStartP = new Point3d(profileCurves[1].PointAt(curveT1));
-                }
+                Vector3 loftDirection = Util.RhinoToOpenTKPoint(direction);
 
                 OpenTK.Vector3 n1 = Util.RhinoToOpenTKPoint(mScene.iPlaneList[0].Normal);
                 OpenTK.Vector3 n2 = Util.RhinoToOpenTKPoint(mScene.iPlaneList[1].Normal);
@@ -1070,6 +1065,13 @@ namespace SparrowHawk
                 //n1,n2 should be the same with railNormal and railEndNormal
                 n1.Normalize();
                 n2.Normalize();
+                loftDirection.Normalize();
+
+                //check the plane normal
+                if (Vector3.Dot(n1, loftDirection) < 0)
+                    n1 = -n1;
+                if (Vector3.Dot(n2, loftDirection) < 0)
+                    n2 = -n2;
 
                 //angle = atan2(norm(cross(a,b)), dot(a,b))
                 float angle = Vector3.Dot(n1, n2);
@@ -1093,11 +1095,35 @@ namespace SparrowHawk
                 }
                 else
                 {
-                    if (dir != dir2)
+                    if (dir == dir2)
                     {
                         profileCurves[1].Reverse();
                     }
                 }
+
+                //calculate the seam point by raycvasting
+                Point3d startP = profileCurves[0].PointAtStart;
+                Ray3d ray1 = new Ray3d(startP, direction);
+                double curveT0 = 0;
+                profileCurves[0].ClosestPoint(startP, out curveT0);
+                profileCurves[0].ChangeClosedCurveSeam(curveT0);
+                mScene.sStartP = new Point3d(profileCurves[0].PointAt(curveT0));
+                //mScene.sStartP = profileCurves[0].GetBoundingBox(true).Center;
+
+                List<GeometryBase> geometries = new List<GeometryBase>();
+                geometries.Add(mScene.iRhObjList[mScene.iRhObjList.Count - 1].Geometry);
+                //must be a brep or surface, not mesh
+                Point3d[] rayIntersections = Rhino.Geometry.Intersect.Intersection.RayShoot(ray1, geometries, 1);
+                if (rayIntersections != null)
+                {
+                    //find the closest point on profileCurve2
+                    double curveT1 = 0;
+                    profileCurves[1].ClosestPoint(rayIntersections[0], out curveT1);
+                    profileCurves[1].ChangeClosedCurveSeam(curveT1);
+                    mScene.eStartP = new Point3d(profileCurves[1].PointAt(curveT1));
+                    //mScene.eStartP = new Point3d(ePlaneCenter);
+                }
+
             }
 
             if (mScene.selectionList[1] == "Circle")
@@ -1107,8 +1133,23 @@ namespace SparrowHawk
             }
 
             //debug
-            mScene.rhinoDoc.Objects.AddCurve(profileCurves[0]);
-            mScene.rhinoDoc.Objects.AddCurve(profileCurves[1]);
+            //mScene.rhinoDoc.Objects.AddCurve(profileCurves[0]);
+            //mScene.rhinoDoc.Objects.AddCurve(profileCurves[1]);
+            Rhino.DocObjects.ObjectEnumeratorSettings settings = new Rhino.DocObjects.ObjectEnumeratorSettings();
+            settings.ObjectTypeFilter = Rhino.DocObjects.ObjectType.Curve;
+            settings.NameFilter = "patchCurve";
+            bool isExist = false;
+            foreach (Rhino.DocObjects.RhinoObject rhObj in mScene.rhinoDoc.Objects.GetObjectList(settings))
+            {             
+                isExist = true;
+                break;
+            }
+            if (!isExist)
+            {
+                Rhino.DocObjects.ObjectAttributes attr = new Rhino.DocObjects.ObjectAttributes();
+                attr.Name = "patchCurve";
+                mScene.rhinoDoc.Objects.AddCurve(profileCurves[0], attr);
+            }
 
             Brep[] loftBreps = Brep.CreateFromLoft(profileCurves, Point3d.Unset, Point3d.Unset, LoftType.Tight, false);
             Brep brep = new Brep();

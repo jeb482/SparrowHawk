@@ -63,7 +63,7 @@ namespace SparrowHawk.Interaction
 
             if (designPlane != null)
             {
-                guid = Util.addSceneNodeWithoutVR(ref mScene, designPlane, ref mesh_m, "panel");
+                guid = Util.addSceneNodeWithoutVR(ref mScene, designPlane, "panel");
                 mScene.iRhObjList.Add(mScene.rhinoDoc.Objects.Find(guid));
                 //TODO- bad solution. constriant the next interaction
                 mScene.iPlaneList.Add(plane);
