@@ -772,17 +772,13 @@ namespace SparrowHawk
             }
         }
 
+        //TODO- Remove the collision part
         public static Guid addSceneNode(ref Scene mScene, Brep brep, ref Material.Material mesh_m, string name)
         {
             //TODO: detect the # of faces
             Mesh base_mesh = new Mesh();
             if (brep != null)
             {
-                Mesh[] meshes = Mesh.CreateFromBrep(brep, MeshingParameters.Default);
-
-                foreach (Mesh mesh in meshes)
-                    base_mesh.Append(mesh);
-
                 long ticks = DateTime.Now.Ticks;
                 byte[] bytes = BitConverter.GetBytes(ticks);
                 string timeuid = Convert.ToBase64String(bytes).Replace('+', '_').Replace('/', '-').TrimEnd('=');
@@ -792,7 +788,72 @@ namespace SparrowHawk
                 Guid guid = mScene.rhinoDoc.Objects.AddBrep(brep, attr);
                 mScene.rhinoDoc.Views.Redraw();
 
-                //testing rotation
+                //remove the collision part and generate the new brep for rendering in VR
+                //testing boolean
+                Brep newBrep = null;
+                if (attr.Name.Contains("aprint"))
+                {
+                    Rhino.DocObjects.ObjectEnumeratorSettings settings = new Rhino.DocObjects.ObjectEnumeratorSettings();
+                    settings.ObjectTypeFilter = Rhino.DocObjects.ObjectType.Brep;
+
+                    List<Brep> boolResultBrep = new List<Brep>();                 
+                    if (mScene.rhinoDoc.Objects.Count() > 1)
+                    {
+                       
+                        foreach (Rhino.DocObjects.RhinoObject rhObj in mScene.rhinoDoc.Objects.GetObjectList(settings))
+                        {
+                            //assume only intersect with one object at most
+                            if (rhObj.Attributes.Name.Contains("aprint") && rhObj.Attributes.Name != attr.Name)
+                            {
+                               
+                                Brep[] boolBrep = brep.Split((Brep)rhObj.Geometry, mScene.rhinoDoc.ModelAbsoluteTolerance);
+                                if(boolBrep != null && boolBrep.Length > 0)
+                                {
+                                    float maxD = 0f;
+                                    int maxIndex = -1;
+                                    for (int i = 0; i < boolBrep.Length; i++) {
+
+                                        //get the correct split brep by comparing their center
+                                        float distance = computePointDistance(RhinoToOpenTKPoint(boolBrep[i].GetBoundingBox(true).Center), RhinoToOpenTKPoint(rhObj.Geometry.GetBoundingBox(true).Center));
+
+                                        if(distance > maxD)
+                                        {
+                                            maxD = distance;
+                                            maxIndex = i;
+                                        }
+
+                                    }
+                                    if (maxIndex != -1)
+                                    {
+                                        //get the correct split brep by comparing their center
+                                        newBrep = boolBrep[maxIndex];
+                                    }
+                                    else
+                                    {
+                                        newBrep = brep;
+                                    }
+                                    break;
+                                }
+                            }
+                        }
+
+                    }
+
+                    if(newBrep == null)
+                    {
+                        newBrep = brep;
+                    }
+                }
+                else
+                {
+                    newBrep = brep;
+                }
+
+                
+                Mesh[] meshes = Mesh.CreateFromBrep(newBrep, MeshingParameters.Default);
+                foreach (Mesh mesh in meshes)
+                    base_mesh.Append(mesh);
+
                 Geometry.Geometry meshStroke_g = new Geometry.RhinoMesh(ref mScene, mScene.platformRotation);
                 ((Geometry.RhinoMesh)meshStroke_g).setMesh(ref base_mesh);
 
@@ -1032,12 +1093,22 @@ namespace SparrowHawk
                 }
                 else
                 {
-                    if (dir == dir2)
+                    if (dir != dir2)
                     {
                         profileCurves[1].Reverse();
                     }
                 }
             }
+
+            if (mScene.selectionList[1] == "Circle")
+            {
+                profileCurves[0] = profileCurves[0].Rebuild(((NurbsCurve)profileCurves[0]).Points.Count, profileCurves[0].Degree, true);
+                profileCurves[1] = profileCurves[1].Rebuild(((NurbsCurve)profileCurves[1]).Points.Count, profileCurves[1].Degree, true);
+            }
+
+            //debug
+            mScene.rhinoDoc.Objects.AddCurve(profileCurves[0]);
+            mScene.rhinoDoc.Objects.AddCurve(profileCurves[1]);
 
             Brep[] loftBreps = Brep.CreateFromLoft(profileCurves, Point3d.Unset, Point3d.Unset, LoftType.Tight, false);
             Brep brep = new Brep();
@@ -1138,9 +1209,9 @@ namespace SparrowHawk
                     profileCurves[1].ClosestPoint(profileCurves[1].PointAtStart, out curveT);
                     profileCurves[1].ChangeClosedCurveSeam(curveT);
                     */
-                }
+            }
 
-                OpenTK.Vector3 n1 = new Vector3((float)curvePlane1.Normal.X, (float)curvePlane1.Normal.Y, (float)curvePlane1.Normal.Z);
+            OpenTK.Vector3 n1 = new Vector3((float)curvePlane1.Normal.X, (float)curvePlane1.Normal.Y, (float)curvePlane1.Normal.Z);
                 OpenTK.Vector3 n2 = new Vector3((float)curvePlane2.Normal.X, (float)curvePlane2.Normal.Y, (float)curvePlane2.Normal.Z);
 
                 //n1,n2 should be the same with railNormal and railEndNormal
@@ -1533,6 +1604,11 @@ namespace SparrowHawk
 
 
         }*/
+
+        public static float computePointDistance(Vector3 p1, Vector3 p2)
+        {
+            return (float)Math.Sqrt(Math.Pow(p1.X - p2.X, 2) + Math.Pow(p1.Y - p2.Y, 2) + Math.Pow(p1.Z - p2.Z, 2));
+        }
 
         public static OpenTK.Matrix4 getCoordinateTransM(OpenTK.Vector3 startO, OpenTK.Vector3 targetO, OpenTK.Vector3 normal1, OpenTK.Vector3 normal2)
         {

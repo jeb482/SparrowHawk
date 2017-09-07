@@ -671,6 +671,8 @@ namespace SparrowHawk.Interaction
                     if (renderObjId != Guid.Empty)
                         Util.removeSceneNode(ref mScene, renderObjId);
                     */
+                    //remove the dynamicaly render sceneNode
+                    //Util.removeSceneNodeWithoutDraw(ref mScene, renderObjId);
                     renderObjId = Util.addSceneNode(ref mScene, dynamicBrep, ref mesh_m, modelName);
 
                     clearDrawing();
