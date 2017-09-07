@@ -19,7 +19,8 @@ namespace SparrowHawk.Interaction
         List<NurbsCurve> curvelist = new List<NurbsCurve>();
         List<Guid> curveGuids = new List<Guid>();
         List<Point> allPoints = new List<Point>();
-        Guid planGuid;
+        Guid planGuid = Guid.Empty;
+       private bool lockPlane = false;
 
         public CreatePatch(ref Scene s) : base(ref s)
         {
@@ -112,48 +113,36 @@ namespace SparrowHawk.Interaction
             {
                 curve = Rhino.Geometry.NurbsCurve.Create(true, 3, curvePoints.ToArray());
                 curvelist.Add(curve);
-
             }
+        }
+
+        protected override void onClickOculusAX(ref VREvent_t vrEvent)
+        {
+            renderPatch();
+            currentState = State.READY;
         }
 
         protected override void onClickOculusTrigger(ref VREvent_t vrEvent)
         {
             curvePoints = new List<Point3d>();
-            base.onClickOculusTrigger(ref vrEvent);
-
+            if (currentState == State.READY)
+            {
+                lockPlane = true;
+                stroke_g = new Geometry.GeometryStroke(ref mScene);
+                reducePoints = new List<Vector3>();
+                currentState = State.PAINT;
+            }
 
         }
 
         protected override void onReleaseOculusTrigger(ref VREvent_t vrEvent)
         {
-            Rhino.RhinoApp.WriteLine("oculus grip release event test");
             if (currentState == State.PAINT)
             {
-                //clear the stroke
-                /*
-                foreach (SceneNode sn in mScene.tableGeometry.children)
-                {
-                    if (sn.guid == strokeId)
-                    {
-                        mScene.tableGeometry.children.Remove(sn);
-                        break;
-                    }
-                }*/
-
-                curveGuids.Add(strokeId);
-                renderCurve();
-                /*
-                if (curvelist.Count == 8)
-                {
-                    renderPatch();
-                }*/
-                //render patch with points
-                renderPatch();
+                lockPlane = false;
                 currentState = State.READY;
-
-                //psuh sweep interation
-                //mScene.popInteraction();
-                //mScene.pushInteraction(new Sweep(ref mScene, planGuid));
+                curveGuids.Add(strokeId); //for clear curve after patch created
+                renderCurve(); //update points
             }
         }
 

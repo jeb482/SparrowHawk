@@ -971,26 +971,37 @@ namespace SparrowHawk
             }
 
             //need to project to the first RhinoObj, but need to translate profile curve along it's normal first and project -normal
-
-            Transform projectTranslate = Transform.Translation(50 * mScene.iPlaneList[0].Normal);
-            profileCurves[0].Transform(projectTranslate);
-            Curve projectCurve = Curve.ProjectToBrep(profileCurves[0], (Brep) mScene.iRhObjList[0].Geometry, -mScene.iPlaneList[0].Normal, mScene.rhinoDoc.ModelAbsoluteTolerance)[0].ToNurbsCurve();
-            profileCurves[0] = projectCurve;
-
-            if (mScene.selectionList[1] == "Circle")
+            if (mScene.selectionList[1] == "Circle" || mScene.selectionList[1] == "Rect")
             {
-                
+                Transform projectTranslate = Transform.Translation(50 * mScene.iPlaneList[0].Normal);
+                profileCurves[0].Transform(projectTranslate);
+                Curve projectCurve = Curve.ProjectToBrep(profileCurves[0], (Brep)mScene.iRhObjList[0].Geometry, -mScene.iPlaneList[0].Normal, mScene.rhinoDoc.ModelAbsoluteTolerance)[0].ToNurbsCurve();
+                profileCurves[0] = projectCurve;
+
+                //calculate the seam point by raycvasting
+                Point3d sPlaneCenter = Util.openTkToRhinoPoint(Util.vrToPlatformPoint(ref mScene, Util.RhinoToOpenTKPoint(profileCurves[0].GetBoundingBox(true).Center)));
+                Point3d ePlaneCenter = Util.openTkToRhinoPoint(Util.vrToPlatformPoint(ref mScene, Util.RhinoToOpenTKPoint(profileCurves[1].GetBoundingBox(true).Center)));
                 Point3d startP = profileCurves[0].PointAtStart;
                 double curveT0 = 0;
                 profileCurves[0].ClosestPoint(startP, out curveT0);
+                profileCurves[0].ChangeClosedCurveSeam(curveT0);
                 mScene.sStartP = new Point3d(profileCurves[0].PointAt(curveT0));
-                //profileCurves[0].ChangeClosedCurveSeam(curveT0);
-               
-                double curveT1 = 0;
-                profileCurves[1].ClosestPoint(startP, out curveT1);
-                mScene.eStartP = new Point3d(profileCurves[1].PointAt(curveT1));
-                //profileCurves[1].ChangeClosedCurveSeam(curveT1);
-                
+
+                Rhino.Geometry.Vector3d direction = new Rhino.Geometry.Vector3d(ePlaneCenter.X - sPlaneCenter.X, ePlaneCenter.Y - sPlaneCenter.Y, ePlaneCenter.Z - sPlaneCenter.Z);
+                Ray3d ray1 = new Ray3d(startP, direction);
+
+                List<GeometryBase> geometries = new List<GeometryBase>();
+                geometries.Add(mScene.iRhObjList[mScene.iRhObjList.Count-1].Geometry);
+                //must be a brep or surface, not mesh
+                Point3d[] rayIntersections = Rhino.Geometry.Intersect.Intersection.RayShoot(ray1, geometries, 1);
+                if (rayIntersections != null)
+                {
+                    //find the closest point on profileCurve2
+                    double curveT1 = 0;
+                    profileCurves[1].ClosestPoint(rayIntersections[0], out curveT1);
+                    profileCurves[1].ChangeClosedCurveSeam(curveT1);
+                    mScene.eStartP = new Point3d(profileCurves[1].PointAt(curveT1));
+                }
 
                 OpenTK.Vector3 n1 = Util.RhinoToOpenTKPoint(mScene.iPlaneList[0].Normal);
                 OpenTK.Vector3 n2 = Util.RhinoToOpenTKPoint(mScene.iPlaneList[1].Normal);
@@ -1025,35 +1036,6 @@ namespace SparrowHawk
                     {
                         profileCurves[1].Reverse();
                     }
-                }
-
-            }
-            else if(mScene.selectionList[1] == "Rect")
-            {
-                Rhino.Geometry.Polyline polylineStart;
-                Rhino.Geometry.Polyline polylineEnd;
-                if (profileCurves[0].TryGetPolyline(out polylineStart) && profileCurves[1].TryGetPolyline(out polylineEnd))
-                {
-                    //testing changing seam
-                    Rectangle3d startRect = Rectangle3d.CreateFromPolyline(polylineStart);
-                    Rectangle3d endRect = Rectangle3d.CreateFromPolyline(polylineEnd);
-
-                    //finding the corner seam
-                    float d0 = (float)Math.Sqrt(Math.Pow(startRect.Corner(0).X - endRect.Corner(0).X, 2) + Math.Pow(startRect.Corner(0).Y - endRect.Corner(0).Y, 2) + Math.Pow(startRect.Corner(0).Z - endRect.Corner(0).Z, 2));
-                    float d1 = (float)Math.Sqrt(Math.Pow(startRect.Corner(0).X - endRect.Corner(1).X, 2) + Math.Pow(startRect.Corner(0).Y - endRect.Corner(1).Y, 2) + Math.Pow(startRect.Corner(0).Z - endRect.Corner(1).Z, 2));
-                    float d2 = (float)Math.Sqrt(Math.Pow(startRect.Corner(0).X - endRect.Corner(2).X, 2) + Math.Pow(startRect.Corner(0).Y - endRect.Corner(2).Y, 2) + Math.Pow(startRect.Corner(0).Z - endRect.Corner(2).Z, 2));
-                    float d3 = (float)Math.Sqrt(Math.Pow(startRect.Corner(0).X - endRect.Corner(3).X, 2) + Math.Pow(startRect.Corner(0).Y - endRect.Corner(3).Y, 2) + Math.Pow(startRect.Corner(0).Z - endRect.Corner(3).Z, 2));
-
-                    float[] distaneArr = { d0, d1, d2, d3 };
-                    int minIndex = Array.IndexOf(distaneArr, distaneArr.Min());
-
-                    double curveT0 = 0;
-                    profileCurves[0].ClosestPoint(startRect.Corner(0), out curveT0);
-                    profileCurves[0].ChangeClosedCurveSeam(curveT0);
-
-                    double curveT = 0;
-                    profileCurves[1].ClosestPoint(endRect.Corner(minIndex), out curveT);
-                    profileCurves[1].ChangeClosedCurveSeam(curveT);
                 }
             }
 

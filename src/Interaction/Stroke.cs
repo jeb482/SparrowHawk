@@ -272,7 +272,7 @@ namespace SparrowHawk.Interaction
         {
             float pointReductionTubeWidth = 0.002f;
             reducePoints = DouglasPeucker(ref curvePoints, 0, curvePoints.Count - 1, pointReductionTubeWidth);
-            Rhino.RhinoApp.WriteLine("reduce points from" + curvePoints.Count + " to " + curvePoints.Count);
+            //Rhino.RhinoApp.WriteLine("reduce points from" + curvePoints.Count + " to " + curvePoints.Count);
         }
 
         //Quick test about Douglas-Peucker for rhino points, return point3d with rhino coordinate system
