@@ -187,7 +187,7 @@ void main()
     for (int i = 0; i < 12; i++) {
         vec3 L = lightPos[i] - fpos;
         float d = length(L); 
-        out_color.xyz += max(0, dot(L/d, N)) * color.xyz * lightInt[i] / (d*d);
+        out_color.xyz += abs(dot(L/d, N)) * color.xyz * lightInt[i] / (d*d);
     }
 }";
 
