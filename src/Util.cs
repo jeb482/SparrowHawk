@@ -1540,7 +1540,38 @@ namespace SparrowHawk
             return 2;
         }
 
+        /// <summary>
+        /// Naive depth sorting algorithm for a single unit of geometry.
+        /// </summary>
+        /// <param name="g"></param>
+        public static void depthSort(Matrix4 modelView,Geometry.Geometry g)
+        {
+            // Only works for tris
+            if (g.primitiveType != OpenTK.Graphics.OpenGL4.BeginMode.Triangles)
+                return;
 
+            // Find the midpoint of each shape
+            System.Tuple<int, float>[] midpointZ = new Tuple<int, float>[g.mNumPrimitives];
+            for (int i = 0; i < g.mNumPrimitives; i++)
+            {
+                Vector4 a = new Vector4(g.mGeometry[3 * g.mGeometryIndices[3 * i + 0]] + 0, g.mGeometry[9 * g.mGeometryIndices[3 * i + 0]] + 1, g.mGeometry[9 * g.mGeometryIndices[3 * i + 0]] + 2, 1);
+                Vector4 b = new Vector4(g.mGeometry[3 * g.mGeometryIndices[3 * i + 1]] + 0, g.mGeometry[9 * g.mGeometryIndices[3 * i + 1]] + 1, g.mGeometry[9 * g.mGeometryIndices[3 * i + 1]] + 2, 1);
+                Vector4 c = new Vector4(g.mGeometry[3 * g.mGeometryIndices[3 * i + 2]] + 0, g.mGeometry[9 * g.mGeometryIndices[3 * i + 2]] + 1, g.mGeometry[9 * g.mGeometryIndices[3 * i + 2]] + 2, 1);
+                midpointZ[i] = new Tuple<int, float>(i,(modelView * (a + b + c)/3).Z);
+            }
+            
+            // Sort indices according to midpoint (a bit sloppy, but hey. 1 week until Chi.)
+            int j = 0;
+            int[] newIndices = new int[g.mGeometryIndices.Length];
+            foreach (var p in midpointZ.OrderBy(pair => pair.Item2)) {
+                newIndices[3 * j + 0] = g.mGeometryIndices[3 * p.Item1 + 0];
+                newIndices[3 * j + 1] = g.mGeometryIndices[3 * p.Item1 + 1];
+                newIndices[3 * j + 2] = g.mGeometryIndices[3 * p.Item1 + 2];
+                j++;
+            }
+            g.mGeometryIndices = newIndices;
+            
+        }
 
 
     }
