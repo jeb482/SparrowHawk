@@ -60,6 +60,8 @@ namespace SparrowHawk.Interaction
         public string dynamicRender = "none";
         private Material.Material mesh_m;
 
+        private List<Vector3> snapPointsList = new List<Vector3>();
+
         public CreateCurve(ref Scene scene) : base(ref scene)
         {
             stroke_g = new Geometry.GeometryStroke(ref mScene);
@@ -96,14 +98,29 @@ namespace SparrowHawk.Interaction
             dynamicRender = renderType;
             mesh_m = new Material.RGBNormalMaterial(0.5f);
 
+            snapPointsList.Clear();
+
+            /*
             if (type != 0)
             {
 
                 // visualizing projection point with white color
                 drawPoint = Util.MarkProjectionPoint(ref mScene, new OpenTK.Vector3(0, 0, 0), 1, 1, 1);
 
+                if (type == 3)
+                {
+                    //render the object plane
+                    float planeSize = 240;
+                    PlaneSurface plane_surface2 = new PlaneSurface(mScene.iPlaneList[mScene.iPlaneList.Count - 1], new Interval(-planeSize, planeSize), new Interval(-planeSize, planeSize));
+                    Brep railPlane2 = Brep.CreateFromSurface(plane_surface2);
+                    Util.addSceneNode(ref mScene, railPlane2, ref mesh_m, "railPlane");
+
+                    snapPointsList.Add(Util.platformToVRPoint(ref mScene, Util.RhinoToOpenTKPoint(railPlane2.GetBoundingBox(true).Center)));
+                }
+
             }
             d = new generateModel_Delegate(generateModel);
+            */
         }
 
         public CreateCurve(ref Scene scene, uint devIndex) : base(ref scene)
@@ -121,7 +138,20 @@ namespace SparrowHawk.Interaction
             {
                 // visualizing projection point with white color
                 drawPoint = Util.MarkProjectionPoint(ref mScene, new OpenTK.Vector3(0, 0, 0), 1, 1, 1);
+
+                if (type == 3)
+                {
+                    //render the object plane
+                    float planeSize = 240;
+                    PlaneSurface plane_surface2 = new PlaneSurface(mScene.iPlaneList[mScene.iPlaneList.Count - 1], new Interval(-planeSize, planeSize), new Interval(-planeSize, planeSize));
+                    Brep railPlane2 = Brep.CreateFromSurface(plane_surface2);
+                    Util.addSceneNode(ref mScene, railPlane2, ref mesh_m, "railPlane");
+
+                    snapPointsList.Add(Util.platformToVRPoint(ref mScene, Util.RhinoToOpenTKPoint(railPlane2.GetBoundingBox(true).Center)));
+                }
             }
+
+            d = new generateModel_Delegate(generateModel);
         }
 
         public override void draw(bool isTop)
@@ -179,6 +209,8 @@ namespace SparrowHawk.Interaction
                             }
                         }
                     }
+
+                    projectP = snapToPoints(projectP, snapPointsList);
                 }
                 else
                 {
@@ -212,6 +244,7 @@ namespace SparrowHawk.Interaction
                         targetPRhObj = null;
                     }
                     projectP = new OpenTK.Vector3(100, 100, 100); //make it invisable
+
                 }
 
                 //visualize the projection points
@@ -391,6 +424,48 @@ namespace SparrowHawk.Interaction
 
                         dynamicBrep = Util.ExtrudeFunc(ref mScene, ref mScene.iCurveList);
 
+                    }else
+                    {
+                        //assume only one intersect point
+                        //compute the brepFace where the intersection is on
+                        int faceIndex = -1;
+                        float mimD = 1000000f;
+                        for (int i = 0; i < targetBrep.Faces.Count; i++)
+                        {
+                            //cast BrepFace to Brep for ClosestPoint(P) menthod
+                            double dist = targetBrep.Faces[i].DuplicateFace(false).ClosestPoint(simplifiedCurve.PointAtStart).DistanceTo(simplifiedCurve.PointAtStart);
+                            //tolerance mScene.rhinoDoc.ModelAbsoluteTolerance too low
+                            if (dist < mimD)
+                            {
+                                mimD = (float)dist;
+                                faceIndex = i;
+                            }
+                        }
+
+                        List<Point3d> extrudeCurveP = new List<Point3d>();
+                        extrudeCurveP.Add(((Surface)targetBrep.Faces[faceIndex]).GetBoundingBox(true).Center);
+                        extrudeCurveP.Add(simplifiedCurve.PointAtEnd);
+                        //update the edit curve
+                        editCurve = Rhino.Geometry.NurbsCurve.Create(false, 1, extrudeCurveP.ToArray());
+
+                        if (mScene.iCurveList.Count == 1)
+                        {
+                            mScene.iCurveList.Add(editCurve);
+                            if (type != 0 && curveOnObj != null)
+                            {
+                                mScene.iRhObjList.Add(curveOnObj);
+                            }
+                        }
+                        else
+                        {
+                            mScene.iCurveList[1] = editCurve;
+                            if (type != 0 && curveOnObj != null)
+                            {
+                                mScene.iRhObjList[mScene.iRhObjList.Count - 1] = curveOnObj;
+                            }
+                        }
+
+                        dynamicBrep = Util.ExtrudeFunc(ref mScene, ref mScene.iCurveList);
                     }
 
                 }
@@ -470,6 +545,23 @@ namespace SparrowHawk.Interaction
 
         }
 
+        private Vector3 snapToPoints(Vector3 projectP, List<Vector3> pointsList)
+        {
+            bool snap = false;
+            foreach (Vector3 p in pointsList)
+            {
+                //snap to origin
+                if (Math.Sqrt(Math.Pow(projectP.X - p.X, 2) + Math.Pow(projectP.Y - p.Y, 2) + Math.Pow(projectP.Z - p.Z, 2)) < 0.02)
+                {
+                    projectP = p;
+                    snap = true;
+                    break;
+                }
+            }
+
+            return projectP;
+        }
+
         protected override void onClickOculusTrigger(ref VREvent_t vrEvent)
         {
             //Rhino.RhinoApp.WriteLine("oculus grip click event test");
@@ -523,7 +615,9 @@ namespace SparrowHawk.Interaction
                 //add plane to iPlaneList since Sweep fun need it's info
                 if (tolerance < 100)
                 {
-                    mScene.iPlaneList.Add(curvePlane);
+                    //type 3 already add a plane
+                    if(type != 3) 
+                        mScene.iPlaneList.Add(curvePlane);
                 }
                 else
                 {

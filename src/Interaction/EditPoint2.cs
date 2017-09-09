@@ -563,7 +563,7 @@ namespace SparrowHawk.Interaction
                     renderObjId = Util.addSceneNodeWithoutDraw(ref mScene, dynamicBrep, ref mesh_m, modelName);
 
                     //SweepCapFun debugging
-                    if (dynamicRender == "Sweep-Circle" || dynamicRender == "Sweep-Rect")
+                    if (dynamicRender == "Sweep-Circle" || dynamicRender == "Sweep-Rect" || dynamicRender == "Loft")
                     {
                         Rhino.RhinoApp.WriteLine("Dot: " + mScene.angleD);
                         Rhino.RhinoApp.WriteLine("c1 dir: " + mScene.c1D);
@@ -868,7 +868,7 @@ namespace SparrowHawk.Interaction
 
                 if (designPlane != null)
                 {
-                    Guid guid = Util.addSceneNodeWithoutVR(ref mScene, designPlane, ref mesh_m, "panel");
+                    Guid guid = Util.addSceneNodeWithoutVR(ref mScene, designPlane, "panel");
                     mScene.iRhObjList.Add(mScene.rhinoDoc.Objects.Find(guid));
                 }
             }
@@ -945,7 +945,7 @@ namespace SparrowHawk.Interaction
 
                         if (designPlane != null)
                         {
-                            Guid guid = Util.addSceneNodeWithoutVR(ref mScene, designPlane, ref mesh_m, "panel");
+                            Guid guid = Util.addSceneNodeWithoutVR(ref mScene, designPlane, "panel");
                             mScene.iRhObjList.Add(mScene.rhinoDoc.Objects.Find(guid));
                         }
                     }

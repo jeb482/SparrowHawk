@@ -351,14 +351,32 @@ namespace SparrowHawk
             
             GL.BindFramebuffer(FramebufferTarget.ReadFramebuffer, rightEyeDesc.renderFramebufferId);
             GL.BindFramebuffer(FramebufferTarget.DrawFramebuffer, 0);
-            if (enableAR)
-            {
-                int ox = ((int)vrRenderWidth - ovrvision_controller.camWidth) / 2;
-                int oy = ((int)vrRenderHeight - ovrvision_controller.camHeight) / 2;
-                GL.BlitFramebuffer(ox + 100, oy, ovrvision_controller.camWidth, ovrvision_controller.camHeight, 0, 0, ovrvision_controller.camWidth, ovrvision_controller.camHeight, ClearBufferMask.ColorBufferBit, BlitFramebufferFilter.Linear);
-            } 
-            else
-                GL.BlitFramebuffer(0, 0, (int)vrRenderWidth, (int)vrRenderHeight, 0, 0, (int)vrRenderWidth, (int)vrRenderHeight, ClearBufferMask.ColorBufferBit, BlitFramebufferFilter.Linear);
+            //if (enableAR)
+            //{
+            //    int ox = ((int)vrRenderWidth - ovrvision_controller.camWidth) / 2;
+            //    int oy = ((int)vrRenderHeight - ovrvision_controller.camHeight) / 2;
+            //    GL.BlitFramebuffer(ox + 100, oy, ovrvision_controller.camWidth, ovrvision_controller.camHeight, 0, 0, ovrvision_controller.camWidth, ovrvision_controller.camHeight, ClearBufferMask.ColorBufferBit, BlitFramebufferFilter.Linear);
+            //} 
+            //else
+            //
+            
+            // THIS ONE IS WITHOUT ANY CLIPPING
+            // 
+            // int leftOffset = 100;
+            // int botOffset = 415;
+            // int rightOffset = 300;
+            // int topOffset = 375;
+
+            // THIS ONE CLIPS TO A NICE RECTANGLE
+            int leftOffset = 183;
+            int botOffset = 517;
+            int rightOffset = 470;
+            int topOffset = 392;
+
+
+            GL.BlitFramebuffer(leftOffset, botOffset, (int)vrRenderWidth - rightOffset, (int)vrRenderHeight - topOffset, 0, 0, (int)vrRenderWidth - (leftOffset + rightOffset), (int)vrRenderHeight - (botOffset + topOffset), ClearBufferMask.ColorBufferBit, BlitFramebufferFilter.Linear);
+            
+            //GL.BlitFramebuffer(100, 400, (int)vrRenderWidth - 100, (int)vrRenderHeight - 300 , 0, 0, (int)vrRenderWidth - 200, (int)vrRenderHeight -  700, ClearBufferMask.ColorBufferBit, BlitFramebufferFilter.Linear);
             GL.BindFramebuffer(FramebufferTarget.ReadFramebuffer, 0);
             
         }

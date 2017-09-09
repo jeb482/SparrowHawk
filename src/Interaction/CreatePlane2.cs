@@ -36,13 +36,14 @@ namespace SparrowHawk.Interaction
         float radius = 20;
         float width = 40;
         float height = 30;
-        private float delta = 5;
+        float delta = 2;
 
         private Plane modelPlane;
         private float planeSize = 240;
         private NurbsCurve modelcurve;
         private Brep modelBrep;
         private bool hitPlane = false;
+        private bool  iStart = false;
 
 
 
@@ -73,7 +74,7 @@ namespace SparrowHawk.Interaction
                 mOuterSelectionRadius = 0.6f;
             }
 
-        }
+    }
 
         public float getAngularMenuOffset(int numOptions)
         {
@@ -105,8 +106,14 @@ namespace SparrowHawk.Interaction
 
             if (theta < 0) { theta += (float)(2 * Math.PI); }
 
+            //prevent changing size immediately
+            if(!iStart && mCurrentRadius < mMinSelectionRadius)
+            {
+                iStart = true;
+            }
+
             // If in midlle selection ring, check delay
-            if (mCurrentRadius > mMinSelectionRadius)
+            if (mCurrentRadius > mMinSelectionRadius && iStart)
             {
 
                 theta = (float)((theta / Math.PI) * 180);
@@ -151,7 +158,7 @@ namespace SparrowHawk.Interaction
         {
             //mScene.vibrateController(0.1, (uint)primaryControllerIdx);
             //Rhino.RhinoApp.WriteLine("sector: " + sector);
-            if (renderType == "circle")
+            if (renderType == "Circle")
             {
                 if (sector == 1)
                 {
@@ -162,11 +169,11 @@ namespace SparrowHawk.Interaction
                     radius -= delta;
                     if (radius <= 0)
                     {
-                        radius = 0;
+                        radius = 1;
                     }
                 }
             }
-            else if (renderType == "rect")
+            else if (renderType == "Rect")
             {
                 if (sector == 1)
                 {
@@ -177,7 +184,7 @@ namespace SparrowHawk.Interaction
                     width -= delta;
                     if (width <= 0)
                     {
-                        width = 0;
+                        width = 1;
                     }
                 }
                 else if (sector == 2)
@@ -189,7 +196,7 @@ namespace SparrowHawk.Interaction
                     height -= delta;
                     if (height <= 0)
                     {
-                        height = 0;
+                        height = 1;
                     }
                 }
             }
@@ -236,13 +243,13 @@ namespace SparrowHawk.Interaction
             //project to xy plane in rhino
             modelPlane = new Plane(controller_pRhino, normal);
 
-            if (renderType == "circle")
+            if (renderType == "Circle")
             {
                 Rhino.Geometry.Circle circle = new Rhino.Geometry.Circle(modelPlane, controller_pRhino, radius);
                 modelcurve = circle.ToNurbsCurve();
 
             }
-            else if (renderType == "rect")
+            else if (renderType == "Rect")
             {
                 //Rectangle3d rect = new Rectangle3d(modelPlane, width, height);
                 Rectangle3d rect = new Rectangle3d(modelPlane, new Interval(-width / 2, width / 2), new Interval(-height / 2, height / 2));
@@ -262,28 +269,47 @@ namespace SparrowHawk.Interaction
         protected override void onClickOculusAX(ref VREvent_t vrEvent)
         {
             //TODO-support projection curve
+            Point3d planeCenter = new Point3d();
             if (renderType != "projection")
             {
+                Util.removeSceneNodeWithoutDraw(ref mScene, renderObjId);
                 Brep[] shapes = Brep.CreatePlanarBreps(modelcurve);
                 modelBrep = shapes[0];
                 //add plane to iRhobj
-                renderObjId = Util.addSceneNode(ref mScene, modelBrep, ref mesh_m, "3D-" + renderType);
-            }
-            else
-            {
-                //update modelPlane and use tolerance to support unplanar surface
-                Plane curvePlane = new Plane();
-                Double tolerance = 0;
-                while (tolerance < 400)
+                renderObjId = Util.addSceneNode(ref mScene, modelBrep, ref mesh_m, renderType);
+
+                if (renderType == "Circle")
                 {
-                    if (modelcurve.TryGetPlane(out curvePlane, tolerance))
+                    Circle circle;
+                    if (modelcurve.TryGetCircle(out circle))
                     {
-                        modelPlane = curvePlane;
-                        break;
+                        planeCenter = circle.Center;
                     }
-                    tolerance++;
+                }
+                else if (renderType == "Rect")
+                {
+                    Rhino.Geometry.Polyline polyline;
+                    if (mScene.iCurveList[mScene.iCurveList.Count - 1].TryGetPolyline(out polyline))
+                    {
+                        Rectangle3d rect = Rectangle3d.CreateFromPolyline(polyline);
+                        planeCenter = rect.Center;
+                    }
                 }
             }
+
+            //update modelPlane and use tolerance to support unplanar surface
+            Plane curvePlane = new Plane();
+            Double tolerance = 0;
+            while (tolerance < 400)
+            {
+                if (modelcurve.TryGetPlane(out curvePlane, tolerance))
+                {
+                    modelPlane = curvePlane;
+                    break;
+                }
+                tolerance++;
+            }
+            
 
             //creating perendicular plane
             //TODO-need to decide whether it's XAxis or YAxis as normal
@@ -291,30 +317,59 @@ namespace SparrowHawk.Interaction
             OpenTK.Vector3 planeXAxis = Util.RhinoToOpenTKPoint(modelPlane.XAxis);
             OpenTK.Vector3 planeYAxis = Util.RhinoToOpenTKPoint(modelPlane.YAxis);
 
-            Plane planeX = new Plane(modelPlane.Origin, modelPlane.XAxis);
-            Plane planeY = new Plane(modelPlane.Origin, modelPlane.YAxis);
+            //Plane planeX = new Plane(modelPlane.Origin, modelPlane.XAxis);
+            //Plane planeY = new Plane(modelPlane.Origin, modelPlane.YAxis)
+
+            Plane planeX = new Plane(planeCenter, modelPlane.XAxis);
+            Plane planeY = new Plane(planeCenter, modelPlane.YAxis);
 
             float xAngle = OpenTK.Vector3.CalculateAngle(Util.RhinoToOpenTKPoint(planeX.Normal), worldUpAxis);
             float yAngle = OpenTK.Vector3.CalculateAngle(Util.RhinoToOpenTKPoint(planeY.Normal), worldUpAxis);
+            Rhino.RhinoApp.WriteLine("xAngle: " + xAngle + " yAngle: " + yAngle);
             Rhino.Geometry.Vector3d normal2;
             Plane plane2;
-            if (xAngle < yAngle)
+            if (yAngle > xAngle)
             {
-                plane2 = planeY;
+                if (yAngle <= Math.PI / 2)
+                    plane2 = planeY;
+                else
+                    plane2 = planeX;
             }
             else
             {
-                plane2 = planeX;
+                if (xAngle < Math.PI / 2)
+                    plane2 = planeX;
+                else
+                    plane2 = planeY;
             }
+            
+            /*
+            PlaneSurface plane_surfaceX = new PlaneSurface(planeX, new Interval(-planeSize, planeSize), new Interval(-planeSize, planeSize));
+            Brep railPlaneX = Brep.CreateFromSurface(plane_surfaceX);
 
+            PlaneSurface plane_surfaceY = new PlaneSurface(planeY, new Interval(-planeSize, planeSize), new Interval(-planeSize, planeSize));
+            Brep railPlaneY = Brep.CreateFromSurface(plane_surfaceY);
+            */
             PlaneSurface plane_surface2 = new PlaneSurface(plane2, new Interval(-planeSize, planeSize), new Interval(-planeSize, planeSize));
-            Brep railPlane = Brep.CreateFromSurface(plane_surface2);
-            Util.addSceneNode(ref mScene, railPlane, ref mesh_m, "railPlane");
+            Brep railPlane2 = Brep.CreateFromSurface(plane_surface2);
+
+            //testing
+            /* 
+            Material.Material mesh_mX = new Material.SingleColorMaterial(0.5f, 0.0f, 0, 0.4f);
+            Material.Material mesh_mY = new Material.SingleColorMaterial(0.0f, 0.5f, 0, 0.4f);
+            Util.addSceneNode(ref mScene, railPlaneX, ref mesh_mX, "railPlaneX");
+            Util.addSceneNode(ref mScene, railPlaneY, ref mesh_mY, "railPlaneY");
+            */
+            //Util.addSceneNode(ref mScene, railPlane2, ref mesh_m, "railPlane");
+
 
             //add icurveList since we don't use EditPoint2 for circle and rect
             mScene.iCurveList.Add(modelcurve);
+            mScene.iPlaneList.Add(curvePlane);
+            mScene.iPlaneList.Add(plane2);
 
             //updating iPointList
+            /*
             if (renderType == "circle")
             {
                 mScene.selectionList.Add("Sweep");
@@ -371,13 +426,19 @@ namespace SparrowHawk.Interaction
 
 
             }
-
+            */
             //push creatcurve for rail curve type-3 for railPlane
 
             //mScene.popInteraction();
-            mScene.pushInteraction(new EditPoint3(ref mScene, true, "Sweep"));
-            mScene.pushInteraction(new CreateCurve(ref mScene, 3, false, "Sweep"));
-            mScene.peekInteraction().init();
+            //mScene.pushInteraction(new EditPoint3(ref mScene, true, "Sweep"));
+            //mScene.pushInteraction(new CreateCurve(ref mScene, 3, false, "Sweep"));
+            //mScene.peekInteraction().init();
+
+            mScene.popInteraction();
+            /*
+            if (!mScene.interactionStackEmpty())
+                mScene.peekInteraction().init();
+            */
 
         }
 

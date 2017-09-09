@@ -18,11 +18,12 @@ namespace SparrowHawk
     {
         public enum ESparrowHawkSigalType
         {
-            InitType, LineType, EncoderType
+            InitType, LineType, EncoderType, CutType
         };
 
         public ESparrowHawkSigalType type;
-        public float[] data; 
+        public float[] data;
+        public string strData; 
         public SparrowHawkSignal(ESparrowHawkSigalType _type, float[] _data)
         {
             type = _type; data = _data; 
@@ -89,8 +90,15 @@ namespace SparrowHawk
             SparrowHawkSignal s = new SparrowHawkSignal(SparrowHawkSignal.ESparrowHawkSigalType.InitType, new float[substrings.Length - 1]);
             for (int i = 1; i < substrings.Length; i++)
             {
-                if (!float.TryParse(substrings[i], out s.data[i - 1]))
-                    return;
+                if (substrings[0] != "del:")
+                {
+                    if (!float.TryParse(substrings[i], out s.data[i - 1]))
+                        return;
+                }
+                else
+                {
+                    s.strData = substrings[1];
+                }
             }
             switch (substrings[0])
             {
@@ -105,6 +113,10 @@ namespace SparrowHawk
                     break;
                 case "stroke:":
                     s.type = SparrowHawkSignal.ESparrowHawkSigalType.LineType;
+                    mSignalQueue.Enqueue(s);
+                    break;
+                case "del:":
+                    s.type = SparrowHawkSignal.ESparrowHawkSigalType.CutType;
                     mSignalQueue.Enqueue(s);
                     break;
             }

@@ -57,6 +57,8 @@ namespace SparrowHawk
         Material.Material printStroke_m;
 
         Guid uGuid;
+        Interaction.Interaction current_i,last_i;
+        Guid cutPGuid;
 
         public VrGame(ref Rhino.RhinoDoc doc, bool isLefty = false)
         {
@@ -161,9 +163,23 @@ namespace SparrowHawk
             //default interaction
             if (mScene.interactionStackEmpty())
                 mScene.pushInteraction(new Interaction.PickPoint(ref mScene));
-         
 
-            Interaction.Interaction current_i = mScene.peekInteraction();
+            if (current_i != null)
+            {
+                last_i = current_i;
+                current_i = mScene.peekInteraction();
+
+                //testing init()
+                if (last_i.GetType() != current_i.GetType())
+                {
+                    current_i.init();
+                }
+            }else
+            {
+                current_i = mScene.peekInteraction();
+                current_i.init();
+            }
+
             current_i.handleInput();
             current_i.draw(true);
 
@@ -265,6 +281,13 @@ namespace SparrowHawk
                         }
                     }
                     break;
+                case SparrowHawkSignal.ESparrowHawkSigalType.CutType:
+                    string guidStr = s.strData;
+                    Guid delId = new Guid(guidStr);
+                    Util.removeSceneNode(ref mScene, delId);
+                    mScene.rhinoDoc.Views.Redraw();
+                    break;
+
                 case SparrowHawkSignal.ESparrowHawkSigalType.EncoderType:
 
                     //for rhino object
@@ -433,7 +456,7 @@ namespace SparrowHawk
             Geometry.Geometry controllerL_g = new Geometry.PointMarker(new Vector3(0, 0, 0));
             Material.Material controllerL_m = new Material.SingleColorMaterial(1, 0, 0, 1);
             SceneNode controllerL_p = new SceneNode("Left Cursor", ref controllerL_g, ref controllerL_m);
-            mScene.rightControllerNode.add(ref controllerL_p);
+            mScene.leftControllerNode.add(ref controllerL_p);
             controllerL_p.transform = new Matrix4(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1);//mScene.mLeftControllerOffset;
 
             Geometry.Geometry controllerR_g = new Geometry.PointMarker(new Vector3(0, 0, 0));
@@ -522,6 +545,13 @@ namespace SparrowHawk
                 mTitleBase = "SparrowHawk (No VR Detected)";
             }
 
+            // // THIS IS FOR UNCLIPPED
+            // Width = 864;
+            // Height = 820; 
+
+            // THIS IS FOR CLIPPED RECTANGLE
+            Width = 691;
+            Height = 692;
             
             // Window Setup Info
             mStrDriver = Util.GetTrackedDeviceString(ref mHMD, OpenVR.k_unTrackedDeviceIndex_Hmd, ETrackedDeviceProperty.Prop_TrackingSystemName_String);
@@ -753,7 +783,15 @@ namespace SparrowHawk
             if (e.KeyChar == 'W' || e.KeyChar == 'w')
             {
                 mScene.popInteraction();
-                mScene.pushInteraction(new Interaction.CreatePlane2(ref mScene, "circle"));
+                //mScene.pushInteraction(new Interaction.CreatePlane2(ref mScene, "circle"));
+                mScene.selectionList.Add("Sweep");
+                mScene.selectionList.Add("Circle");
+                mScene.selectionList.Add("Curve");
+
+                mScene.pushInteraction(new Interaction.EditPoint3(ref mScene, true, "Sweep"));
+                mScene.pushInteraction(new Interaction.CreateCurve(ref mScene, 3, false, "Sweep"));
+                mScene.pushInteraction(new Interaction.CreatePlane2(ref mScene, "Circle"));
+
             }
 
             if (e.KeyChar == 'O' || e.KeyChar == 'o')

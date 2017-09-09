@@ -63,7 +63,7 @@ namespace SparrowHawk.Interaction
 
             if (designPlane != null)
             {
-                guid = Util.addSceneNodeWithoutVR(ref mScene, designPlane, ref mesh_m, "panel");
+                guid = Util.addSceneNodeWithoutVR(ref mScene, designPlane, "panel");
                 mScene.iRhObjList.Add(mScene.rhinoDoc.Objects.Find(guid));
                 //TODO- bad solution. constriant the next interaction
                 mScene.iPlaneList.Add(plane);
@@ -108,6 +108,10 @@ namespace SparrowHawk.Interaction
                 renderObjId = Util.addSceneNode(ref mScene, modelBrep, ref mesh_m, renderType);
                 //add icurveList since we don't use EditPoint2 for circle and rect
                 mScene.iCurveList.Add(modelcurve);
+
+                //now it will call the init() automatically
+                mScene.popInteraction();
+                mScene.peekInteraction().init();
 
             }
 

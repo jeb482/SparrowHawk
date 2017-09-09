@@ -123,10 +123,11 @@ namespace SparrowHawk
         public char[] mDeviceClassChar = new char[Valve.VR.OpenVR.k_unMaxTrackedDeviceCount];
         public int leftControllerIdx = -1;
         public int rightControllerIdx = -1;
-        public Matrix4 mLeftControllerOffset = Util.createTranslationMatrix(0.001457473f+ 0.005344f, -0.02422076f - 0.0013317f, -0.00521365f + 0.00124466f);
+        public Matrix4 mLeftControllerOffset = Util.createTranslationMatrix(0.01451808f, -0.08065776f, 0.006754342f);
         //public Matrix4 mLeftControllerOffset = Util.createTranslationMatrix(0.001885863f, -0.02479392f,-0.0003346408f);
         //public Matrix4 mLeftControllerOffset = Util.createTranslationMatrix(0.00134759f, -0.02559454f, -0.005455005f);//Util.createTranslationMatrix(0,0,0);//Util.createTranslationMatrix(0.0006068f, -.02383642f, -0.00026948f);
-        public Matrix4 mRightControllerOffset = Util.createTranslationMatrix(0.006997579f+ -5.139893E-05f, -0.02764783f+ 0.0005281732f, 0.002040779f+ 0.0001677993f);//Util.createTranslationMatrix(-0.03205855f+ 0.0001097674f, -0.02689967f+ -0.0008004899f, 0.006957637f+ -0.0005140541f);
+        public Matrix4 mRightControllerOffset = Util.createTranslationMatrix(0.005918316f + -0.0003245298f, -0.02670806f+ 0.0002023121f, 0.001123522f + -0.0001561325f);//Util.createTranslationMatrix(-0.03205855f+ 0.0001097674f, -0.02689967f+ -0.0008004899f, 0.006957637f+ -0.0005140541f);
+        //(0.005918316, -0.02670806, 0.001123522)
         //-0.0009147244f, -0.002345422f, -0.0006840917f
         //-5.139893E-05f, 0.0005281732f, 0.0001677993f
         private double leftControllerEndVibrateTime;
@@ -181,11 +182,17 @@ namespace SparrowHawk
                                               -6.955585f, -995.7741f, -15.0203f, 702.3792f,
                                               0, 0, 0, 1);
         */
-
+        /*
         public Matrix4 vrToRobot = new Matrix4(-24.40972f, -15.1202f, -1006.631f, -619.447f,
                                              977.9764f, -15.0478f, -28.42042f, 173.4097f,
                                              -16.9345f, -985.1676f, 2.534816f, 709.4443f,
-                                             0, 0, 0, 1);
+                                             0, 0, 0, 1);*/
+        public Matrix4 vrToRobot = new Matrix4(-25.23433f, -1.428557f, -986.1774f, -619.1987f,
+            994.2307f, -14.8897f, -28.13068f, 175.5754f,
+            -9.72579f, -1007.435f, -17.07237f, 707.9531f,
+            0, 0, 0, 1);
+
+                                             
         // Interactions
         private Stack<Interaction.Interaction> mInteractionStack = new Stack<Interaction.Interaction>();
         public bool isOculus = false;

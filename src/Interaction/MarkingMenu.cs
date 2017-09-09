@@ -383,7 +383,7 @@ namespace SparrowHawk.Interaction
                         //patch
                         case 3:
                             mScene.popInteraction();
-                            initInteractionChain(mScene.selectionList.Count - 1, "Patch");
+                            initInteractionChain(mScene.selectionList.Count - 1, "Reference");
                             mScene.menuIndex++;
                             break;
                     }
@@ -418,7 +418,7 @@ namespace SparrowHawk.Interaction
                         //patch
                         case 3:
                             mScene.popInteraction();
-                            renderModel(mScene.selectionList.Count - 1, "Patch");
+                            renderModel(mScene.selectionList.Count - 1, "Reference");
                             mScene.menuIndex = 0;
                             mScene.menuList.Clear();
                             break;
@@ -459,12 +459,14 @@ namespace SparrowHawk.Interaction
                     mScene.pushInteraction(new EditPoint3(ref mScene, true, "Rect"));
                     //mScene.pushInteraction(new AddPoint(ref mScene, 3, 2));
                     mScene.pushInteraction(new CreatePlane(ref mScene, "Rect"));
+                    //mScene.pushInteraction(new CreatePlane2(ref mScene, "Rect"));
                 }
                 else if (mScene.selectionList[index] == "Circle")
                 {
                     mScene.pushInteraction(new EditPoint3(ref mScene, true, "Circle"));
                     //mScene.pushInteraction(new AddPoint(ref mScene, 3, 2));
                     mScene.pushInteraction(new CreatePlane(ref mScene, "Circle"));
+                    //mScene.pushInteraction(new CreatePlane2(ref mScene, "Circle"));
                 }
                 else if (mScene.selectionList[index] == "Curve")
                 {
@@ -502,7 +504,14 @@ namespace SparrowHawk.Interaction
             }
             else if (type == "Reference")
             {
-
+                if (mScene.selectionList[index] == "Circle")
+                {
+                    mScene.pushInteraction(new CreatePlane2(ref mScene, "Circle"));
+                }else if (mScene.selectionList[index] == "Rect")
+                {
+                    mScene.pushInteraction(new CreatePlane2(ref mScene, "Rect"));
+                }
+                
             }
 
         }
@@ -538,15 +547,15 @@ namespace SparrowHawk.Interaction
             {
                 if (mScene.selectionList[index] == "Rect")
                 {
-                    mScene.pushInteraction(new EditPoint3(ref mScene, true, renderType));
+                    //mScene.pushInteraction(new EditPoint3(ref mScene, true, renderType));
                     //mScene.pushInteraction(new AddPoint(ref mScene, 3, 2));
-                    mScene.pushInteraction(new CreatePlane(ref mScene, "Rect"));
+                    mScene.pushInteraction(new CreatePlane2(ref mScene, "Rect"));
                 }
                 else if (mScene.selectionList[index] == "Circle")
                 {
-                    mScene.pushInteraction(new EditPoint3(ref mScene, true, renderType));
+                    //mScene.pushInteraction(new EditPoint3(ref mScene, true, renderType));
                     //mScene.pushInteraction(new AddPoint(ref mScene, 3, 2));
-                    mScene.pushInteraction(new CreatePlane(ref mScene, "Circle"));
+                    mScene.pushInteraction(new CreatePlane2(ref mScene, "Circle"));
                 }
                 else if (mScene.selectionList[index] == "Curve")
                 {
@@ -584,6 +593,14 @@ namespace SparrowHawk.Interaction
                 {
                     mScene.pushInteraction(new EditPoint3(ref mScene, false, renderType));
                     mScene.pushInteraction(new CreatePatch(ref mScene, true));
+                }
+            }
+            else if (type == "Reference")
+            {
+                if (mScene.selectionList[index] == "Curve")
+                {
+                    mScene.pushInteraction(new EditPoint3(ref mScene, true, renderType));
+                    mScene.pushInteraction(new CreateCurve(ref mScene, 3, false, renderType));
                 }
             }
         }
