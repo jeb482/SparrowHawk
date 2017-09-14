@@ -138,7 +138,8 @@ namespace SparrowHawk.Interaction
                     foreach (Rhino.DocObjects.RhinoObject rhObj in mScene.rhinoDoc.Objects.GetObjectList(settings))
                     {
                         //check for different drawing curve types
-                        bool b1 = (type == 1) && rhObj.Attributes.Name.Contains("plane");
+                        //assume only use xy plane for exrude
+                        bool b1 = ((type == 1) && rhObj.Attributes.Name.Contains("plane") && mScene.selectionList[0] != "Extrude") || ((type == 1) && rhObj.Attributes.Name.Contains("planeXY") && mScene.selectionList[0] == "Extrude");
                         bool b2 = (type == 2) && (rhObj.Attributes.Name.Contains("brepMesh") || rhObj.Attributes.Name.Contains("aprint") || rhObj.Attributes.Name.Contains("patchSurface"));
                         bool b3 = (type == 3) && ListTargets.Contains(rhObj.Id);
 
@@ -457,17 +458,17 @@ namespace SparrowHawk.Interaction
                     }
                     else if (renderType == "Rect")
                     {
-                        /*
+                        
                         Vector3 rectDiagonalV = new Vector3((float)(pointsList[0].X - pointsList[1].X), (float)(pointsList[0].Y - pointsList[1].Y), (float)(pointsList[0].Z - pointsList[1].Z));
                         float lenDiagonal = rectDiagonalV.Length;
                         Vector3 rectLeftTop = new Vector3((float)pointsList[0].X, (float)pointsList[0].Y, (float)pointsList[0].Z) + lenDiagonal * rectDiagonalV.Normalized();
                         Point3d topLeftP = new Point3d(rectLeftTop.X, rectLeftTop.Y, rectLeftTop.Z);
-                        
-                        */
+
+                        Rectangle3d rect = new Rectangle3d(curvePlane, topLeftP, pointsList[1]);
 
                         //using top-left cornel and bottom right
 
-                        Rectangle3d rect = new Rectangle3d(curvePlane, pointsList[0], pointsList[1]);
+                        //Rectangle3d rect = new Rectangle3d(curvePlane, pointsList[0], pointsList[1]);
 
                         modelcurve = rect.ToNurbsCurve();
 

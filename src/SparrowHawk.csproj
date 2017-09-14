@@ -89,6 +89,7 @@
     <Compile Include="Geometry\DesignPlaneMesh.cs" />
     <Compile Include="Geometry\DrawPointMarker.cs" />
     <Compile Include="Geometry\GeometryStroke.cs" />
+    <Compile Include="Geometry\GeometryStroke2.cs" />
     <Compile Include="Geometry\PlaneRep.cs" />
     <Compile Include="Geometry\RhinoMesh.cs" />
     <Compile Include="Geometry\RhinoMesh2.cs" />

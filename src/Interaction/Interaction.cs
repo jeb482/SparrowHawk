@@ -201,7 +201,8 @@ namespace SparrowHawk.Interaction
                 {
                     mScene.menuList.Add(Scene.MenuLayout.MainMenu);
                 }
-                mScene.pushInteraction(new MarkingMenu(ref mScene, mScene.menuList[mScene.menuIndex]));
+                //mScene.pushInteraction(new MarkingMenu(ref mScene, mScene.menuList[mScene.menuIndex]));
+                mScene.pushInteraction(new MarkingMenu(ref mScene, mScene.menuList[mScene.menuList.Count-1]));
             }
         }
         protected virtual void onClickOculusGrip(ref VREvent_t vrEvent) { }

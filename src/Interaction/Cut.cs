@@ -22,6 +22,19 @@ namespace SparrowHawk.Interaction
             attr2.Name = "cut:";
             Point3d cutP = new Point3d(0, 0, 0);
             cutPGuid = mScene.rhinoDoc.Objects.AddPoint(cutP, attr2);
+
+            //hiding the aprint model only show the printStroke
+            
+            Rhino.DocObjects.ObjectEnumeratorSettings settings = new Rhino.DocObjects.ObjectEnumeratorSettings();
+            settings.ObjectTypeFilter = Rhino.DocObjects.ObjectType.Brep;
+            foreach (Rhino.DocObjects.RhinoObject rhObj in mScene.rhinoDoc.Objects.GetObjectList(settings))
+            {
+                if (rhObj.Attributes.Name.Contains("aprint")){
+                    SceneNode sn = mScene.brepToSceneNodeDic[rhObj.Id];
+                    Material.LambertianMaterial hide_m = new Material.LambertianMaterial(((Material.LambertianMaterial)sn.material).mColor.R, ((Material.LambertianMaterial)sn.material).mColor.G, ((Material.LambertianMaterial)sn.material).mColor.B, 0);
+                    sn.material = hide_m;
+                }
+            }
         }
 
         protected override void onClickOculusTrigger(ref VREvent_t vrEvent)

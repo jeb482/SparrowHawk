@@ -126,10 +126,11 @@ namespace SparrowHawk
         public Matrix4 mLeftControllerOffset = Util.createTranslationMatrix(0.01451808f, -0.08065776f, 0.006754342f);
         //public Matrix4 mLeftControllerOffset = Util.createTranslationMatrix(0.001885863f, -0.02479392f,-0.0003346408f);
         //public Matrix4 mLeftControllerOffset = Util.createTranslationMatrix(0.00134759f, -0.02559454f, -0.005455005f);//Util.createTranslationMatrix(0,0,0);//Util.createTranslationMatrix(0.0006068f, -.02383642f, -0.00026948f);
-        public Matrix4 mRightControllerOffset = Util.createTranslationMatrix(0.005918316f + -0.0003245298f, -0.02670806f+ 0.0002023121f, 0.001123522f + -0.0001561325f);//Util.createTranslationMatrix(-0.03205855f+ 0.0001097674f, -0.02689967f+ -0.0008004899f, 0.006957637f+ -0.0005140541f);
+        public Matrix4 mRightControllerOffset = Util.createTranslationMatrix(0.005497481f, -0.02618495f, 0.0009147127f);//Util.createTranslationMatrix(-0.03205855f+ 0.0001097674f, -0.02689967f+ -0.0008004899f, 0.006957637f+ -0.0005140541f);
         //(0.005918316, -0.02670806, 0.001123522)
         //-0.0009147244f, -0.002345422f, -0.0006840917f
         //-5.139893E-05f, 0.0005281732f, 0.0001677993f
+        //0.005918316f + -0.0003245298f, -0.02670806f+ 0.0002023121f, 0.001123522f + -0.0001561325f
         private double leftControllerEndVibrateTime;
         private double rightControllerEndVibrateTime;
         public bool mIsLefty;
@@ -142,8 +143,9 @@ namespace SparrowHawk
         public List<Rhino.Geometry.Plane> iPlaneList = new List<Rhino.Geometry.Plane>(); //temporary solution for circle, rect
         public enum MenuLayout
         {
-            MainMenu, ExtrudeC1, ExtrudeD1, ExtrudeC2, ExtrudeD2,
-            LoftC1, LoftD1, LoftC2, LoftD2, RevolveC1, RevolveD1, SweepC1, SweepD1, SweepC2, SweepD2
+            MainMenu, ExtrudeC1, ExtrudeD1Circle, ExtrudeD1Rect, ExtrudeD1Curve, ExtrudeC2, ExtrudeD2Circle, ExtrudeD2Rect, ExtrudeD2Curve,
+            LoftC1, LoftD1Circle, LoftD1Rect, LoftD1Curve, LoftC2, LoftD2Circle, LoftD2Rect, LoftD2Curve, RevolveC1, RevolveD1Circle, RevolveD1Rect, RevolveD1Curve,
+            SweepC1, SweepD1Circle, SweepD1Rect, SweepD1Curve, SweepC2, SweepD2Circle, SweepD2Rect, SweepD2Curve
         };
         public List<MenuLayout> menuList = new List<MenuLayout>();
         public List<string> selectionList = new List<string>();
@@ -187,10 +189,17 @@ namespace SparrowHawk
                                              977.9764f, -15.0478f, -28.42042f, 173.4097f,
                                              -16.9345f, -985.1676f, 2.534816f, 709.4443f,
                                              0, 0, 0, 1);*/
-        public Matrix4 vrToRobot = new Matrix4(-25.23433f, -1.428557f, -986.1774f, -619.1987f,
-            994.2307f, -14.8897f, -28.13068f, 175.5754f,
-            -9.72579f, -1007.435f, -17.07237f, 707.9531f,
-            0, 0, 0, 1);
+        /*
+public Matrix4 vrToRobot = new Matrix4(-25.23433f, -1.428557f, -986.1774f, -619.1987f,
+994.2307f, -14.8897f, -28.13068f, 175.5754f,
+-9.72579f, -1007.435f, -17.07237f, 707.9531f,
+0, 0, 0, 1);*/
+
+        public Matrix4 vrToRobot = new Matrix4(-33.63248f, 9.429968f, -991.436f, -496.768f,
+           991.543f, -6.830433f, -28.51888f, 175.9437f,
+-6.5498f, -997.948f, -10.59687f, 723.3129f,
+0, 0, 0, 1);
+
 
                                              
         // Interactions

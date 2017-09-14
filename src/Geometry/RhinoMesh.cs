@@ -29,14 +29,18 @@ namespace SparrowHawk.Geometry
 
         public RhinoMesh(ref Mesh mesh)
         {
-            triMesh = Triangulate(mesh);
+            //triMesh = Triangulate(mesh);
+             triMesh = mesh;
+            triMesh.Faces.ConvertQuadsToTriangles();
             initMeshGeometry(ref triMesh);
         }
 
         public RhinoMesh(ref Scene s, ref Mesh mesh)
         {
             mScene = s;
-            triMesh = Triangulate(mesh);
+            //triMesh = Triangulate(mesh);
+            triMesh = mesh;
+            triMesh.Faces.ConvertQuadsToTriangles();
             initMeshGeometry(ref triMesh);
         }
 
@@ -51,7 +55,9 @@ namespace SparrowHawk.Geometry
 
         public void setMesh(ref Mesh mesh)
         {
-            triMesh = Triangulate(mesh);
+            //triMesh = Triangulate(mesh);
+            triMesh = mesh;
+            triMesh.Faces.ConvertQuadsToTriangles();
             initMeshGeometry(ref triMesh);
         }
 
@@ -89,7 +95,6 @@ namespace SparrowHawk.Geometry
             List<Point3d> vertices = new List<Point3d>();
             List<float> vertices_array = new List<float>();
             OpenTK.Matrix4 transToOrigin = new OpenTK.Matrix4();
-
 
             foreach (Point3d vertex in triMesh.Vertices)
             {

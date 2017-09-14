@@ -59,8 +59,10 @@ namespace SparrowHawk.Interaction
         private string modelName = "tprint";
         public string dynamicRender = "none";
         private Material.Material mesh_m;
+        private Material.Material railPlane_m;
 
         private List<Vector3> snapPointsList = new List<Vector3>();
+        private Guid railPlaneGuid = Guid.Empty;
 
         public CreateCurve(ref Scene scene) : base(ref scene)
         {
@@ -97,6 +99,7 @@ namespace SparrowHawk.Interaction
             isClosed = _isClosed;
             dynamicRender = renderType;
             mesh_m = new Material.RGBNormalMaterial(0.5f);
+            railPlane_m = new Material.SingleColorMaterial(34f/255f, 139f/255f, 34f/255f, 0.4f);
 
             snapPointsList.Clear();
 
@@ -145,7 +148,7 @@ namespace SparrowHawk.Interaction
                     float planeSize = 240;
                     PlaneSurface plane_surface2 = new PlaneSurface(mScene.iPlaneList[mScene.iPlaneList.Count - 1], new Interval(-planeSize, planeSize), new Interval(-planeSize, planeSize));
                     Brep railPlane2 = Brep.CreateFromSurface(plane_surface2);
-                    Util.addSceneNode(ref mScene, railPlane2, ref mesh_m, "railPlane");
+                    railPlaneGuid = Util.addSceneNode(ref mScene, railPlane2, ref railPlane_m, "railPlane");
 
                     snapPointsList.Add(Util.platformToVRPoint(ref mScene, Util.RhinoToOpenTKPoint(railPlane2.GetBoundingBox(true).Center)));
                 }
@@ -576,7 +579,13 @@ namespace SparrowHawk.Interaction
                 //hide two other design plane
                 if (curveOnObj != null && type == 1)
                 {
-                    Util.hideOtherPlanes(ref mScene, curveOnObj.Attributes.Name);
+                    //Util.hideOtherPlanes(ref mScene, curveOnObj.Attributes.Name);
+                    Util.hideOtherPlanes(ref mScene, "all");
+                }else if (curveOnObj != null && type == 3)
+                {
+                    SceneNode sn = mScene.brepToSceneNodeDic[railPlaneGuid];
+                    Material.SingleColorMaterial hide_m = new Material.SingleColorMaterial(((Material.SingleColorMaterial)sn.material).mColor.R, ((Material.SingleColorMaterial)sn.material).mColor.G, ((Material.SingleColorMaterial)sn.material).mColor.B, 0);
+                    sn.material = hide_m;
                 }
 
                 //detecting plane

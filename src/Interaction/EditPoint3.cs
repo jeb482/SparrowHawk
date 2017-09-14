@@ -76,7 +76,7 @@ namespace SparrowHawk.Interaction
         float radius = 0;
         float width = 0;
         float height = 0;
-        float delta = 2;
+        float delta = 1;
 
         float mCurrentRadius;
         float mMinSelectionRadius;
@@ -436,11 +436,7 @@ namespace SparrowHawk.Interaction
                     //TODO-force not to move the center in Circle or topleft in Rect
                     if (i == 0)
                     {
-                        if (mScene.selectionList[mScene.selectionList.Count - 1] == "Circle" || dynamicRender == "Sweep-Circle" || dynamicRender == "Extrude-Circle")
-                        {
-                            continue;
-                        }
-                        else if (mScene.selectionList[mScene.selectionList.Count - 1] == "Rect" || dynamicRender == "Sweep-Rect" || dynamicRender == "Extrude-Rect")
+                        if (isEditCircle || isEditRect)
                         {
                             continue;
                         }
@@ -467,11 +463,7 @@ namespace SparrowHawk.Interaction
                     //TODO-force not to move the center in Circle or topleft in Rect
                     if (i == 0)
                     {
-                        if (mScene.selectionList[mScene.selectionList.Count - 1] == "Circle" || dynamicRender == "Sweep-Circle" || dynamicRender == "Extrude-Circle")
-                        {
-                            continue;
-                        }
-                        else if (mScene.selectionList[mScene.selectionList.Count - 1] == "Rect" || dynamicRender == "Sweep-Rect" || dynamicRender == "Extrude-Rect")
+                        if (isEditCircle || isEditRect)
                         {
                             continue;
                         }
@@ -649,8 +641,12 @@ namespace SparrowHawk.Interaction
             {
                 if (modelName == "tprint")
                 {
-
                     renderObjId = Util.addSceneNodeWithoutDraw(ref mScene, dynamicBrep, ref mesh_m, modelName);
+                    /*
+                    if (renderObjId != Guid.Empty)
+                        Util.removeSceneNode(ref mScene, renderObjId);
+                    renderObjId = Util.addSceneNode(ref mScene, dynamicBrep, ref mesh_m, modelName);
+                    */
 
                     //SweepCapFun debugging
                     if (dynamicRender == "Sweep-Circle" || dynamicRender == "Sweep-Rect" || dynamicRender == "Extrude-Circle" || dynamicRender == "Loft")

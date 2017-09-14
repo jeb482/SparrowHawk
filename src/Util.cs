@@ -616,6 +616,14 @@ namespace SparrowHawk
                 mScene.xAxis.material = new Material.SingleColorMaterial(1, 1, 1, 1);
                 mScene.yAxis.material = new Material.SingleColorMaterial(1, 1, 1, 0);
                 mScene.zAxis.material = new Material.SingleColorMaterial(1, 1, 1, 1);
+            }else if (name.Contains("all"))
+            {
+                mScene.xyPlane.setAlpha(0f);
+                mScene.yzPlane.setAlpha(0f);
+                mScene.xzPlane.setAlpha(0f);
+                mScene.xAxis.material = new Material.SingleColorMaterial(1, 1, 1, 0);
+                mScene.yAxis.material = new Material.SingleColorMaterial(1, 1, 1, 0);
+                mScene.zAxis.material = new Material.SingleColorMaterial(1, 1, 1, 0);
             }
         }
 
@@ -1780,13 +1788,17 @@ namespace SparrowHawk
                 return;
 
             // Find the midpoint of each shape
+            modelView = modelView * (1/modelView.M44);
             System.Tuple<int, float>[] midpointZ = new Tuple<int, float>[g.mNumPrimitives];
             for (int i = 0; i < g.mNumPrimitives; i++)
             {
-                Vector4 a = new Vector4(g.mGeometry[3 * g.mGeometryIndices[3 * i + 0]] + 0, g.mGeometry[9 * g.mGeometryIndices[3 * i + 0]] + 1, g.mGeometry[9 * g.mGeometryIndices[3 * i + 0]] + 2, 1);
-                Vector4 b = new Vector4(g.mGeometry[3 * g.mGeometryIndices[3 * i + 1]] + 0, g.mGeometry[9 * g.mGeometryIndices[3 * i + 1]] + 1, g.mGeometry[9 * g.mGeometryIndices[3 * i + 1]] + 2, 1);
-                Vector4 c = new Vector4(g.mGeometry[3 * g.mGeometryIndices[3 * i + 2]] + 0, g.mGeometry[9 * g.mGeometryIndices[3 * i + 2]] + 1, g.mGeometry[9 * g.mGeometryIndices[3 * i + 2]] + 2, 1);
-                midpointZ[i] = new Tuple<int, float>(i,(modelView * (a + b + c)/3).Z);
+                Vector4 a = new Vector4(g.mGeometry[3 * g.mGeometryIndices[3 * i + 0]] + 0, g.mGeometry[3 * g.mGeometryIndices[3 * i + 0]] + 1, g.mGeometry[3 * g.mGeometryIndices[3 * i + 0]] + 2, 1);
+                Vector4 b = new Vector4(g.mGeometry[3 * g.mGeometryIndices[3 * i + 1]] + 0, g.mGeometry[3 * g.mGeometryIndices[3 * i + 1]] + 1, g.mGeometry[3 * g.mGeometryIndices[3 * i + 1]] + 2, 1);
+                Vector4 c = new Vector4(g.mGeometry[3 * g.mGeometryIndices[3 * i + 2]] + 0, g.mGeometry[3 * g.mGeometryIndices[3 * i + 2]] + 1, g.mGeometry[3 * g.mGeometryIndices[3 * i + 2]] + 2, 1);
+                midpointZ[i] = new Tuple<int, float>(i,(modelView * (a + b + c) / 3).Z);
+                if (i == 0) {
+                    //Rhino.RhinoApp.WriteLine("Z " + ((modelView * (a + b + c) / 3).Z));
+                }
             }
             
             // Sort indices according to midpoint (a bit sloppy, but hey. 1 week until Chi.)

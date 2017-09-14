@@ -36,7 +36,7 @@ namespace SparrowHawk.Interaction
         float radius = 20;
         float width = 40;
         float height = 30;
-        float delta = 2;
+        float delta = 1;
 
         private Plane modelPlane;
         private float planeSize = 240;
