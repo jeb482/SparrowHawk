@@ -35,6 +35,16 @@ namespace SparrowHawk.Interaction
                     sn.material = hide_m;
                 }
             }
+
+            //clear the stroke
+            foreach (SceneNode sn in mScene.tableGeometry.children)
+            {
+                if (sn.name == "PrintStroke")
+                {
+                    mScene.tableGeometry.children.Remove(sn);
+                    break;
+                }
+            }
         }
 
         protected override void onClickOculusTrigger(ref VREvent_t vrEvent)

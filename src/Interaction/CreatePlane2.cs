@@ -36,7 +36,7 @@ namespace SparrowHawk.Interaction
         float radius = 20;
         float width = 40;
         float height = 30;
-        float delta = 1;
+        float delta = 0.6f;
 
         private Plane modelPlane;
         private float planeSize = 240;
@@ -316,6 +316,8 @@ namespace SparrowHawk.Interaction
             OpenTK.Vector3 worldUpAxis = new Vector3(0, 0, 1); //in Rhino z axis is up
             OpenTK.Vector3 planeXAxis = Util.RhinoToOpenTKPoint(modelPlane.XAxis);
             OpenTK.Vector3 planeYAxis = Util.RhinoToOpenTKPoint(modelPlane.YAxis);
+            OpenTK.Vector3 planeNormal = Util.RhinoToOpenTKPoint(modelPlane.Normal);
+            
 
             //Plane planeX = new Plane(modelPlane.Origin, modelPlane.XAxis);
             //Plane planeY = new Plane(modelPlane.Origin, modelPlane.YAxis)
@@ -342,7 +344,7 @@ namespace SparrowHawk.Interaction
                 else
                     plane2 = planeY;
             }
-            
+
             /*
             PlaneSurface plane_surfaceX = new PlaneSurface(planeX, new Interval(-planeSize, planeSize), new Interval(-planeSize, planeSize));
             Brep railPlaneX = Brep.CreateFromSurface(plane_surfaceX);
@@ -350,6 +352,10 @@ namespace SparrowHawk.Interaction
             PlaneSurface plane_surfaceY = new PlaneSurface(planeY, new Interval(-planeSize, planeSize), new Interval(-planeSize, planeSize));
             Brep railPlaneY = Brep.CreateFromSurface(plane_surfaceY);
             */
+
+            //testing new method
+            plane2 = new Plane(planeCenter, Util.openTkToRhinoVector(Vector3.Cross(planeNormal, worldUpAxis)));
+
             PlaneSurface plane_surface2 = new PlaneSurface(plane2, new Interval(-planeSize, planeSize), new Interval(-planeSize, planeSize));
             Brep railPlane2 = Brep.CreateFromSurface(plane_surface2);
 

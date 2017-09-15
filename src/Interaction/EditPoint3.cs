@@ -76,7 +76,7 @@ namespace SparrowHawk.Interaction
         float radius = 0;
         float width = 0;
         float height = 0;
-        float delta = 1;
+        float delta = 0.6f;
 
         float mCurrentRadius;
         float mMinSelectionRadius;

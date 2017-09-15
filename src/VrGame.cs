@@ -296,7 +296,7 @@ namespace SparrowHawk
                     Util.removeSceneNode(ref mScene, delId);
                     //removePrintStroke and show the model again
                     ((Geometry.GeometryStroke2)printStroke).removePoint();
-                    mScene.tableGeometry.remove(ref printStrokeSN);
+                    //mScene.tableGeometry.remove(ref printStrokeSN); //already remove
                     Rhino.DocObjects.ObjectEnumeratorSettings settings = new Rhino.DocObjects.ObjectEnumeratorSettings();
                     settings.ObjectTypeFilter = Rhino.DocObjects.ObjectType.Brep;
                     foreach (Rhino.DocObjects.RhinoObject rhObj in mScene.rhinoDoc.Objects.GetObjectList(settings))
@@ -493,7 +493,7 @@ namespace SparrowHawk
             Material.Material controllerLRay_m = new Material.SingleColorMaterial(1, 0, 0, 1);
             ((Geometry.GeometryStroke)controllerLRay_g).addPoint(new Vector3(0, 0, 0));
             ((Geometry.GeometryStroke)controllerLRay_g).addPoint(new Vector3(0, 0, -1));
-            SceneNode rayTraceL = new SceneNode("PrintStroke", ref controllerLRay_g, ref controllerLRay_m);
+            SceneNode rayTraceL = new SceneNode("ControllerRay", ref controllerLRay_g, ref controllerLRay_m);
             if (mIsLefty)
                 mScene.leftControllerNode.add(ref rayTraceL);
             else
