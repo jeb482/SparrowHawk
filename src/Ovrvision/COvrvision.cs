@@ -220,6 +220,7 @@ namespace SparrowHawk.Ovrvision
                 return false;
 
             //Open camera
+            Rhino.RhinoApp.WriteLine(Environment.CurrentDirectory);
             if (ovOpen(0, 0.15f, opentype) == 0)
             {
                 imageSizeW = ovGetImageWidth();

@@ -756,9 +756,41 @@ namespace SparrowHawk
 
             if (e.KeyChar == 'P' || e.KeyChar == 'p')
             {
+                /*
                 mScene.popInteraction();
                 controllerP = new List<Vector3>();
                 mScene.pushInteraction(new Interaction.PickPoint(ref mScene, ref controllerP));
+                */
+                Rhino.DocObjects.ObjectEnumeratorSettings settings = new Rhino.DocObjects.ObjectEnumeratorSettings();
+                settings.ObjectTypeFilter = Rhino.DocObjects.ObjectType.Brep;
+                Brep teapotBody = new Brep();
+                Brep teapotSprout = new Brep();
+                Brep teapotHandle = new Brep();
+                foreach (Rhino.DocObjects.RhinoObject rhObj in mScene.rhinoDoc.Objects.GetObjectList(settings))
+                {
+                    if (rhObj.Attributes.Name == "aprinteGZx3Sz91Ag")
+                    {
+                        teapotBody = ((Brep)rhObj.Geometry).DuplicateBrep();
+                        mScene.rhinoDoc.Objects.Delete(rhObj.Id, true);
+                    }
+                    else if (rhObj.Attributes.Name == "aprintS8FyJC391Ag")
+                    {
+                        teapotSprout = ((Brep)rhObj.Geometry).DuplicateBrep();
+                        mScene.rhinoDoc.Objects.Delete(rhObj.Id, true);
+                    }
+                    else if (rhObj.Attributes.Name == "aprintVBE2eS391Ag")
+                    {
+                        teapotHandle = ((Brep)rhObj.Geometry).DuplicateBrep();
+                        mScene.rhinoDoc.Objects.Delete(rhObj.Id, true);
+                    }
+                }
+
+                Material.Material mesh_m = new Material.LambertianMaterial(.7f, .7f, .7f, .3f);
+                string modelName = "aprint";
+                Util.addSceneNode(ref mScene, teapotBody, ref mesh_m, modelName);
+                Util.addSceneNode(ref mScene, teapotSprout, ref mesh_m, modelName);
+                Util.addSceneNode(ref mScene, teapotHandle, ref mesh_m, modelName);
+
             }
 
             if (e.KeyChar == 'A' || e.KeyChar == 'a')
