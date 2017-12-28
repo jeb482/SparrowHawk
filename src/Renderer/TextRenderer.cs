@@ -84,11 +84,11 @@ namespace SparrowHawk.Renderer
             float u_step = (float)font.glyphWidth / texWidth;
             float v_step = (float)font.glyphWidth / texWidth;
 
-            foreach (char idx in text) {
-                float u = (float)(idx % font.glyphsPerLine) * u_step;
-                float v = (float)(idx / font.glyphsPerLine) * v_step;
-
-                GL.TexSubImage2D(TextureTarget.Texture2D, 0, u, v, font.glyphWidth, font.glyphHeight, OpenTK.Graphics.OpenGL4.PixelFormat.UnsignedInt, bitmap.   )
+            //foreach (char idx in text) {
+            //    float u = (float)(idx % font.glyphsPerLine) * u_step;
+            //    float v = (float)(idx / font.glyphsPerLine) * v_step;
+            //
+            //    GL.TexSubImage2D(TextureTarget.Texture2D, 0, u, v, font.glyphWidth, font.glyphHeight, OpenTK.Graphics.OpenGL4.PixelFormat.UnsignedInt, bitmap.   )
 
 
 

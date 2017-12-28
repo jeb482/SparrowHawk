@@ -133,6 +133,7 @@
     <Compile Include="Ovrvision\COvrvision.cs" />
     <Compile Include="Geometry\CubeGeometry.cs" />
     <Compile Include="Renderer\DepthPeelingRenderer.cs" />
+    <Compile Include="Renderer\TextRenderer.cs" />
     <Compile Include="SparrowHawkEventListeners.cs" />
     <Compile Include="Geometry\Polyline.cs" />
     <Compile Include="Geometry\PointMarker.cs" />

@@ -426,6 +426,16 @@ namespace SparrowHawk
             if (mHMD != null)
                 mHMD.GetRecommendedRenderTargetSize(ref mRenderWidth, ref mRenderHeight);
 
+
+            var overlay = OpenVR.Overlay;
+            ulong overlayHandle = 0, thumbnailHandle = 0;
+            overlay.CreateOverlay("OverlayTest", "Jimmy is so handsome", ref overlayHandle);
+            
+
+            overlay.SetOverlayWidthInMeters(overlayHandle, .4f);
+            overlay.ShowDashboard("OverlayTest");
+            overlay.ShowOverlay(0);
+
             //TODO: testing passing by ref bug of OpenGL
             /*
             Geometry.Geometry g = new Geometry.Geometry("C:/workspace/Kestrel/resources/meshes/bunny.obj");
