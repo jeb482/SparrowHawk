@@ -12,27 +12,19 @@ namespace SparrowHawk.Interaction
     class CreatePlane2 : Interaction
     {
         private Material.Material mesh_m;
-        private Brep designPlane;
-        private Guid guid;
-        //private string renderType = "none";
-        private SceneNode selectedSN;
         private Guid renderObjId = Guid.Empty;
+        private Guid previewObjId = Guid.Empty;
         protected uint primaryDeviceIndex;
 
         protected int mCurrentSelection = -1;
         protected double mInitialSelectOKTime = 0;
         protected double mSelectOKTime = 0;
-        double markingMenuFeedbackDelay = .2;
-        double markingMenuSelectionDelay = .85f;
         double defaultInitialDelay = .2;
         float mMinSelectionRadius;
-        float mOuterSelectionRadius;
         float mCurrentRadius;
 
         int mNumSectors = 4;
-        float mFirstSectorOffsetAngle;
         int selectedSector = 0;
-        int lastSector = 0;
 
         float radius = 20;
         float width = 40;
@@ -70,18 +62,17 @@ namespace SparrowHawk.Interaction
             }
 
             mNumSectors = 4;
-            mFirstSectorOffsetAngle = getAngularMenuOffset(mNumSectors);
             mCurrentSelection = -1;
 
             if (scene.isOculus)
             {
                 mMinSelectionRadius = 0.2f;
-                mOuterSelectionRadius = 0.8f;
+                //mOuterSelectionRadius = 0.8f;
             }
             else
             {
                 mMinSelectionRadius = 0.4f;
-                mOuterSelectionRadius = 0.6f;
+                //mOuterSelectionRadius = 0.6f;
             }
 
         }
@@ -92,11 +83,72 @@ namespace SparrowHawk.Interaction
             return (float)(-2 * Math.PI) / (2 * numOptions);
         }
 
-        public override void activate()
+        public override void leaveTop()
         {
+            //clearDrawing is a bit tricky here since we need to save the shape for later.
+        }
+
+        public override void deactivate()
+        {
+            if (previewObjId != Guid.Empty)
+            {
+                Util.removeSceneNodeWithoutDraw(ref mScene, previewObjId);
+                previewObjId = Guid.Empty;
+            }
+
+            //already click confirm button
+            if (renderObjId != Guid.Empty)
+            {
+                Util.removeSceneNode(ref mScene, renderObjId);
+            }
+
+            resetVariables();
+        }
+
+        private void resetVariables()
+        {
+            mCurrentSelection = -1;
+            mInitialSelectOKTime = 0;
+            mSelectOKTime = 0;
+            defaultInitialDelay = .2;
+            mCurrentRadius = 0; ;
+            selectedSector = 0;
+
+            modelPlane = new Plane();
+            modelcurve = null;
+            modelBrep = null;
+            hitPlane = iStart = false;
+        }
+
+        public override void init()
+        {
+            resetVariables();
+            //support undo function
+            if (mScene != null)
+            {
+                if(previewObjId != Guid.Empty)
+                {
+                    Util.removeSceneNodeWithoutDraw(ref mScene, previewObjId);
+                }
+
+                //already click confirm button
+                if(renderObjId != Guid.Empty)
+                {
+                    Util.removeSceneNode(ref mScene, renderObjId);
+                    mScene.iCurveList.RemoveAt(mScene.iCurveList.Count-1);
+                    mScene.iPlaneList.RemoveAt(mScene.iPlaneList.Count-1);
+                    mScene.iPlaneList.RemoveAt(mScene.iPlaneList.Count-1);
+                }
+            }
 
             // Set initial timeout that cannot be skipped to prevent double selections.
             mInitialSelectOKTime = mScene.gameTime + defaultInitialDelay;
+        }
+
+        public override void activate()
+        {
+
+            
         }
 
         public override void draw(bool isTop)
@@ -213,10 +265,7 @@ namespace SparrowHawk.Interaction
 
         }
 
-        public override void init()
-        {
 
-        }
 
         private void createModel()
         {
@@ -271,7 +320,7 @@ namespace SparrowHawk.Interaction
                 Brep[] shapes = Brep.CreatePlanarBreps(modelcurve);
                 modelBrep = shapes[0];
 
-                renderObjId = Util.addSceneNodeWithoutDraw(ref mScene, modelBrep, ref mesh_m, "3D-" + shapeType.ToString());
+                previewObjId = Util.addSceneNodeWithoutDraw(ref mScene, modelBrep, ref mesh_m, "3D-" + shapeType.ToString());
             }
 
         }
@@ -282,7 +331,8 @@ namespace SparrowHawk.Interaction
             Point3d planeCenter = new Point3d();
             if (!isProjection)
             {
-                Util.removeSceneNodeWithoutDraw(ref mScene, renderObjId);
+                Util.removeSceneNodeWithoutDraw(ref mScene, previewObjId);
+                previewObjId = Guid.Empty;
                 Brep[] shapes = Brep.CreatePlanarBreps(modelcurve);
                 modelBrep = shapes[0];
                 //add plane to iRhobj
@@ -457,7 +507,7 @@ namespace SparrowHawk.Interaction
 
         protected override void onClickOculusGrip(ref VREvent_t vrEvent)
         {
-
+            /*
             primaryDeviceIndex = vrEvent.trackedDeviceIndex;
             //testing projection
             //ray casting to the pre-defind planes
@@ -545,7 +595,7 @@ namespace SparrowHawk.Interaction
 
             hitPlane = false;
             isProjection = true;
-
+            */
         }
         protected override void onReleaseOculusTrigger(ref VREvent_t vrEvent)
         {

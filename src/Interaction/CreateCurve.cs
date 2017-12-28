@@ -78,11 +78,11 @@ namespace SparrowHawk.Interaction
             mScene = scene;
             stroke_g = new Geometry.GeometryStroke(ref mScene);
             stroke_m = new Material.SingleColorMaterial(1, 0, 0, 1);
-            currentState = State.READY;
             mesh_m = new Material.RGBNormalMaterial(0.5f);
             railPlane_m = new Material.SingleColorMaterial(34f / 255f, 139f / 255f, 34f / 255f, 0.4f);
-            snapPointsList.Clear();
             isClosed = _isClosed;
+
+            resetVariables();
 
             FunctionType modelFun = (FunctionType)mScene.selectionDic[SelectionKey.ModelFun];
             //0:3D, 1:onDPlanes, 2: onSurfaces, 3: onTargets
@@ -146,10 +146,75 @@ namespace SparrowHawk.Interaction
             primaryDeviceIndex = devIndex;
         }
 
+        public void resetVariables()
+        {
+            currentState = State.READY;
+
+            //strokeId = Guid.Empty;
+            reducePoints = new List<Vector3>();
+            ListTargets = new List<Guid>(); //could be added in init() pass argument
+
+            hitPlane = lockPlane = false;
+            targetPSN = null;
+            targetPRhObj = null;
+            drawPoint = null;
+            projectP = new Vector3();
+
+            rhinoCurvePoints = new List<Point3d>();
+            rhinoCurve = null;
+            proj_plane = new Plane();
+            simplifiedCurvePoints = new List<Point3d>();
+            simplifiedCurve = null;
+            editCurve = null; //for extrude
+            curveOnObj = null;
+            //renderObjId = Guid.Empty;
+
+           
+            backgroundStart = false;
+            displacement = 0;
+            dynamicBrep = null;
+            modelName = "tprint";
+            //dynamicRender = "none"; // need to save same as drawType and shapeType 
+            snapPointsList = new List<Vector3>();
+            railPlaneGuid = Guid.Empty;
+
+            d = null;
+        }
+
+        public override void leaveTop()
+        {
+            clearDrawing();
+        }
+
+        public override void deactivate()
+        {
+            clearDrawing();
+        }
+
         public override void init()
         {
+            resetVariables();
 
-            if (drawnType != DrawnType.In3D)
+            //support undo function
+            if (mScene != null && strokeId != Guid.Empty)
+            {
+                mScene.iCurveList.RemoveAt(mScene.iCurveList.Count-1);
+                if (drawnType != DrawnType.In3D)
+                {
+                    mScene.iRhObjList.RemoveAt(mScene.iRhObjList.Count-1);
+                }
+
+                //need to clear stroke tprint scenenode as well here
+                if (renderObjId != Guid.Empty)
+                {
+                    Util.removeSceneNodeWithoutDraw(ref mScene, renderObjId);
+                }
+
+                strokeId = Guid.Empty;
+                renderObjId = Guid.Empty;
+            }
+
+            if (drawnType != DrawnType.In3D && drawnType != DrawnType.None)
             {
                 // visualizing projection point with white color
                 drawPoint = Util.MarkProjectionPoint(ref mScene, new OpenTK.Vector3(0, 0, 0), 1, 1, 1);
@@ -163,6 +228,10 @@ namespace SparrowHawk.Interaction
                     railPlaneGuid = Util.addSceneNode(ref mScene, railPlane2, ref railPlane_m, "railPlane");
 
                     snapPointsList.Add(Util.platformToVRPoint(ref mScene, Util.RhinoToOpenTKPoint(railPlane2.GetBoundingBox(true).Center)));
+                }
+                else if (drawnType == DrawnType.Plane)
+                {
+                    Util.setPlaneAlpha(ref mScene, 0.4f);
                 }
             }
 
@@ -697,7 +766,7 @@ namespace SparrowHawk.Interaction
                     }
 
                     //go to editcurve interaction
-                    clearDrawing();
+                    //clearDrawing();
                     //call next interaction in the chain
                     mScene.pushInteractionFromChain();
 

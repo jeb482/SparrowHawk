@@ -14,30 +14,28 @@ namespace SparrowHawk.Interaction
     {
 
         public int maxNumPoint = 100;
-        public List<Guid> ListTargets = new List<Guid>();
+        Double tolerance;
         protected Geometry.Geometry point_g;
         protected Material.Material point_m;
+        private Material.Material profile_m;
+        private Material.Material plane_m;
 
+        private Brep designPlane;      
+        private Point3d endP;    
+        private Plane curvePlane;
+        private bool isMove = false;
         private bool hitPlane = false;
         private bool lockPlane = false;
+
         protected SceneNode targetPSN;
         protected RhinoObject targetPRhObj;
         protected SceneNode drawPoint;
         protected OpenTK.Vector3 projectP;
         Vector3 pos = new Vector3();
         protected RhinoObject pointOnObj;
-
+        public List<Guid> ListTargets = new List<Guid>();
         private List<Point3d> pointsList = new List<Point3d>();
-
         List<SceneNode> pointMarkers = new List<SceneNode>();
-        private Material.Material profile_m;
-
-        private bool isMove = false;
-        private Brep designPlane;
-        private Material.Material plane_m;
-        private Point3d endP;
-        Double tolerance = 0;
-        private Plane curvePlane;
         private Rhino.Geometry.Curve contourCurve = null;
         private List<Vector3> snapPointsList = new List<Vector3>();
 
@@ -48,8 +46,9 @@ namespace SparrowHawk.Interaction
         private Guid movePlaneRenderID = Guid.Empty;
 
         //0:3D, 1:onDPlanes, 2: onSurfaces, 3: onTargets ==> before we modified
-        DrawnType drawnType = DrawnType.None;
-        ShapeType shapeType = ShapeType.None;
+        private DrawnType drawnType = DrawnType.None;
+        private ShapeType shapeType = ShapeType.None;
+        private Guid renderObjId = Guid.Empty;
 
         public AddPoint(ref Scene scene) : base(ref scene)
         {
@@ -78,25 +77,86 @@ namespace SparrowHawk.Interaction
 
             profile_m = new Material.SingleColorMaterial(0.5f, 0, 0, 0.4f);
             maxNumPoint = num;
-            if (drawnType != DrawnType.In3D)
-            {
-                // visualizing projection point with white color
-                drawPoint = Util.MarkProjectionPoint(ref mScene, new OpenTK.Vector3(0, 0, 0), 1, 1, 1);
-                contourCurve = null;
-                snapPointsList.Clear();
-            }
+            
+        }
+
+        private void resetVariables()
+        {
+            tolerance = 0;
+            designPlane = null;
+            endP = moveControlerOrigin = movePlaneOrigin = new Point3d();
+            curvePlane = new Plane();
+            isMove = hitPlane = lockPlane = false;
+
+            targetPSN = null;
+            targetPRhObj = null;
+            drawPoint = null;
+            projectP = pos = planeNormal = new Vector3();
+            pointOnObj = null;
+            ListTargets = new List<Guid>();
+            pointsList = new List<Point3d>();
+            pointMarkers = new List<SceneNode>();
+            contourCurve = null;
+            snapPointsList = new List<Vector3>();
+            movePlane = null;
+            movePlaneRenderID = Guid.Empty;
         }
 
         public override void init()
         {
-            if ((drawnType == DrawnType.Reference) && mScene.iRhObjList.Count != 0)
+            resetVariables();
+
+            //support undo function
+            if (mScene != null && renderObjId != Guid.Empty)
             {
-                foreach (Rhino.DocObjects.RhinoObject RhObj in mScene.iRhObjList)
+                Util.removeSceneNode(ref mScene, renderObjId);
+                renderObjId = Guid.Empty;
+                mScene.iCurveList.RemoveAt(mScene.iCurveList.Count-1);
+
+                if (drawnType != DrawnType.In3D)
                 {
-                    ListTargets.Add(RhObj.Id);
+                    mScene.iRhObjList.RemoveAt(mScene.iRhObjList.Count-1); //pointOnObj is new plane after we move
+                    mScene.iPlaneList.RemoveAt(mScene.iPlaneList.Count-1);
+
+                }
+                else
+                {
+                    mScene.iPlaneList.Remove(curvePlane);
                 }
 
             }
+
+            if (drawnType != DrawnType.In3D && drawnType != DrawnType.None)
+            {
+                // visualizing projection point with white color
+                drawPoint = Util.MarkProjectionPoint(ref mScene, new OpenTK.Vector3(0, 0, 0), 1, 1, 1);
+
+                if (drawnType == DrawnType.Plane)
+                {
+                    Util.setPlaneAlpha(ref mScene, 0.4f);
+                }
+
+                if ((drawnType == DrawnType.Reference) && mScene.iRhObjList.Count != 0)
+                {
+                    foreach (Rhino.DocObjects.RhinoObject RhObj in mScene.iRhObjList)
+                    {
+                        ListTargets.Add(RhObj.Id);
+                    }
+
+                }
+            }
+
+           
+        }
+
+        public override void leaveTop()
+        {
+            clearDrawing();
+        }
+
+        public override void deactivate()
+        {
+            clearDrawing();
         }
 
         public override void draw(bool isTop)
@@ -259,6 +319,8 @@ namespace SparrowHawk.Interaction
 
         public void clearDrawing()
         {
+            pointMarkers.Clear();
+
             //clear the curve and points
             if (mScene.tableGeometry.children.Count > 0)
             {
@@ -464,7 +526,7 @@ namespace SparrowHawk.Interaction
                     Brep[] shapes = Brep.CreatePlanarBreps(modelcurve);
                     modelBrep = shapes[0];
 
-                    Guid renderObjId = Util.addSceneNode(ref mScene, modelBrep, ref profile_m, modelName);
+                    renderObjId = Util.addSceneNode(ref mScene, modelBrep, ref profile_m, modelName);
                     //add icurveList since we don't use EditPoint2 for circle and rect
                     mScene.iCurveList.Add(modelcurve);
                     //mScene.iPlaneList.Add(ref curvePlane);
@@ -484,7 +546,7 @@ namespace SparrowHawk.Interaction
                 }
 
                 lockPlane = false;
-                clearDrawing();
+                //clearDrawing();
 
                 //reset predefined plane position and delete the old one
                 //need to careful about rhinoObjList. update it before we delete it

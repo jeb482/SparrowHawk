@@ -26,6 +26,7 @@ namespace SparrowHawk.Interaction
         float thetaDebug = 0;
 
         private SelectionKey curSelectionKey = SelectionKey.Null;
+        private Stack<Interaction> interactionChain = new Stack<Interaction>();
 
 
         public override void init()
@@ -36,7 +37,7 @@ namespace SparrowHawk.Interaction
 
                 if (curSelectionKey == SelectionKey.Profile1On || curSelectionKey == SelectionKey.Profile2On)
                 {
-                    mScene.mInteractionChain.Clear();
+                    interactionChain.Clear();
                 }
 
                 //deal with visible
@@ -344,8 +345,7 @@ namespace SparrowHawk.Interaction
                             {
                                 //this.setVisible(false);
                                 nextMenu.setVisible(true);
-                                mScene.mInteractionChain.Push(nextMenu);
-                                mScene.pushInteractionFromChain();
+                                mScene.pushInteraction(nextMenu);
                             }
                             break;
                         //Sweep
@@ -358,8 +358,7 @@ namespace SparrowHawk.Interaction
                             {
                                 //this.setVisible(false);
                                 nextMenu.setVisible(true);
-                                mScene.mInteractionChain.Push(nextMenu);
-                                mScene.pushInteractionFromChain();
+                                mScene.pushInteraction(nextMenu);
                             }
                             break;
                         //Revolve
@@ -372,8 +371,7 @@ namespace SparrowHawk.Interaction
                             {
                                 //this.setVisible(false);
                                 nextMenu.setVisible(true);
-                                mScene.mInteractionChain.Push(nextMenu);
-                                mScene.pushInteractionFromChain();
+                                mScene.pushInteraction(nextMenu);
                             }
                             break;
                         //Extrude
@@ -386,8 +384,7 @@ namespace SparrowHawk.Interaction
                             {
                                 //this.setVisible(false);
                                 nextMenu.setVisible(true);
-                                mScene.mInteractionChain.Push(nextMenu);
-                                mScene.pushInteractionFromChain();
+                                mScene.pushInteraction(nextMenu);
                             }
                             break;
                     }
@@ -399,12 +396,9 @@ namespace SparrowHawk.Interaction
                 case MenuLayout.ExtrudeC1:
                     mScene.selectionDic.Add(SelectionKey.Profile1Shape, (ShapeType)(interactionNumber));
                     setCurSelectionKey(SelectionKey.Profile1Shape);
-                    nextMenu = new MarkingMenu(ref mScene, (MenuLayout)((int)mLayout + interactionNumber));
+                    nextMenu = new MarkingMenu(ref mScene, (MenuLayout)((int)mLayout + interactionNumber + 1));
                     nextMenu.setVisible(true);
-                    //mScene.pushInteraction(nextMenu);
-                    mScene.mInteractionChain.Push(nextMenu);
-                    mScene.pushInteractionFromChain();
-
+                    mScene.pushInteraction(nextMenu);
                     break;
 
                 case MenuLayout.LoftD1Circle:
@@ -436,10 +430,9 @@ namespace SparrowHawk.Interaction
                 case MenuLayout.ExtrudeC2:
                     mScene.selectionDic.Add(SelectionKey.Profile2Shape, (ShapeType)(interactionNumber));
                     setCurSelectionKey(SelectionKey.Profile2Shape);
-                    nextMenu = new MarkingMenu(ref mScene, (MenuLayout)((int)mLayout + interactionNumber));
+                    nextMenu = new MarkingMenu(ref mScene, (MenuLayout)((int)mLayout + interactionNumber+1));
                     nextMenu.setVisible(true);
-                    mScene.mInteractionChain.Push(nextMenu);
-                    mScene.pushInteractionFromChain();
+                    mScene.pushInteraction(nextMenu);
                     break;
 
                 case MenuLayout.LoftD2Circle:
@@ -459,11 +452,19 @@ namespace SparrowHawk.Interaction
             }
         }
 
+        private void pushInteractionChain(Interaction i)
+        {
+            i.setInChain(true);
+            interactionChain.Push(i);
+        }
+
         private void initInteractionChain(CurveID curveID)
         {
             //0-Surface, 1-3D, 2-Plane, 3-Reference
-            Util.setPlaneAlpha(ref mScene, 0.0f);
-            mScene.mInteractionChain.Clear();
+            interactionChain.Clear();
+            //always remove from the last
+            if(mScene.mIChainsList.Count > 0)
+                mScene.mIChainsList.RemoveAt(mScene.mIChainsList.Count - 1);
 
             FunctionType modelFun = (FunctionType)mScene.selectionDic[SelectionKey.ModelFun];
             ShapeType shapeType = ShapeType.None;
@@ -481,50 +482,54 @@ namespace SparrowHawk.Interaction
                     case FunctionType.Extrude:
                         nextMenu = new MarkingMenu(ref mScene, MenuLayout.ExtrudeC2);
                         nextMenu.setVisible(true);
-                        mScene.mInteractionChain.Push(nextMenu);
+                        pushInteractionChain(nextMenu);
                         break;
                     case FunctionType.Sweep:
                         nextMenu = new MarkingMenu(ref mScene, MenuLayout.SweepC2);
                         nextMenu.setVisible(true);
-                        mScene.mInteractionChain.Push(nextMenu);
+                        pushInteractionChain(nextMenu);
                         break;
                     case FunctionType.Loft:
                         nextMenu = new MarkingMenu(ref mScene, MenuLayout.LoftC2);
                         nextMenu.setVisible(true);
-                        mScene.mInteractionChain.Push(nextMenu);
+                        pushInteractionChain(nextMenu);
                         break;
                 }
 
             }
             else if (curveID == CurveID.ProfileCurve2)
             {
-                shapeType = (ShapeType)mScene.selectionDic[SelectionKey.Profile2Shape];
-                drawnType = (DrawnType)mScene.selectionDic[SelectionKey.Profile2On];
+                ShapeType shapeType1 = (ShapeType)mScene.selectionDic[SelectionKey.Profile1Shape];
+                DrawnType drawnType1 = (DrawnType)mScene.selectionDic[SelectionKey.Profile1On];
 
                 //add the editing end cap interactaion here
                 if (modelFun == FunctionType.Extrude || modelFun == FunctionType.Sweep)
                 {
-                    if (shapeType == ShapeType.Circle || shapeType == ShapeType.Rect)
-                        mScene.mInteractionChain.Push(new EditPoint3(ref mScene, CurveID.EndCapCurve));
+                    if (shapeType1 == ShapeType.Circle || shapeType1 == ShapeType.Rect)
+                        pushInteractionChain(new EditPoint3(ref mScene, CurveID.EndCapCurve));
                 }
+
+                shapeType = (ShapeType)mScene.selectionDic[SelectionKey.Profile2Shape];
+                drawnType = (DrawnType)mScene.selectionDic[SelectionKey.Profile2On];
+            
             }
 
             if (drawnType == DrawnType.Surface)
             {
                 if (shapeType == ShapeType.Rect)
                 {
-                    mScene.mInteractionChain.Push(new EditPoint3(ref mScene, curveID));
-                    mScene.mInteractionChain.Push(new AddPoint(ref mScene, 2, curveID));
+                    pushInteractionChain(new EditPoint3(ref mScene, curveID));
+                    pushInteractionChain(new AddPoint(ref mScene, 2, curveID));
                 }
                 else if (shapeType == ShapeType.Circle)
                 {
-                    mScene.mInteractionChain.Push(new EditPoint3(ref mScene, curveID));
-                    mScene.mInteractionChain.Push(new AddPoint(ref mScene, 2, curveID));
+                    pushInteractionChain(new EditPoint3(ref mScene, curveID));
+                    pushInteractionChain(new AddPoint(ref mScene, 2, curveID));
                 }
                 else if (shapeType == ShapeType.Curve)
                 {
-                    mScene.mInteractionChain.Push(new EditPoint3(ref mScene, curveID));
-                    mScene.mInteractionChain.Push(new CreateCurve(ref mScene, false, curveID));
+                    pushInteractionChain(new EditPoint3(ref mScene, curveID));
+                    pushInteractionChain(new CreateCurve(ref mScene, false, curveID));
                 }
                 /*
                 else if (mScene.selectionList[index] == "Patch")
@@ -536,37 +541,36 @@ namespace SparrowHawk.Interaction
             {
                 if (shapeType == ShapeType.Circle)
                 {
-                    mScene.mInteractionChain.Push(new CreatePlane2(ref mScene, curveID));
+                    pushInteractionChain(new CreatePlane2(ref mScene, curveID));
                 }
                 else if (shapeType == ShapeType.Rect)
                 {
-                    mScene.mInteractionChain.Push(new CreatePlane2(ref mScene, curveID));
+                    pushInteractionChain(new CreatePlane2(ref mScene, curveID));
                 }
                 else if (shapeType == ShapeType.Curve)
                 {
-                    mScene.mInteractionChain.Push(new EditPoint3(ref mScene, curveID));
-                    mScene.mInteractionChain.Push(new CreateCurve(ref mScene, false, curveID));
+                    pushInteractionChain(new EditPoint3(ref mScene, curveID));
+                    pushInteractionChain(new CreateCurve(ref mScene, false, curveID));
                 }
 
             }
             else if (drawnType == DrawnType.Plane)
             {
-                Util.setPlaneAlpha(ref mScene, 0.4f);
 
                 if (shapeType == ShapeType.Rect)
                 {
-                    mScene.mInteractionChain.Push(new EditPoint3(ref mScene, curveID));
-                    mScene.mInteractionChain.Push(new AddPoint(ref mScene, 2, curveID));
+                    pushInteractionChain(new EditPoint3(ref mScene, curveID));
+                    pushInteractionChain(new AddPoint(ref mScene, 2, curveID));
                 }
                 else if (shapeType == ShapeType.Circle)
                 {
-                    mScene.mInteractionChain.Push(new EditPoint3(ref mScene, curveID));
-                    mScene.mInteractionChain.Push(new AddPoint(ref mScene, 2, curveID));
+                    pushInteractionChain(new EditPoint3(ref mScene, curveID));
+                    pushInteractionChain(new AddPoint(ref mScene, 2, curveID));
                 }
                 else if (shapeType == ShapeType.Curve)
                 {
-                    mScene.mInteractionChain.Push(new EditPoint3(ref mScene, curveID));
-                    mScene.mInteractionChain.Push(new CreateCurve(ref mScene, false, curveID));
+                    pushInteractionChain(new EditPoint3(ref mScene, curveID));
+                    pushInteractionChain(new CreateCurve(ref mScene, false, curveID));
                 }
                 /*
                 else if (mScene.selectionList[index] == "Patch")
@@ -578,20 +582,20 @@ namespace SparrowHawk.Interaction
             {
                 if (shapeType == ShapeType.Rect)
                 {
-                    mScene.mInteractionChain.Push(new EditPoint3(ref mScene, curveID));
+                    pushInteractionChain(new EditPoint3(ref mScene, curveID));
                     //mScene.mInteractionChian.Push(new AddPoint(ref mScene, 2, curveID));
-                    mScene.mInteractionChain.Push(new CreatePlane(ref mScene, curveID));
+                    pushInteractionChain(new CreatePlane(ref mScene, curveID));
                 }
                 else if (shapeType == ShapeType.Circle)
                 {
-                    mScene.mInteractionChain.Push(new EditPoint3(ref mScene, curveID));
+                    pushInteractionChain(new EditPoint3(ref mScene, curveID));
                     //mScene.mInteractionChian.Push(new AddPoint(ref mScene, 2, curveID));
-                    mScene.mInteractionChain.Push(new CreatePlane(ref mScene, curveID));
+                    pushInteractionChain(new CreatePlane(ref mScene, curveID));
                 }
                 else if (shapeType == ShapeType.Curve)
                 {
-                    mScene.mInteractionChain.Push(new EditPoint3(ref mScene, curveID));
-                    mScene.mInteractionChain.Push(new CreateCurve(ref mScene, false, curveID));
+                    pushInteractionChain(new EditPoint3(ref mScene, curveID));
+                    pushInteractionChain(new CreateCurve(ref mScene, false, curveID));
                 }
                 /*
                 else if (mScene.selectionList[index] == "Patch")
@@ -600,6 +604,8 @@ namespace SparrowHawk.Interaction
                 }*/
 
             }
+
+            mScene.mIChainsList.Add(interactionChain);
 
         }
 

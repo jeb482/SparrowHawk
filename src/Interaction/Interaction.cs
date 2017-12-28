@@ -12,6 +12,7 @@ namespace SparrowHawk.Interaction
         protected Scene mScene;
         protected int primaryControllerIdx;
         protected int secondaryControllerIdx;
+        protected bool inChain = false;
 
         protected Interaction(ref Scene scene)
         {
@@ -26,6 +27,16 @@ namespace SparrowHawk.Interaction
                 primaryControllerIdx = mScene.rightControllerIdx;
                 secondaryControllerIdx = mScene.leftControllerIdx;
             }
+        }
+
+        public void setInChain(bool inChain)
+        {
+            this.inChain = inChain;
+        }
+
+        public bool isInChain()
+        {
+            return inChain;
         }
 
         public void handleInput()
@@ -212,7 +223,13 @@ namespace SparrowHawk.Interaction
         {
 
             //back buttom - make sure each interaction implements deactivate() properly
-            mScene.popInteraction();
+            Interaction i = mScene.popInteraction();
+
+            //push it back to interactionchain
+            if(i.isInChain())
+            {
+                mScene.pushInteractionToChain(i);
+            }
 
         }
         protected virtual void onReleaseOculusTrigger(ref VREvent_t vrEvent) { }

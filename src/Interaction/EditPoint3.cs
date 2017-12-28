@@ -41,12 +41,6 @@ namespace SparrowHawk.Interaction
         private Material.Material profile_m;
 
         List<SceneNode> pointMarkers = new List<SceneNode>();
-        private Guid surfaceID;
-        string type;
-
-        //for sweep2
-        Guid sGuid;
-        Guid eGuid;
 
         float mimD = 1000000f;
 
@@ -158,7 +152,7 @@ namespace SparrowHawk.Interaction
                 }
             }
 
-            if (drawnType == DrawnType.Plane || drawnType == DrawnType.Surface)
+            if (drawnType == DrawnType.Plane || drawnType == DrawnType.Surface || drawnType == DrawnType.Reference)
                 onPlane = true;
 
             mesh_m = new Material.LambertianMaterial(.7f, .7f, .7f, .3f);
@@ -175,9 +169,66 @@ namespace SparrowHawk.Interaction
             }
         }
 
+        public void resetVariable()
+        {
+            currentState = State.Start;
+            targetPSN = null;
+            targetPRhObj = null;
+            snapIndex = -1;
+            isSnap = false;
+            rhinoPlane = null;
+            drawPoint = null;
+            projectP = new Vector3();
+            polyline = null;
+            curveList = new List<Curve>();
+            curvePoints = new List<Point3d>();
+            stroke = null;
+            pointMarkers = new List<SceneNode>();
+            mimD = 1000000f;
+            editCurve = circleCurve = rectCurve = null;
+            curvePlane = new Plane();
+            //Sweep debug
+            profileCurves = new List<Curve>();
+            angle = 0;
+            curveT = 0;
+            refIndex = 0;
+            startP = new Point3d();
+
+            backgroundStart = false;
+            displacement = 0;
+            dynamicBrep = null;
+            d = null;
+            modelName = "tprint";
+
+            isEditCircle = false;
+            isEditRect = false;
+
+            circle = new Circle();
+            rect = new Rectangle3d();
+            radius = 0;
+            width = 0;
+            height = 0;
+            delta = 0.6f;
+
+            mCurrentRadius = 0;
+            mMinSelectionRadius = 0;
+            selectedSector = 0;
+        }
+
+        public override void leaveTop()
+        {
+            clearDrawing();
+        }
+
+        public override void deactivate()
+        {
+            clearDrawing();
+        }
 
         public override void init()
         {
+            resetVariable();
+
             //mScene.selectionList[mScene.selectionList.Count - 1] how to detect 2nd profile?
             isEditCircle = (shapeType == ShapeType.Circle) ? true : false;
             isEditRect = (shapeType == ShapeType.Rect) ? true : false;
@@ -742,6 +793,7 @@ namespace SparrowHawk.Interaction
 
                     // once sending to slice, can't go back to edit again
                     mScene.clearInteractionStack();
+                    mScene.clearIChainsList();
                     mScene.selectionDic.Clear();
                 }
             }
@@ -811,7 +863,7 @@ namespace SparrowHawk.Interaction
                             }
                         }
                         //only clear the drawpoint, editpoint
-                        if (sn.name == "drawPoint" || sn.name == "EditPoint")
+                        if (sn.name == "drawPoint" || sn.name == "EditPoint" || sn.name == "EditCurve")
                         {
                             mScene.tableGeometry.children.Remove(sn);
                         }
@@ -837,7 +889,9 @@ namespace SparrowHawk.Interaction
             else if (dynamicRender == "Extrude" || dynamicRender == "Sweep")
             {
                 clearDrawing();
-                if (shapeType == ShapeType.Circle || shapeType == ShapeType.Rect)
+
+                ShapeType shapeType1 = (ShapeType)mScene.selectionDic[SelectionKey.Profile1Shape];
+                if (shapeType1 == ShapeType.Circle || shapeType1 == ShapeType.Rect)
                 {
                     generateEndCap(); //interaction chain already set up in marking menu
 
@@ -1160,6 +1214,7 @@ namespace SparrowHawk.Interaction
 
                 //Rectangle3d newRect = new Rectangle3d(curvePlane, width, height);
                 //fix-origin change so we can't use the curvePlane directly
+                //TODO fix the bug of curvePlane
                 Plane newPlane = new Plane(rect.Center, curvePlane.Normal);
                 newPlane.XAxis = curvePlane.XAxis;
                 newPlane.YAxis = curvePlane.YAxis;

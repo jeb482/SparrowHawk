@@ -214,7 +214,7 @@ public Matrix4 vrToRobot = new Matrix4(-25.23433f, -1.428557f, -986.1774f, -619.
 
         // Interactions
         private Stack<Interaction.Interaction> mInteractionStack = new Stack<Interaction.Interaction>();
-        public Stack<Interaction.Interaction> mInteractionChain = new Stack<Interaction.Interaction>();
+        public List<Stack<Interaction.Interaction>> mIChainsList = new List<Stack<Interaction.Interaction>>();
         public bool isOculus = true;
 
         //SweepCapFun Debugging
@@ -228,14 +228,32 @@ public Matrix4 vrToRobot = new Matrix4(-25.23433f, -1.428557f, -986.1774f, -619.
 
         public float rhinoTheta = 0;
 
+        public void pushInteractionToChain(Interaction.Interaction i)
+        {
+            i.setInChain(true);
+            mIChainsList[mIChainsList.Count - 1].Push(i);
+        }
+
         public void pushInteractionFromChain()
         {
             //get the interaction in the interactionChain
-            if (mInteractionChain.Count != 0)
+            for(int i = mIChainsList.Count-1; i >= 0; i--)
             {
-                Interaction.Interaction nextI = mInteractionChain.Pop();
-                pushInteraction(nextI);
+                if (mIChainsList[i].Count != 0)
+                {
+                    Interaction.Interaction nextI = mIChainsList[i].Pop();
+                    pushInteraction(nextI);
+                }else
+                {
+                    continue;
+                }
             }
+            
+        }
+
+        public void clearIChainsList()
+        {
+            mIChainsList.Clear();
         }
 
         public Interaction.Interaction popInteraction()
