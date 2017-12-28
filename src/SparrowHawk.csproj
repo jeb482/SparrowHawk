@@ -83,8 +83,6 @@
     <Reference Include="System.XML" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="DesignPlane.cs" />
-    <Compile Include="DesignPlane2.cs" />
     <Compile Include="DesignPlane3.cs" />
     <Compile Include="Geometry\DesignPlaneMesh.cs" />
     <Compile Include="Geometry\DrawPointMarker.cs" />
@@ -96,37 +94,17 @@
     <Compile Include="Interaction\AddPoint.cs" />
     <Compile Include="Interaction\Align.cs" />
     <Compile Include="Interaction\CalibrationAR.cs" />
-    <Compile Include="Interaction\CreateCircle2.cs" />
     <Compile Include="Interaction\CreateCurve.cs" />
     <Compile Include="Interaction\CreatePatch.cs" />
     <Compile Include="Interaction\CreatePlane.cs" />
     <Compile Include="Interaction\CreatePlane2.cs" />
-    <Compile Include="Interaction\CreatePlaneA.cs" />
-    <Compile Include="Interaction\CreateRect.cs" />
     <Compile Include="Interaction\Cut.cs" />
     <Compile Include="Interaction\Delete.cs" />
-    <Compile Include="Interaction\EditPlane.cs" />
-    <Compile Include="Interaction\EditPlane2.cs" />
-    <Compile Include="Interaction\EditPoint.cs" />
-    <Compile Include="Interaction\EditPoint2.cs" />
     <Compile Include="Interaction\EditPoint3.cs" />
-    <Compile Include="Interaction\Extrusion.cs" />
     <Compile Include="Interaction\Grip.cs" />
-    <Compile Include="Interaction\Loft.cs" />
-    <Compile Include="Interaction\Loft2.cs" />
-    <Compile Include="Interaction\Revolve.cs" />
-    <Compile Include="Interaction\Revolve2.cs" />
-    <Compile Include="Interaction\RotatePlane.cs" />
     <Compile Include="Interaction\Selection.cs" />
-    <Compile Include="Interaction\CreateCircle.cs" />
-    <Compile Include="Interaction\ClosedCurve.cs" />
     <Compile Include="Interaction\CreateCylinder.cs" />
     <Compile Include="Interaction\Stroke.cs" />
-    <Compile Include="Interaction\Sweep.cs" />
-    <Compile Include="Interaction\Sweep2.cs" />
-    <Compile Include="Interaction\Sweep3.cs" />
-    <Compile Include="Interaction\SweepShape.cs" />
-    <Compile Include="Interaction\SweepShapeCircle.cs" />
     <Compile Include="Material\LambertianMaterial.cs" />
     <Compile Include="Material\RadialMenuMaterial.cs" />
     <Compile Include="OfflineCalibration.cs" />

@@ -616,7 +616,8 @@ namespace SparrowHawk
                 mScene.xAxis.material = new Material.SingleColorMaterial(1, 1, 1, 1);
                 mScene.yAxis.material = new Material.SingleColorMaterial(1, 1, 1, 0);
                 mScene.zAxis.material = new Material.SingleColorMaterial(1, 1, 1, 1);
-            }else if (name.Contains("all"))
+            }
+            else if (name.Contains("all"))
             {
                 mScene.xyPlane.setAlpha(0f);
                 mScene.yzPlane.setAlpha(0f);
@@ -805,27 +806,28 @@ namespace SparrowHawk
                     Rhino.DocObjects.ObjectEnumeratorSettings settings = new Rhino.DocObjects.ObjectEnumeratorSettings();
                     settings.ObjectTypeFilter = Rhino.DocObjects.ObjectType.Brep;
 
-                    List<Brep> boolResultBrep = new List<Brep>();                 
+                    List<Brep> boolResultBrep = new List<Brep>();
                     if (mScene.rhinoDoc.Objects.Count() > 1)
                     {
-                       
+
                         foreach (Rhino.DocObjects.RhinoObject rhObj in mScene.rhinoDoc.Objects.GetObjectList(settings))
                         {
                             //assume only intersect with one object at most
                             if (rhObj.Attributes.Name.Contains("aprint") && rhObj.Attributes.Name != attr.Name)
                             {
-                               
+
                                 Brep[] boolBrep = brep.Split((Brep)rhObj.Geometry, mScene.rhinoDoc.ModelAbsoluteTolerance);
-                                if(boolBrep != null && boolBrep.Length > 0)
+                                if (boolBrep != null && boolBrep.Length > 0)
                                 {
                                     float maxD = 0f;
                                     int maxIndex = -1;
-                                    for (int i = 0; i < boolBrep.Length; i++) {
+                                    for (int i = 0; i < boolBrep.Length; i++)
+                                    {
 
                                         //get the correct split brep by comparing their center
                                         float distance = computePointDistance(RhinoToOpenTKPoint(boolBrep[i].GetBoundingBox(true).Center), RhinoToOpenTKPoint(rhObj.Geometry.GetBoundingBox(true).Center));
 
-                                        if(distance > maxD)
+                                        if (distance > maxD)
                                         {
                                             maxD = distance;
                                             maxIndex = i;
@@ -848,7 +850,7 @@ namespace SparrowHawk
 
                     }
 
-                    if(newBrep == null)
+                    if (newBrep == null)
                     {
                         newBrep = brep;
                     }
@@ -858,7 +860,7 @@ namespace SparrowHawk
                     newBrep = brep;
                 }
 
-                
+
                 Mesh[] meshes = Mesh.CreateFromBrep(newBrep, MeshingParameters.Default);
                 foreach (Mesh mesh in meshes)
                     base_mesh.Append(mesh);
@@ -978,7 +980,7 @@ namespace SparrowHawk
 
             foreach (Rhino.DocObjects.RhinoObject rhObj in mScene.rhinoDoc.Objects.GetObjectList(settings))
             {
-                if(rhObj.Attributes.Name.Contains("aprint") || rhObj.Attributes.Name.Contains("patchSurface"))
+                if (rhObj.Attributes.Name.Contains("aprint") || rhObj.Attributes.Name.Contains("patchSurface"))
                 {
                     removeSceneNode(ref mScene, rhObj.Id);
                 }
@@ -1055,7 +1057,7 @@ namespace SparrowHawk
             }
 
             //need to project to the first RhinoObj, but need to translate profile curve along it's normal first and project -normal
-            if (mScene.selectionList[1] == "Circle" || mScene.selectionList[1] == "Rect")
+            if ((Scene.ShapeType)mScene.selectionDic[Scene.SelectionKey.Profile1Shape] == Scene.ShapeType.Circle || (Scene.ShapeType)mScene.selectionDic[Scene.SelectionKey.Profile1Shape] == Scene.ShapeType.Rect)
             {
                 Transform projectTranslate = Transform.Translation(50 * mScene.iPlaneList[0].Normal);
                 profileCurves[0].Transform(projectTranslate);
@@ -1134,7 +1136,7 @@ namespace SparrowHawk
 
             }
 
-            if (mScene.selectionList[1] == "Circle")
+            if ((Scene.ShapeType)mScene.selectionDic[Scene.SelectionKey.Profile1Shape] == Scene.ShapeType.Circle)
             {
                 profileCurves[0] = profileCurves[0].Rebuild(((NurbsCurve)profileCurves[0]).Points.Count, profileCurves[0].Degree, true);
                 profileCurves[1] = profileCurves[1].Rebuild(((NurbsCurve)profileCurves[1]).Points.Count, profileCurves[1].Degree, true);
@@ -1148,7 +1150,7 @@ namespace SparrowHawk
             settings.NameFilter = "patchCurve";
             bool isExist = false;
             foreach (Rhino.DocObjects.RhinoObject rhObj in mScene.rhinoDoc.Objects.GetObjectList(settings))
-            {             
+            {
                 isExist = true;
                 break;
             }
@@ -1187,7 +1189,7 @@ namespace SparrowHawk
             OpenTK.Matrix4 transMEnd = Util.getCoordinateTransM(railStartPoint, railEndPoint, railstartNormal, railEndNormal);
             Transform t = Util.OpenTKToRhinoTransform(transMEnd);
 
-            if (mScene.selectionList[1] == "Circle")
+            if ((Scene.ShapeType)mScene.selectionDic[Scene.SelectionKey.Profile1Shape] == Scene.ShapeType.Circle)
             {
                 Point3d startP = profileCurves[0].PointAtStart;
                 double curveT0 = 0;
@@ -1205,7 +1207,7 @@ namespace SparrowHawk
             Plane curvePlane2;
             if (profileCurves[0].TryGetPlane(out curvePlane1) && profileCurves[1].TryGetPlane(out curvePlane2))
             {
-                if (mScene.selectionList[1] == "Rect")
+                if ((Scene.ShapeType)mScene.selectionDic[Scene.SelectionKey.Profile1Shape] == Scene.ShapeType.Rect)
                 {
                     //testing create new rect
                     //TODO- don't need to move to the railcurve start unlike sweep
@@ -1258,9 +1260,9 @@ namespace SparrowHawk
                     profileCurves[1].ClosestPoint(profileCurves[1].PointAtStart, out curveT);
                     profileCurves[1].ChangeClosedCurveSeam(curveT);
                     */
-            }
+                }
 
-            OpenTK.Vector3 n1 = new Vector3((float)curvePlane1.Normal.X, (float)curvePlane1.Normal.Y, (float)curvePlane1.Normal.Z);
+                OpenTK.Vector3 n1 = new Vector3((float)curvePlane1.Normal.X, (float)curvePlane1.Normal.Y, (float)curvePlane1.Normal.Z);
                 OpenTK.Vector3 n2 = new Vector3((float)curvePlane2.Normal.X, (float)curvePlane2.Normal.Y, (float)curvePlane2.Normal.Z);
 
                 //n1,n2 should be the same with railNormal and railEndNormal
@@ -1284,7 +1286,7 @@ namespace SparrowHawk
                     profileCurves[1].Reverse();
                 }
                 //debug rect
-                if (mScene.selectionList[1] == "Circle")
+                if ((Scene.ShapeType)mScene.selectionDic[Scene.SelectionKey.Profile1Shape] == Scene.ShapeType.Circle)
                 {
                     double curveT = 0;
                     profileCurves[1].ClosestPoint(mScene.eStartP, out curveT);
@@ -1335,34 +1337,34 @@ namespace SparrowHawk
             OpenTK.Matrix4 transM = Util.getCoordinateTransM(shapeCenter, railStartPoint, shapeNormal, railNormal);
             //Rhino.RhinoApp.WriteLine("railNormal: " + railNormal.ToString());
             //Rhino.RhinoApp.WriteLine("transM: " + transM.ToString());
-           
+
             Transform t = new Transform();
-            if (mScene.selectionList[1] == "Circle")
+            if ((Scene.ShapeType)mScene.selectionDic[Scene.SelectionKey.Profile1Shape] == Scene.ShapeType.Circle)
             {
-                 t = Util.OpenTKToRhinoTransform(transM);
+                t = Util.OpenTKToRhinoTransform(transM);
                 ((NurbsCurve)curveList[curveList.Count - 2]).Transform(t);
             }
-            else if (mScene.selectionList[1] == "Rect")
+            else if ((Scene.ShapeType)mScene.selectionDic[Scene.SelectionKey.Profile1Shape] == Scene.ShapeType.Rect)
             {
                 //TODO-rotating to align rect. but need to know the drawplane noraml to allign with
                 curvePlane.Transform(Util.OpenTKToRhinoTransform(transM));
                 OpenTK.Vector3 testAxis = Util.RhinoToOpenTKPoint(curvePlane.XAxis).Normalized();
                 //OpenTK.Matrix4 transM2 = Util.getTransMAroundAxis(railStartPoint, testAxis, new Vector3(1, 0, 0), Util.RhinoToOpenTKPoint(curvePlane.Normal)); //still affect by the different normal
-                OpenTK.Matrix4 transM2 = Util.getCoordinateTransM(railStartPoint, railStartPoint, testAxis, Util.RhinoToOpenTKPoint(mScene.iPlaneList[mScene.iPlaneList.Count-1].Normal));
+                OpenTK.Matrix4 transM2 = Util.getCoordinateTransM(railStartPoint, railStartPoint, testAxis, Util.RhinoToOpenTKPoint(mScene.iPlaneList[mScene.iPlaneList.Count - 1].Normal));
                 t = Util.OpenTKToRhinoTransform(transM2 * transM);
                 Rhino.RhinoApp.WriteLine("angle: " + OpenTK.Vector3.CalculateAngle(testAxis, new Vector3(1, 0, 0)));
 
                 ////Transform t = Util.OpenTKToRhinoTransform(transM);
                 ((NurbsCurve)curveList[curveList.Count - 2]).Transform(t);
             }
-        
+
 
             NurbsCurve circleCurve = (NurbsCurve)curveList[curveList.Count - 2];
 
             //cruves coordinate are in rhino, somehow cap didn't work and need to call CapPlanarHoles
             Brep[] breps = Brep.CreateFromSweep(curveList[curveList.Count - 1], circleCurve, false, mScene.rhinoDoc.ModelAbsoluteTolerance);
             Brep brep = breps[0];
-            
+
 
             Transform invT;
             if (t.TryGetInverse(out invT))
@@ -1400,7 +1402,7 @@ namespace SparrowHawk
             profileCurves[1].TryGetPlane(out curvePlane2);
 
             //store the starting point for changing seam laster
-            if (mScene.selectionList[1] == "Circle")
+            if ((Scene.ShapeType)mScene.selectionDic[Scene.SelectionKey.Profile1Shape] == Scene.ShapeType.Circle)
             {
                 Point3d startP = profileCurves[0].PointAtStart;
                 double curveT0 = 0;
@@ -1422,7 +1424,7 @@ namespace SparrowHawk
 
                 //angle = atan2(norm(cross(a,b)), dot(a,b))
                 float angle = Vector3.Dot(n1, n2);
-                CurveOrientation dir = profileCurves[0].ClosedCurveOrientation(new Rhino.Geometry.Vector3d(n1.X,n1.Y,n1.Z)); //new Vector3(0,0,1)
+                CurveOrientation dir = profileCurves[0].ClosedCurveOrientation(new Rhino.Geometry.Vector3d(n1.X, n1.Y, n1.Z)); //new Vector3(0,0,1)
                 CurveOrientation dir2 = profileCurves[1].ClosedCurveOrientation(new Rhino.Geometry.Vector3d(n2.X, n2.Y, n2.Z)); //new Vector3(0,0,1)
 
                 //debugging
@@ -1464,7 +1466,7 @@ namespace SparrowHawk
                 mScene.c3D = dir3.ToString();
 
             }
-            else if (mScene.selectionList[1] == "Rect")
+            else if ((Scene.ShapeType)mScene.selectionDic[Scene.SelectionKey.Profile1Shape] == Scene.ShapeType.Rect)
             {
                 //TODO- create the endRect on startPlane to locate the reference corner
                 Rhino.Geometry.Polyline polylineStart;
@@ -1544,12 +1546,12 @@ namespace SparrowHawk
             }
 
             //solving the issue of mutilple faces in Brep by rebuilding curve
-            if (mScene.selectionList[1] == "Circle")
+            if ((Scene.ShapeType)mScene.selectionDic[Scene.SelectionKey.Profile1Shape] == Scene.ShapeType.Circle)
             {
                 profileCurves[0] = profileCurves[0].Rebuild(((NurbsCurve)profileCurves[0]).Points.Count, profileCurves[0].Degree, true);
                 profileCurves[1] = profileCurves[1].Rebuild(((NurbsCurve)profileCurves[1]).Points.Count, profileCurves[1].Degree, true);
             }
-            else if (mScene.selectionList[1] == "Rect")
+            else if ((Scene.ShapeType)mScene.selectionDic[Scene.SelectionKey.Profile1Shape] == Scene.ShapeType.Rect)
             {
                 //TODO- rebuild will generate non-rect
                 //profileCurves[0] = new NurbsCurve((NurbsCurve)profileCurves[0]);
@@ -1559,7 +1561,7 @@ namespace SparrowHawk
 
             Brep[] breps = Brep.CreateFromSweep(curveList[curveList.Count - 2], profileCurves, false, mScene.rhinoDoc.ModelAbsoluteTolerance);
 
-            if (mScene.selectionList[0] == "Sweep")
+            if ((Scene.FunctionType)mScene.selectionDic[Scene.SelectionKey.ModelFun] == Scene.FunctionType.Sweep)
             {
                 //testing boolean
                 /*
@@ -1581,9 +1583,9 @@ namespace SparrowHawk
                 return breps[0];
 
             }
-            else if (mScene.selectionList[0] == "Extrude")
+            else if ((Scene.FunctionType)mScene.selectionDic[Scene.SelectionKey.ModelFun] == Scene.FunctionType.Extrude)
             {
-                if (mScene.selectionList[1] == "Rect")
+                if ((Scene.ShapeType)mScene.selectionDic[Scene.SelectionKey.Profile1Shape] == Scene.ShapeType.Rect)
                 {
                     return breps[0].CapPlanarHoles(mScene.rhinoDoc.ModelAbsoluteTolerance);
                 }
@@ -1754,7 +1756,7 @@ namespace SparrowHawk
             else
             {
                 return scene.mDevicePose[scene.rightControllerIdx] * scene.mRightControllerOffset;
-            }            
+            }
         }
 
         /// <summary>
@@ -1781,37 +1783,39 @@ namespace SparrowHawk
         /// Naive depth sorting algorithm for a single unit of geometry.
         /// </summary>
         /// <param name="g"></param>
-        public static void depthSort(Matrix4 modelView,Geometry.Geometry g)
+        public static void depthSort(Matrix4 modelView, Geometry.Geometry g)
         {
             // Only works for tris
             if (g.primitiveType != OpenTK.Graphics.OpenGL4.BeginMode.Triangles)
                 return;
 
             // Find the midpoint of each shape
-            modelView = modelView * (1/modelView.M44);
+            modelView = modelView * (1 / modelView.M44);
             System.Tuple<int, float>[] midpointZ = new Tuple<int, float>[g.mNumPrimitives];
             for (int i = 0; i < g.mNumPrimitives; i++)
             {
                 Vector4 a = new Vector4(g.mGeometry[3 * g.mGeometryIndices[3 * i + 0]] + 0, g.mGeometry[3 * g.mGeometryIndices[3 * i + 0]] + 1, g.mGeometry[3 * g.mGeometryIndices[3 * i + 0]] + 2, 1);
                 Vector4 b = new Vector4(g.mGeometry[3 * g.mGeometryIndices[3 * i + 1]] + 0, g.mGeometry[3 * g.mGeometryIndices[3 * i + 1]] + 1, g.mGeometry[3 * g.mGeometryIndices[3 * i + 1]] + 2, 1);
                 Vector4 c = new Vector4(g.mGeometry[3 * g.mGeometryIndices[3 * i + 2]] + 0, g.mGeometry[3 * g.mGeometryIndices[3 * i + 2]] + 1, g.mGeometry[3 * g.mGeometryIndices[3 * i + 2]] + 2, 1);
-                midpointZ[i] = new Tuple<int, float>(i,(modelView * (a + b + c) / 3).Z);
-                if (i == 0) {
+                midpointZ[i] = new Tuple<int, float>(i, (modelView * (a + b + c) / 3).Z);
+                if (i == 0)
+                {
                     //Rhino.RhinoApp.WriteLine("Z " + ((modelView * (a + b + c) / 3).Z));
                 }
             }
-            
+
             // Sort indices according to midpoint (a bit sloppy, but hey. 1 week until Chi.)
             int j = 0;
             int[] newIndices = new int[g.mGeometryIndices.Length];
-            foreach (var p in midpointZ.OrderBy(pair => pair.Item2)) {
+            foreach (var p in midpointZ.OrderBy(pair => pair.Item2))
+            {
                 newIndices[3 * j + 0] = g.mGeometryIndices[3 * p.Item1 + 0];
                 newIndices[3 * j + 1] = g.mGeometryIndices[3 * p.Item1 + 1];
                 newIndices[3 * j + 2] = g.mGeometryIndices[3 * p.Item1 + 2];
                 j++;
             }
             g.mGeometryIndices = newIndices;
-            
+
         }
 
 

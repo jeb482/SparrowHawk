@@ -8,6 +8,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using Valve.VR;
+using static SparrowHawk.Scene;
 
 namespace SparrowHawk.Interaction
 {
@@ -82,6 +83,8 @@ namespace SparrowHawk.Interaction
         float mMinSelectionRadius;
         int selectedSector = 0;
 
+        ShapeType shapeType = ShapeType.None;
+        DrawnType drawnType = DrawnType.None;
 
         public EditPoint3(ref Scene scene) : base(ref scene)
         {
@@ -89,20 +92,75 @@ namespace SparrowHawk.Interaction
 
         }
 
-        public EditPoint3(ref Scene scene, bool drawOnP) : base(ref scene)
+        public EditPoint3(ref Scene scene, CurveID curveID) : base(ref scene)
         {
             stroke_g2 = new Geometry.GeometryStroke(ref mScene);
+            FunctionType modelFun = (FunctionType)mScene.selectionDic[SelectionKey.ModelFun];
 
-            onPlane = drawOnP;
-        }
+            //TODO: figure out a better way 
+            if (curveID == CurveID.ProfileCurve1)
+            {
+                shapeType = (ShapeType)mScene.selectionDic[SelectionKey.Profile1Shape];
+                drawnType = (DrawnType)mScene.selectionDic[SelectionKey.Profile1On];
 
-        public EditPoint3(ref Scene scene, bool drawOnP, string render) : base(ref scene)
-        {
-            stroke_g2 = new Geometry.GeometryStroke(ref mScene);
+                //Revolve only needs 1 profilecurve in our case
+                if (modelFun == FunctionType.Revolve)
+                    dynamicRender = "Revolve";
+            }
+            else if (curveID == CurveID.ProfileCurve2)
+            {
+                shapeType = (ShapeType)mScene.selectionDic[SelectionKey.Profile2Shape];
+                drawnType = (DrawnType)mScene.selectionDic[SelectionKey.Profile2On];
 
-            onPlane = drawOnP;
+                //need to visualize the model
 
-            dynamicRender = render;
+                switch (modelFun)
+                {
+                    case FunctionType.Extrude:
+                        dynamicRender = "Extrude";
+                        break;
+                    case FunctionType.Loft:
+                        dynamicRender = "Loft";
+                        break;
+                    case FunctionType.Sweep:
+                        dynamicRender = "Sweep";
+                        break;
+                }
+
+            }
+            else if (curveID == CurveID.EndCapCurve)
+            {
+                //only generate end cap if we use sweep or extrude
+                if (modelFun == FunctionType.Extrude)
+                {
+                    shapeType = (ShapeType)mScene.selectionDic[SelectionKey.Profile1Shape];
+                    if (shapeType == ShapeType.Circle)
+                    {
+                        dynamicRender = "Extrude-Circle";
+                    }
+                    else if (shapeType == ShapeType.Rect)
+                    {
+                        dynamicRender = "Extrude-Rect";
+                    }
+
+                }
+                else if (modelFun == FunctionType.Sweep)
+                {
+                    shapeType = (ShapeType)mScene.selectionDic[SelectionKey.Profile1Shape];
+                    if (shapeType == ShapeType.Circle)
+                    {
+                        dynamicRender = "Sweep-Circle";
+                    }
+                    else if (shapeType == ShapeType.Rect)
+                    {
+                        dynamicRender = "Sweep-Rect";
+                    }
+                }
+            }
+
+            if (drawnType == DrawnType.Plane || drawnType == DrawnType.Surface)
+                onPlane = true;
+
             mesh_m = new Material.LambertianMaterial(.7f, .7f, .7f, .3f);
             profile_m = new Material.SingleColorMaterial(0.5f, 0, 0, 0.4f);
             //mesh_m = new Material.RGBNormalMaterial(0.5f);
@@ -117,10 +175,12 @@ namespace SparrowHawk.Interaction
             }
         }
 
+
         public override void init()
         {
-            isEditCircle = mScene.selectionList[mScene.selectionList.Count - 1] == "Circle" || dynamicRender == "Sweep-Circle" || dynamicRender == "Extrude-Circle";
-            isEditRect = mScene.selectionList[mScene.selectionList.Count - 1] == "Rect" || dynamicRender == "Sweep-Rect" || dynamicRender == "Extrude-Rect";
+            //mScene.selectionList[mScene.selectionList.Count - 1] how to detect 2nd profile?
+            isEditCircle = (shapeType == ShapeType.Circle) ? true : false;
+            isEditRect = (shapeType == ShapeType.Rect) ? true : false;
 
             if (onPlane)
             {
@@ -219,12 +279,13 @@ namespace SparrowHawk.Interaction
             }
 
             //null check
+            /*
             if (editCurve == null)
             {
                 while (!mScene.interactionStackEmpty())
                     mScene.popInteraction();
                 return;
-            }
+            }*/
 
             //store the plane when we created a curve
             //rotate the curvePlane to match roatation
@@ -391,12 +452,13 @@ namespace SparrowHawk.Interaction
                 }
 
                 //prevent crash
+                /*
                 if (editCurve == null)
                 {
                     while (!mScene.interactionStackEmpty())
                         mScene.popInteraction();
                     return;
-                }
+                }*/
 
 
                 renderEditCurve();
@@ -677,6 +739,10 @@ namespace SparrowHawk.Interaction
                     Util.clearCurveTargetRhObj(ref mScene);
                     //TODO- OpenGL compile error why?
                     //Util.setPlaneAlpha(ref mScene, 0.0f);
+
+                    // once sending to slice, can't go back to edit again
+                    mScene.clearInteractionStack();
+                    mScene.selectionDic.Clear();
                 }
             }
             dynamicBrep = null;
@@ -760,48 +826,21 @@ namespace SparrowHawk.Interaction
         {
             //TODO- need to consider this might be the first time editpoint.
             //start slicing model by changing the name of the model
-            mScene.popInteraction();
+            //mScene.popInteraction();
             Util.setPlaneAlpha(ref mScene, 0.0f);
 
             if (dynamicRender == "Revolve" || dynamicRender == "Loft")
-            {            
+            {
                 modelName = "aprint";
                 R = d.BeginInvoke(new AsyncCallback(modelCompleted), null);
             }
-            else if (dynamicRender == "Extrude")
+            else if (dynamicRender == "Extrude" || dynamicRender == "Sweep")
             {
                 clearDrawing();
-                if (mScene.selectionList[1] == "Circle")
+                if (shapeType == ShapeType.Circle || shapeType == ShapeType.Rect)
                 {
-                    generateEndCap();
-                    //mScene.popInteraction();
-                    mScene.pushInteraction(new EditPoint3(ref mScene, true, "Extrude-Circle"));
-                    mScene.peekInteraction().init();
-                }
-                else if (mScene.selectionList[1] == "Rect")
-                {
-                    generateEndCap();
-                    //mScene.popInteraction();
-                    mScene.pushInteraction(new EditPoint3(ref mScene, true, "Extrude-Rect"));
-                    mScene.peekInteraction().init();
-                }
-            }
-            else if (dynamicRender == "Sweep") //TODO-implement edit endCurve
-            {
-                clearDrawing();
-                if (mScene.selectionList[1] == "Circle")
-                {
-                    generateEndCap();
-                    //mScene.popInteraction();
-                    mScene.pushInteraction(new EditPoint3(ref mScene, true, "Sweep-Circle"));
-                    mScene.peekInteraction().init();
-                }
-                else if (mScene.selectionList[1] == "Rect")
-                {
-                    generateEndCap();
-                    //mScene.popInteraction();
-                    mScene.pushInteraction(new EditPoint3(ref mScene, true, "Sweep-Rect"));
-                    mScene.peekInteraction().init();
+                    generateEndCap(); //interaction chain already set up in marking menu
+
                 }
                 else
                 {
@@ -839,6 +878,8 @@ namespace SparrowHawk.Interaction
             }
 
             currentState = State.End;
+
+            mScene.pushInteractionFromChain();
 
         }
 
@@ -882,7 +923,7 @@ namespace SparrowHawk.Interaction
             transMEnd = Util.getCoordinateTransM(shapeCenter, railEndPoint, shapeNormal, railEndNormal);
             Transform tEnd = Util.OpenTKToRhinoTransform(transMEnd);
 
-            if (mScene.selectionList[1] == "Circle")
+            if ((ShapeType)mScene.selectionDic[SelectionKey.Profile1Shape] == ShapeType.Circle)
             {
                 //Method 1--Add iPointList for endCurve. Careful it's in VR space
                 //OpenTK.Vector3 newCenter = Util.transformPoint(transMEnd, shapeCenter);
@@ -911,10 +952,10 @@ namespace SparrowHawk.Interaction
 
                 Brep[] shapes = Brep.CreatePlanarBreps(mScene.iCurveList[mScene.iCurveList.Count - 1]);
                 //don't need to update the RhinoView
-                renderObjId = Util.addSceneNodeWithoutDraw(ref mScene, shapes[0], ref profile_m, "Circle");
+                renderObjId = Util.addSceneNodeWithoutDraw(ref mScene, shapes[0], ref profile_m, ShapeType.Circle.ToString());
 
             }
-            else if (mScene.selectionList[1] == "Rect")
+            else if ((ShapeType)mScene.selectionDic[SelectionKey.Profile1Shape] == ShapeType.Rect)
             {
                 //TODO--Debugging for different methods
                 //bug1 - transM will cause unintended rotation around normal axis
@@ -956,7 +997,7 @@ namespace SparrowHawk.Interaction
 
                 Brep[] shapes = Brep.CreatePlanarBreps(mScene.iCurveList[mScene.iCurveList.Count - 1]);
                 //don't need to update the RhinoView
-                renderObjId = Util.addSceneNodeWithoutDraw(ref mScene, shapes[0], ref profile_m, "Rect");
+                renderObjId = Util.addSceneNodeWithoutDraw(ref mScene, shapes[0], ref profile_m, ShapeType.Rect.ToString());
 
             }
             else
@@ -1139,7 +1180,7 @@ namespace SparrowHawk.Interaction
         {
 
             //testing projection
-            if ((mScene.selectionList[1] == "Rect") && (dynamicRender == "Sweep-Rect" || dynamicRender == "Extrude-Rect"))
+            if (((ShapeType)mScene.selectionDic[SelectionKey.Profile1Shape] == ShapeType.Rect) && (dynamicRender == "Sweep-Rect" || dynamicRender == "Extrude-Rect"))
             {
                 refIndex++;
                 if (refIndex >= 4)
@@ -1158,7 +1199,7 @@ namespace SparrowHawk.Interaction
                 }
 
             }
-            else if ((mScene.selectionList[1] == "Circle") && (dynamicRender == "Sweep-Circle" || dynamicRender == "Extrude-Circle") || dynamicRender == "Loft")
+            else if (((ShapeType)mScene.selectionDic[SelectionKey.Profile1Shape] == ShapeType.Circle) && (dynamicRender == "Sweep-Circle" || dynamicRender == "Extrude-Circle") || dynamicRender == "Loft")
             {
 
                 OpenTK.Vector3 p1 = Util.transformPoint(mScene.tableGeometry.transform.Inverted(), Util.platformToVRPoint(ref mScene, new Vector3((float)mScene.eStartP.X, (float)mScene.eStartP.Y, (float)mScene.eStartP.Z)));

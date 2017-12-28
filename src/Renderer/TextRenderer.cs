@@ -100,9 +100,4 @@ namespace SparrowHawk.Renderer
             }
         }
         
-
-
-
-
-    }
 }

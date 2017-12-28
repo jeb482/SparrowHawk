@@ -8,6 +8,7 @@ using static SparrowHawk.Scene;
 namespace SparrowHawk.Interaction
 {
 
+    //update selectionDic, mInteractionChain
 
     class MarkingMenu : Interaction
     {
@@ -20,11 +21,38 @@ namespace SparrowHawk.Interaction
         float mMinSelectionRadius;
         float mOuterSelectionRadius;
         float mCurrentRadius;
+        private bool isVisiable = false;
 
         float thetaDebug = 0;
 
+        private SelectionKey curSelectionKey = SelectionKey.Null;
+
+
+        public override void init()
+        {
+            if (mScene != null && curSelectionKey != SelectionKey.Null)
+            {
+                mScene.selectionDic.Remove(curSelectionKey);
+
+                if (curSelectionKey == SelectionKey.Profile1On || curSelectionKey == SelectionKey.Profile2On)
+                {
+                    mScene.mInteractionChain.Clear();
+                }
+
+                //deal with visible
+                setVisible(true);
+            }
+
+        }
+
+        public void setCurSelectionKey(SelectionKey lastKey)
+        {
+            curSelectionKey = lastKey;
+        }
+
         public int getNumSectors(MenuLayout layout)
         {
+            //TODO- support different layout
             /*
             switch (layout)
             {
@@ -57,23 +85,7 @@ namespace SparrowHawk.Interaction
         {
             switch (layout)
             {
-                /*
-                case MenuLayout.MainMenu: return @"C:\workspace\SparrowHawk\src\resources\menus\new\Main.png";
-                case MenuLayout.ExtrudeC1: return @"C:\workspace\SparrowHawk\src\resources\menus\new\Extrude1.png";
-                case MenuLayout.ExtrudeD1: return @"C:\workspace\SparrowHawk\src\resources\menus\new\Extrude2.png";
-                case MenuLayout.ExtrudeC2: return @"C:\workspace\SparrowHawk\src\resources\menus\new\Extrude1.png";
-                case MenuLayout.ExtrudeD2: return @"C:\workspace\SparrowHawk\src\resources\menus\new\Extrude2.png";
-                case MenuLayout.LoftC1: return @"C:\workspace\SparrowHawk\src\resources\menus\new\LoftA1.png";
-                case MenuLayout.LoftD1: return @"C:\workspace\SparrowHawk\src\resources\menus\new\LoftA2.png";
-                case MenuLayout.LoftC2: return @"C:\workspace\SparrowHawk\src\resources\menus\new\LoftB1.png";
-                case MenuLayout.LoftD2: return @"C:\workspace\SparrowHawk\src\resources\menus\new\LoftB2.png";
-                case MenuLayout.RevolveC1: return @"C:\workspace\SparrowHawk\src\resources\menus\new\Revolve1.png";
-                case MenuLayout.RevolveD1: return @"C:\workspace\SparrowHawk\src\resources\menus\new\Revovle2.png";
-                case MenuLayout.SweepC1: return @"C:\workspace\SparrowHawk\src\resources\menus\new\SweepA1.png";
-                case MenuLayout.SweepD1: return @"C:\workspace\SparrowHawk\src\resources\menus\new\SweepA2.png";
-                case MenuLayout.SweepC2: return @"C:\workspace\SparrowHawk\src\resources\menus\new\SweepB1.png";
-                case MenuLayout.SweepD2: return @"C:\workspace\SparrowHawk\src\resources\menus\new\SweepB2.png";
-                */
+                //testing C:\\Users\\ericw\\Documents at home, C:\workspace at lab
                 case MenuLayout.MainMenu: return @"C:\workspace\SparrowHawk\src\resources\menus\new2\Main.png";
                 case MenuLayout.ExtrudeC1: return @"C:\workspace\SparrowHawk\src\resources\menus\new2\Extrude1.png";
                 case MenuLayout.ExtrudeD1Circle: return @"C:\workspace\SparrowHawk\src\resources\menus\new2\Extrude2Circle.png";
@@ -103,6 +115,7 @@ namespace SparrowHawk.Interaction
                 case MenuLayout.SweepD2Circle: return @"C:\workspace\SparrowHawk\src\resources\menus\new2\SweepB2Circle.png";
                 case MenuLayout.SweepD2Rect: return @"C:\workspace\SparrowHawk\src\resources\menus\new2\SweepB2Rectangle.png";
                 case MenuLayout.SweepD2Curve: return @"C:\workspace\SparrowHawk\src\resources\menus\new2\SweepB2Curve.png";
+
             }
             return "";
 
@@ -122,11 +135,10 @@ namespace SparrowHawk.Interaction
 
         public MarkingMenu(ref Scene scene, MenuLayout layout = MenuLayout.MainMenu) : base(ref scene)
         {
-
+            mScene = scene;
             mLayout = layout;
             mNumSectors = getNumSectors(layout);
             mFirstSectorOffsetAngle = getAngularMenuOffset(mNumSectors);
-            mScene = scene;
             mCurrentSelection = -1;
 
             if (scene.isOculus)
@@ -141,10 +153,11 @@ namespace SparrowHawk.Interaction
             }
         }
 
-
-
         public override void draw(bool isTop)
         {
+            if (!isVisiable)
+                return;
+
             // get R and Theta and the associated sector
             float theta = 0;
             float mLastRadius = mCurrentRadius;
@@ -182,6 +195,7 @@ namespace SparrowHawk.Interaction
             }
 
             // If you're in the outer ring, select immediately
+            /*
             if (mCurrentRadius >= mOuterSelectionRadius)
             {
                 if (mLastRadius < mOuterSelectionRadius)
@@ -197,7 +211,7 @@ namespace SparrowHawk.Interaction
                     }
                 }
                 return;
-            }
+            }*/
 
 
             // If in midlle selection ring, check delay
@@ -224,6 +238,30 @@ namespace SparrowHawk.Interaction
             }
         }
 
+        public void setVisible(bool visible)
+        {
+            bool lastVisible = this.isVisiable;
+            this.isVisiable = visible;
+            if (mSceneNode != null)
+            {
+                if (!lastVisible && isVisiable)
+                {
+                    if (mScene.mIsLefty)
+                        mScene.leftControllerNode.add(ref mSceneNode);
+                    else
+                        mScene.rightControllerNode.add(ref mSceneNode);
+                }
+                else if (lastVisible && !isVisiable)
+                {
+                    if (mScene.mIsLefty)
+                        mScene.leftControllerNode.remove(ref mSceneNode);
+                    else
+                        mScene.rightControllerNode.remove(ref mSceneNode);
+                }
+            }
+        }
+
+        //TODO- seperate activate and visible
         public override void activate()
         {
             Geometry.Geometry g = new Geometry.Geometry("C:\\workspace\\SparrowHawk\\src\\resources\\circle.obj");
@@ -237,31 +275,41 @@ namespace SparrowHawk.Interaction
                                                           0, 0, -2, 0,
                                                           0, 2, 0, 0,
                                                           0, 0, 0, 1);
-            if (mScene.mIsLefty)
-                mScene.leftControllerNode.add(ref mSceneNode);
-            else
-                mScene.rightControllerNode.add(ref mSceneNode);
+
+            if (isVisiable)
+            {
+                if (mScene.mIsLefty)
+                    mScene.leftControllerNode.add(ref mSceneNode);
+                else
+                    mScene.rightControllerNode.add(ref mSceneNode);
+            }
+
             // Set initial timeout that cannot be skipped to prevent double selections.
             mInitialSelectOKTime = mScene.gameTime + defaultInitialDelay;
         }
 
         public override void deactivate()
         {
-            if (mScene.mIsLefty)
-                mScene.leftControllerNode.remove(ref mSceneNode);
-            else
-                mScene.rightControllerNode.remove(ref mSceneNode);
+            //TODO- if we want to support multiple back at once then we need to check and init some stuff here
+            setVisible(false);
 
+        }
+
+        public override void leaveTop()
+        {
+            setVisible(false);
         }
 
         protected override void onClickViveAppMenu(ref VREvent_t vrEvent)
         {
-            terminate();
+            setVisible(true);
+            //terminate();
         }
 
         protected override void onClickOculusStick(ref VREvent_t vrEvent)
         {
-            terminate();
+            setVisible(true);
+            //terminate();
         }
 
         private void terminate()
@@ -271,6 +319,7 @@ namespace SparrowHawk.Interaction
         }
 
         // TODO: Need to account for offset. Next
+        // TODO: after add a new menulayout to the list, newing a new marking menu interaction and set approiate visiable attribute. it's easier for the undo function.
         private void launchInteraction(float r, float theta)
         {
             //int interactionNumber = ((int) Math.Floor((mNumSectors * theta - mFirstSectorOffsetAngle) / (2 * Math.PI)));
@@ -279,6 +328,7 @@ namespace SparrowHawk.Interaction
             if (theta < 0) { theta += (float)(2 * Math.PI); }
             interactionNumber = (int)Math.Ceiling((theta - (Math.PI / mNumSectors)) / (Math.PI / 2));
             if (interactionNumber >= mNumSectors) { interactionNumber = 0; }
+            MarkingMenu nextMenu = null;
             switch (mLayout)
             {
                 case MenuLayout.MainMenu:
@@ -286,403 +336,112 @@ namespace SparrowHawk.Interaction
                     {
                         //Loft
                         case 0:
-                            //clear selectionList here to make sure Editpoint can access it
-
-                            mScene.selectionList.Clear();
-                            //deal with when user select wrong at the begining
-                            while (!mScene.interactionStackEmpty())
-                                mScene.popInteraction();
-
-                            mScene.menuList.Add(MenuLayout.LoftC1); //index is 1, 0 is mainMenu
-                            mScene.selectionList.Add("Loft");
-                            mScene.menuIndex++;
-
+                            mScene.selectionDic.Add(SelectionKey.ModelFun, FunctionType.Loft);
+                            setCurSelectionKey(SelectionKey.ModelFun);
+                            nextMenu = new MarkingMenu(ref mScene, MenuLayout.LoftC1);
                             //Rhino.RhinoApp.WriteLine("section 0 : " + thetaDebug / Math.PI * 180);
-
+                            if (nextMenu != null)
+                            {
+                                //this.setVisible(false);
+                                nextMenu.setVisible(true);
+                                mScene.mInteractionChain.Push(nextMenu);
+                                mScene.pushInteractionFromChain();
+                            }
                             break;
                         //Sweep
                         case 1:
-
-                            mScene.selectionList.Clear();
-                            while (!mScene.interactionStackEmpty())
-                                mScene.popInteraction();
-
-                            mScene.menuList.Add(MenuLayout.SweepC1);
-                            mScene.selectionList.Add("Sweep");
-                            mScene.menuIndex++;
-
+                            mScene.selectionDic.Add(SelectionKey.ModelFun, FunctionType.Sweep);
+                            setCurSelectionKey(SelectionKey.ModelFun);
+                            nextMenu = new MarkingMenu(ref mScene, MenuLayout.SweepC1);
                             //Rhino.RhinoApp.WriteLine("section 1 : " + thetaDebug / Math.PI * 180);
-
+                            if (nextMenu != null)
+                            {
+                                //this.setVisible(false);
+                                nextMenu.setVisible(true);
+                                mScene.mInteractionChain.Push(nextMenu);
+                                mScene.pushInteractionFromChain();
+                            }
                             break;
                         //Revolve
                         case 2:
-
-                            mScene.selectionList.Clear();
-                            while (!mScene.interactionStackEmpty())
-                                mScene.popInteraction();
-
-                            mScene.menuList.Add(MenuLayout.RevolveC1);
-                            mScene.selectionList.Add("Revolve");
-                            mScene.menuIndex++;
-
+                            mScene.selectionDic.Add(SelectionKey.ModelFun, FunctionType.Revolve);
+                            setCurSelectionKey(SelectionKey.ModelFun);
+                            nextMenu = new MarkingMenu(ref mScene, MenuLayout.RevolveC1);
                             //Rhino.RhinoApp.WriteLine("section 2 : "+ thetaDebug / Math.PI * 180);
+                            if (nextMenu != null)
+                            {
+                                //this.setVisible(false);
+                                nextMenu.setVisible(true);
+                                mScene.mInteractionChain.Push(nextMenu);
+                                mScene.pushInteractionFromChain();
+                            }
                             break;
                         //Extrude
                         case 3:
-
-                            mScene.selectionList.Clear();
-                            while (!mScene.interactionStackEmpty())
-                                mScene.popInteraction();
-
-                            mScene.menuList.Add(MenuLayout.ExtrudeC1);
-                            mScene.selectionList.Add("Extrude");
-                            mScene.menuIndex++;
-
+                            mScene.selectionDic.Add(SelectionKey.ModelFun, FunctionType.Extrude);
+                            setCurSelectionKey(SelectionKey.ModelFun);
+                            nextMenu = new MarkingMenu(ref mScene, MenuLayout.ExtrudeC1);
                             //Rhino.RhinoApp.WriteLine("section 3: "+ thetaDebug / Math.PI * 180);
+                            if (nextMenu != null)
+                            {
+                                //this.setVisible(false);
+                                nextMenu.setVisible(true);
+                                mScene.mInteractionChain.Push(nextMenu);
+                                mScene.pushInteractionFromChain();
+                            }
                             break;
-                            /*
-                        case 4:
-                            Rhino.RhinoApp.WriteLine("section 4 : " + thetaDebug / Math.PI * 180);
-                            break;*/
-
                     }
                     break;
 
                 case MenuLayout.LoftC1:
-                    switch (interactionNumber)
-                    {
-                        //rect
-                        case 0:
-                            mScene.popInteraction();
-                            mScene.menuIndex++;
-                            mScene.menuList.Add(MenuLayout.LoftD1Rect);
-                            mScene.selectionList.Add("Rect");
-                            break;
-                        //curve
-                        case 1:
-                            mScene.popInteraction();
-                            mScene.menuIndex++;
-                            mScene.menuList.Add(MenuLayout.LoftD1Curve);
-                            mScene.selectionList.Add("Curve");
-                            break;
-                        //circle
-                        case 2:
-                            mScene.popInteraction();
-                            mScene.menuIndex++;
-                            mScene.menuList.Add(MenuLayout.LoftD1Curve);
-                            mScene.selectionList.Add("Circle");
-                            break;
-                        //patch
-                        case 3:
-                            mScene.popInteraction();
-                            mScene.menuIndex++;
-                            mScene.selectionList.Add("Patch");
-                            break;
-                    }
-                    break;
-                case MenuLayout.LoftC2:
-                    switch (interactionNumber)
-                    {
-                        //rect
-                        case 0:
-                            mScene.popInteraction();
-                            mScene.menuIndex++;
-                            mScene.menuList.Add(MenuLayout.LoftD2Rect);
-                            mScene.selectionList.Add("Rect");
-                            break;
-                        //curve
-                        case 1:
-                            mScene.popInteraction();
-                            mScene.menuIndex++;
-                            mScene.menuList.Add(MenuLayout.LoftD2Curve);
-                            mScene.selectionList.Add("Curve");
-                            break;
-                        //circle
-                        case 2:
-                            mScene.popInteraction();
-                            mScene.menuIndex++;
-                            mScene.menuList.Add(MenuLayout.LoftD2Curve);
-                            mScene.selectionList.Add("Circle");
-                            break;
-                        //patch
-                        case 3:
-                            mScene.popInteraction();
-                            mScene.menuIndex++;
-                            mScene.selectionList.Add("Patch");
-                            break;
-                    }
-                    break;
                 case MenuLayout.SweepC1:
-                    switch (interactionNumber)
-                    {
-                        //rect
-                        case 0:
-                            mScene.popInteraction();
-                            mScene.menuIndex++;
-                            mScene.menuList.Add(MenuLayout.SweepD1Rect);
-                            mScene.selectionList.Add("Rect");
-                            break;
-                        //curve
-                        case 1:
-                            mScene.popInteraction();
-                            mScene.menuIndex++;
-                            mScene.menuList.Add(MenuLayout.SweepD1Curve);
-                            mScene.selectionList.Add("Curve");
-                            break;
-                        //circle
-                        case 2:
-                            mScene.popInteraction();
-                            mScene.menuIndex++;
-                            mScene.menuList.Add(MenuLayout.SweepD1Circle);
-                            mScene.selectionList.Add("Circle");
-                            break;
-                        //patch
-                        case 3:
-                            mScene.popInteraction();
-                            mScene.menuIndex++;
-                            mScene.selectionList.Add("Patch");
-                            break;
-                    }
-                    break;
-                case MenuLayout.SweepC2:
-                    switch (interactionNumber)
-                    {
-                        //rect
-                        case 0:
-                            mScene.popInteraction();
-                            mScene.menuIndex++;
-                            mScene.menuList.Add(MenuLayout.SweepD2Rect);
-                            mScene.selectionList.Add("Rect");
-                            break;
-                        //curve
-                        case 1:
-                            mScene.popInteraction();
-                            mScene.menuIndex++;
-                            mScene.menuList.Add(MenuLayout.SweepD2Curve);
-                            mScene.selectionList.Add("Curve");
-                            break;
-                        //circle
-                        case 2:
-                            mScene.popInteraction();
-                            mScene.menuIndex++;
-                            mScene.menuList.Add(MenuLayout.SweepD2Circle);
-                            mScene.selectionList.Add("Circle");
-                            break;
-                        //patch
-                        case 3:
-                            mScene.popInteraction();
-                            mScene.menuIndex++;
-                            mScene.selectionList.Add("Patch");
-                            break;
-                    }
-                    break;
                 case MenuLayout.RevolveC1:
-                    switch (interactionNumber)
-                    {
-                        //rect
-                        case 0:
-                            mScene.popInteraction();
-                            mScene.menuIndex++;
-                            mScene.menuList.Add(MenuLayout.RevolveD1Rect);
-                            mScene.selectionList.Add("Rect");
-                            break;
-                        //curve
-                        case 1:
-                            mScene.popInteraction();
-                            mScene.menuIndex++;
-                            mScene.menuList.Add(MenuLayout.RevolveD1Curve);
-                            mScene.selectionList.Add("Curve");
-                            break;
-                        //circle
-                        case 2:
-                            mScene.popInteraction();
-                            mScene.menuIndex++;
-                            mScene.menuList.Add(MenuLayout.RevolveD1Circle);
-                            mScene.selectionList.Add("Circle");
-                            break;
-                        //patch
-                        case 3:
-                            mScene.popInteraction();
-                            mScene.menuIndex++;
-                            mScene.selectionList.Add("Patch");
-                            break;
-                    }
-                    break;
                 case MenuLayout.ExtrudeC1:
-                    switch (interactionNumber)
-                    {
-                        //rect
-                        case 0:
-                            mScene.popInteraction();
-                            mScene.menuIndex++;
-                            mScene.menuList.Add(MenuLayout.ExtrudeD1Rect);
-                            mScene.selectionList.Add("Rect");
-                            break;
-                        //curve
-                        case 1:
-                            mScene.popInteraction();
-                            mScene.menuIndex++;
-                            mScene.menuList.Add(MenuLayout.ExtrudeD1Curve);
-                            mScene.selectionList.Add("Curve");
-                            break;
-                        //circle
-                        case 2:
-                            mScene.popInteraction();
-                            mScene.menuIndex++;
-                            mScene.menuList.Add(MenuLayout.ExtrudeD1Circle);
-                            mScene.selectionList.Add("Circle");
-                            break;
-                        //patch
-                        case 3:
-                            mScene.popInteraction();
-                            mScene.menuIndex++;
-                            mScene.menuList.Add(MenuLayout.ExtrudeD1Rect);
-                            mScene.selectionList.Add("Patch");
-                            break;
-                    }
-                    break;
-                case MenuLayout.ExtrudeC2:
+                    mScene.selectionDic.Add(SelectionKey.Profile1Shape, (ShapeType)(interactionNumber));
+                    setCurSelectionKey(SelectionKey.Profile1Shape);
+                    nextMenu = new MarkingMenu(ref mScene, (MenuLayout)((int)mLayout + interactionNumber));
+                    nextMenu.setVisible(true);
+                    //mScene.pushInteraction(nextMenu);
+                    mScene.mInteractionChain.Push(nextMenu);
+                    mScene.pushInteractionFromChain();
 
-                    switch (interactionNumber)
-                    {
-                        //rect
-                        case 0:
-                            mScene.popInteraction();
-                            mScene.menuIndex++;
-                            mScene.menuList.Add(MenuLayout.ExtrudeD2Rect);
-                            mScene.selectionList.Add("Rect");
-                            break;
-                        //curve
-                        case 1:
-                            mScene.popInteraction();
-                            mScene.menuIndex++;
-                            mScene.menuList.Add(MenuLayout.ExtrudeD2Curve);
-                            mScene.selectionList.Add("Curve");
-                            break;
-                        //circle
-                        case 2:
-                            mScene.popInteraction();
-                            mScene.menuIndex++;
-                            mScene.menuList.Add(MenuLayout.ExtrudeD2Circle);
-                            mScene.selectionList.Add("Circle");
-                            break;
-                        //patch
-                        case 3:
-                            mScene.popInteraction();
-                            mScene.menuIndex++;
-                            mScene.selectionList.Add("Patch");
-                            break;
-                    }
                     break;
 
                 case MenuLayout.LoftD1Circle:
                 case MenuLayout.LoftD1Rect:
                 case MenuLayout.LoftD1Curve:
-                    switch (interactionNumber)
-                    {
-                        //surface
-                        case 0:
-                            mScene.popInteraction();
-                            initInteractionChain(mScene.selectionList.Count - 1, "Surface");
-                            mScene.menuIndex++;
-                            mScene.menuList.Add(MenuLayout.LoftC2);
-                            break;
-                        //3D
-                        case 1:
-                            mScene.popInteraction();
-                            initInteractionChain(mScene.selectionList.Count - 1, "3D");
-                            mScene.menuIndex++;
-                            mScene.menuList.Add(MenuLayout.LoftC2);
-                            break;
-                        //plane
-                        case 2:
-                            mScene.popInteraction();
-                            initInteractionChain(mScene.selectionList.Count - 1, "Plane");
-                            mScene.menuIndex++;
-                            mScene.menuList.Add(MenuLayout.LoftC2);
-                            break;
-                        //patch
-                        case 3:
-                            mScene.popInteraction();
-                            initInteractionChain(mScene.selectionList.Count - 1, "Reference");
-                            mScene.menuIndex++;
-                            mScene.menuList.Add(MenuLayout.LoftC2);
-                            break;
-                    }
-                    break;
                 case MenuLayout.SweepD1Circle:
                 case MenuLayout.SweepD1Rect:
                 case MenuLayout.SweepD1Curve:
-                    switch (interactionNumber)
-                    {
-                        //surface
-                        case 0:
-                            mScene.popInteraction();
-                            initInteractionChain(mScene.selectionList.Count - 1, "Surface");
-                            mScene.menuIndex++;
-                            mScene.menuList.Add(MenuLayout.SweepC2);
-                            break;
-                        //3D
-                        case 1:
-                            mScene.popInteraction();
-                            initInteractionChain(mScene.selectionList.Count - 1, "3D");
-                            mScene.menuIndex++;
-                            mScene.menuList.Add(MenuLayout.SweepC2);
-                            break;
-                        //plane
-                        case 2:
-                            mScene.popInteraction();
-                            initInteractionChain(mScene.selectionList.Count - 1, "Plane");
-                            mScene.menuIndex++;
-                            mScene.menuList.Add(MenuLayout.SweepC2);
-                            break;
-                        //patch
-                        case 3:
-                            mScene.popInteraction();
-                            initInteractionChain(mScene.selectionList.Count - 1, "Reference");
-                            mScene.menuIndex++;
-                            mScene.menuList.Add(MenuLayout.SweepC2);
-                            break;
-                    }
-                    break;
                 case MenuLayout.ExtrudeD1Circle:
                 case MenuLayout.ExtrudeD1Rect:
                 case MenuLayout.ExtrudeD1Curve:
-                    switch (interactionNumber)
-                    {
-                        //surface
-                        case 0:
-                            mScene.popInteraction();
-                            initInteractionChain(mScene.selectionList.Count - 1, "Surface");
-                            mScene.menuIndex++;
-                            mScene.menuList.Add(MenuLayout.ExtrudeC2);
-                            break;
-                        //3D
-                        case 1:
-                            mScene.popInteraction();
-                            initInteractionChain(mScene.selectionList.Count - 1, "3D");
-                            mScene.menuIndex++;
-                            mScene.menuList.Add(MenuLayout.ExtrudeC2);
-                            break;
-                        //plane
-                        case 2:
-                            mScene.popInteraction();
-                            initInteractionChain(mScene.selectionList.Count - 1, "Plane");
-                            mScene.menuIndex++;
-                            mScene.menuList.Add(MenuLayout.ExtrudeC2);
-                            break;
-                        //patch
-                        case 3:
-                            mScene.popInteraction();
-                            initInteractionChain(mScene.selectionList.Count - 1, "Reference");
-                            mScene.menuIndex++;
-                            mScene.menuList.Add(MenuLayout.ExtrudeC2);
-                            break;
-                    }
+                    mScene.selectionDic.Add(SelectionKey.Profile1On, (DrawnType)(interactionNumber));
+                    setCurSelectionKey(SelectionKey.Profile1On);
+                    initInteractionChain(CurveID.ProfileCurve1);
+                    mScene.pushInteractionFromChain();
                     break;
+
                 case MenuLayout.RevolveD1Circle:
                 case MenuLayout.RevolveD1Rect:
                 case MenuLayout.RevolveD1Curve:
+                    mScene.selectionDic.Add(SelectionKey.Profile1On, (DrawnType)(interactionNumber));
+                    setCurSelectionKey(SelectionKey.Profile1On);
+                    initInteractionChain(CurveID.ProfileCurve1);
+                    mScene.pushInteractionFromChain();
+                    break;
+
+                case MenuLayout.LoftC2:
+                case MenuLayout.SweepC2:
+                case MenuLayout.ExtrudeC2:
+                    mScene.selectionDic.Add(SelectionKey.Profile2Shape, (ShapeType)(interactionNumber));
+                    setCurSelectionKey(SelectionKey.Profile2Shape);
+                    nextMenu = new MarkingMenu(ref mScene, (MenuLayout)((int)mLayout + interactionNumber));
+                    nextMenu.setVisible(true);
+                    mScene.mInteractionChain.Push(nextMenu);
+                    mScene.pushInteractionFromChain();
+                    break;
+
                 case MenuLayout.LoftD2Circle:
                 case MenuLayout.LoftD2Rect:
                 case MenuLayout.LoftD2Curve:
@@ -692,226 +451,157 @@ namespace SparrowHawk.Interaction
                 case MenuLayout.ExtrudeD2Circle:
                 case MenuLayout.ExtrudeD2Rect:
                 case MenuLayout.ExtrudeD2Curve:
-                    switch (interactionNumber)
-                    {
-                        //surface
-                        case 0:
-                            mScene.popInteraction();
-                            renderModel(mScene.selectionList.Count - 1, "Surface");
-                            mScene.menuIndex = 0;
-                            mScene.menuList.Clear();
-                            break;
-                        //3D
-                        case 1:
-                            mScene.popInteraction();
-                            renderModel(mScene.selectionList.Count - 1, "3D");
-                            mScene.menuIndex = 0;
-                            mScene.menuList.Clear();
-                            break;
-                        //plane
-                        case 2:
-                            mScene.popInteraction();
-                            renderModel(mScene.selectionList.Count - 1, "Plane");
-                            mScene.menuIndex = 0;
-                            mScene.menuList.Clear();
-                            break;
-                        //patch
-                        case 3:
-                            mScene.popInteraction();
-                            renderModel(mScene.selectionList.Count - 1, "Reference");
-                            mScene.menuIndex = 0;
-                            mScene.menuList.Clear();
-                            break;
-                    }
+                    mScene.selectionDic.Add(SelectionKey.Profile2On, (DrawnType)(interactionNumber));
+                    setCurSelectionKey(SelectionKey.Profile2On);
+                    initInteractionChain(CurveID.ProfileCurve2);
+                    mScene.pushInteractionFromChain();
                     break;
             }
         }
 
-        private void initInteractionChain(int index, string type)
+        private void initInteractionChain(CurveID curveID)
         {
+            //0-Surface, 1-3D, 2-Plane, 3-Reference
             Util.setPlaneAlpha(ref mScene, 0.0f);
-            if (type == "Surface")
+            mScene.mInteractionChain.Clear();
+
+            FunctionType modelFun = (FunctionType)mScene.selectionDic[SelectionKey.ModelFun];
+            ShapeType shapeType = ShapeType.None;
+            DrawnType drawnType = DrawnType.None;
+            MarkingMenu nextMenu = null;
+
+            if (curveID == CurveID.ProfileCurve1)
             {
-                if (mScene.selectionList[index] == "Rect")
+                shapeType = (ShapeType)mScene.selectionDic[SelectionKey.Profile1Shape];
+                drawnType = (DrawnType)mScene.selectionDic[SelectionKey.Profile1On];
+
+                //create next menu interaction based on different modelFun, it will be at the bottom of the interactionChain
+                switch (modelFun)
                 {
-                    mScene.pushInteraction(new EditPoint3(ref mScene, true, "Rect"));
-                    mScene.pushInteraction(new AddPoint(ref mScene, 2, 2, "Rect"));
-                }
-                else if (mScene.selectionList[index] == "Circle")
-                {
-                    mScene.pushInteraction(new EditPoint3(ref mScene, true, "Circle"));
-                    mScene.pushInteraction(new AddPoint(ref mScene, 2, 2, "Circle"));
-                }
-                else if (mScene.selectionList[index] == "Curve")
-                {
-                    mScene.pushInteraction(new EditPoint3(ref mScene, true));
-                    mScene.pushInteraction(new CreateCurve(ref mScene, 2, false));
-                }
-                else if (mScene.selectionList[index] == "Patch")
-                {
-                    mScene.pushInteraction(new CreatePatch(ref mScene));
-                }
-            }
-            else if (type == "3D")
-            {
-                if (mScene.selectionList[index] == "Circle")
-                {
-                    mScene.pushInteraction(new CreatePlane2(ref mScene, "Circle"));
-                }
-                else if (mScene.selectionList[index] == "Rect")
-                {
-                    mScene.pushInteraction(new CreatePlane2(ref mScene, "Rect"));
+                    case FunctionType.Extrude:
+                        nextMenu = new MarkingMenu(ref mScene, MenuLayout.ExtrudeC2);
+                        nextMenu.setVisible(true);
+                        mScene.mInteractionChain.Push(nextMenu);
+                        break;
+                    case FunctionType.Sweep:
+                        nextMenu = new MarkingMenu(ref mScene, MenuLayout.SweepC2);
+                        nextMenu.setVisible(true);
+                        mScene.mInteractionChain.Push(nextMenu);
+                        break;
+                    case FunctionType.Loft:
+                        nextMenu = new MarkingMenu(ref mScene, MenuLayout.LoftC2);
+                        nextMenu.setVisible(true);
+                        mScene.mInteractionChain.Push(nextMenu);
+                        break;
                 }
 
-                
             }
-            else if (type == "Plane")
+            else if (curveID == CurveID.ProfileCurve2)
+            {
+                shapeType = (ShapeType)mScene.selectionDic[SelectionKey.Profile2Shape];
+                drawnType = (DrawnType)mScene.selectionDic[SelectionKey.Profile2On];
+
+                //add the editing end cap interactaion here
+                if (modelFun == FunctionType.Extrude || modelFun == FunctionType.Sweep)
+                {
+                    if (shapeType == ShapeType.Circle || shapeType == ShapeType.Rect)
+                        mScene.mInteractionChain.Push(new EditPoint3(ref mScene, CurveID.EndCapCurve));
+                }
+            }
+
+            if (drawnType == DrawnType.Surface)
+            {
+                if (shapeType == ShapeType.Rect)
+                {
+                    mScene.mInteractionChain.Push(new EditPoint3(ref mScene, curveID));
+                    mScene.mInteractionChain.Push(new AddPoint(ref mScene, 2, curveID));
+                }
+                else if (shapeType == ShapeType.Circle)
+                {
+                    mScene.mInteractionChain.Push(new EditPoint3(ref mScene, curveID));
+                    mScene.mInteractionChain.Push(new AddPoint(ref mScene, 2, curveID));
+                }
+                else if (shapeType == ShapeType.Curve)
+                {
+                    mScene.mInteractionChain.Push(new EditPoint3(ref mScene, curveID));
+                    mScene.mInteractionChain.Push(new CreateCurve(ref mScene, false, curveID));
+                }
+                /*
+                else if (mScene.selectionList[index] == "Patch")
+                {
+                    mScene.mInteractionChian.Push(new CreatePatch(ref mScene));
+                }*/
+            }
+            else if (drawnType == DrawnType.In3D)
+            {
+                if (shapeType == ShapeType.Circle)
+                {
+                    mScene.mInteractionChain.Push(new CreatePlane2(ref mScene, curveID));
+                }
+                else if (shapeType == ShapeType.Rect)
+                {
+                    mScene.mInteractionChain.Push(new CreatePlane2(ref mScene, curveID));
+                }
+                else if (shapeType == ShapeType.Curve)
+                {
+                    mScene.mInteractionChain.Push(new EditPoint3(ref mScene, curveID));
+                    mScene.mInteractionChain.Push(new CreateCurve(ref mScene, false, curveID));
+                }
+
+            }
+            else if (drawnType == DrawnType.Plane)
             {
                 Util.setPlaneAlpha(ref mScene, 0.4f);
 
-                if (mScene.selectionList[index] == "Rect")
+                if (shapeType == ShapeType.Rect)
                 {
-                    mScene.pushInteraction(new EditPoint3(ref mScene, true, "Rect"));
-                    mScene.pushInteraction(new AddPoint(ref mScene, 1, 2, "Rect"));
+                    mScene.mInteractionChain.Push(new EditPoint3(ref mScene, curveID));
+                    mScene.mInteractionChain.Push(new AddPoint(ref mScene, 2, curveID));
                 }
-                else if (mScene.selectionList[index] == "Circle")
+                else if (shapeType == ShapeType.Circle)
                 {
-                    mScene.pushInteraction(new EditPoint3(ref mScene, true, "Circle"));
-                    mScene.pushInteraction(new AddPoint(ref mScene, 1, 2, "Circle"));
+                    mScene.mInteractionChain.Push(new EditPoint3(ref mScene, curveID));
+                    mScene.mInteractionChain.Push(new AddPoint(ref mScene, 2, curveID));
                 }
-                else if (mScene.selectionList[index] == "Curve")
+                else if (shapeType == ShapeType.Curve)
                 {
-                    mScene.pushInteraction(new EditPoint3(ref mScene, true));
-                    mScene.pushInteraction(new CreateCurve(ref mScene, 1, false));
+                    mScene.mInteractionChain.Push(new EditPoint3(ref mScene, curveID));
+                    mScene.mInteractionChain.Push(new CreateCurve(ref mScene, false, curveID));
                 }
+                /*
                 else if (mScene.selectionList[index] == "Patch")
                 {
-                    mScene.pushInteraction(new CreatePatch(ref mScene, true));
-                }
+                    mScene.mInteractionChian.Push(new CreatePatch(ref mScene, true));
+                }*/
             }
-            else if (type == "Reference")
+            else if (drawnType == DrawnType.Reference)
             {
-                if (mScene.selectionList[index] == "Rect")
+                if (shapeType == ShapeType.Rect)
                 {
-                    mScene.pushInteraction(new EditPoint3(ref mScene, true, "Rect"));
-                    //mScene.pushInteraction(new AddPoint(ref mScene, 3, 2));
-                    mScene.pushInteraction(new CreatePlane(ref mScene, "Rect"));
-                    //mScene.pushInteraction(new CreatePlane2(ref mScene, "Rect"));
+                    mScene.mInteractionChain.Push(new EditPoint3(ref mScene, curveID));
+                    //mScene.mInteractionChian.Push(new AddPoint(ref mScene, 2, curveID));
+                    mScene.mInteractionChain.Push(new CreatePlane(ref mScene, curveID));
                 }
-                else if (mScene.selectionList[index] == "Circle")
+                else if (shapeType == ShapeType.Circle)
                 {
-                    mScene.pushInteraction(new EditPoint3(ref mScene, true, "Circle"));
-                    //mScene.pushInteraction(new AddPoint(ref mScene, 3, 2));
-                    mScene.pushInteraction(new CreatePlane(ref mScene, "Circle"));
-                    //mScene.pushInteraction(new CreatePlane2(ref mScene, "Circle"));
+                    mScene.mInteractionChain.Push(new EditPoint3(ref mScene, curveID));
+                    //mScene.mInteractionChian.Push(new AddPoint(ref mScene, 2, curveID));
+                    mScene.mInteractionChain.Push(new CreatePlane(ref mScene, curveID));
                 }
-                else if (mScene.selectionList[index] == "Curve")
+                else if (shapeType == ShapeType.Curve)
                 {
-                    mScene.pushInteraction(new EditPoint3(ref mScene, false));
-                    mScene.pushInteraction(new CreateCurve(ref mScene, 0, false));
+                    mScene.mInteractionChain.Push(new EditPoint3(ref mScene, curveID));
+                    mScene.mInteractionChain.Push(new CreateCurve(ref mScene, false, curveID));
                 }
+                /*
                 else if (mScene.selectionList[index] == "Patch")
                 {
-                    mScene.pushInteraction(new CreatePatch(ref mScene));
-                }
+                    mScene.mInteractionChian.Push(new CreatePatch(ref mScene));
+                }*/
 
             }
 
         }
-
-        private void renderModel(int index, string type)
-        {
-            string renderType = mScene.selectionList[0];
-            Util.setPlaneAlpha(ref mScene, 0.0f);
-
-            if (type == "Surface")
-            {
-                if (mScene.selectionList[index] == "Rect")
-                {
-                    mScene.pushInteraction(new EditPoint3(ref mScene, true, renderType));
-                    mScene.pushInteraction(new AddPoint(ref mScene, 2, 2, "Rect"));
-                }
-                else if (mScene.selectionList[index] == "Circle")
-                {
-                    mScene.pushInteraction(new EditPoint3(ref mScene, true, renderType));
-                    mScene.pushInteraction(new AddPoint(ref mScene, 2, 2, "Circle"));
-                }
-                else if (mScene.selectionList[index] == "Curve")
-                {
-                    mScene.pushInteraction(new EditPoint3(ref mScene, true, renderType));
-                    mScene.pushInteraction(new CreateCurve(ref mScene, 2, false));
-                }
-                else if (mScene.selectionList[index] == "Patch")
-                {
-                    mScene.pushInteraction(new CreatePatch(ref mScene));
-                }
-            }
-            else if (type == "3D")
-            {
-
-                if (mScene.selectionList[index] == "Rect")
-                {
-                    //mScene.pushInteraction(new EditPoint3(ref mScene, true, renderType));
-                    //mScene.pushInteraction(new AddPoint(ref mScene, 3, 2));
-                    mScene.pushInteraction(new CreatePlane2(ref mScene, "Rect"));
-                }
-                else if (mScene.selectionList[index] == "Circle")
-                {
-                    //mScene.pushInteraction(new EditPoint3(ref mScene, true, renderType));
-                    //mScene.pushInteraction(new AddPoint(ref mScene, 3, 2));
-                    mScene.pushInteraction(new CreatePlane2(ref mScene, "Circle"));
-                }
-                else if (mScene.selectionList[index] == "Curve")
-                {
-                    mScene.pushInteraction(new EditPoint3(ref mScene, false, renderType));
-                    //mScene.pushInteraction(new CreateCurve(ref mScene, 0, false));
-                    mScene.pushInteraction(new CreateCurve(ref mScene, 0, false, renderType));
-                }
-                else if (mScene.selectionList[index] == "Patch")
-                {
-                    mScene.pushInteraction(new EditPoint3(ref mScene, false, renderType));
-                    mScene.pushInteraction(new CreatePatch(ref mScene));
-                }
-            }
-            else if (type == "Plane")
-            {
-
-                Util.setPlaneAlpha(ref mScene, 0.4f);
-                if (mScene.selectionList[index] == "Rect")
-                {
-                    mScene.pushInteraction(new EditPoint3(ref mScene, true, renderType));
-                    mScene.pushInteraction(new AddPoint(ref mScene, 1, 2, "Rect")); ;
-                }
-                else if (mScene.selectionList[index] == "Circle")
-                {
-                    mScene.pushInteraction(new EditPoint3(ref mScene, true, renderType));
-                    mScene.pushInteraction(new AddPoint(ref mScene, 1, 2, "Circle"));
-                }
-                else if (mScene.selectionList[index] == "Curve")
-                {
-                    mScene.pushInteraction(new EditPoint3(ref mScene, true, renderType));
-                    mScene.pushInteraction(new CreateCurve(ref mScene, 1, false, renderType));
-                    //mScene.pushInteraction(new CreateCurve(ref mScene, 1, false));
-                }
-                else if (mScene.selectionList[index] == "Patch")
-                {
-                    mScene.pushInteraction(new EditPoint3(ref mScene, false, renderType));
-                    mScene.pushInteraction(new CreatePatch(ref mScene, true));
-                }
-            }
-            else if (type == "Reference")
-            {
-
-                if (mScene.selectionList[index] == "Curve")
-                {
-                    mScene.pushInteraction(new EditPoint3(ref mScene, true, renderType));
-                    mScene.pushInteraction(new CreateCurve(ref mScene, 3, false, renderType));
-                }
-
-                
-            }
-        }
-
 
     }
 }

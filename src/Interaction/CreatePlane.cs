@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using Valve.VR;
+using static SparrowHawk.Scene;
 
 namespace SparrowHawk.Interaction
 {
@@ -13,21 +14,29 @@ namespace SparrowHawk.Interaction
         private Material.Material mesh_m;
         private Brep designPlane;
         private Guid guid;
-        private string renderType = "none";
+        //private string renderType = "none";
         private SceneNode selectedSN;
         private NurbsCurve modelcurve;
         private Brep modelBrep;
         private Guid renderObjId = Guid.Empty;
+        private ShapeType shapeType = ShapeType.None;
 
         public CreatePlane(ref Scene scene) : base(ref scene)
         {
             mesh_m = new Material.SingleColorMaterial(0.5f, 0, 0, 0.4f);
         }
 
-        public CreatePlane(ref Scene scene, string type) : base(ref scene)
+        public CreatePlane(ref Scene scene, CurveID curveID) : base(ref scene)
         {
             mesh_m = new Material.SingleColorMaterial(0.5f, 0, 0, 0.4f);
-            renderType = type;
+            if (curveID == CurveID.ProfileCurve1)
+            {
+                shapeType = (ShapeType)mScene.selectionDic[SelectionKey.Profile1Shape];
+            }
+            else if (curveID == CurveID.ProfileCurve2)
+            {
+                shapeType = (ShapeType)mScene.selectionDic[SelectionKey.Profile2Shape];
+            }
         }
 
         public override void draw(bool isTop)
@@ -68,7 +77,7 @@ namespace SparrowHawk.Interaction
                 //TODO- bad solution. constriant the next interaction
                 mScene.iPlaneList.Add(plane);
 
-                if (renderType == "Circle")
+                if (shapeType == ShapeType.Circle)
                 {
 
                     OpenTK.Vector3 origin = new Vector3(controller_p.X, controller_p.Y, controller_p.Z);
@@ -83,7 +92,7 @@ namespace SparrowHawk.Interaction
 
 
                 }
-                else if (renderType == "Rect")
+                else if (shapeType == ShapeType.Rect)
                 {
 
                     float width = 40;
@@ -105,13 +114,12 @@ namespace SparrowHawk.Interaction
 
                 Brep[] shapes = Brep.CreatePlanarBreps(modelcurve);
                 modelBrep = shapes[0];
-                renderObjId = Util.addSceneNode(ref mScene, modelBrep, ref mesh_m, renderType);
+                renderObjId = Util.addSceneNode(ref mScene, modelBrep, ref mesh_m, shapeType.ToString());
                 //add icurveList since we don't use EditPoint2 for circle and rect
                 mScene.iCurveList.Add(modelcurve);
 
-                //now it will call the init() automatically
-                mScene.popInteraction();
-                mScene.peekInteraction().init();
+                //call next interaction in the chain
+                mScene.pushInteractionFromChain();
 
             }
 
@@ -130,8 +138,8 @@ namespace SparrowHawk.Interaction
 
         protected override void onReleaseOculusTrigger(ref VREvent_t vrEvent)
         {
-            mScene.popInteraction();
-            mScene.peekInteraction().init();
+            //call next interaction in the chain
+            //mScene.pushInteractionFromChain();
         }
     }
 }

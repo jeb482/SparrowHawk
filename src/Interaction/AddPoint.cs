@@ -6,13 +6,13 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using Valve.VR;
+using static SparrowHawk.Scene;
 
 namespace SparrowHawk.Interaction
 {
     class AddPoint : Interaction
     {
-        //0:3D, 1:onDPlanes, 2: onSurfaces, 3: onTargets
-        public int type = 0;
+
         public int maxNumPoint = 100;
         public List<Guid> ListTargets = new List<Guid>();
         protected Geometry.Geometry point_g;
@@ -26,7 +26,7 @@ namespace SparrowHawk.Interaction
         protected OpenTK.Vector3 projectP;
         Vector3 pos = new Vector3();
         protected RhinoObject pointOnObj;
-        private string renderType = "none";
+
         private List<Point3d> pointsList = new List<Point3d>();
 
         List<SceneNode> pointMarkers = new List<SceneNode>();
@@ -47,6 +47,10 @@ namespace SparrowHawk.Interaction
         private Point3d movePlaneOrigin = new Point3d();
         private Guid movePlaneRenderID = Guid.Empty;
 
+        //0:3D, 1:onDPlanes, 2: onSurfaces, 3: onTargets ==> before we modified
+        DrawnType drawnType = DrawnType.None;
+        ShapeType shapeType = ShapeType.None;
+
         public AddPoint(ref Scene scene) : base(ref scene)
         {
             mScene = scene;
@@ -54,45 +58,27 @@ namespace SparrowHawk.Interaction
             point_m = new Material.SingleColorMaterial(0f, .5f, 1f, 1f);
         }
 
-        public AddPoint(ref Scene scene, int _type) : base(ref scene)
+        public AddPoint(ref Scene scene, int num, CurveID curveID) : base(ref scene)
         {
             mScene = scene;
             point_g = new Geometry.PointMarker(new Vector3());
             point_m = new Material.SingleColorMaterial(0f, .5f, 1f, 1f);
-            type = _type;
-            if (type != 0)
-            {
-                // visualizing projection point with white color
-                drawPoint = Util.MarkProjectionPoint(ref mScene, new OpenTK.Vector3(0, 0, 0), 1, 1, 1);
-            }
-        }
 
-        public AddPoint(ref Scene scene, int _type, int num) : base(ref scene)
-        {
-            mScene = scene;
-            point_g = new Geometry.PointMarker(new Vector3());
-            point_m = new Material.SingleColorMaterial(0f, .5f, 1f, 1f);
-            type = _type;
-            maxNumPoint = num;
-            if (type != 0)
+            if (curveID == CurveID.ProfileCurve1)
             {
-                // visualizing projection point with white color
-                drawPoint = Util.MarkProjectionPoint(ref mScene, new OpenTK.Vector3(0, 0, 0), 1, 1, 1);
-                contourCurve = null;
-                snapPointsList.Clear();
+                drawnType = (DrawnType)mScene.selectionDic[SelectionKey.Profile1On];
+                shapeType = (ShapeType)mScene.selectionDic[SelectionKey.Profile1Shape];
             }
-        }
+            else if (curveID == CurveID.ProfileCurve2)
+            {
+                drawnType = (DrawnType)mScene.selectionDic[SelectionKey.Profile2On];
+                shapeType = (ShapeType)mScene.selectionDic[SelectionKey.Profile2Shape];
+            }
 
-        public AddPoint(ref Scene scene, int _type, int num, string rtype) : base(ref scene)
-        {
-            mScene = scene;
-            point_g = new Geometry.PointMarker(new Vector3());
-            point_m = new Material.SingleColorMaterial(0f, .5f, 1f, 1f);
-            type = _type;
-            renderType = rtype;
+
             profile_m = new Material.SingleColorMaterial(0.5f, 0, 0, 0.4f);
             maxNumPoint = num;
-            if (type != 0)
+            if (drawnType != DrawnType.In3D)
             {
                 // visualizing projection point with white color
                 drawPoint = Util.MarkProjectionPoint(ref mScene, new OpenTK.Vector3(0, 0, 0), 1, 1, 1);
@@ -103,7 +89,7 @@ namespace SparrowHawk.Interaction
 
         public override void init()
         {
-            if ((type == 3) && mScene.iRhObjList.Count != 0)
+            if ((drawnType == DrawnType.Reference) && mScene.iRhObjList.Count != 0)
             {
                 foreach (Rhino.DocObjects.RhinoObject RhObj in mScene.iRhObjList)
                 {
@@ -116,7 +102,7 @@ namespace SparrowHawk.Interaction
         public override void draw(bool isTop)
         {
             //visualize the point on the plane for type = 1, 2, 3
-            if (type != 0 && isTop)
+            if (drawnType != DrawnType.In3D && isTop)
             {
                 //ray casting to the pre-defind planes
                 OpenTK.Vector4 controller_p = Util.getControllerTipPosition(ref mScene, primaryControllerIdx == mScene.leftControllerIdx) * new OpenTK.Vector4(0, 0, 0, 1);
@@ -138,10 +124,9 @@ namespace SparrowHawk.Interaction
                     foreach (Rhino.DocObjects.RhinoObject rhObj in mScene.rhinoDoc.Objects.GetObjectList(settings))
                     {
                         //check for different drawing curve types
-                        //assume only use xy plane for exrude
-                        bool b1 = ((type == 1) && rhObj.Attributes.Name.Contains("plane") && mScene.selectionList[0] != "Extrude") || ((type == 1) && rhObj.Attributes.Name.Contains("planeXY") && mScene.selectionList[0] == "Extrude");
-                        bool b2 = (type == 2) && (rhObj.Attributes.Name.Contains("brepMesh") || rhObj.Attributes.Name.Contains("aprint") || rhObj.Attributes.Name.Contains("patchSurface"));
-                        bool b3 = (type == 3) && ListTargets.Contains(rhObj.Id);
+                        bool b1 = (drawnType == DrawnType.Plane) && rhObj.Attributes.Name.Contains("plane");
+                        bool b2 = (drawnType == DrawnType.Surface) && (rhObj.Attributes.Name.Contains("brepMesh") || rhObj.Attributes.Name.Contains("aprint") || rhObj.Attributes.Name.Contains("patchSurface"));
+                        bool b3 = (drawnType == DrawnType.Reference) && ListTargets.Contains(rhObj.Id);
 
                         //only drawing on planes for now rhObj.Attributes.Name.Contains("brepMesh") || rhObj.Attributes.Name.Contains("aprint") || rhObj.Attributes.Name.Contains("plane")
                         //if (rhObj.Attributes.Name.Contains("plane"))
@@ -187,7 +172,7 @@ namespace SparrowHawk.Interaction
                         PlaneSurface plane_surface = new PlaneSurface(newPlane, new Interval(-size, size), new Interval(-size, size));
                         designPlane = Brep.CreateFromSurface(plane_surface);
 
-                        movePlaneRenderID =Util.addSceneNodeWithoutDraw(ref mScene, designPlane, ref plane_m, "Move-" + movePlane.Attributes.Name);
+                        movePlaneRenderID = Util.addSceneNodeWithoutDraw(ref mScene, designPlane, ref plane_m, "Move-" + movePlane.Attributes.Name);
 
                     }
 
@@ -248,10 +233,10 @@ namespace SparrowHawk.Interaction
 
                 pointOnObj = targetPRhObj;
 
-                if (hitPlane && type != 0)
+                if (hitPlane && drawnType != DrawnType.In3D)
                 {
                     //create contour curve and snap points
-                    if(!lockPlane)
+                    if (!lockPlane)
                         computeContourCurve();
                     projectP = snapToPoints(projectP, snapPointsList);
 
@@ -343,7 +328,7 @@ namespace SparrowHawk.Interaction
             {
                 snapPointsList.Add(Util.platformToVRPoint(ref mScene, Util.RhinoToOpenTKPoint(circle.Center)));
                 snapPointsList.Add(Util.platformToVRPoint(ref mScene, Util.RhinoToOpenTKPoint(circle.PointAt(0))));
-                snapPointsList.Add(Util.platformToVRPoint(ref mScene, Util.RhinoToOpenTKPoint(circle.PointAt(Math.PI/2))));
+                snapPointsList.Add(Util.platformToVRPoint(ref mScene, Util.RhinoToOpenTKPoint(circle.PointAt(Math.PI / 2))));
                 snapPointsList.Add(Util.platformToVRPoint(ref mScene, Util.RhinoToOpenTKPoint(circle.PointAt(Math.PI))));
                 snapPointsList.Add(Util.platformToVRPoint(ref mScene, Util.RhinoToOpenTKPoint(circle.PointAt(Math.PI * 1.5))));
 
@@ -401,7 +386,7 @@ namespace SparrowHawk.Interaction
 
             if (designPlane != null)
             {
-                planeId =Util.addSceneNodeWithoutVR(ref mScene, designPlane, "plane" + type);
+                planeId = Util.addSceneNodeWithoutVR(ref mScene, designPlane, "plane" + type);
             }
 
 
@@ -428,12 +413,12 @@ namespace SparrowHawk.Interaction
             //TODO-hide two other design plane
             if (pointMarkers.Count == 1)
             {
-                if (pointOnObj != null && type == 1)
+                if (pointOnObj != null && drawnType == DrawnType.Plane)
                 {
                     Util.hideOtherPlanes(ref mScene, pointOnObj.Attributes.Name);
                     computeContourCurve();
                 }
-                else if (pointOnObj != null && type == 2)
+                else if (pointOnObj != null && drawnType == DrawnType.Surface)
                 {
                     computeContourCurve();
                 }
@@ -448,17 +433,18 @@ namespace SparrowHawk.Interaction
                 {
                     NurbsCurve modelcurve = null;
                     Brep modelBrep;
-
-                    if (renderType == "Circle")
+                    string modelName = "";
+                    if (shapeType == ShapeType.Circle)
                     {
                         float radius = (float)Math.Sqrt(Math.Pow(pointsList[1].X - pointsList[0].X, 2) + Math.Pow(pointsList[1].Y - pointsList[0].Y, 2) + Math.Pow(pointsList[1].Z - pointsList[0].Z, 2));
                         Circle circle = new Rhino.Geometry.Circle(curvePlane, pointsList[0], radius);
                         modelcurve = circle.ToNurbsCurve();
+                        modelName = "Circle";
 
                     }
-                    else if (renderType == "Rect")
+                    else if (shapeType == ShapeType.Rect)
                     {
-                        
+
                         Vector3 rectDiagonalV = new Vector3((float)(pointsList[0].X - pointsList[1].X), (float)(pointsList[0].Y - pointsList[1].Y), (float)(pointsList[0].Z - pointsList[1].Z));
                         float lenDiagonal = rectDiagonalV.Length;
                         Vector3 rectLeftTop = new Vector3((float)pointsList[0].X, (float)pointsList[0].Y, (float)pointsList[0].Z) + lenDiagonal * rectDiagonalV.Normalized();
@@ -471,19 +457,21 @@ namespace SparrowHawk.Interaction
                         //Rectangle3d rect = new Rectangle3d(curvePlane, pointsList[0], pointsList[1]);
 
                         modelcurve = rect.ToNurbsCurve();
+                        modelName = "Rect";
 
                     }
 
                     Brep[] shapes = Brep.CreatePlanarBreps(modelcurve);
                     modelBrep = shapes[0];
-                    Guid renderObjId = Util.addSceneNode(ref mScene, modelBrep, ref profile_m, renderType);
+
+                    Guid renderObjId = Util.addSceneNode(ref mScene, modelBrep, ref profile_m, modelName);
                     //add icurveList since we don't use EditPoint2 for circle and rect
                     mScene.iCurveList.Add(modelcurve);
                     //mScene.iPlaneList.Add(ref curvePlane);
                 }
 
 
-                if (type != 0 && pointOnObj != null)
+                if (drawnType != DrawnType.In3D && pointOnObj != null)
                 {
                     mScene.iRhObjList.Add(pointOnObj); //pointOnObj is new plane after we move
                     mScene.iPlaneList.Add(curvePlane);
@@ -556,15 +544,14 @@ namespace SparrowHawk.Interaction
                     Util.setPlaneAlpha(ref mScene, 0.0f);
                 }
 
-                mScene.popInteraction();
-                if (!mScene.interactionStackEmpty())
-                    mScene.peekInteraction().init();
+                //call next interaction in the chain
+                mScene.pushInteractionFromChain();
             }
         }
 
         protected override void onReleaseOculusTrigger(ref VREvent_t vrEvent)
         {
-            
+
         }
 
         protected override void onClickOculusGrip(ref VREvent_t vrEvent)
@@ -582,7 +569,7 @@ namespace SparrowHawk.Interaction
             {
                 ((Material.SingleColorMaterial)plane_m).mColor.B = .5f;
                 planeNormal = new OpenTK.Vector3(0, 0, 1);
-                
+
             }
             else if (targetPRhObj.Attributes.Name.Contains("planeYZ"))
             {

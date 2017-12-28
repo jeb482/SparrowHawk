@@ -44,21 +44,19 @@ namespace SparrowHawk
         int lastNumLeftControllerPoses;
         List<OpenTK.Matrix4> mRightControllerPoses = new List<OpenTK.Matrix4>();
         List<OpenTK.Matrix4> mLeftControllerPoses = new List<OpenTK.Matrix4>();
+        bool isCalibrateController = false;
         Matrix<double> mVRtoRobot;
         Matrix4 glmVRtoMarker;
         byte[] inliers;
 
-        bool manualCallibration = false;
-
         DesignPlane3 xzPlane, xyPlane, yzPlane;
-        DesignPlane2 xzPlane2, xyPlane2, yzPlane2;
 
         Geometry.Geometry printStroke;
         Material.Material printStroke_m;
         private SceneNode printStrokeSN;
 
         Guid uGuid;
-        Interaction.Interaction current_i,last_i;
+        Interaction.Interaction current_i, last_i;
         Guid cutPGuid;
 
         public VrGame(ref Rhino.RhinoDoc doc, bool isLefty = false)
@@ -71,7 +69,6 @@ namespace SparrowHawk
             if (init())
                 Rhino.RhinoApp.WriteLine("Initialization complete!");
 
-            mScene.pushInteraction(new Interaction.PickPoint(ref mScene, ref vrCallibrationPoints));
         }
 
         /**
@@ -161,21 +158,27 @@ namespace SparrowHawk
         {
             if (mHMD == null)
                 return;
-            //default interaction
-            if (mScene.interactionStackEmpty())
-                mScene.pushInteraction(new Interaction.PickPoint(ref mScene));
 
+            //set default interaction to main menu
+            if (mScene.interactionStackEmpty())
+            {
+                mScene.pushInteraction(new Interaction.MarkingMenu(ref mScene, Scene.MenuLayout.MainMenu));
+            }
+
+            //TODO- use activate() instead of init()
             if (current_i != null)
             {
                 last_i = current_i;
                 current_i = mScene.peekInteraction();
 
-                //testing init()
-                if (last_i.GetType() != current_i.GetType())
+                if (!last_i.Equals(current_i))
                 {
+                    last_i.leaveTop();
                     current_i.init();
                 }
-            }else
+
+            }
+            else
             {
                 current_i = mScene.peekInteraction();
                 current_i.init();
@@ -184,40 +187,6 @@ namespace SparrowHawk
             current_i.handleInput();
             current_i.draw(true);
 
-            if (manualCallibration && vrCallibrationPoints.Count == 8)
-            {
-                manualCallibration = false; // HACK to not reset my cylinder forever.
-                //Util.solveForAffineTransform(vrCallibrationPoints, robotCallibrationPoints, ref mScene.vrToRobot);
-
-                //using opencv by Eric                
-                foreach (Vector3 p in vrCallibrationPoints)
-                {
-                    vrCallibrationPoints_cv.Add(new MCvPoint3D32f(p.X, p.Y, p.Z));
-                }
-                CvInvoke.EstimateAffine3D(vrCallibrationPoints_cv.ToArray(), robotCallibrationPoints_cv.ToArray(), out mVRtoRobot, out inliers, 3, 0.99);
-
-                mScene.vrToRobot = new Matrix4(
-                    (float)mVRtoRobot[0, 0], (float)mVRtoRobot[0, 1], (float)mVRtoRobot[0, 2], (float)mVRtoRobot[0, 3],
-                    (float)mVRtoRobot[1, 0], (float)mVRtoRobot[1, 1], (float)mVRtoRobot[1, 2], (float)mVRtoRobot[1, 3],
-                    (float)mVRtoRobot[2, 0], (float)mVRtoRobot[2, 1], (float)mVRtoRobot[2, 2], (float)mVRtoRobot[2, 3],
-                    0, 0, 0, 1
-                );
-
-                mScene.popInteraction();
-                mScene.pushInteraction(new Interaction.CreateCylinder(ref mScene));
-            }
-
-            //testing controller origins
-            if (controllerP.Count == 2)
-            {
-                Vector3 p1 = controllerP[0];
-                Vector3 p2 = controllerP[1];
-                Rhino.RhinoApp.WriteLine("P1: " + p1.ToString());
-                Rhino.RhinoApp.WriteLine("P2: " + p2.ToString());
-                Rhino.RhinoApp.WriteLine("Distance: " + ((p1 - p2).Length).ToString());
-                Rhino.RhinoApp.WriteLine("Vector: " + (p1 - p2).ToString());
-                controllerP.Clear();
-            }
         }
 
         protected override void OnUpdateFrame(FrameEventArgs e)
@@ -245,19 +214,17 @@ namespace SparrowHawk
                 case SparrowHawkSignal.ESparrowHawkSigalType.InitType:
                     if (s.data.Length >= 3)
                     {
-                        //Vector3 robotPoint = new Vector3(s.data[0] - 8, s.data[1], s.data[2] - 240);
+                        //To compute VRtoRobot matrix, press V key 8 times.
+                        //robotPoint is in mm unit so the calibration result already deal with scale issue
                         Vector3 robotPoint = new Vector3(s.data[0], s.data[1], s.data[2]);
-                        //robotPoint /= 1000;
                         robotCallibrationPoints.Add(robotPoint);
                         Rhino.RhinoApp.WriteLine("add robotPoint: " + robotPoint.ToString());
                         if (mIsLefty && mScene.leftControllerIdx < 0 || !mIsLefty && mScene.leftControllerIdx < 0)
                             break;
-                        //adding vrCallibrationPoints by pressing v
-                        //calibrationTest();
                     }
                     break;
                 case SparrowHawkSignal.ESparrowHawkSigalType.LineType:
-                    if(s.data.Length >= 4)
+                    if (s.data.Length >= 4)
                     {
                         if (s.data[0] == 0)
                         {
@@ -285,7 +252,7 @@ namespace SparrowHawk
                             OpenTK.Vector3 p1 = new Vector3(s.data[1], s.data[2], s.data[3]);
                             p1 = Util.platformToVRPoint(ref mScene, p1);
                             //((Geometry.GeometryStroke2)printStroke).addPoint(p1);
-                            ((Geometry.GeometryStroke2)printStroke).addEdge(((Geometry.GeometryStroke2)printStroke).mPoints[((Geometry.GeometryStroke2)printStroke).mPoints.Count-1], p1);
+                            ((Geometry.GeometryStroke2)printStroke).addEdge(((Geometry.GeometryStroke2)printStroke).mPoints[((Geometry.GeometryStroke2)printStroke).mPoints.Count - 1], p1);
                             printStrokeSN.geometry = printStroke;
                         }
                     }
@@ -320,7 +287,7 @@ namespace SparrowHawk
                     mScene.rhinoTheta = theta;
                     Rhino.RhinoApp.WriteLine("Theta = " + theta);
                     Matrix4.CreateRotationZ(-theta, out mScene.platformRotation);
-                    mScene.platformRotation.Transpose();                
+                    mScene.platformRotation.Transpose();
 
                     //rotate Rhino objects
                     OpenTK.Matrix4 rotMRhino = mScene.platformRotation * currentRotation.Inverted();
@@ -370,7 +337,7 @@ namespace SparrowHawk
             }
         }
 
-        private void calibrationTest()
+        private void calibrationVRtoRobot()
         {
 
             Vector3 vrPoint = Util.getTranslationVector3(Util.getControllerTipPosition(ref mScene, true));
@@ -396,15 +363,16 @@ namespace SparrowHawk
         {
             base.OnRenderFrame(e);
             if (mScene.leftControllerShouldVibrate())
-                mHMD.TriggerHapticPulse((uint) mScene.leftControllerIdx, 0, (char) 127);
+                mHMD.TriggerHapticPulse((uint)mScene.leftControllerIdx, 0, (char)127);
             if (mScene.rightControllerShouldVibrate())
-                mHMD.TriggerHapticPulse((uint)mScene.rightControllerIdx, 0, (char) 127);
+                mHMD.TriggerHapticPulse((uint)mScene.rightControllerIdx, 0, (char)127);
             MakeCurrent();
             updateMatrixPose();
             notifyRobotIfSafe();
             handleSignals();
             handleInteractions();
-            updateControllerCallibration();
+            if (isCalibrateController)
+                updateControllerCallibration();
             mRenderer.renderFrame();
             SwapBuffers();
         }
@@ -425,16 +393,6 @@ namespace SparrowHawk
 
             if (mHMD != null)
                 mHMD.GetRecommendedRenderTargetSize(ref mRenderWidth, ref mRenderHeight);
-
-
-            var overlay = OpenVR.Overlay;
-            ulong overlayHandle = 0, thumbnailHandle = 0;
-            overlay.CreateOverlay("OverlayTest", "Jimmy is so handsome", ref overlayHandle);
-            
-
-            overlay.SetOverlayWidthInMeters(overlayHandle, .4f);
-            overlay.ShowDashboard("OverlayTest");
-            overlay.ShowOverlay(0);
 
             //TODO: testing passing by ref bug of OpenGL
             /*
@@ -586,7 +544,7 @@ namespace SparrowHawk
             // THIS IS FOR CLIPPED RECTANGLE
             Width = 691;
             Height = 692;
-            
+
             // Window Setup Info
             mStrDriver = Util.GetTrackedDeviceString(ref mHMD, OpenVR.k_unTrackedDeviceIndex_Hmd, ETrackedDeviceProperty.Prop_TrackingSystemName_String);
             mStrDisplay = Util.GetTrackedDeviceString(ref mHMD, OpenVR.k_unTrackedDeviceIndex_Hmd, ETrackedDeviceProperty.Prop_SerialNumber_String);
@@ -656,7 +614,7 @@ namespace SparrowHawk
         {
             if (e.KeyChar == 'C' || e.KeyChar == 'c')
             {
-                ((VrRenderer) mRenderer).ovrvision_controller.getMatrixHeadtoCamera(0);
+                ((VrRenderer)mRenderer).ovrvision_controller.getMatrixHeadtoCamera(0);
                 mScene.popInteraction();
                 mScene.pushInteraction(new Interaction.CalibrationAR(ref mScene, ref mRenderer.ovrvision_controller));
             }
@@ -664,47 +622,11 @@ namespace SparrowHawk
             if (e.KeyChar == 'D' || e.KeyChar == 'd')
                 mRenderer.ovrvision_controller.setDefaultMatrixHC();
 
-            if (e.KeyChar == 'S' || e.KeyChar == 's')
-            {
-                // i.GetType() == typeof(Interaction.Closedcurve) if we want to combine closedcurve and sweep as an interaction
-                mScene.pushInteraction(new Interaction.Sweep3(ref mScene));
-                mScene.pushInteraction(new Interaction.CreateCurve(ref mScene, 1, false));
-                mScene.pushInteraction(new Interaction.CreateCircle2(ref mScene));
-                mScene.pushInteraction(new Interaction.AddPoint(ref mScene, 3, 2));
-                mScene.pushInteraction(new Interaction.CreatePlane(ref mScene));
-                mScene.peekInteraction().init();
-            }
-
-            if (e.KeyChar == 'R' || e.KeyChar == 'r')
-            {
-                mScene.popInteraction();
-                //mScene.pushInteraction(new Interaction.Revolve2(ref mScene));
-                mScene.pushInteraction(new Interaction.EditPoint2(ref mScene, true, "Revolve"));
-                mScene.pushInteraction(new Interaction.CreateCurve(ref mScene, 1, false));
-            }
-
-            if (e.KeyChar == 'E' || e.KeyChar == 'e')
-            {
-                mScene.popInteraction();
-                mScene.pushInteraction(new Interaction.Extrusion(ref mScene));
-                mScene.pushInteraction(new Interaction.CreateCurve(ref mScene, 0, false));
-                mScene.pushInteraction(new Interaction.CreateRect(ref mScene));
-                mScene.pushInteraction(new Interaction.AddPoint(ref mScene, 3, 2));
-                mScene.pushInteraction(new Interaction.CreatePlane(ref mScene));
-                mScene.peekInteraction().init();
-            }
 
             if (e.KeyChar == 'G' || e.KeyChar == 'g')
             {
                 mScene.popInteraction();
                 mScene.pushInteraction(new Interaction.Grip(ref mScene));
-            }
-
-            if (e.KeyChar == 'H' || e.KeyChar == 'h')
-            {
-                mScene.popInteraction();
-                //mScene.pushInteraction(new Interaction.EditPlane(ref mScene, ref xyPlane, ref xzPlane, ref yzPlane));
-                //mScene.pushInteraction(new Interaction.EditPlane2(ref mScene, ref xyPlane2, ref xzPlane2, ref yzPlane2));
             }
 
             if (e.KeyChar == 'J' || e.KeyChar == 'j')
@@ -724,22 +646,6 @@ namespace SparrowHawk
                 }
             }
 
-            if (e.KeyChar == 'K' || e.KeyChar == 'k')
-            {
-                mScene.popInteraction();
-                mScene.pushInteraction(new Interaction.Revolve(ref mScene, true));
-            }
-
-            if (e.KeyChar == 'L' || e.KeyChar == 'l')
-            {
-                mScene.popInteraction();
-                mScene.pushInteraction(new Interaction.Loft2(ref mScene));
-                mScene.pushInteraction(new Interaction.EditPoint2(ref mScene, false));
-                mScene.pushInteraction(new Interaction.CreateCurve(ref mScene, 0, false));
-                mScene.pushInteraction(new Interaction.EditPoint2(ref mScene, true));
-                mScene.pushInteraction(new Interaction.CreateCurve(ref mScene, 2, false));
-            }
-
             if (e.KeyChar == 'B' || e.KeyChar == 'b')
             {
                 mScene.popInteraction();
@@ -752,16 +658,9 @@ namespace SparrowHawk
                 mScene.pushInteraction(new Interaction.Stroke(ref mScene));
             }
 
-            if (e.KeyChar == 'N' || e.KeyChar == 'n')
-            {
-                mScene.popInteraction();
-                //mScene.pushInteraction(new Interaction.Sweep2(ref mScene));
-                mScene.pushInteraction(new Interaction.Sweep2(ref mScene,true));
-            }
-
             if (e.KeyChar == 'V' || e.KeyChar == 'v')
             {
-                calibrationTest();
+                calibrationVRtoRobot();
             }
 
             if (e.KeyChar == 'P' || e.KeyChar == 'p')
@@ -809,7 +708,7 @@ namespace SparrowHawk
                 //mScene.pushInteraction(new Interaction.Align(ref mScene));
 
                 //for rhino object
-                OpenTK.Matrix4 currentRotation =  mScene.platformRotation;
+                OpenTK.Matrix4 currentRotation = mScene.platformRotation;
 
                 float theta = (float)(90.0f / 360f * 2 * Math.PI);
                 Rhino.RhinoApp.WriteLine("Theta = " + theta);
@@ -817,7 +716,7 @@ namespace SparrowHawk
                 mScene.platformRotation.Transpose();
 
                 //rotate Rhino objects
-                OpenTK.Matrix4 rotMRhino =  mScene.platformRotation * currentRotation.Inverted();
+                OpenTK.Matrix4 rotMRhino = mScene.platformRotation * currentRotation.Inverted();
                 Rhino.DocObjects.ObjectEnumeratorSettings settings = new Rhino.DocObjects.ObjectEnumeratorSettings();
                 mScene.transM = new Transform();
                 for (int row = 0; row < 4; row++)
@@ -842,22 +741,8 @@ namespace SparrowHawk
                         //mScene.brepToSceneNodeDic.Add(newGuid, sn);
                         //mScene.SceneNodeToBrepDic[sn.guid] = mScene.rhinoDoc.Objects.Find(newGuid);
                     }
-                    
+
                 }
-            }
-
-            if (e.KeyChar == 'W' || e.KeyChar == 'w')
-            {
-                mScene.popInteraction();
-                //mScene.pushInteraction(new Interaction.CreatePlane2(ref mScene, "circle"));
-                mScene.selectionList.Add("Sweep");
-                mScene.selectionList.Add("Circle");
-                mScene.selectionList.Add("Curve");
-
-                mScene.pushInteraction(new Interaction.EditPoint3(ref mScene, true, "Sweep"));
-                mScene.pushInteraction(new Interaction.CreateCurve(ref mScene, 3, false, "Sweep"));
-                mScene.pushInteraction(new Interaction.CreatePlane2(ref mScene, "Circle"));
-
             }
 
             if (e.KeyChar == 'O' || e.KeyChar == 'o')
@@ -868,14 +753,16 @@ namespace SparrowHawk
 
             if (e.KeyChar == 'Q' || e.KeyChar == 'q')
             {
-                mScene.popInteraction();
-                mScene.pushInteraction(new Interaction.CreateCircle(ref mScene, true));
+                //print out debug info
+                foreach (var item in mScene.selectionDic)
+                {
+                    Rhino.RhinoApp.WriteLine(item.Key.ToString() + ": " + item.Value.ToString());
+                }
             }
 
             if (e.KeyChar == 'Z' || e.KeyChar == 'z')
             {
-                mScene.popInteraction();
-                mScene.pushInteraction(new Interaction.Closedcurve(ref mScene, true));
+
             }
 
             if (e.KeyChar == 'X' || e.KeyChar == 'x')

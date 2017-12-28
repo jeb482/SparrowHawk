@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using Valve.VR;
+using static SparrowHawk.Scene;
 
 namespace SparrowHawk.Interaction
 {
@@ -27,8 +28,6 @@ namespace SparrowHawk.Interaction
         // Pops this interaction of the stack after releasing stroke if true.
         bool mPopAfterStroke = false;
 
-        //0:3D, 1:onDPlanes, 2: onSurfaces, 3: onTargets
-        public int type = 0;
         public bool isClosed = false;
         public List<Guid> ListTargets = new List<Guid>(); //could be added in init() pass argument
 
@@ -64,47 +63,59 @@ namespace SparrowHawk.Interaction
         private List<Vector3> snapPointsList = new List<Vector3>();
         private Guid railPlaneGuid = Guid.Empty;
 
+        //0:3D, 1:onDPlanes, 2: onSurfaces, 3: onTargets - before we modified
+        private DrawnType drawnType = DrawnType.None;
+
         public CreateCurve(ref Scene scene) : base(ref scene)
         {
             stroke_g = new Geometry.GeometryStroke(ref mScene);
             stroke_m = new Material.SingleColorMaterial(1, 0, 0, 1);
             currentState = State.READY;
         }
-        public CreateCurve(ref Scene scene, int _type, bool _isClosed) : base(ref scene)
+
+        public CreateCurve(ref Scene scene, bool _isClosed, CurveID curveID) : base(ref scene)
         {
             mScene = scene;
             stroke_g = new Geometry.GeometryStroke(ref mScene);
             stroke_m = new Material.SingleColorMaterial(1, 0, 0, 1);
             currentState = State.READY;
-            type = _type;
+            mesh_m = new Material.RGBNormalMaterial(0.5f);
+            railPlane_m = new Material.SingleColorMaterial(34f / 255f, 139f / 255f, 34f / 255f, 0.4f);
+            snapPointsList.Clear();
             isClosed = _isClosed;
 
-            if (type != 0)
+            FunctionType modelFun = (FunctionType)mScene.selectionDic[SelectionKey.ModelFun];
+            //0:3D, 1:onDPlanes, 2: onSurfaces, 3: onTargets
+            if (curveID == CurveID.ProfileCurve1)
             {
+                drawnType = (DrawnType)mScene.selectionDic[SelectionKey.Profile1On];
+                //Revolve only needs 1 profilecurve in our case
+                if (modelFun == FunctionType.Revolve)
+                    dynamicRender = "Revolve";
+            }
+            else if (curveID == CurveID.ProfileCurve2)
+            {
+                drawnType = (DrawnType)mScene.selectionDic[SelectionKey.Profile2On];
 
-                // visualizing projection point with white color
-                drawPoint = Util.MarkProjectionPoint(ref mScene, new OpenTK.Vector3(0, 0, 0), 1, 1, 1);
+                //need to visualize the model
+
+                switch (modelFun)
+                {
+                    case FunctionType.Extrude:
+                        dynamicRender = "Extrude";
+                        break;
+                    case FunctionType.Loft:
+                        dynamicRender = "Loft";
+                        break;
+                    case FunctionType.Sweep:
+                        dynamicRender = "Sweep";
+                        break;
+                }
 
             }
 
-        }
-
-        public CreateCurve(ref Scene scene, int _type, bool _isClosed, string renderType) : base(ref scene)
-        {
-            mScene = scene;
-            stroke_g = new Geometry.GeometryStroke(ref mScene);
-            stroke_m = new Material.SingleColorMaterial(1, 0, 0, 1);
-            currentState = State.READY;
-            type = _type;
-            isClosed = _isClosed;
-            dynamicRender = renderType;
-            mesh_m = new Material.RGBNormalMaterial(0.5f);
-            railPlane_m = new Material.SingleColorMaterial(34f/255f, 139f/255f, 34f/255f, 0.4f);
-
-            snapPointsList.Clear();
-
             /*
-            if (type != 0)
+            if (drawnType !=  DrawnType.In3D)
             {
 
                 // visualizing projection point with white color
@@ -124,6 +135,7 @@ namespace SparrowHawk.Interaction
             }
             d = new generateModel_Delegate(generateModel);
             */
+
         }
 
         public CreateCurve(ref Scene scene, uint devIndex) : base(ref scene)
@@ -137,12 +149,12 @@ namespace SparrowHawk.Interaction
         public override void init()
         {
 
-            if (type != 0)
+            if (drawnType != DrawnType.In3D)
             {
                 // visualizing projection point with white color
                 drawPoint = Util.MarkProjectionPoint(ref mScene, new OpenTK.Vector3(0, 0, 0), 1, 1, 1);
 
-                if (type == 3)
+                if (drawnType == DrawnType.Reference)
                 {
                     //render the object plane
                     float planeSize = 240;
@@ -160,8 +172,8 @@ namespace SparrowHawk.Interaction
         public override void draw(bool isTop)
         {
 
-            //visualize the point on the plane for type = 1, 2, 3
-            if (type != 0 && isTop)
+            //visualize the point on the plane
+            if (drawnType != DrawnType.In3D && isTop)
             {
                 //ray casting to the pre-defind planes
                 OpenTK.Vector4 controller_p = Util.getControllerTipPosition(ref mScene, primaryDeviceIndex == mScene.leftControllerIdx) * new OpenTK.Vector4(0, 0, 0, 1);
@@ -183,9 +195,9 @@ namespace SparrowHawk.Interaction
                     foreach (Rhino.DocObjects.RhinoObject rhObj in mScene.rhinoDoc.Objects.GetObjectList(settings))
                     {
                         //check for different drawing curve types
-                        bool b1 = (type == 1) && rhObj.Attributes.Name.Contains("plane");
-                        bool b2 = (type == 2) && (rhObj.Attributes.Name.Contains("brepMesh") || rhObj.Attributes.Name.Contains("aprint") || rhObj.Attributes.Name.Contains("patchSurface"));
-                        bool b3 = (type == 3) && rhObj.Attributes.Name.Contains("railPlane");
+                        bool b1 = (drawnType == DrawnType.Plane) && rhObj.Attributes.Name.Contains("plane");
+                        bool b2 = (drawnType == DrawnType.Surface) && (rhObj.Attributes.Name.Contains("brepMesh") || rhObj.Attributes.Name.Contains("aprint") || rhObj.Attributes.Name.Contains("patchSurface"));
+                        bool b3 = (drawnType == DrawnType.Reference) && rhObj.Attributes.Name.Contains("railPlane");
 
                         //only drawing on planes for now rhObj.Attributes.Name.Contains("brepMesh") || rhObj.Attributes.Name.Contains("aprint") || rhObj.Attributes.Name.Contains("plane")
                         //if (rhObj.Attributes.Name.Contains("plane"))
@@ -267,7 +279,7 @@ namespace SparrowHawk.Interaction
 
             // drawing curve
             Vector3 pos = new Vector3();
-            if (type != 0)
+            if (drawnType != DrawnType.In3D)
             {
                 pos = projectP;
                 if (hitPlane)
@@ -336,7 +348,7 @@ namespace SparrowHawk.Interaction
                 if (mScene.iCurveList.Count == 0)
                 {
                     mScene.iCurveList.Add(simplifiedCurve);
-                    if (type != 0 && curveOnObj != null)
+                    if (drawnType != DrawnType.In3D && curveOnObj != null)
                     {
                         mScene.iRhObjList.Add(curveOnObj);
                     }
@@ -344,7 +356,7 @@ namespace SparrowHawk.Interaction
                 else
                 {
                     mScene.iCurveList[0] = simplifiedCurve;
-                    if (type != 0 && curveOnObj != null)
+                    if (drawnType != DrawnType.In3D && curveOnObj != null)
                     {
                         mScene.iRhObjList[mScene.iRhObjList.Count - 1] = curveOnObj;
                     }
@@ -357,7 +369,7 @@ namespace SparrowHawk.Interaction
                 if (mScene.iCurveList.Count == 1)
                 {
                     mScene.iCurveList.Add(simplifiedCurve);
-                    if (type != 0 && curveOnObj != null)
+                    if (drawnType != DrawnType.In3D && curveOnObj != null)
                     {
                         mScene.iRhObjList.Add(curveOnObj);
                     }
@@ -365,7 +377,7 @@ namespace SparrowHawk.Interaction
                 else
                 {
                     mScene.iCurveList[1] = simplifiedCurve;
-                    if (type != 0 && curveOnObj != null)
+                    if (drawnType != DrawnType.In3D && curveOnObj != null)
                     {
                         mScene.iRhObjList[mScene.iRhObjList.Count - 1] = curveOnObj;
                     }
@@ -411,7 +423,7 @@ namespace SparrowHawk.Interaction
                         if (mScene.iCurveList.Count == 1)
                         {
                             mScene.iCurveList.Add(editCurve);
-                            if (type != 0 && curveOnObj != null)
+                            if (drawnType != DrawnType.In3D && curveOnObj != null)
                             {
                                 mScene.iRhObjList.Add(curveOnObj);
                             }
@@ -419,7 +431,7 @@ namespace SparrowHawk.Interaction
                         else
                         {
                             mScene.iCurveList[1] = editCurve;
-                            if (type != 0 && curveOnObj != null)
+                            if (drawnType != DrawnType.In3D && curveOnObj != null)
                             {
                                 mScene.iRhObjList[mScene.iRhObjList.Count - 1] = curveOnObj;
                             }
@@ -427,7 +439,8 @@ namespace SparrowHawk.Interaction
 
                         dynamicBrep = Util.ExtrudeFunc(ref mScene, ref mScene.iCurveList);
 
-                    }else
+                    }
+                    else
                     {
                         //assume only one intersect point
                         //compute the brepFace where the intersection is on
@@ -454,7 +467,7 @@ namespace SparrowHawk.Interaction
                         if (mScene.iCurveList.Count == 1)
                         {
                             mScene.iCurveList.Add(editCurve);
-                            if (type != 0 && curveOnObj != null)
+                            if (drawnType != DrawnType.In3D && curveOnObj != null)
                             {
                                 mScene.iRhObjList.Add(curveOnObj);
                             }
@@ -462,7 +475,7 @@ namespace SparrowHawk.Interaction
                         else
                         {
                             mScene.iCurveList[1] = editCurve;
-                            if (type != 0 && curveOnObj != null)
+                            if (drawnType != DrawnType.In3D && curveOnObj != null)
                             {
                                 mScene.iRhObjList[mScene.iRhObjList.Count - 1] = curveOnObj;
                             }
@@ -500,7 +513,7 @@ namespace SparrowHawk.Interaction
                 if (mScene.iCurveList.Count == 1)
                 {
                     mScene.iCurveList.Add(simplifiedCurve);
-                    if (type != 0 && curveOnObj != null)
+                    if (drawnType != DrawnType.In3D && curveOnObj != null)
                     {
                         mScene.iRhObjList.Add(curveOnObj);
                     }
@@ -508,7 +521,7 @@ namespace SparrowHawk.Interaction
                 else
                 {
                     mScene.iCurveList[1] = simplifiedCurve;
-                    if (type != 0 && curveOnObj != null)
+                    if (drawnType != DrawnType.In3D && curveOnObj != null)
                     {
                         mScene.iRhObjList[mScene.iRhObjList.Count - 1] = curveOnObj;
                     }
@@ -577,11 +590,12 @@ namespace SparrowHawk.Interaction
                 currentState = State.PAINT;
 
                 //hide two other design plane
-                if (curveOnObj != null && type == 1)
+                if (curveOnObj != null && drawnType == DrawnType.Plane)
                 {
                     //Util.hideOtherPlanes(ref mScene, curveOnObj.Attributes.Name);
                     Util.hideOtherPlanes(ref mScene, "all");
-                }else if (curveOnObj != null && type == 3)
+                }
+                else if (curveOnObj != null && drawnType == DrawnType.Reference)
                 {
                     SceneNode sn = mScene.brepToSceneNodeDic[railPlaneGuid];
                     Material.SingleColorMaterial hide_m = new Material.SingleColorMaterial(((Material.SingleColorMaterial)sn.material).mColor.R, ((Material.SingleColorMaterial)sn.material).mColor.G, ((Material.SingleColorMaterial)sn.material).mColor.B, 0);
@@ -591,7 +605,7 @@ namespace SparrowHawk.Interaction
                 //detecting plane
                 Double tolerance = 0;
                 Plane curvePlane = new Plane();
-                if (type != 0)
+                if (drawnType != DrawnType.In3D)
                 {
                     Brep targetBrep = (Brep)(curveOnObj.Geometry);
 
@@ -625,7 +639,7 @@ namespace SparrowHawk.Interaction
                 if (tolerance < 100)
                 {
                     //type 3 already add a plane
-                    if(type != 3) 
+                    if (drawnType != DrawnType.Reference)
                         mScene.iPlaneList.Add(curvePlane);
                 }
                 else
@@ -652,11 +666,11 @@ namespace SparrowHawk.Interaction
 
                     //add to Scene curve object ,targetRhobj and check the next interaction
 
-                   
+
                     if (dynamicRender == "none")
                     {
                         mScene.iCurveList.Add(simplifiedCurve);
-                        if (type != 0 && curveOnObj != null)
+                        if (drawnType != DrawnType.In3D && curveOnObj != null)
                         {
                             mScene.iRhObjList.Add(curveOnObj);
                         }
@@ -674,18 +688,18 @@ namespace SparrowHawk.Interaction
                             mScene.iCurveList[mScene.iCurveList.Count - 1] = simplifiedCurve;
                         }
 
-                        if (type != 0 && curveOnObj != null)
+                        if (drawnType != DrawnType.In3D && curveOnObj != null)
                         {
                             mScene.iRhObjList[mScene.iRhObjList.Count - 1] = curveOnObj;
 
                         }
-                        
+
                     }
 
                     //go to editcurve interaction
                     clearDrawing();
-                    mScene.popInteraction();
-                    mScene.peekInteraction().init();
+                    //call next interaction in the chain
+                    mScene.pushInteractionFromChain();
 
                     currentState = State.READY;
                     curveOnObj = null;

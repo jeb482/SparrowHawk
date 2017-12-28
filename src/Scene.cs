@@ -12,8 +12,10 @@ namespace SparrowHawk
     {
         private RenderOrderComparer() { }
         private static RenderOrderComparer instance;
-        public static RenderOrderComparer Instance {
-            get {
+        public static RenderOrderComparer Instance
+        {
+            get
+            {
                 if (instance == null)
                     RenderOrderComparer.instance = new RenderOrderComparer();
                 return instance;
@@ -54,7 +56,8 @@ namespace SparrowHawk
             mRenderLate = false;
         }
 
-        public void render(ref Matrix4 vp, Matrix4 model) {
+        public void render(ref Matrix4 vp, Matrix4 model)
+        {
             model = model * transform;
             if (geometry != null && material != null)
             {
@@ -142,24 +145,29 @@ namespace SparrowHawk
         public List<Rhino.DocObjects.RhinoObject> iRhObjList = new List<Rhino.DocObjects.RhinoObject>();
         public List<Rhino.Geometry.Curve> iCurveList = new List<Rhino.Geometry.Curve>();
         public List<OpenTK.Vector3> iPointList = new List<OpenTK.Vector3>();
-        public List<Interaction.Interaction> interactioChain = new List<Interaction.Interaction>();
         public List<Rhino.Geometry.Plane> iPlaneList = new List<Rhino.Geometry.Plane>(); //temporary solution for circle, rect
-        public enum MenuLayout
+        public enum MenuLayout //make sure the order matches the selection numbers rect-curve-circle.
         {
-            MainMenu, ExtrudeC1, ExtrudeD1Circle, ExtrudeD1Rect, ExtrudeD1Curve, ExtrudeC2, ExtrudeD2Circle, ExtrudeD2Rect, ExtrudeD2Curve,
-            LoftC1, LoftD1Circle, LoftD1Rect, LoftD1Curve, LoftC2, LoftD2Circle, LoftD2Rect, LoftD2Curve, RevolveC1, RevolveD1Circle, RevolveD1Rect, RevolveD1Curve,
-            SweepC1, SweepD1Circle, SweepD1Rect, SweepD1Curve, SweepC2, SweepD2Circle, SweepD2Rect, SweepD2Curve
+            MainMenu, ExtrudeC1, ExtrudeD1Rect, ExtrudeD1Curve, ExtrudeD1Circle, ExtrudeC2, ExtrudeD2Rect, ExtrudeD2Curve, ExtrudeD2Circle,
+            LoftC1, LoftD1Rect, LoftD1Curve, LoftD1Circle, LoftC2, LoftD2Rect, LoftD2Curve, LoftD2Circle, RevolveC1, RevolveD1Rect, RevolveD1Curve, RevolveD1Circle,
+            SweepC1, SweepD1Rect, SweepD1Curve, SweepD1Circle, SweepC2, SweepD2Rect, SweepD2Curve, SweepD2Circle
         };
-        public List<MenuLayout> menuList = new List<MenuLayout>();
-        public List<string> selectionList = new List<string>();
-        public int menuIndex = 0;
+        public enum FunctionType { None = -1, Loft, Sweep, Revolve, Extrude, Patch };
+        public enum ShapeType { None = -1, Rect, Curve, Circle };
+        public enum DrawnType { None = -1, Surface, In3D, Plane, Reference };
+        public enum CurveID { ProfileCurve1, ProfileCurve2, EndCapCurve }
+        //public List<MenuLayout> menuList = new List<MenuLayout>();
+        //public List<string> selectionList = new List<string>();
+        public enum SelectionKey { Null = -1, ModelFun, Profile1Shape, Profile1On, Profile2Shape, Profile2On };
+        public Dictionary<SelectionKey, Object> selectionDic = new Dictionary<SelectionKey, Object>();
+        //public int menuIndex = 0;
 
         // For rhino positioning
         public Rhino.RhinoDoc rhinoDoc;
-        public Matrix4 robotToPlatform = new Matrix4(1,  0,  0, 0,
-                                                     0, -1,  0, 0,
-                                                     0,  0, -1, 0, 
-                                                     0,  0,  0, 1);
+        public Matrix4 robotToPlatform = new Matrix4(1, 0, 0, 0,
+                                                     0, -1, 0, 0,
+                                                     0, 0, -1, 0,
+                                                     0, 0, 0, 1);
         public Matrix4 platformRotation = new Matrix4(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1);
         public Transform transM = new Transform();
         //public Matrix4 vrToRobot = new Matrix4(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1);
@@ -203,14 +211,15 @@ public Matrix4 vrToRobot = new Matrix4(-25.23433f, -1.428557f, -986.1774f, -619.
 -13.29245f, -989.1036f, -30.18169f, 703.6801f,
 0, 0, 0, 1);
 
-                                             
+
         // Interactions
         private Stack<Interaction.Interaction> mInteractionStack = new Stack<Interaction.Interaction>();
-        public bool isOculus = false;
+        public Stack<Interaction.Interaction> mInteractionChain = new Stack<Interaction.Interaction>();
+        public bool isOculus = true;
 
         //SweepCapFun Debugging
         public float angleD;
-        public string c1D, c2D,c3D;
+        public string c1D, c2D, c3D;
         public Point3d sStartP, eStartP;
 
         //visiable and hide designPlane
@@ -218,6 +227,16 @@ public Matrix4 vrToRobot = new Matrix4(-25.23433f, -1.428557f, -986.1774f, -619.
         public SceneNode xAxis, yAxis, zAxis;
 
         public float rhinoTheta = 0;
+
+        public void pushInteractionFromChain()
+        {
+            //get the interaction in the interactionChain
+            if (mInteractionChain.Count != 0)
+            {
+                Interaction.Interaction nextI = mInteractionChain.Pop();
+                pushInteraction(nextI);
+            }
+        }
 
         public Interaction.Interaction popInteraction()
         {
@@ -244,8 +263,13 @@ public Matrix4 vrToRobot = new Matrix4(-25.23433f, -1.428557f, -986.1774f, -619.
             return (mInteractionStack.Count == 0);
         }
 
+        public void clearInteractionStack()
+        {
+            mInteractionStack.Clear();
+        }
+
         public Scene(ref Rhino.RhinoDoc doc, ref Valve.VR.CVRSystem hmd)
-        {   
+        {
             rhinoDoc = doc;
             mHMD = hmd;
         }
@@ -264,7 +288,7 @@ public Matrix4 vrToRobot = new Matrix4(-25.23433f, -1.428557f, -986.1774f, -619.
         public void vibrateController(double duration, uint deviceIndex)
         {
             if (deviceIndex == leftControllerIdx)
-                leftControllerEndVibrateTime = Math.Max(leftControllerEndVibrateTime, gameTime + duration);  
+                leftControllerEndVibrateTime = Math.Max(leftControllerEndVibrateTime, gameTime + duration);
             else if (deviceIndex == rightControllerIdx)
                 rightControllerEndVibrateTime = Math.Max(rightControllerEndVibrateTime, gameTime + duration);
         }

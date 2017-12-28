@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using Valve.VR;
+using static SparrowHawk.Scene;
 
 namespace SparrowHawk.Interaction
 {
@@ -13,7 +14,7 @@ namespace SparrowHawk.Interaction
         private Material.Material mesh_m;
         private Brep designPlane;
         private Guid guid;
-        private string renderType = "none";
+        //private string renderType = "none";
         private SceneNode selectedSN;
         private Guid renderObjId = Guid.Empty;
         protected uint primaryDeviceIndex;
@@ -43,21 +44,30 @@ namespace SparrowHawk.Interaction
         private NurbsCurve modelcurve;
         private Brep modelBrep;
         private bool hitPlane = false;
-        private bool  iStart = false;
+        private bool iStart = false;
 
-
+        private ShapeType shapeType = ShapeType.None;
+        private bool isProjection = false;
 
         public CreatePlane2(ref Scene scene) : base(ref scene)
         {
             mesh_m = new Material.SingleColorMaterial(0.5f, 0, 0, 0.4f);
         }
 
-        public CreatePlane2(ref Scene scene, string type) : base(ref scene)
+        public CreatePlane2(ref Scene scene, CurveID curveID) : base(ref scene)
         {
             mScene = scene;
 
             mesh_m = new Material.SingleColorMaterial(0.5f, 0.5f, 0, 0.4f);
-            renderType = type;
+
+            if (curveID == CurveID.ProfileCurve1)
+            {
+                shapeType = (ShapeType)mScene.selectionDic[SelectionKey.Profile1Shape];
+            }
+            else if (curveID == CurveID.ProfileCurve2)
+            {
+                shapeType = (ShapeType)mScene.selectionDic[SelectionKey.Profile2Shape];
+            }
 
             mNumSectors = 4;
             mFirstSectorOffsetAngle = getAngularMenuOffset(mNumSectors);
@@ -74,7 +84,7 @@ namespace SparrowHawk.Interaction
                 mOuterSelectionRadius = 0.6f;
             }
 
-    }
+        }
 
         public float getAngularMenuOffset(int numOptions)
         {
@@ -107,7 +117,7 @@ namespace SparrowHawk.Interaction
             if (theta < 0) { theta += (float)(2 * Math.PI); }
 
             //prevent changing size immediately
-            if(!iStart && mCurrentRadius < mMinSelectionRadius)
+            if (!iStart && mCurrentRadius < mMinSelectionRadius)
             {
                 iStart = true;
             }
@@ -158,7 +168,7 @@ namespace SparrowHawk.Interaction
         {
             //mScene.vibrateController(0.1, (uint)primaryControllerIdx);
             //Rhino.RhinoApp.WriteLine("sector: " + sector);
-            if (renderType == "Circle")
+            if (shapeType == ShapeType.Circle)
             {
                 if (sector == 1)
                 {
@@ -173,7 +183,7 @@ namespace SparrowHawk.Interaction
                     }
                 }
             }
-            else if (renderType == "Rect")
+            else if (shapeType == ShapeType.Rect)
             {
                 if (sector == 1)
                 {
@@ -243,13 +253,13 @@ namespace SparrowHawk.Interaction
             //project to xy plane in rhino
             modelPlane = new Plane(controller_pRhino, normal);
 
-            if (renderType == "Circle")
+            if (shapeType == ShapeType.Circle)
             {
                 Rhino.Geometry.Circle circle = new Rhino.Geometry.Circle(modelPlane, controller_pRhino, radius);
                 modelcurve = circle.ToNurbsCurve();
 
             }
-            else if (renderType == "Rect")
+            else if (shapeType == ShapeType.Rect)
             {
                 //Rectangle3d rect = new Rectangle3d(modelPlane, width, height);
                 Rectangle3d rect = new Rectangle3d(modelPlane, new Interval(-width / 2, width / 2), new Interval(-height / 2, height / 2));
@@ -261,7 +271,7 @@ namespace SparrowHawk.Interaction
                 Brep[] shapes = Brep.CreatePlanarBreps(modelcurve);
                 modelBrep = shapes[0];
 
-                renderObjId = Util.addSceneNodeWithoutDraw(ref mScene, modelBrep, ref mesh_m, "3D-" + renderType);
+                renderObjId = Util.addSceneNodeWithoutDraw(ref mScene, modelBrep, ref mesh_m, "3D-" + shapeType.ToString());
             }
 
         }
@@ -270,15 +280,15 @@ namespace SparrowHawk.Interaction
         {
             //TODO-support projection curve
             Point3d planeCenter = new Point3d();
-            if (renderType != "projection")
+            if (!isProjection)
             {
                 Util.removeSceneNodeWithoutDraw(ref mScene, renderObjId);
                 Brep[] shapes = Brep.CreatePlanarBreps(modelcurve);
                 modelBrep = shapes[0];
                 //add plane to iRhobj
-                renderObjId = Util.addSceneNode(ref mScene, modelBrep, ref mesh_m, renderType);
+                renderObjId = Util.addSceneNode(ref mScene, modelBrep, ref mesh_m, shapeType.ToString());
 
-                if (renderType == "Circle")
+                if (shapeType == ShapeType.Circle)
                 {
                     Circle circle;
                     if (modelcurve.TryGetCircle(out circle))
@@ -286,7 +296,7 @@ namespace SparrowHawk.Interaction
                         planeCenter = circle.Center;
                     }
                 }
-                else if (renderType == "Rect")
+                else if (shapeType == ShapeType.Rect)
                 {
                     Rhino.Geometry.Polyline polyline;
                     if (mScene.iCurveList[mScene.iCurveList.Count - 1].TryGetPolyline(out polyline))
@@ -309,7 +319,7 @@ namespace SparrowHawk.Interaction
                 }
                 tolerance++;
             }
-            
+
 
             //creating perendicular plane
             //TODO-need to decide whether it's XAxis or YAxis as normal
@@ -317,7 +327,7 @@ namespace SparrowHawk.Interaction
             OpenTK.Vector3 planeXAxis = Util.RhinoToOpenTKPoint(modelPlane.XAxis);
             OpenTK.Vector3 planeYAxis = Util.RhinoToOpenTKPoint(modelPlane.YAxis);
             OpenTK.Vector3 planeNormal = Util.RhinoToOpenTKPoint(modelPlane.Normal);
-            
+
 
             //Plane planeX = new Plane(modelPlane.Origin, modelPlane.XAxis);
             //Plane planeY = new Plane(modelPlane.Origin, modelPlane.YAxis)
@@ -440,16 +450,14 @@ namespace SparrowHawk.Interaction
             //mScene.pushInteraction(new CreateCurve(ref mScene, 3, false, "Sweep"));
             //mScene.peekInteraction().init();
 
-            mScene.popInteraction();
-            /*
-            if (!mScene.interactionStackEmpty())
-                mScene.peekInteraction().init();
-            */
+            //call next interaction in the chain
+            mScene.pushInteractionFromChain();
 
         }
 
         protected override void onClickOculusGrip(ref VREvent_t vrEvent)
         {
+
             primaryDeviceIndex = vrEvent.trackedDeviceIndex;
             //testing projection
             //ray casting to the pre-defind planes
@@ -536,7 +544,8 @@ namespace SparrowHawk.Interaction
             //TODO-remove renderObjId sceneNode
 
             hitPlane = false;
-            renderType = "projection";
+            isProjection = true;
+
         }
         protected override void onReleaseOculusTrigger(ref VREvent_t vrEvent)
         {
