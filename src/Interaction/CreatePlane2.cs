@@ -39,6 +39,7 @@ namespace SparrowHawk.Interaction
         private bool iStart = false;
 
         private ShapeType shapeType = ShapeType.None;
+        private DrawnType drawnType = DrawnType.None;
         private bool isProjection = false;
 
         public CreatePlane2(ref Scene scene) : base(ref scene)
@@ -55,10 +56,12 @@ namespace SparrowHawk.Interaction
             if (curveID == CurveID.ProfileCurve1)
             {
                 shapeType = (ShapeType)mScene.selectionDic[SelectionKey.Profile1Shape];
+                drawnType = (DrawnType)mScene.selectionDic[SelectionKey.Profile1On];
             }
             else if (curveID == CurveID.ProfileCurve2)
             {
                 shapeType = (ShapeType)mScene.selectionDic[SelectionKey.Profile2Shape];
+                drawnType = (DrawnType)mScene.selectionDic[SelectionKey.Profile2On];
             }
 
             mNumSectors = 4;
@@ -137,6 +140,15 @@ namespace SparrowHawk.Interaction
 
             // Set initial timeout that cannot be skipped to prevent double selections.
             mInitialSelectOKTime = mScene.gameTime + defaultInitialDelay;
+
+            if(drawnType == DrawnType.Reference)
+            {
+                isProjection = true;
+            }else
+            {
+                isProjection = false;
+            }
+
         }
 
         public override void activate()
@@ -502,6 +514,10 @@ namespace SparrowHawk.Interaction
         protected override void onClickOculusGrip(ref VREvent_t vrEvent)
         {
             /*
+            if (modelcurve == null)
+                return;
+
+            //testing project to non-planar surface   
             primaryDeviceIndex = vrEvent.trackedDeviceIndex;
             //testing projection
             //ray casting to the pre-defind planes
@@ -546,6 +562,11 @@ namespace SparrowHawk.Interaction
             }
             if (hitPlane)
             {
+                Curve[] proejctCurveList;
+                proejctCurveList = Curve.ProjectToBrep(modelcurve, (Brep)(targetPRhObj.Geometry), direction, mScene.rhinoDoc.ModelAbsoluteTolerance);
+                
+
+                
                 Brep targetBrep = (Brep)(targetPRhObj.Geometry);
                 //compute the brepFace where the curve is on
                 int faceIndex = -1;
@@ -583,6 +604,7 @@ namespace SparrowHawk.Interaction
 
                 }
 
+
             }
 
             //TODO-remove renderObjId sceneNode
@@ -590,6 +612,7 @@ namespace SparrowHawk.Interaction
             hitPlane = false;
             isProjection = true;
             */
+            
         }
         protected override void onReleaseOculusTrigger(ref VREvent_t vrEvent)
         {

@@ -306,14 +306,31 @@ namespace SparrowHawk.Interaction
 
         protected override void onClickViveAppMenu(ref VREvent_t vrEvent)
         {
-            showMenu(true);
+            if (!isShowing)
+                showMenu(true);
             //terminate();
         }
 
         protected override void onClickOculusStick(ref VREvent_t vrEvent)
         {
-            showMenu(true);
+            if(!isShowing)
+                showMenu(true);
             //terminate();
+        }
+
+        protected override void onClickOculusAX(ref VREvent_t vrEvent)
+        {
+            //temporary testing patch
+            if (vrEvent.trackedDeviceIndex == mScene.leftControllerIdx)
+            {
+                mScene.popInteraction();
+                mScene.pushInteraction(new Cut(ref mScene));
+            }else
+            {
+                mScene.popInteraction();
+                mScene.pushInteraction(new CreatePatch(ref mScene));
+            }
+
         }
 
         private void terminate()
@@ -587,13 +604,13 @@ namespace SparrowHawk.Interaction
                 {
                     pushInteractionChain(new EditPoint3(ref mScene, curveID));
                     //mScene.mInteractionChian.Push(new AddPoint(ref mScene, 2, curveID));
-                    pushInteractionChain(new CreatePlane(ref mScene, curveID));
+                    pushInteractionChain(new CreatePlane2(ref mScene, curveID));
                 }
                 else if (shapeType == ShapeType.Circle)
                 {
                     pushInteractionChain(new EditPoint3(ref mScene, curveID));
                     //mScene.mInteractionChian.Push(new AddPoint(ref mScene, 2, curveID));
-                    pushInteractionChain(new CreatePlane(ref mScene, curveID));
+                    pushInteractionChain(new CreatePlane2(ref mScene, curveID));
                 }
                 else if (shapeType == ShapeType.Curve)
                 {

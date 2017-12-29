@@ -20,7 +20,7 @@ namespace SparrowHawk.Interaction
         List<Guid> curveGuids = new List<Guid>();
         List<Point> allPoints = new List<Point>();
         Guid planGuid = Guid.Empty;
-       private bool lockPlane = false;
+        private bool lockPlane = false;
 
         public CreatePatch(ref Scene s) : base(ref s)
         {
@@ -120,6 +120,8 @@ namespace SparrowHawk.Interaction
         {
             renderPatch();
             currentState = State.READY;
+            //TODO support undo funtion
+            mScene.popInteraction();
         }
 
         protected override void onClickOculusTrigger(ref VREvent_t vrEvent)

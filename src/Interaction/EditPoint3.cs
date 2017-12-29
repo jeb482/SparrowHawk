@@ -322,6 +322,11 @@ namespace SparrowHawk.Interaction
 
                     //curvePlane = circle.Plane;
                     radius = (float)circle.Radius;
+                }else
+                {
+                    //if we project to a patch surface, the curve won't match a circle
+                    editCurve = mScene.iCurveList[mScene.iCurveList.Count - 1].ToNurbsCurve();
+                    isEditCircle = false;
                 }
 
             }
@@ -341,6 +346,11 @@ namespace SparrowHawk.Interaction
 
                     width = (float)rect.Width;
                     height = (float)rect.Height;
+                }else
+                {
+                    //if we project to a patch surface, the curve won't match a circle
+                    editCurve = mScene.iCurveList[mScene.iCurveList.Count - 1].ToNurbsCurve();
+                    isEditRect = false;
                 }
 
             }

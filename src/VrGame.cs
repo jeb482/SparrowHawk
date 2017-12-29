@@ -762,7 +762,10 @@ namespace SparrowHawk
 
             if (e.KeyChar == 'Z' || e.KeyChar == 'z')
             {
-
+                while (!mScene.interactionStackEmpty())
+                {
+                    mScene.popInteraction();
+                }
             }
 
             if (e.KeyChar == 'X' || e.KeyChar == 'x')
