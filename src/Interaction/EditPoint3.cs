@@ -124,10 +124,14 @@ namespace SparrowHawk.Interaction
             }
             else if (curveID == CurveID.EndCapCurve)
             {
-                //only generate end cap if we use sweep or extrude
+                shapeType = (ShapeType)mScene.selectionDic[SelectionKey.Profile1Shape];
+                drawnType = DrawnType.Reference; //the plane where the end cap curve on 
+
+                //generate end cap if we use sweep or extrude
                 if (modelFun == FunctionType.Extrude)
                 {
-                    shapeType = (ShapeType)mScene.selectionDic[SelectionKey.Profile1Shape];
+
+
                     if (shapeType == ShapeType.Circle)
                     {
                         dynamicRender = "Extrude-Circle";
@@ -140,7 +144,7 @@ namespace SparrowHawk.Interaction
                 }
                 else if (modelFun == FunctionType.Sweep)
                 {
-                    shapeType = (ShapeType)mScene.selectionDic[SelectionKey.Profile1Shape];
+
                     if (shapeType == ShapeType.Circle)
                     {
                         dynamicRender = "Sweep-Circle";
@@ -152,12 +156,10 @@ namespace SparrowHawk.Interaction
                 }
             }
 
-            if (drawnType == DrawnType.Plane || drawnType == DrawnType.Surface || drawnType == DrawnType.Reference)
-                onPlane = true;
-
-            mesh_m = new Material.LambertianMaterial(.7f, .7f, .7f, .3f);
-            profile_m = new Material.SingleColorMaterial(0.5f, 0, 0, 0.4f);
-            //mesh_m = new Material.RGBNormalMaterial(0.5f);
+            //mesh_m = new Material.LambertianMaterial(.7f, .7f, .7f, .3f);
+            //profile_m = new Material.SingleColorMaterial(0.5f, 0, 0, 0.4f);
+            profile_m = new Material.LambertianMaterial(.7f, .7f, .7f, .3f);
+            mesh_m = new Material.RGBNormalMaterial(0.5f);
 
             if (scene.isOculus)
             {
@@ -182,7 +184,8 @@ namespace SparrowHawk.Interaction
             polyline = null;
             curveList = new List<Curve>();
             curvePoints = new List<Point3d>();
-            stroke = null;
+            //stroke = null;
+            stroke_g2 = new Geometry.GeometryStroke(ref mScene);
             pointMarkers = new List<SceneNode>();
             mimD = 1000000f;
             editCurve = circleCurve = rectCurve = null;
@@ -213,25 +216,54 @@ namespace SparrowHawk.Interaction
             mCurrentRadius = 0;
             mMinSelectionRadius = 0;
             selectedSector = 0;
+
+            onPlane = false;
         }
 
         public override void leaveTop()
         {
-            clearDrawing();
+            //clean editcurve since we don't need it in xxxx-rect or xxxx-sweep
+            if (dynamicRender == "Extrude" || dynamicRender == "Sweep")
+            {
+                clearDrawing(false);
+            }
+            else
+            {
+                clearDrawing(true);
+            }
+
         }
 
         public override void deactivate()
         {
-            clearDrawing();
+            clearDrawing(false);
+
+            //deal with when end curve edit pop
+            if (dynamicRender == "Extrude-Circle" || dynamicRender == "Extrude-Rect" || dynamicRender == "Sweep-Circle" || dynamicRender == "Sweep-Rect")
+            {
+                //remove the end cap curve and it's plane
+                mScene.iCurveList.RemoveAt(mScene.iCurveList.Count - 1);
+                mScene.iPlaneList.RemoveAt(mScene.iPlaneList.Count - 1);
+                mScene.iRhObjList.RemoveAt(mScene.iRhObjList.Count - 1);
+            }
+
         }
 
         public override void init()
         {
             resetVariable();
 
+            if (stroke != null)
+            {
+                clearDrawing(false); //clear previous stroke
+                stroke = null;
+            }
+
             //mScene.selectionList[mScene.selectionList.Count - 1] how to detect 2nd profile?
             isEditCircle = (shapeType == ShapeType.Circle) ? true : false;
             isEditRect = (shapeType == ShapeType.Rect) ? true : false;
+            if (drawnType == DrawnType.Plane || drawnType == DrawnType.Surface || drawnType == DrawnType.Reference)
+                onPlane = true;
 
             if (onPlane)
             {
@@ -241,7 +273,7 @@ namespace SparrowHawk.Interaction
                 rhinoPlane = mScene.iRhObjList.ElementAt(mScene.iRhObjList.Count - 1);
 
                 //testing get curveOnplane here.
-                curvePlane = mScene.iPlaneList[mScene.iPlaneList.Count - 1];
+                curvePlane = mScene.iPlaneList.ElementAt(mScene.iPlaneList.Count - 1);
 
             }
 
@@ -269,6 +301,7 @@ namespace SparrowHawk.Interaction
                     List<Point3d> extrudeCurveP = new List<Point3d>();
                     //extrudeCurveP.Add(curvePlane.Origin); //plane origin will be in the corner
                     //try using geting bounding box
+                    //TODO- fix the iCurveList should update if it extrude-circle pop
                     Point3d startP = Brep.CreatePlanarBreps(mScene.iCurveList[mScene.iCurveList.Count - 2])[0].GetBoundingBox(true).Center;
                     extrudeCurveP.Add(startP);
                     Point3d endP = new Point3d(startP.X + height * planeNormal.X, startP.Y + height * planeNormal.Y, startP.Z + height * planeNormal.Z);
@@ -755,11 +788,6 @@ namespace SparrowHawk.Interaction
                 if (modelName == "tprint")
                 {
                     renderObjId = Util.addSceneNodeWithoutDraw(ref mScene, dynamicBrep, ref mesh_m, modelName);
-                    /*
-                    if (renderObjId != Guid.Empty)
-                        Util.removeSceneNode(ref mScene, renderObjId);
-                    renderObjId = Util.addSceneNode(ref mScene, dynamicBrep, ref mesh_m, modelName);
-                    */
 
                     //SweepCapFun debugging
                     if (dynamicRender == "Sweep-Circle" || dynamicRender == "Sweep-Rect" || dynamicRender == "Extrude-Circle" || dynamicRender == "Loft")
@@ -783,16 +811,16 @@ namespace SparrowHawk.Interaction
                     */
                     //remove the dynamicaly render sceneNode
                     //Util.removeSceneNodeWithoutDraw(ref mScene, renderObjId);
-                    renderObjId = Util.addSceneNode(ref mScene, dynamicBrep, ref mesh_m, modelName);
+                    renderObjId = Util.addSceneNode(ref mScene, dynamicBrep, ref profile_m, modelName);
 
-                    clearDrawing();
+                    clearDrawing(false);
                     Util.clearPlanePoints(ref mScene);
                     Util.clearCurveTargetRhObj(ref mScene);
                     //TODO- OpenGL compile error why?
                     //Util.setPlaneAlpha(ref mScene, 0.0f);
 
                     // once sending to slice, can't go back to edit again
-                    mScene.clearInteractionStack();
+                    mScene.clearInteractionStack(); // thus it will vrgame will push marking main menu interaction
                     mScene.clearIChainsList();
                     mScene.selectionDic.Clear();
                 }
@@ -825,7 +853,7 @@ namespace SparrowHawk.Interaction
             }
         }
 
-        private void clearDrawing()
+        private void clearDrawing(bool hasNextI)
         {
             //clear the curve and points
             if (mScene.tableGeometry.children.Count > 0)
@@ -862,17 +890,29 @@ namespace SparrowHawk.Interaction
                                 mScene.tableGeometry.children.Remove(sn);
                             }
                         }
+
                         //only clear the drawpoint, editpoint
-                        if (sn.name == "drawPoint" || sn.name == "EditPoint" || sn.name == "EditCurve")
+                        if (hasNextI)
                         {
-                            mScene.tableGeometry.children.Remove(sn);
+                            //clear the drawpoint, editpoint, editcurve. save editcurve if shapetype is curve
+                            if (sn.name == "drawPoint" || sn.name == "EditPoint" || (sn.name == "EditCurve" && shapeType != ShapeType.Curve))
+                            {
+                                mScene.tableGeometry.children.Remove(sn);
+                            }
                         }
+                        else
+                        {
+                            if (sn.name == "drawPoint" || sn.name == "EditPoint" || sn.name == "EditCurve")
+                            {
+                                mScene.tableGeometry.children.Remove(sn);
+                            }
+                        }
+
                     }
 
                 }
             }
         }
-
 
         protected override void onClickOculusAX(ref VREvent_t vrEvent)
         {
@@ -888,8 +928,6 @@ namespace SparrowHawk.Interaction
             }
             else if (dynamicRender == "Extrude" || dynamicRender == "Sweep")
             {
-                clearDrawing();
-
                 ShapeType shapeType1 = (ShapeType)mScene.selectionDic[SelectionKey.Profile1Shape];
                 if (shapeType1 == ShapeType.Circle || shapeType1 == ShapeType.Rect)
                 {
@@ -928,7 +966,7 @@ namespace SparrowHawk.Interaction
             }
             else
             {
-                clearDrawing();
+                //clearDrawing();
             }
 
             currentState = State.End;
@@ -1006,7 +1044,7 @@ namespace SparrowHawk.Interaction
 
                 Brep[] shapes = Brep.CreatePlanarBreps(mScene.iCurveList[mScene.iCurveList.Count - 1]);
                 //don't need to update the RhinoView
-                renderObjId = Util.addSceneNodeWithoutDraw(ref mScene, shapes[0], ref profile_m, ShapeType.Circle.ToString());
+                renderObjId = Util.addSceneNodeWithoutDraw(ref mScene, shapes[0], ref mesh_m, ShapeType.Circle.ToString());
 
             }
             else if ((ShapeType)mScene.selectionDic[SelectionKey.Profile1Shape] == ShapeType.Rect)
@@ -1051,7 +1089,7 @@ namespace SparrowHawk.Interaction
 
                 Brep[] shapes = Brep.CreatePlanarBreps(mScene.iCurveList[mScene.iCurveList.Count - 1]);
                 //don't need to update the RhinoView
-                renderObjId = Util.addSceneNodeWithoutDraw(ref mScene, shapes[0], ref profile_m, ShapeType.Rect.ToString());
+                renderObjId = Util.addSceneNodeWithoutDraw(ref mScene, shapes[0], ref mesh_m, ShapeType.Rect.ToString());
 
             }
             else
@@ -1059,13 +1097,14 @@ namespace SparrowHawk.Interaction
                 //Can only use method 2--Add endCurve
                 NurbsCurve endCurve = mScene.iCurveList[mScene.iCurveList.Count - 2].DuplicateCurve().ToNurbsCurve();
                 endCurve.Transform(tEnd);
+
                 mScene.iCurveList.Add(endCurve);
 
                 if (mScene.iCurveList[mScene.iCurveList.Count - 1].IsClosed)
                 {
                     Brep[] shapes = Brep.CreatePlanarBreps(mScene.iCurveList[mScene.iCurveList.Count - 1]);
                     //don't need to update the RhinoView
-                    renderObjId = Util.addSceneNodeWithoutDraw(ref mScene, shapes[0], ref profile_m, "ClosedCurve");
+                    renderObjId = Util.addSceneNodeWithoutDraw(ref mScene, shapes[0], ref mesh_m, "ClosedCurve");
                     mScene.iPlaneList.Add(endPlane);
                 }
 

@@ -237,18 +237,19 @@ public Matrix4 vrToRobot = new Matrix4(-25.23433f, -1.428557f, -986.1774f, -619.
         public void pushInteractionFromChain()
         {
             //get the interaction in the interactionChain
-            for(int i = mIChainsList.Count-1; i >= 0; i--)
+            for (int i = mIChainsList.Count - 1; i >= 0; i--)
             {
                 if (mIChainsList[i].Count != 0)
                 {
                     Interaction.Interaction nextI = mIChainsList[i].Pop();
                     pushInteraction(nextI);
-                }else
+                }
+                else
                 {
                     continue;
                 }
             }
-            
+
         }
 
         public void clearIChainsList()

@@ -96,12 +96,6 @@ namespace SparrowHawk.Interaction
                 previewObjId = Guid.Empty;
             }
 
-            //already click confirm button
-            if (renderObjId != Guid.Empty)
-            {
-                Util.removeSceneNode(ref mScene, renderObjId);
-            }
-
             resetVariables();
         }
 
@@ -126,18 +120,18 @@ namespace SparrowHawk.Interaction
             //support undo function
             if (mScene != null)
             {
-                if(previewObjId != Guid.Empty)
+                if (previewObjId != Guid.Empty)
                 {
                     Util.removeSceneNodeWithoutDraw(ref mScene, previewObjId);
                 }
 
                 //already click confirm button
-                if(renderObjId != Guid.Empty)
+                if (renderObjId != Guid.Empty)
                 {
                     Util.removeSceneNode(ref mScene, renderObjId);
-                    mScene.iCurveList.RemoveAt(mScene.iCurveList.Count-1);
-                    mScene.iPlaneList.RemoveAt(mScene.iPlaneList.Count-1);
-                    mScene.iPlaneList.RemoveAt(mScene.iPlaneList.Count-1);
+                    mScene.iCurveList.RemoveAt(mScene.iCurveList.Count - 1);
+                    mScene.iPlaneList.RemoveAt(mScene.iPlaneList.Count - 1);
+                    mScene.iPlaneList.RemoveAt(mScene.iPlaneList.Count - 1);
                 }
             }
 
@@ -148,7 +142,7 @@ namespace SparrowHawk.Interaction
         public override void activate()
         {
 
-            
+
         }
 
         public override void draw(bool isTop)
@@ -349,7 +343,7 @@ namespace SparrowHawk.Interaction
                 else if (shapeType == ShapeType.Rect)
                 {
                     Rhino.Geometry.Polyline polyline;
-                    if (mScene.iCurveList[mScene.iCurveList.Count - 1].TryGetPolyline(out polyline))
+                    if (modelcurve.TryGetPolyline(out polyline))
                     {
                         Rectangle3d rect = Rectangle3d.CreateFromPolyline(polyline);
                         planeCenter = rect.Center;

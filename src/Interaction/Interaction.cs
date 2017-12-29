@@ -226,7 +226,7 @@ namespace SparrowHawk.Interaction
             Interaction i = mScene.popInteraction();
 
             //push it back to interactionchain
-            if(i.isInChain())
+            if (i.isInChain())
             {
                 mScene.pushInteractionToChain(i);
             }

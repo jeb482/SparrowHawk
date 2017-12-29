@@ -148,6 +148,7 @@ namespace SparrowHawk.Interaction
 
         public void resetVariables()
         {
+            stroke_g = new Geometry.GeometryStroke(ref mScene);
             currentState = State.READY;
 
             //strokeId = Guid.Empty;
@@ -169,14 +170,14 @@ namespace SparrowHawk.Interaction
             curveOnObj = null;
             //renderObjId = Guid.Empty;
 
-           
+
             backgroundStart = false;
             displacement = 0;
             dynamicBrep = null;
             modelName = "tprint";
             //dynamicRender = "none"; // need to save same as drawType and shapeType 
             snapPointsList = new List<Vector3>();
-            railPlaneGuid = Guid.Empty;
+            //railPlaneGuid = Guid.Empty;
 
             d = null;
         }
@@ -189,6 +190,14 @@ namespace SparrowHawk.Interaction
         public override void deactivate()
         {
             clearDrawing();
+
+            //list data already remove when it init
+            //remove railPlane sceneNodeif there is one
+            if (drawnType == DrawnType.Reference && railPlaneGuid != Guid.Empty)
+            {
+                Util.removeSceneNode(ref mScene, railPlaneGuid);
+                railPlaneGuid = Guid.Empty;
+            }
         }
 
         public override void init()
@@ -198,10 +207,10 @@ namespace SparrowHawk.Interaction
             //support undo function
             if (mScene != null && strokeId != Guid.Empty)
             {
-                mScene.iCurveList.RemoveAt(mScene.iCurveList.Count-1);
+                mScene.iCurveList.RemoveAt(mScene.iCurveList.Count - 1);
                 if (drawnType != DrawnType.In3D)
                 {
-                    mScene.iRhObjList.RemoveAt(mScene.iRhObjList.Count-1);
+                    mScene.iRhObjList.RemoveAt(mScene.iRhObjList.Count - 1);
                 }
 
                 //need to clear stroke tprint scenenode as well here
@@ -212,12 +221,13 @@ namespace SparrowHawk.Interaction
 
                 strokeId = Guid.Empty;
                 renderObjId = Guid.Empty;
+
             }
 
             if (drawnType != DrawnType.In3D && drawnType != DrawnType.None)
             {
-                // visualizing projection point with white color
-                drawPoint = Util.MarkProjectionPoint(ref mScene, new OpenTK.Vector3(0, 0, 0), 1, 1, 1);
+                // visualizing projection point with white color, make it invisiable
+                drawPoint = Util.MarkProjectionPoint(ref mScene, new OpenTK.Vector3(100, 100, 100), 1, 1, 1);
 
                 if (drawnType == DrawnType.Reference)
                 {
@@ -779,6 +789,11 @@ namespace SparrowHawk.Interaction
 
         private void clearDrawing()
         {
+            if (drawnType == DrawnType.Plane)
+            {
+                Util.setPlaneAlpha(ref mScene, 0.0f);
+            }
+
             //clear the curve and points
             if (mScene.tableGeometry.children.Count > 0)
             {

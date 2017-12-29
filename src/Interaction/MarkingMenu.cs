@@ -22,6 +22,7 @@ namespace SparrowHawk.Interaction
         float mOuterSelectionRadius;
         float mCurrentRadius;
         private bool isVisiable = false;
+        private bool isShowing = false;
 
         float thetaDebug = 0;
 
@@ -31,6 +32,9 @@ namespace SparrowHawk.Interaction
 
         public override void init()
         {
+            // Set initial timeout that cannot be skipped to prevent double selections.
+            mInitialSelectOKTime = mScene.gameTime + defaultInitialDelay;
+
             if (mScene != null && curSelectionKey != SelectionKey.Null)
             {
                 mScene.selectionDic.Remove(curSelectionKey);
@@ -39,11 +43,10 @@ namespace SparrowHawk.Interaction
                 {
                     interactionChain.Clear();
                 }
-
-                //deal with visible
-                setVisible(true);
             }
 
+            if (isVisiable)
+                showMenu(true);
         }
 
         public void setCurSelectionKey(SelectionKey lastKey)
@@ -152,11 +155,24 @@ namespace SparrowHawk.Interaction
                 mMinSelectionRadius = 0.4f;
                 mOuterSelectionRadius = 0.6f;
             }
+
+
+            Geometry.Geometry g = new Geometry.Geometry("C:\\workspace\\SparrowHawk\\src\\resources\\circle.obj");
+            switch (mLayout)
+            {
+
+            }
+            radialMenuMat = new Material.RadialMenuMaterial(mScene.rhinoDoc, getTexturePath(mLayout));
+            mSceneNode = new SceneNode("MarkingMenu", ref g, ref radialMenuMat);
+            mSceneNode.transform = new OpenTK.Matrix4(2, 0, 0, 0,
+                                                          0, 0, -2, 0,
+                                                          0, 2, 0, 0,
+                                                          0, 0, 0, 1);
         }
 
         public override void draw(bool isTop)
         {
-            if (!isVisiable)
+            if (!isShowing)
                 return;
 
             // get R and Theta and the associated sector
@@ -239,21 +255,21 @@ namespace SparrowHawk.Interaction
             }
         }
 
-        public void setVisible(bool visible)
+        private void showMenu(bool vis)
         {
-            bool lastVisible = this.isVisiable;
-            this.isVisiable = visible;
             if (mSceneNode != null)
             {
-                if (!lastVisible && isVisiable)
+                if (vis)
                 {
+                    isShowing = true;
                     if (mScene.mIsLefty)
                         mScene.leftControllerNode.add(ref mSceneNode);
                     else
                         mScene.rightControllerNode.add(ref mSceneNode);
                 }
-                else if (lastVisible && !isVisiable)
+                else
                 {
+                    isShowing = false;
                     if (mScene.mIsLefty)
                         mScene.leftControllerNode.remove(ref mSceneNode);
                     else
@@ -262,54 +278,41 @@ namespace SparrowHawk.Interaction
             }
         }
 
+        public void setVisible(bool visible)
+        {
+            this.isVisiable = visible;
+        }
+
         //TODO- seperate activate and visible
         public override void activate()
         {
-            Geometry.Geometry g = new Geometry.Geometry("C:\\workspace\\SparrowHawk\\src\\resources\\circle.obj");
-            switch (mLayout)
-            {
 
-            }
-            radialMenuMat = new Material.RadialMenuMaterial(mScene.rhinoDoc, getTexturePath(mLayout));
-            mSceneNode = new SceneNode("MarkingMenu", ref g, ref radialMenuMat);
-            mSceneNode.transform = new OpenTK.Matrix4(2, 0, 0, 0,
-                                                          0, 0, -2, 0,
-                                                          0, 2, 0, 0,
-                                                          0, 0, 0, 1);
-
-            if (isVisiable)
-            {
-                if (mScene.mIsLefty)
-                    mScene.leftControllerNode.add(ref mSceneNode);
-                else
-                    mScene.rightControllerNode.add(ref mSceneNode);
-            }
-
-            // Set initial timeout that cannot be skipped to prevent double selections.
-            mInitialSelectOKTime = mScene.gameTime + defaultInitialDelay;
         }
-
         public override void deactivate()
         {
-            //TODO- if we want to support multiple back at once then we need to check and init some stuff here
-            setVisible(false);
-
+            if (isShowing)
+            {
+                showMenu(false);
+            }
         }
 
         public override void leaveTop()
         {
-            setVisible(false);
+            if (isShowing)
+            {
+                showMenu(false);
+            }
         }
 
         protected override void onClickViveAppMenu(ref VREvent_t vrEvent)
         {
-            setVisible(true);
+            showMenu(true);
             //terminate();
         }
 
         protected override void onClickOculusStick(ref VREvent_t vrEvent)
         {
-            setVisible(true);
+            showMenu(true);
             //terminate();
         }
 
@@ -430,7 +433,7 @@ namespace SparrowHawk.Interaction
                 case MenuLayout.ExtrudeC2:
                     mScene.selectionDic.Add(SelectionKey.Profile2Shape, (ShapeType)(interactionNumber));
                     setCurSelectionKey(SelectionKey.Profile2Shape);
-                    nextMenu = new MarkingMenu(ref mScene, (MenuLayout)((int)mLayout + interactionNumber+1));
+                    nextMenu = new MarkingMenu(ref mScene, (MenuLayout)((int)mLayout + interactionNumber + 1));
                     nextMenu.setVisible(true);
                     mScene.pushInteraction(nextMenu);
                     break;
@@ -463,7 +466,7 @@ namespace SparrowHawk.Interaction
             //0-Surface, 1-3D, 2-Plane, 3-Reference
             interactionChain.Clear();
             //always remove from the last
-            if(mScene.mIChainsList.Count > 0)
+            if (mScene.mIChainsList.Count > 0)
                 mScene.mIChainsList.RemoveAt(mScene.mIChainsList.Count - 1);
 
             FunctionType modelFun = (FunctionType)mScene.selectionDic[SelectionKey.ModelFun];
@@ -511,7 +514,7 @@ namespace SparrowHawk.Interaction
 
                 shapeType = (ShapeType)mScene.selectionDic[SelectionKey.Profile2Shape];
                 drawnType = (DrawnType)mScene.selectionDic[SelectionKey.Profile2On];
-            
+
             }
 
             if (drawnType == DrawnType.Surface)

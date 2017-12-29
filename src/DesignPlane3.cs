@@ -17,6 +17,7 @@ namespace SparrowHawk
         private Brep designPlane;
         private int size = 240;
         private Point3d origin = new Point3d(0, 0, 0);
+        private bool isMove = false;
 
         public DesignPlane3(ref Scene scene)
         {
@@ -77,7 +78,35 @@ namespace SparrowHawk
                     break;
             }
 
-           
+        }
+
+        public DesignPlane3(ref Scene scene, int axis, Point3d o, bool isMove)
+        {
+            mScene = scene;
+            mesh_m = new Material.SingleColorMaterial(0, 0, 0, 0.0f);
+            origin = o;
+            this.isMove = isMove;
+
+            switch (axis)
+            {
+                //Rhino space
+                case 0: // Platform-space x-axis, yz-plane
+                    type = "YZ";
+                    ((Material.SingleColorMaterial)mesh_m).mColor.R = .5f;
+                    createRhinoBrep(type);
+                    break;
+                case 1: // Platform-space y-axis, xz-plane 
+                    type = "XZ";
+                    ((Material.SingleColorMaterial)mesh_m).mColor.G = .5f;
+                    createRhinoBrep(type);
+                    break;
+                case 2: // Platform-space z-axis, xy-plane
+                    type = "XY";
+                    ((Material.SingleColorMaterial)mesh_m).mColor.B = .5f;
+                    createRhinoBrep(type);
+                    break;
+            }
+
 
         }
 
@@ -110,7 +139,14 @@ namespace SparrowHawk
 
             if (designPlane != null)
             {
-                guid = Util.addStaticNode(ref mScene, designPlane, ref mesh_m, "plane" + type);
+                if (isMove)
+                {
+                    guid = Util.addStaticNode(ref mScene, designPlane, ref mesh_m, "plane" + type + "move");
+                }
+                else
+                {
+                    guid = Util.addStaticNode(ref mScene, designPlane, ref mesh_m, "plane" + type);
+                }
             }
 
         }

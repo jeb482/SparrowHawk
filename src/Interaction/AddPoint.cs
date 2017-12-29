@@ -20,8 +20,8 @@ namespace SparrowHawk.Interaction
         private Material.Material profile_m;
         private Material.Material plane_m;
 
-        private Brep designPlane;      
-        private Point3d endP;    
+        private Brep designPlane;
+        private Point3d endP;
         private Plane curvePlane;
         private bool isMove = false;
         private bool hitPlane = false;
@@ -77,11 +77,12 @@ namespace SparrowHawk.Interaction
 
             profile_m = new Material.SingleColorMaterial(0.5f, 0, 0, 0.4f);
             maxNumPoint = num;
-            
+
         }
 
         private void resetVariables()
         {
+            point_g = new Geometry.PointMarker(new Vector3());
             tolerance = 0;
             designPlane = null;
             endP = moveControlerOrigin = movePlaneOrigin = new Point3d();
@@ -111,25 +112,25 @@ namespace SparrowHawk.Interaction
             {
                 Util.removeSceneNode(ref mScene, renderObjId);
                 renderObjId = Guid.Empty;
-                mScene.iCurveList.RemoveAt(mScene.iCurveList.Count-1);
+                mScene.iCurveList.RemoveAt(mScene.iCurveList.Count - 1);
 
                 if (drawnType != DrawnType.In3D)
                 {
-                    mScene.iRhObjList.RemoveAt(mScene.iRhObjList.Count-1); //pointOnObj is new plane after we move
-                    mScene.iPlaneList.RemoveAt(mScene.iPlaneList.Count-1);
+                    mScene.iRhObjList.RemoveAt(mScene.iRhObjList.Count - 1); //pointOnObj is new plane after we move
+                    mScene.iPlaneList.RemoveAt(mScene.iPlaneList.Count - 1);
 
                 }
                 else
                 {
                     mScene.iPlaneList.Remove(curvePlane);
                 }
-
             }
+
 
             if (drawnType != DrawnType.In3D && drawnType != DrawnType.None)
             {
-                // visualizing projection point with white color
-                drawPoint = Util.MarkProjectionPoint(ref mScene, new OpenTK.Vector3(0, 0, 0), 1, 1, 1);
+                // visualizing projection point with white color, make it invinsible at frist
+                drawPoint = Util.MarkProjectionPoint(ref mScene, new OpenTK.Vector3(100, 100, 100), 1, 1, 1);
 
                 if (drawnType == DrawnType.Plane)
                 {
@@ -146,7 +147,7 @@ namespace SparrowHawk.Interaction
                 }
             }
 
-           
+
         }
 
         public override void leaveTop()
@@ -319,6 +320,7 @@ namespace SparrowHawk.Interaction
 
         public void clearDrawing()
         {
+            Util.setPlaneAlpha(ref mScene, 0.0f);
             pointMarkers.Clear();
 
             //clear the curve and points
@@ -535,8 +537,14 @@ namespace SparrowHawk.Interaction
 
                 if (drawnType != DrawnType.In3D && pointOnObj != null)
                 {
-                    mScene.iRhObjList.Add(pointOnObj); //pointOnObj is new plane after we move
+                    //in order to delete the moving plane after generating shape, we create another rhinoobj
+                    //mScene.iRhObjList.Add(pointOnObj); //pointOnObj is new plane after we move
                     mScene.iPlaneList.Add(curvePlane);
+                    int size = 240;
+                    PlaneSurface plane_surface = new PlaneSurface(curvePlane, new Interval(-size, size), new Interval(-size, size));
+                    Brep pointOnPlane = Brep.CreateFromSurface(plane_surface);
+                    Guid guid = Util.addSceneNodeWithoutVR(ref mScene, pointOnPlane, "moveP");
+                    mScene.iRhObjList.Add(mScene.rhinoDoc.Objects.Find(guid));
 
                 }
                 else
@@ -548,33 +556,17 @@ namespace SparrowHawk.Interaction
                 lockPlane = false;
                 //clearDrawing();
 
-                //reset predefined plane position and delete the old one
-                //need to careful about rhinoObjList. update it before we delete it
-                //reset it;
-                if (movePlane != null)
+                if (pointOnObj != null && (pointOnObj.Geometry.GetBoundingBox(true).Center.X != 0 || pointOnObj.Geometry.GetBoundingBox(true).Center.Y != 0 || pointOnObj.Geometry.GetBoundingBox(true).Center.Z != 0))
                 {
                     DesignPlane3 tempXY = new DesignPlane3(ref mScene, 2);
                     DesignPlane3 tempYZ = new DesignPlane3(ref mScene, 0);
                     DesignPlane3 tempXZ = new DesignPlane3(ref mScene, 1);
-                    string name = movePlane.Attributes.Name;
+                    /*
+                    string name = pointOnObj.Attributes.Name;
 
-                    for (int i = 0; i < mScene.iRhObjList.Count; i++)
-                    {
-                        if (mScene.iRhObjList[i].Id == mScene.xyPlane.guid && !name.Contains("planeXY"))
-                        {
-                            mScene.iRhObjList[i] = mScene.rhinoDoc.Objects.Find(tempXY.guid);
-                        }
-                        else if (mScene.iRhObjList[i].Id == mScene.yzPlane.guid && !name.Contains("planeYZ"))
-                        {
-                            mScene.iRhObjList[i] = mScene.rhinoDoc.Objects.Find(tempYZ.guid);
-                        }
-                        else if (mScene.iRhObjList[i].Id == mScene.xzPlane.guid && !name.Contains("planeXZ"))
-                        {
-                            mScene.iRhObjList[i] = mScene.rhinoDoc.Objects.Find(tempXZ.guid);
-                        }
-                    }
                     if (name.Contains("planeXY"))
-                    {
+                    {                      
+                        //TODO-might need to change name or will affect DrawnType.planes later, however we can't change to DrawType.reference. how to do ?
                         Util.removeStaticSceneNodeKeepRhio(ref mScene, mScene.xyPlane.guid);
                     }
                     else
@@ -598,12 +590,17 @@ namespace SparrowHawk.Interaction
                     {
                         Util.removeStaticSceneNode(ref mScene, mScene.xzPlane.guid);
                     }
+                    */
+
+                    Util.removeStaticSceneNode(ref mScene, mScene.xyPlane.guid);
+                    Util.removeStaticSceneNode(ref mScene, mScene.yzPlane.guid);
+                    Util.removeStaticSceneNode(ref mScene, mScene.xzPlane.guid);
 
                     mScene.xyPlane = tempXY;
                     mScene.yzPlane = tempYZ;
                     mScene.xzPlane = tempXZ;
 
-                    Util.setPlaneAlpha(ref mScene, 0.0f);
+                    //Util.setPlaneAlpha(ref mScene, 0.0f);
                 }
 
                 //call next interaction in the chain
@@ -673,17 +670,19 @@ namespace SparrowHawk.Interaction
 
             if (name.Contains("planeXY"))
             {
-                mScene.xyPlane = new DesignPlane3(ref mScene, 2, endP);
+                mScene.xyPlane = new DesignPlane3(ref mScene, 2, endP, true);
                 mScene.xyPlane.setAlpha(0.4f);
             }
             else if (name.Contains("planeYZ"))
             {
-                mScene.yzPlane = new DesignPlane3(ref mScene, 0, endP);
+
+                mScene.yzPlane = new DesignPlane3(ref mScene, 0, endP, true);
                 mScene.yzPlane.setAlpha(0.4f);
             }
             else if (name.Contains("planeXZ"))
             {
-                mScene.xzPlane = new DesignPlane3(ref mScene, 1, endP);
+
+                mScene.xzPlane = new DesignPlane3(ref mScene, 1, endP, true);
                 mScene.xzPlane.setAlpha(0.4f);
             }
 
