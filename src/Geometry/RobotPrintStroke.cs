@@ -6,7 +6,7 @@ using System.Text;
 
 namespace SparrowHawk.Geometry
 {
-    class GeometryStroke2 : Geometry
+    class RobotPrintStroke : Geometry
     {
         private Scene mScene;
         public int mNumPoints;
@@ -14,13 +14,13 @@ namespace SparrowHawk.Geometry
         public List<float> vertices_array = new List<float>();
         public List<int> indices_array = new List<int>();
 
-        public GeometryStroke2()
+        public RobotPrintStroke()
         {
             mNumPoints = 0;
             primitiveType = OpenTK.Graphics.OpenGL4.BeginMode.Lines;
         }
 
-        public GeometryStroke2(ref Scene s)
+        public RobotPrintStroke(ref Scene s)
         {
             mScene = s;
             mNumPoints = 0;

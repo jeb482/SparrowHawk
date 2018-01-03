@@ -20,6 +20,16 @@ namespace SparrowHawk.Material
             mShader.init("SingleColorMaterial", ShaderSource.SingleColorVertShader, ShaderSource.SingleColorFragShader);
         }
 
+        public void setAlpha(float alpha)
+        {
+            mColor = new OpenTK.Graphics.Color4(mColor.R, mColor.G, mColor.B, alpha);
+        }
+
+        public void changeColor(float r, float g, float b, float a)
+        {
+            mColor = new OpenTK.Graphics.Color4(r, g, b, a);
+        }
+
         public override void draw(ref Geometry.Geometry g, ref Matrix4 model, ref Matrix4 vp)
         {
             GL.Disable(EnableCap.DepthTest);

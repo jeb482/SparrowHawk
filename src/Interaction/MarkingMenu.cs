@@ -9,7 +9,6 @@ namespace SparrowHawk.Interaction
 {
 
     //update selectionDic, mInteractionChain
-
     class MarkingMenu : Interaction
     {
         protected int mCurrentSelection = -1;
@@ -128,7 +127,16 @@ namespace SparrowHawk.Interaction
         public float getAngularMenuOffset(int numOptions)
         {
             if (numOptions <= 1) return 0;
-            return (float)(-2 * Math.PI) / (2 * numOptions);
+
+            if(numOptions == 2)
+            {
+                return -(float)(Math.PI / 2);
+            }else
+            {
+                //aligin with 12oclock direction looks better 
+                return -(float)((Math.PI / 2) - (Math.PI / numOptions));
+            }
+            
         }
 
         MenuLayout mLayout;
@@ -186,11 +194,31 @@ namespace SparrowHawk.Interaction
             {
                 getViveTouchpadPoint((uint)primaryControllerIdx, out mCurrentRadius, out theta);
             }
-            int sector = (int)Math.Floor((((theta + 2 * Math.PI) % (2 * Math.PI)) - mFirstSectorOffsetAngle) * mNumSectors / (2 * Math.PI));
-            ;
 
-            //Rhino.RhinoApp.WriteLine("theta = " + theta);
+            //int sector = (int)Math.Floor((((theta + 2 * Math.PI) % (2 * Math.PI)) - mFirstSectorOffsetAngle) * mNumSectors / (2 * Math.PI));
+
+            float thetaOffset;
+            if (theta < 0)
+            {
+                thetaOffset = (theta + (float)(2 * Math.PI)) - mFirstSectorOffsetAngle; //mFirstSectorOffsetAngle <0 so the result might greater than 360
+            }
+            else
+            {
+                thetaOffset = (theta) - mFirstSectorOffsetAngle;
+            }
+
+            if(thetaOffset < 0)
+            {
+                thetaOffset = thetaOffset + (float)(2 * Math.PI);
+            }else if (thetaOffset > (float)(2 * Math.PI))
+            {
+                thetaOffset = thetaOffset - (float)(2 * Math.PI);
+            }
+
+            float sectorAngle = (float) (2 * Math.PI) / (float)mNumSectors;
+            int sector = (int) Math.Floor( thetaOffset / sectorAngle);
             thetaDebug = theta;
+            //Rhino.RhinoApp.WriteLine("theta= "+ thetaOffset * 180.0/ Math.PI + ", offset= " + mFirstSectorOffsetAngle * 180.0 / Math.PI + ", sector = " + sector);
 
             // Update the shader
             if (mCurrentRadius > mMinSelectionRadius)
@@ -526,7 +554,7 @@ namespace SparrowHawk.Interaction
                 if (modelFun == FunctionType.Extrude || modelFun == FunctionType.Sweep)
                 {
                     if (shapeType1 == ShapeType.Circle || shapeType1 == ShapeType.Rect)
-                        pushInteractionChain(new EditPoint3(ref mScene, CurveID.EndCapCurve));
+                        pushInteractionChain(new EditPoint(ref mScene, CurveID.EndCapCurve));
                 }
 
                 shapeType = (ShapeType)mScene.selectionDic[SelectionKey.Profile2Shape];
@@ -538,17 +566,17 @@ namespace SparrowHawk.Interaction
             {
                 if (shapeType == ShapeType.Rect)
                 {
-                    pushInteractionChain(new EditPoint3(ref mScene, curveID));
+                    pushInteractionChain(new EditPoint(ref mScene, curveID));
                     pushInteractionChain(new AddPoint(ref mScene, 2, curveID));
                 }
                 else if (shapeType == ShapeType.Circle)
                 {
-                    pushInteractionChain(new EditPoint3(ref mScene, curveID));
+                    pushInteractionChain(new EditPoint(ref mScene, curveID));
                     pushInteractionChain(new AddPoint(ref mScene, 2, curveID));
                 }
                 else if (shapeType == ShapeType.Curve)
                 {
-                    pushInteractionChain(new EditPoint3(ref mScene, curveID));
+                    pushInteractionChain(new EditPoint(ref mScene, curveID));
                     pushInteractionChain(new CreateCurve(ref mScene, false, curveID));
                 }
                 /*
@@ -561,15 +589,15 @@ namespace SparrowHawk.Interaction
             {
                 if (shapeType == ShapeType.Circle)
                 {
-                    pushInteractionChain(new CreatePlane2(ref mScene, curveID));
+                    pushInteractionChain(new CreatePlane(ref mScene, curveID));
                 }
                 else if (shapeType == ShapeType.Rect)
                 {
-                    pushInteractionChain(new CreatePlane2(ref mScene, curveID));
+                    pushInteractionChain(new CreatePlane(ref mScene, curveID));
                 }
                 else if (shapeType == ShapeType.Curve)
                 {
-                    pushInteractionChain(new EditPoint3(ref mScene, curveID));
+                    pushInteractionChain(new EditPoint(ref mScene, curveID));
                     pushInteractionChain(new CreateCurve(ref mScene, false, curveID));
                 }
 
@@ -579,17 +607,17 @@ namespace SparrowHawk.Interaction
 
                 if (shapeType == ShapeType.Rect)
                 {
-                    pushInteractionChain(new EditPoint3(ref mScene, curveID));
+                    pushInteractionChain(new EditPoint(ref mScene, curveID));
                     pushInteractionChain(new AddPoint(ref mScene, 2, curveID));
                 }
                 else if (shapeType == ShapeType.Circle)
                 {
-                    pushInteractionChain(new EditPoint3(ref mScene, curveID));
+                    pushInteractionChain(new EditPoint(ref mScene, curveID));
                     pushInteractionChain(new AddPoint(ref mScene, 2, curveID));
                 }
                 else if (shapeType == ShapeType.Curve)
                 {
-                    pushInteractionChain(new EditPoint3(ref mScene, curveID));
+                    pushInteractionChain(new EditPoint(ref mScene, curveID));
                     pushInteractionChain(new CreateCurve(ref mScene, false, curveID));
                 }
                 /*
@@ -602,19 +630,19 @@ namespace SparrowHawk.Interaction
             {
                 if (shapeType == ShapeType.Rect)
                 {
-                    pushInteractionChain(new EditPoint3(ref mScene, curveID));
+                    pushInteractionChain(new EditPoint(ref mScene, curveID));
                     //mScene.mInteractionChian.Push(new AddPoint(ref mScene, 2, curveID));
-                    pushInteractionChain(new CreatePlane2(ref mScene, curveID));
+                    pushInteractionChain(new CreatePlane(ref mScene, curveID));
                 }
                 else if (shapeType == ShapeType.Circle)
                 {
-                    pushInteractionChain(new EditPoint3(ref mScene, curveID));
+                    pushInteractionChain(new EditPoint(ref mScene, curveID));
                     //mScene.mInteractionChian.Push(new AddPoint(ref mScene, 2, curveID));
-                    pushInteractionChain(new CreatePlane2(ref mScene, curveID));
+                    pushInteractionChain(new CreatePlane(ref mScene, curveID));
                 }
                 else if (shapeType == ShapeType.Curve)
                 {
-                    pushInteractionChain(new EditPoint3(ref mScene, curveID));
+                    pushInteractionChain(new EditPoint(ref mScene, curveID));
                     pushInteractionChain(new CreateCurve(ref mScene, false, curveID));
                 }
                 /*

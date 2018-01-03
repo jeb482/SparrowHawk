@@ -83,27 +83,21 @@
     <Reference Include="System.XML" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="DesignPlane3.cs" />
+    <Compile Include="BiDictionaryOneToOne.cs" />
+    <Compile Include="DesignPlane.cs" />
     <Compile Include="Geometry\DesignPlaneMesh.cs" />
     <Compile Include="Geometry\DrawPointMarker.cs" />
     <Compile Include="Geometry\GeometryStroke.cs" />
-    <Compile Include="Geometry\GeometryStroke2.cs" />
+    <Compile Include="Geometry\RobotPrintStroke.cs" />
     <Compile Include="Geometry\PlaneRep.cs" />
     <Compile Include="Geometry\RhinoMesh.cs" />
-    <Compile Include="Geometry\RhinoMesh2.cs" />
     <Compile Include="Interaction\AddPoint.cs" />
-    <Compile Include="Interaction\Align.cs" />
     <Compile Include="Interaction\CalibrationAR.cs" />
     <Compile Include="Interaction\CreateCurve.cs" />
     <Compile Include="Interaction\CreatePatch.cs" />
     <Compile Include="Interaction\CreatePlane.cs" />
-    <Compile Include="Interaction\CreatePlane2.cs" />
     <Compile Include="Interaction\Cut.cs" />
-    <Compile Include="Interaction\Delete.cs" />
-    <Compile Include="Interaction\EditPoint3.cs" />
-    <Compile Include="Interaction\Grip.cs" />
-    <Compile Include="Interaction\Selection.cs" />
-    <Compile Include="Interaction\CreateCylinder.cs" />
+    <Compile Include="Interaction\EditPoint.cs" />
     <Compile Include="Interaction\Stroke.cs" />
     <Compile Include="Material\LambertianMaterial.cs" />
     <Compile Include="Material\RadialMenuMaterial.cs" />

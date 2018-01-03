@@ -31,10 +31,6 @@ namespace SparrowHawk.Geometry
         {
 
             mPoints.Add(p);
-
-            //when visualizing, stroke is in tableGeometry so we need to apply tableGeomeotry.transfrom inverted first
-            p = Util.transformPoint(mScene.tableGeometry.transform.Inverted(), p);
-
             vertices_array.Add(p.X);
             vertices_array.Add(p.Y);
             vertices_array.Add(p.Z);

@@ -28,7 +28,6 @@ namespace SparrowHawk.Interaction
         public bool onPlane = false;
         private bool hitPlane = false;
         private bool lockPlane = false;
-        protected SceneNode targetPSN;
         protected RhinoObject targetPRhObj;
         protected SceneNode drawPoint;
         protected OpenTK.Vector3 projectP;
@@ -151,7 +150,6 @@ namespace SparrowHawk.Interaction
                                 if (distance < mimD)
                                 {
                                     hitPlane = true;
-                                    targetPSN = mScene.brepToSceneNodeDic[rhObj.Id];
                                     targetPRhObj = rhObj;
                                     mimD = distance;
                                     projectP = Util.platformToVRPoint(ref mScene, new OpenTK.Vector3((float)rayIntersections[0].X, (float)rayIntersections[0].Y, (float)rayIntersections[0].Z));
@@ -185,7 +183,6 @@ namespace SparrowHawk.Interaction
 
                 if (!hitPlane)
                 {
-                    targetPSN = null;
                     targetPRhObj = null;
                     projectP = new OpenTK.Vector3(100, 100, 100); //make it invisable
                 }

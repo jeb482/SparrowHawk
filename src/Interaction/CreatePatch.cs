@@ -19,7 +19,7 @@ namespace SparrowHawk.Interaction
         List<NurbsCurve> curvelist = new List<NurbsCurve>();
         List<Guid> curveGuids = new List<Guid>();
         List<Point> allPoints = new List<Point>();
-        Guid planGuid = Guid.Empty;
+        SceneNode planeSN;
         private bool lockPlane = false;
 
         public CreatePatch(ref Scene s) : base(ref s)
@@ -73,12 +73,10 @@ namespace SparrowHawk.Interaction
         public void renderPatch()
         {
             //Brep patchSurface = Brep.CreatePatch(curvelist, 4, 4, mScene.rhinoDoc.ModelAbsoluteTolerance);
-            Brep patchSurface = Brep.CreatePatch(allPoints, 10, 10, mScene.rhinoDoc.ModelAbsoluteTolerance);
+            Brep patchSurface = Brep.CreatePatch(allPoints, 10, 10, mScene.rhinoDoc.ModelAbsoluteTolerance);          
+            Guid planGuid = Util.addRhinoObjectSceneNode(ref mScene, ref patchSurface, ref mesh_m, "patchSurface", out planeSN);
 
-            planGuid = Util.addSceneNode(ref mScene, patchSurface, ref mesh_m, "patchSurface");
-            mScene.iRhObjList.Add(mScene.rhinoDoc.Objects.Find(planGuid));
-            mScene.rhinoDoc.Views.Redraw();
-
+            //clear profile curves
             foreach (Guid id in curveGuids)
             {
                 foreach (SceneNode sn in mScene.tableGeometry.children)
@@ -90,6 +88,7 @@ namespace SparrowHawk.Interaction
                     }
                 }
             }
+
             allPoints.Clear();
             curvelist.Clear();
         }

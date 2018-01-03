@@ -1,6 +1,7 @@
 ﻿using OpenTK;
 using Rhino.DocObjects;
 using Rhino.Geometry;
+using Rhino.Geometry.Intersect;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -12,49 +13,54 @@ namespace SparrowHawk.Interaction
 {
     class AddPoint : Interaction
     {
+        public enum State
+        {
+            READY = 0, MOVEPLANE = 1
+        };
 
         public int maxNumPoint = 100;
-        Double tolerance;
         protected Geometry.Geometry point_g;
         protected Material.Material point_m;
         private Material.Material profile_m;
-        private Material.Material plane_m;
+        protected State currentState;
+        protected uint primaryDeviceIndex;
 
-        private Brep designPlane;
-        private Point3d endP;
-        private Plane curvePlane;
-        private bool isMove = false;
-        private bool hitPlane = false;
-        private bool lockPlane = false;
-
-        protected SceneNode targetPSN;
-        protected RhinoObject targetPRhObj;
+        protected Guid targetPRhObjID;
         protected SceneNode drawPoint;
-        protected OpenTK.Vector3 projectP;
-        Vector3 pos = new Vector3();
-        protected RhinoObject pointOnObj;
-        public List<Guid> ListTargets = new List<Guid>();
+        protected Rhino.Geometry.Point3d projectP;
+
+        protected Rhino.DocObjects.ObjRef pointOnObjRef; //in case that before modelComplete targetPRhObj become null
+        private SceneNode renderObjSN;
         private List<Point3d> pointsList = new List<Point3d>();
         List<SceneNode> pointMarkers = new List<SceneNode>();
         private Rhino.Geometry.Curve contourCurve = null;
-        private List<Vector3> snapPointsList = new List<Vector3>();
+        private Plane curvePlane;
 
-        private OpenTK.Vector3 planeNormal;
-        private RhinoObject movePlane;
-        private Point3d moveControlerOrigin = new Point3d();
-        private Point3d movePlaneOrigin = new Point3d();
-        private Guid movePlaneRenderID = Guid.Empty;
 
-        //0:3D, 1:onDPlanes, 2: onSurfaces, 3: onTargets ==> before we modified
+        private List<Point3d> snapPointsList = new List<Point3d>();
+
         private DrawnType drawnType = DrawnType.None;
         private ShapeType shapeType = ShapeType.None;
-        private Guid renderObjId = Guid.Empty;
+        private List<ObjRef> rayCastingObjs;
+        private int toleranceMax = 100000;
+        private bool isSnap = false;
+        private bool shouldSnap = false;
+        private float snapDistance = 20; //mm
+
+        //moving XYZPlanes
+        private Point3d moveControlerOrigin = new Point3d();
+        private Rhino.Geometry.Vector3d planeNormal = new Rhino.Geometry.Vector3d();
+        private ObjRef movePlaneRef;
+
+        private float lastTranslate = 0.0f;
+
 
         public AddPoint(ref Scene scene) : base(ref scene)
         {
             mScene = scene;
             point_g = new Geometry.PointMarker(new Vector3());
             point_m = new Material.SingleColorMaterial(0f, .5f, 1f, 1f);
+            currentState = State.READY;
         }
 
         public AddPoint(ref Scene scene, int num, CurveID curveID) : base(ref scene)
@@ -74,33 +80,55 @@ namespace SparrowHawk.Interaction
                 shapeType = (ShapeType)mScene.selectionDic[SelectionKey.Profile2Shape];
             }
 
-
-            profile_m = new Material.SingleColorMaterial(0.5f, 0, 0, 0.4f);
             maxNumPoint = num;
+            profile_m = new Material.SingleColorMaterial(0.5f, 0, 0, 0.4f);
+            rayCastingObjs = new List<ObjRef>();
+
+            resetVariables();
 
         }
 
-        private void resetVariables()
+        //addRhinoObjectSceneNode-renderObjSN (shape), addRhinoObject-pointOnObjRef (where shape on)
+        //drawPoint,editPointSN in PointMarkers-addSceneNode  
+        public void resetVariables()
         {
             point_g = new Geometry.PointMarker(new Vector3());
-            tolerance = 0;
-            designPlane = null;
-            endP = moveControlerOrigin = movePlaneOrigin = new Point3d();
-            curvePlane = new Plane();
-            isMove = hitPlane = lockPlane = false;
+            currentState = State.READY;
 
-            targetPSN = null;
-            targetPRhObj = null;
+            targetPRhObjID = Guid.Empty;
+            //pointOnObjRef = null;
             drawPoint = null;
-            projectP = pos = planeNormal = new Vector3();
-            pointOnObj = null;
-            ListTargets = new List<Guid>();
+            projectP = new Point3d();
+
+            snapPointsList = new List<Point3d>();
+            rayCastingObjs = new List<ObjRef>();
+
             pointsList = new List<Point3d>();
             pointMarkers = new List<SceneNode>();
             contourCurve = null;
-            snapPointsList = new List<Vector3>();
-            movePlane = null;
-            movePlaneRenderID = Guid.Empty;
+            curvePlane = new Plane();
+
+            toleranceMax = 100000;
+            snapDistance = 40;
+            isSnap = false;
+            shouldSnap = false;
+
+            moveControlerOrigin = new Point3d();
+            movePlaneRef = null;
+            planeNormal = new Rhino.Geometry.Vector3d();
+
+            lastTranslate = 0.0f;
+
+        }
+
+        public override void leaveTop()
+        {
+            clearDrawing();
+        }
+
+        public override void deactivate()
+        {
+            clearDrawing();
         }
 
         public override void init()
@@ -108,10 +136,32 @@ namespace SparrowHawk.Interaction
             resetVariables();
 
             //support undo function
-            if (mScene != null && renderObjId != Guid.Empty)
+            if (mScene != null && pointOnObjRef != null)
             {
-                Util.removeSceneNode(ref mScene, renderObjId);
-                renderObjId = Guid.Empty;
+                //TODO-check if it does clear the points
+                if (pointMarkers.Count > 0)
+                {
+                    for (int i = 0; i < pointMarkers.Count; i++)
+                    {
+                        SceneNode sn = pointMarkers[i];
+                        Util.removeSceneNode(ref mScene, ref sn);                     
+                    }
+                    pointMarkers = new List<SceneNode>();
+                }
+
+                //TODO-make sure it won't remove the obj we created 
+                if (pointOnObjRef != null)
+                {
+                    //Util.removeRhinoObject(ref mScene, pointOnObjRef.ObjectId);
+                    pointOnObjRef = null;
+                }
+
+                if (renderObjSN != null)
+                {
+                    Util.removeRhinoObjectSceneNode(ref mScene, ref renderObjSN);
+                    renderObjSN = null;
+                }
+                
                 mScene.iCurveList.RemoveAt(mScene.iCurveList.Count - 1);
 
                 if (drawnType != DrawnType.In3D)
@@ -126,567 +176,381 @@ namespace SparrowHawk.Interaction
                 }
             }
 
-
             if (drawnType != DrawnType.In3D && drawnType != DrawnType.None)
             {
-                // visualizing projection point with white color, make it invinsible at frist
-                drawPoint = Util.MarkProjectionPoint(ref mScene, new OpenTK.Vector3(100, 100, 100), 1, 1, 1);
 
                 if (drawnType == DrawnType.Plane)
                 {
                     Util.setPlaneAlpha(ref mScene, 0.4f);
                 }
 
-                if ((drawnType == DrawnType.Reference) && mScene.iRhObjList.Count != 0)
+                //init rayCastingObjs
+                Rhino.DocObjects.ObjectEnumeratorSettings settings = new Rhino.DocObjects.ObjectEnumeratorSettings();
+                settings.ObjectTypeFilter = Rhino.DocObjects.ObjectType.Brep;
+                foreach (Rhino.DocObjects.RhinoObject rhObj in mScene.rhinoDoc.Objects.GetObjectList(settings))
                 {
-                    foreach (Rhino.DocObjects.RhinoObject RhObj in mScene.iRhObjList)
-                    {
-                        ListTargets.Add(RhObj.Id);
-                    }
+                    bool b1 = (drawnType == DrawnType.Plane) && rhObj.Attributes.Name.Contains("plane");
+                    bool b2 = (drawnType == DrawnType.Surface) && (rhObj.Attributes.Name.Contains("brepMesh") || rhObj.Attributes.Name.Contains("aprint") || rhObj.Attributes.Name.Contains("patchSurface"));
+                    bool b3 = (drawnType == DrawnType.Reference) && rhObj.Attributes.Name.Contains("railPlane");
 
+                    if (b1 || b2 || b3)
+                    {
+                        rayCastingObjs.Add(new ObjRef(rhObj.Id));
+                    }
                 }
+
+                Geometry.Geometry geo = new Geometry.DrawPointMarker(new OpenTK.Vector3(0, 0, 0));
+                Material.Material m = new Material.SingleColorMaterial(1, 1, 1, 0);
+                drawPoint = new SceneNode("drawPoint", ref geo, ref m);
+                Util.addSceneNode(ref mScene, ref drawPoint);
+
             }
 
-
         }
 
-        public override void leaveTop()
-        {
-            clearDrawing();
-        }
-
-        public override void deactivate()
-        {
-            clearDrawing();
-        }
 
         public override void draw(bool isTop)
         {
-            //visualize the point on the plane for type = 1, 2, 3
-            if (drawnType != DrawnType.In3D && isTop)
+            if (!isTop)
             {
-                //ray casting to the pre-defind planes
-                OpenTK.Vector4 controller_p = Util.getControllerTipPosition(ref mScene, primaryControllerIdx == mScene.leftControllerIdx) * new OpenTK.Vector4(0, 0, 0, 1);
-                OpenTK.Vector4 controller_pZ = Util.getControllerTipPosition(ref mScene, primaryControllerIdx == mScene.leftControllerIdx) * new OpenTK.Vector4(0, 0, -1, 1);
-                Point3d controller_pRhino = Util.openTkToRhinoPoint(Util.vrToPlatformPoint(ref mScene, new OpenTK.Vector3(controller_p.X, controller_p.Y, controller_p.Z)));
-                Point3d controller_pZRhin = Util.openTkToRhinoPoint(Util.vrToPlatformPoint(ref mScene, new OpenTK.Vector3(controller_pZ.X, controller_pZ.Y, controller_pZ.Z)));
+                return;
+            }
 
-                Rhino.Geometry.Vector3d direction = new Rhino.Geometry.Vector3d(controller_pZRhin.X - controller_pRhino.X, controller_pZRhin.Y - controller_pRhino.Y, controller_pZRhin.Z - controller_pRhino.Z);
-                Ray3d ray = new Ray3d(controller_pRhino, direction);
 
-                Rhino.DocObjects.ObjectEnumeratorSettings settings = new Rhino.DocObjects.ObjectEnumeratorSettings();
-                settings.ObjectTypeFilter = Rhino.DocObjects.ObjectType.Brep;
-                //settings.NameFilter = "plane";
-                float mimD = 1000000f;
-                hitPlane = false;
-                //lock the active plane when users start drawing
-                if (!lockPlane)
+            OpenTK.Vector4 controller_p = Util.getControllerTipPosition(ref mScene, primaryDeviceIndex == mScene.leftControllerIdx) * new OpenTK.Vector4(0, 0, 0, 1);
+            OpenTK.Vector4 controller_pZ = Util.getControllerTipPosition(ref mScene, primaryDeviceIndex == mScene.leftControllerIdx) * new OpenTK.Vector4(0, 0, -1, 1);
+            Point3d controller_pRhino = Util.openTkToRhinoPoint(Util.vrToPlatformPoint(ref mScene, new OpenTK.Vector3(controller_p.X, controller_p.Y, controller_p.Z)));
+            Point3d controller_pZRhin = Util.openTkToRhinoPoint(Util.vrToPlatformPoint(ref mScene, new OpenTK.Vector3(controller_pZ.X, controller_pZ.Y, controller_pZ.Z)));
+            Rhino.Geometry.Vector3d direction = new Rhino.Geometry.Vector3d(controller_pZRhin.X - controller_pRhino.X, controller_pZRhin.Y - controller_pRhino.Y, controller_pZRhin.Z - controller_pRhino.Z);
+
+            if (drawnType != DrawnType.In3D)
+            {
+                Util.rayCasting(controller_pRhino, direction, ref rayCastingObjs, out projectP, out targetPRhObjID);
+            }
+            else
+            {
+                projectP = controller_pRhino;
+            }
+
+            //only snap for the first drawing point
+            Util.snapToPoints(ref projectP, ref snapPointsList);
+
+            Vector3 projectPVR = Util.platformToVRPoint(ref mScene, Util.RhinoToOpenTKPoint(projectP));
+            if (drawnType != DrawnType.In3D)
+            {
+                OpenTK.Matrix4 t = OpenTK.Matrix4.CreateTranslation(projectPVR);
+                t.Transpose();
+                drawPoint.transform = t;
+                if (targetPRhObjID != Guid.Empty)
                 {
-                    foreach (Rhino.DocObjects.RhinoObject rhObj in mScene.rhinoDoc.Objects.GetObjectList(settings))
-                    {
-                        //check for different drawing curve types
-                        bool b1 = (drawnType == DrawnType.Plane) && rhObj.Attributes.Name.Contains("plane");
-                        bool b2 = (drawnType == DrawnType.Surface) && (rhObj.Attributes.Name.Contains("brepMesh") || rhObj.Attributes.Name.Contains("aprint") || rhObj.Attributes.Name.Contains("patchSurface"));
-                        bool b3 = (drawnType == DrawnType.Reference) && ListTargets.Contains(rhObj.Id);
-
-                        //only drawing on planes for now rhObj.Attributes.Name.Contains("brepMesh") || rhObj.Attributes.Name.Contains("aprint") || rhObj.Attributes.Name.Contains("plane")
-                        //if (rhObj.Attributes.Name.Contains("plane"))
-                        if (b1 || b2 || b3)
-                        {
-                            List<GeometryBase> geometries = new List<GeometryBase>();
-                            geometries.Add(rhObj.Geometry);
-                            //must be a brep or surface, not mesh
-                            Point3d[] rayIntersections = Rhino.Geometry.Intersect.Intersection.RayShoot(ray, geometries, 1);
-                            if (rayIntersections != null)
-                            {
-                                //get the nearest one
-                                OpenTK.Vector3 tmpP = Util.platformToVRPoint(ref mScene, new OpenTK.Vector3((float)rayIntersections[0].X, (float)rayIntersections[0].Y, (float)rayIntersections[0].Z));
-                                float distance = (float)Math.Sqrt(Math.Pow(tmpP.X - controller_p.X, 2) + Math.Pow(tmpP.Y - controller_p.Y, 2) + Math.Pow(tmpP.Z - controller_p.Z, 2));
-
-                                if (distance < mimD)
-                                {
-                                    hitPlane = true;
-                                    targetPSN = mScene.brepToSceneNodeDic[rhObj.Id];
-                                    targetPRhObj = rhObj;
-                                    mimD = distance;
-                                    projectP = Util.platformToVRPoint(ref mScene, new OpenTK.Vector3((float)rayIntersections[0].X, (float)rayIntersections[0].Y, (float)rayIntersections[0].Z));
-                                }
-
-                            }
-
-                        }
-                    }
-
-                    if (isMove)
-                    {
-                        //OpenTK.Vector4 controller_p = Util.getControllerTipPosition(ref mScene, primaryControllerIdx == mScene.leftControllerIdx) * new OpenTK.Vector4(0, 0, 0, 1);
-                        //Point3d controller_pRhino = Util.openTkToRhinoPoint(Util.vrToPlatformPoint(ref mScene, new OpenTK.Vector3(controller_p.X, controller_p.Y, controller_p.Z)));
-
-                        OpenTK.Vector3 controllerVector = Util.vrToPlatformPoint(ref mScene, new OpenTK.Vector3(controller_p.X, controller_p.Y, controller_p.Z)) - Util.RhinoToOpenTKPoint(moveControlerOrigin);
-
-                        float translate = OpenTK.Vector3.Dot(controllerVector, planeNormal) / planeNormal.Length;
-                        //move from the porjection point not origin
-                        endP = new Point3d(movePlaneOrigin.X + translate * planeNormal.X, movePlaneOrigin.Y + translate * planeNormal.Y, movePlaneOrigin.Z + translate * planeNormal.Z);
-
-                        Plane newPlane = new Plane(endP, new Rhino.Geometry.Vector3d(planeNormal.X, planeNormal.Y, planeNormal.Z));
-                        int size = 240;
-                        PlaneSurface plane_surface = new PlaneSurface(newPlane, new Interval(-size, size), new Interval(-size, size));
-                        designPlane = Brep.CreateFromSurface(plane_surface);
-
-                        movePlaneRenderID = Util.addSceneNodeWithoutDraw(ref mScene, designPlane, ref plane_m, "Move-" + movePlane.Attributes.Name);
-
-                    }
-
+                    drawPoint.material = new Material.SingleColorMaterial(1, 1, 1, 1);
                 }
                 else
                 {
-                    if (targetPRhObj != null)
-                    {
-                        List<GeometryBase> geometries = new List<GeometryBase>();
-                        geometries.Add(targetPRhObj.Geometry);
-                        //must be a brep or surface, not mesh
-                        Point3d[] rayIntersections = Rhino.Geometry.Intersect.Intersection.RayShoot(ray, geometries, 1);
-                        if (rayIntersections != null)
-                        {
-                            //get the nearest one
-                            OpenTK.Vector3 tmpP = Util.platformToVRPoint(ref mScene, new OpenTK.Vector3((float)rayIntersections[0].X, (float)rayIntersections[0].Y, (float)rayIntersections[0].Z));
-                            float distance = (float)Math.Sqrt(Math.Pow(tmpP.X - controller_p.X, 2) + Math.Pow(tmpP.Y - controller_p.Y, 2) + Math.Pow(tmpP.Z - controller_p.Z, 2));
-
-                            if (distance < mimD)
-                            {
-                                hitPlane = true;
-                                mimD = distance;
-                                projectP = Util.platformToVRPoint(ref mScene, new OpenTK.Vector3((float)rayIntersections[0].X, (float)rayIntersections[0].Y, (float)rayIntersections[0].Z));
-                            }
-                        }
-
-                        //move the plane if user needs
-                        if (isMove)
-                        {
-                            //OpenTK.Vector4 controller_p = Util.getControllerTipPosition(ref mScene, primaryControllerIdx == mScene.leftControllerIdx) * new OpenTK.Vector4(0, 0, 0, 1);
-                            //Point3d controller_pRhino = Util.openTkToRhinoPoint(Util.vrToPlatformPoint(ref mScene, new OpenTK.Vector3(controller_p.X, controller_p.Y, controller_p.Z)));
-
-                            OpenTK.Vector3 controllerVector = Util.vrToPlatformPoint(ref mScene, new OpenTK.Vector3(controller_p.X, controller_p.Y, controller_p.Z)) - Util.RhinoToOpenTKPoint(moveControlerOrigin);
-
-                            float translate = OpenTK.Vector3.Dot(controllerVector, planeNormal) / planeNormal.Length;
-                            endP = new Point3d(movePlaneOrigin.X + translate * planeNormal.X, movePlaneOrigin.Y + translate * planeNormal.Y, movePlaneOrigin.Z + translate * planeNormal.Z);
-
-                            Plane newPlane = new Plane(endP, new Rhino.Geometry.Vector3d(planeNormal.X, planeNormal.Y, planeNormal.Z));
-                            int size = 240;
-                            PlaneSurface plane_surface = new PlaneSurface(newPlane, new Interval(-size, size), new Interval(-size, size));
-                            designPlane = Brep.CreateFromSurface(plane_surface);
-
-                            movePlaneRenderID = Util.addSceneNodeWithoutDraw(ref mScene, designPlane, ref plane_m, "Move-" + movePlane.Attributes.Name);
-
-                        }
-                    }
-                }
-
-                if (!hitPlane)
-                {
-                    if (!lockPlane)
-                    {
-                        targetPSN = null;
-                        targetPRhObj = null;
-                    }
-                    projectP = new OpenTK.Vector3(100, 100, 100); //make it invisable
-                }
-
-                pointOnObj = targetPRhObj;
-
-                if (hitPlane && drawnType != DrawnType.In3D)
-                {
-                    //create contour curve and snap points
-                    if (!lockPlane)
-                        computeContourCurve();
-                    projectP = snapToPoints(projectP, snapPointsList);
-
-                }
-
-                //visualize the projection points
-                // inverted rotation first
-
-                OpenTK.Matrix4 t = OpenTK.Matrix4.CreateTranslation(Util.transformPoint(mScene.tableGeometry.transform.Inverted(), projectP));
-                t.Transpose();
-                drawPoint.transform = t;
-
-                pos = projectP;
-            }
-            else
-            {
-                pos = Util.getTranslationVector3(Util.getControllerTipPosition(ref mScene, primaryControllerIdx == mScene.leftControllerIdx));
-            }
-        }
-
-        public void clearDrawing()
-        {
-            Util.setPlaneAlpha(ref mScene, 0.0f);
-            pointMarkers.Clear();
-
-            //clear the curve and points
-            if (mScene.tableGeometry.children.Count > 0)
-            {
-                // need to remove rerverse since the list update dynamically
-                foreach (SceneNode sn in mScene.tableGeometry.children.Reverse<SceneNode>())
-                {
-                    if (sn.name == "drawPoint" || sn.name == "EditPoint")
-                    {
-                        mScene.tableGeometry.children.Remove(sn);
-                    }
+                    drawPoint.material = new Material.SingleColorMaterial(1, 1, 1, 0);
                 }
             }
 
-            pointsList.Clear();
-        }
 
 
-        private Vector3 snapToPoints(Vector3 projectP, List<Vector3> pointsList)
-        {
-            bool snap = false;
-            foreach (Vector3 p in pointsList)
+
+            //moving XYZ planes
+            if (currentState == State.MOVEPLANE)
             {
-                //snap to origin
-                if (Math.Sqrt(Math.Pow(projectP.X - p.X, 2) + Math.Pow(projectP.Y - p.Y, 2) + Math.Pow(projectP.Z - p.Z, 2)) < 0.01)
-                {
-                    projectP = p;
-                    snap = true;
-                    break;
-                }
-            }
+                OpenTK.Vector3 controllerVector = Util.vrToPlatformPoint(ref mScene, new OpenTK.Vector3(controller_p.X, controller_p.Y, controller_p.Z)) - Util.RhinoToOpenTKPoint(moveControlerOrigin);
+             
+                float translate = OpenTK.Vector3.Dot(controllerVector, Util.RhinoToOpenTKVector(planeNormal)) / (float)planeNormal.Length;
+                float relTranslate = translate - lastTranslate;
+                lastTranslate = translate;
 
-            return projectP;
-        }
-
-        private void computeContourCurve()
-        {
-            snapPointsList = new List<Vector3>();
-            //detecting plane
-            Brep targetBrep = (Brep)(pointOnObj.Geometry);
-            //compute the brepFace where the curve is on
-            //Surface s = targetBrep.Faces[0];
-
-            //TODO- topLeftP won't be on the face in the 3D case. so probably use orgin
-            Point3d projectPRhino = Util.openTkToRhinoPoint(Util.vrToPlatformPoint(ref mScene, projectP));
-            int faceIndex = -1;
-            for (int i = 0; i < targetBrep.Faces.Count; i++)
-            {
-                //cast BrepFace to Brep for ClosestPoint(P) menthod, and there still isn't a PointList item so we use projectP
-                double dist = targetBrep.Faces[i].DuplicateFace(false).ClosestPoint(projectPRhino).DistanceTo(projectPRhino);
-                //debuging mScene.rhinoDoc.ModelAbsoluteTolerance                   
-                if (dist < mScene.rhinoDoc.ModelAbsoluteTolerance)
-                {
-                    faceIndex = i;
-                    break;
-                }
+                Matrix4 transM = Matrix4.CreateTranslation(new Vector3(relTranslate * (float)planeNormal.X, relTranslate * (float)planeNormal.Y, relTranslate * (float)planeNormal.Z));
+                transM.Transpose();
+                Util.updateRhinoObjectSceneNode(ref mScene, ref movePlaneRef, Util.OpenTKToRhinoTransform(transM));
+                
             }
-            Surface s = targetBrep.Faces[faceIndex];
-            //testing finding the edge curve
-            Rhino.Geometry.Curve[] edgeCurves = (targetBrep.Faces[faceIndex].DuplicateFace(false)).DuplicateEdgeCurves(true);
-            double tol = mScene.rhinoDoc.ModelAbsoluteTolerance * 2.1;
-            edgeCurves = Rhino.Geometry.Curve.JoinCurves(edgeCurves, tol);
-            contourCurve = edgeCurves[0];
-            //detect whether it's rect or circle then generate a snap pointList
-            Circle circle;
-            Rhino.Geometry.Polyline polyline;
-            if (contourCurve.TryGetCircle(out circle))
-            {
-                snapPointsList.Add(Util.platformToVRPoint(ref mScene, Util.RhinoToOpenTKPoint(circle.Center)));
-                snapPointsList.Add(Util.platformToVRPoint(ref mScene, Util.RhinoToOpenTKPoint(circle.PointAt(0))));
-                snapPointsList.Add(Util.platformToVRPoint(ref mScene, Util.RhinoToOpenTKPoint(circle.PointAt(Math.PI / 2))));
-                snapPointsList.Add(Util.platformToVRPoint(ref mScene, Util.RhinoToOpenTKPoint(circle.PointAt(Math.PI))));
-                snapPointsList.Add(Util.platformToVRPoint(ref mScene, Util.RhinoToOpenTKPoint(circle.PointAt(Math.PI * 1.5))));
-
-            }
-            else if (contourCurve.TryGetPolyline(out polyline))
-            {
-                Rectangle3d rect = Rectangle3d.CreateFromPolyline(polyline);
-                snapPointsList.Add(Util.platformToVRPoint(ref mScene, Util.RhinoToOpenTKPoint(rect.Center)));
-                snapPointsList.Add(Util.platformToVRPoint(ref mScene, Util.RhinoToOpenTKPoint(rect.Corner(0))));
-                snapPointsList.Add(Util.platformToVRPoint(ref mScene, Util.RhinoToOpenTKPoint(rect.Corner(1))));
-                snapPointsList.Add(Util.platformToVRPoint(ref mScene, Util.RhinoToOpenTKPoint(rect.Corner(2))));
-                snapPointsList.Add(Util.platformToVRPoint(ref mScene, Util.RhinoToOpenTKPoint(rect.Corner(3))));
-            }
-            else
-            {
-                double u = 0;
-                double v = 0;
-                s.ClosestPoint(s.GetBoundingBox(true).Center, out u, out v);
-                snapPointsList.Add(Util.platformToVRPoint(ref mScene, Util.RhinoToOpenTKPoint(s.PointAt(u, v))));
-            }
-
-            curvePlane = new Plane();
-            //surface might not be a perfect planar surface
-            tolerance = 0;
-            while (tolerance < 100)
-            {
-                if (s.TryGetPlane(out curvePlane, tolerance))
-                {
-                    break;
-                }
-                tolerance++;
-            }
-        }
-
-        private void createCustomPlane(string type, Point3d origin)
-        {
-            Guid planeId = Guid.Empty;
-            int size = 240;
-            Plane plane = new Plane();
-            if (type == "YZ")
-            {
-                plane = new Plane(origin, new Rhino.Geometry.Vector3d(1, 0, 0));
-            }
-            else if (type == "XZ")
-            {
-                plane = new Plane(origin, new Rhino.Geometry.Vector3d(0, 1, 0));
-            }
-            else if (type == "XY")
-            {
-                plane = new Plane(origin, new Rhino.Geometry.Vector3d(0, 0, 1));
-            }
-
-            PlaneSurface plane_surface = new PlaneSurface(plane, new Interval(-size, size), new Interval(-size, size));
-            designPlane = Brep.CreateFromSurface(plane_surface);
-
-            if (designPlane != null)
-            {
-                planeId = Util.addSceneNodeWithoutVR(ref mScene, designPlane, "plane" + type);
-            }
-
-
 
         }
 
         protected override void onClickOculusTrigger(ref VREvent_t vrEvent)
         {
 
-            if (projectP.X == 100 && projectP.Y == 100 && projectP.Z == 100)
+            primaryDeviceIndex = vrEvent.trackedDeviceIndex;
+            if (currentState != State.READY && targetPRhObjID == null)
+            {
                 return;
+            }
 
-            lockPlane = true;
+            pointOnObjRef = new ObjRef(targetPRhObjID);
+            //chage to only raycasting to the obj where we draw
+            rayCastingObjs.Clear();
+            rayCastingObjs.Add(pointOnObjRef);
 
             //testing
-            mScene.iPointList.Add(pos); //not using iPointList anymore but added here since EditPoint3 still use
-            pointsList.Add(Util.openTkToRhinoPoint(Util.vrToPlatformPoint(ref mScene, pos)));
+            Vector3 projectPVR = Util.platformToVRPoint(ref mScene, Util.RhinoToOpenTKPoint(projectP));
+            mScene.iPointList.Add(Util.platformToVRPoint(ref mScene, projectPVR)); //not use at the current version, point is VR coordinate
+            pointsList.Add(projectP);
 
-            //TODO- figure out why here need mScene.tableGeometry.transform.Inverted() but others don't
-            OpenTK.Vector3 p = Util.transformPoint(mScene.tableGeometry.transform.Inverted(), pos);
-            SceneNode sn = Util.MarkPointSN(ref mScene.tableGeometry, p, 0, 1, 0);
-            pointMarkers.Add(sn);
+            //render edit points in VR
+            Geometry.Geometry geo = new Geometry.DrawPointMarker(new Vector3(0, 0, 0));
+            Material.Material m = new Material.SingleColorMaterial(0, 1, 0, 1);
+            SceneNode editPointSN;
+            Util.MarkPointVR(ref mScene, projectPVR, ref geo, ref m, out editPointSN);
+            pointMarkers.Add(editPointSN);
 
             //TODO-hide two other design plane
             if (pointMarkers.Count == 1)
             {
-                if (pointOnObj != null && drawnType == DrawnType.Plane)
+                if (pointOnObjRef != null && drawnType == DrawnType.Plane)
                 {
-                    Util.hideOtherPlanes(ref mScene, pointOnObj.Attributes.Name);
+                    Util.hideOtherPlanes(ref mScene, pointOnObjRef.Object().Attributes.Name);
                     computeContourCurve();
                 }
-                else if (pointOnObj != null && drawnType == DrawnType.Surface)
+                else if (pointOnObjRef != null && drawnType == DrawnType.Surface)
                 {
                     computeContourCurve();
                 }
             }
 
-
             if (maxNumPoint == pointMarkers.Count)
             {
-
-                //tolerance < 100 == finding a cvurve plane
-                if (tolerance < 100)
+                //Assume we always can find a curvePlane sicnce we use a huge tolerance
+                NurbsCurve modelcurve = null;
+                Brep modelBrep;
+                string modelName = "";
+                if (shapeType == ShapeType.Circle)
                 {
-                    NurbsCurve modelcurve = null;
-                    Brep modelBrep;
-                    string modelName = "";
-                    if (shapeType == ShapeType.Circle)
-                    {
-                        float radius = (float)Math.Sqrt(Math.Pow(pointsList[1].X - pointsList[0].X, 2) + Math.Pow(pointsList[1].Y - pointsList[0].Y, 2) + Math.Pow(pointsList[1].Z - pointsList[0].Z, 2));
-                        Circle circle = new Rhino.Geometry.Circle(curvePlane, pointsList[0], radius);
-                        modelcurve = circle.ToNurbsCurve();
-                        modelName = "Circle";
+                    float radius = (float)Math.Sqrt(Math.Pow(pointsList[1].X - pointsList[0].X, 2) + Math.Pow(pointsList[1].Y - pointsList[0].Y, 2) + Math.Pow(pointsList[1].Z - pointsList[0].Z, 2));
+                    Circle circle = new Rhino.Geometry.Circle(curvePlane, pointsList[0], radius);
+                    modelcurve = circle.ToNurbsCurve();
+                    modelName = "Circle";
 
-                    }
-                    else if (shapeType == ShapeType.Rect)
-                    {
+                }
+                else if (shapeType == ShapeType.Rect)
+                {
 
-                        Vector3 rectDiagonalV = new Vector3((float)(pointsList[0].X - pointsList[1].X), (float)(pointsList[0].Y - pointsList[1].Y), (float)(pointsList[0].Z - pointsList[1].Z));
-                        float lenDiagonal = rectDiagonalV.Length;
-                        Vector3 rectLeftTop = new Vector3((float)pointsList[0].X, (float)pointsList[0].Y, (float)pointsList[0].Z) + lenDiagonal * rectDiagonalV.Normalized();
-                        Point3d topLeftP = new Point3d(rectLeftTop.X, rectLeftTop.Y, rectLeftTop.Z);
+                    Vector3 rectDiagonalV = new Vector3((float)(pointsList[0].X - pointsList[1].X), (float)(pointsList[0].Y - pointsList[1].Y), (float)(pointsList[0].Z - pointsList[1].Z));
+                    float lenDiagonal = rectDiagonalV.Length;
+                    Vector3 rectLeftTop = new Vector3((float)pointsList[0].X, (float)pointsList[0].Y, (float)pointsList[0].Z) + lenDiagonal * rectDiagonalV.Normalized();
+                    Point3d topLeftP = new Point3d(rectLeftTop.X, rectLeftTop.Y, rectLeftTop.Z);
 
-                        Rectangle3d rect = new Rectangle3d(curvePlane, topLeftP, pointsList[1]);
+                    Rectangle3d rect = new Rectangle3d(curvePlane, topLeftP, pointsList[1]);
 
-                        //using top-left cornel and bottom right
+                    //using top-left cornel and bottom right
 
-                        //Rectangle3d rect = new Rectangle3d(curvePlane, pointsList[0], pointsList[1]);
+                    //Rectangle3d rect = new Rectangle3d(curvePlane, pointsList[0], pointsList[1]);
 
-                        modelcurve = rect.ToNurbsCurve();
-                        modelName = "Rect";
+                    modelcurve = rect.ToNurbsCurve();
+                    modelName = "Rect";
 
-                    }
-
-                    Brep[] shapes = Brep.CreatePlanarBreps(modelcurve);
-                    modelBrep = shapes[0];
-
-                    renderObjId = Util.addSceneNode(ref mScene, modelBrep, ref profile_m, modelName);
-                    //add icurveList since we don't use EditPoint2 for circle and rect
-                    mScene.iCurveList.Add(modelcurve);
-                    //mScene.iPlaneList.Add(ref curvePlane);
                 }
 
+                Brep[] shapes = Brep.CreatePlanarBreps(modelcurve);
+                modelBrep = shapes[0];
 
-                if (drawnType != DrawnType.In3D && pointOnObj != null)
+                Guid guid = Util.addRhinoObjectSceneNode(ref mScene, ref modelBrep, ref profile_m, modelName, out renderObjSN);
+                mScene.iCurveList.Add(modelcurve);
+
+                //generate new curveOnObj for mvoingPlane cases sicne and move the XYZPlanes to origial positons
+                if (drawnType == DrawnType.Plane)
                 {
-                    //in order to delete the moving plane after generating shape, we create another rhinoobj
-                    //mScene.iRhObjList.Add(pointOnObj); //pointOnObj is new plane after we move
-                    mScene.iPlaneList.Add(curvePlane);
+                    Rhino.Geometry.Vector3d newNormal = new Rhino.Geometry.Vector3d(); ;
+                    Point3d newOrigin = new Point3d();
+                    String planeName = pointOnObjRef.Object().Attributes.Name;
+                    Point3d planeOrigin = pointOnObjRef.Object().Geometry.GetBoundingBox(true).Center;
+                    if (planeName.Contains("planeXY"))
+                    {
+                        newNormal = new Rhino.Geometry.Vector3d(0, 0, 1);
+                        newOrigin = new Point3d(0, 0, planeOrigin.Z);
+
+                    }
+                    else if (planeName.Contains("planeYZ"))
+                    {
+                        newNormal = new Rhino.Geometry.Vector3d(1, 0, 0);
+                        newOrigin = new Point3d(planeOrigin.X, 0, 0);
+
+                    }
+                    else if( planeName.Contains("planeXZ"))
+                    {
+                        newNormal = new Rhino.Geometry.Vector3d(0, 1, 0);
+                        newOrigin = new Point3d(0, planeOrigin.Y, 0);
+                    }
+
+                    Plane newPlane = new Plane(newOrigin, newNormal);
                     int size = 240;
-                    PlaneSurface plane_surface = new PlaneSurface(curvePlane, new Interval(-size, size), new Interval(-size, size));
-                    Brep pointOnPlane = Brep.CreateFromSurface(plane_surface);
-                    Guid guid = Util.addSceneNodeWithoutVR(ref mScene, pointOnPlane, "moveP");
-                    mScene.iRhObjList.Add(mScene.rhinoDoc.Objects.Find(guid));
+                    PlaneSurface plane_surface = new PlaneSurface(newPlane, new Interval(-size, size), new Interval(-size, size));
+                    Brep newPlaneBrep = Brep.CreateFromSurface(plane_surface);
+
+                    Guid newPlaneID = Util.addRhinoObject(ref mScene, ref newPlaneBrep, "MoveP");
+                    //might be better to use Replace(), just need to be careful about the referece count
+                    pointOnObjRef = null;
+                    pointOnObjRef = new ObjRef(newPlaneID);
+
+                    mScene.iPlaneList.Add(newPlane);
+                    mScene.iRhObjList.Add(pointOnObjRef);
 
                 }
-                else
+                else if (drawnType == DrawnType.Surface)
                 {
-                    curvePlane = new Plane(new Point3d(-100, -100, -100), new Rhino.Geometry.Vector3d(0, 0, 0));
                     mScene.iPlaneList.Add(curvePlane);
-                }
-
-                lockPlane = false;
-                //clearDrawing();
-
-                if (pointOnObj != null && (pointOnObj.Geometry.GetBoundingBox(true).Center.X != 0 || pointOnObj.Geometry.GetBoundingBox(true).Center.Y != 0 || pointOnObj.Geometry.GetBoundingBox(true).Center.Z != 0))
-                {
-                    DesignPlane3 tempXY = new DesignPlane3(ref mScene, 2);
-                    DesignPlane3 tempYZ = new DesignPlane3(ref mScene, 0);
-                    DesignPlane3 tempXZ = new DesignPlane3(ref mScene, 1);
-                    /*
-                    string name = pointOnObj.Attributes.Name;
-
-                    if (name.Contains("planeXY"))
-                    {                      
-                        //TODO-might need to change name or will affect DrawnType.planes later, however we can't change to DrawType.reference. how to do ?
-                        Util.removeStaticSceneNodeKeepRhio(ref mScene, mScene.xyPlane.guid);
-                    }
-                    else
-                    {
-                        Util.removeStaticSceneNode(ref mScene, mScene.xyPlane.guid);
-                    }
-                    if (name.Contains("planeYZ"))
-                    {
-                        Util.removeStaticSceneNodeKeepRhio(ref mScene, mScene.yzPlane.guid);
-                    }
-                    else
-                    {
-                        Util.removeStaticSceneNode(ref mScene, mScene.yzPlane.guid);
-                    }
-
-                    if (name.Contains("planeXZ"))
-                    {
-                        Util.removeStaticSceneNodeKeepRhio(ref mScene, mScene.xzPlane.guid);
-                    }
-                    else
-                    {
-                        Util.removeStaticSceneNode(ref mScene, mScene.xzPlane.guid);
-                    }
-                    */
-
-                    Util.removeStaticSceneNode(ref mScene, mScene.xyPlane.guid);
-                    Util.removeStaticSceneNode(ref mScene, mScene.yzPlane.guid);
-                    Util.removeStaticSceneNode(ref mScene, mScene.xzPlane.guid);
-
-                    mScene.xyPlane = tempXY;
-                    mScene.yzPlane = tempYZ;
-                    mScene.xzPlane = tempXZ;
-
-                    //Util.setPlaneAlpha(ref mScene, 0.0f);
+                    mScene.iRhObjList.Add(pointOnObjRef);
                 }
 
                 //call next interaction in the chain
                 mScene.pushInteractionFromChain();
+                currentState = State.READY;
+
+
             }
         }
 
         protected override void onReleaseOculusTrigger(ref VREvent_t vrEvent)
         {
+           
+        }
 
+        private void clearDrawing()
+        {
+            if (drawnType == DrawnType.Plane)
+            {
+                //resetPlane
+                mScene.xyPlane.resetOrgin();
+                mScene.yzPlane.resetOrgin();
+                mScene.xzPlane.resetOrgin();
+                Util.setPlaneAlpha(ref mScene, 0.0f);
+            }
+
+            for (int i = 0; i < pointMarkers.Count; i++)
+            {
+                SceneNode sn = pointMarkers[i];
+                Util.removeSceneNode(ref mScene, ref sn);
+            }
+
+            pointMarkers.Clear();
+            pointsList.Clear();
+
+            //clear drawPoint
+            Util.removeSceneNode(ref mScene, ref drawPoint);
+          
         }
 
         protected override void onClickOculusGrip(ref VREvent_t vrEvent)
         {
-            if (!hitPlane)
+            if (targetPRhObjID == Guid.Empty || currentState != State.READY)
                 return;
 
-            isMove = true;
+            currentState = State.MOVEPLANE;
+            movePlaneRef = new ObjRef(targetPRhObjID);
+            lastTranslate = 0.0f;
 
             //get the plane info
-            plane_m = new Material.SingleColorMaterial(0, 0, 0, 0.4f);
-            planeNormal = new Vector3();
+            RhinoObject movePlaneObj = movePlaneRef.Object();
+            planeNormal = new Rhino.Geometry.Vector3d();
             //PointOnObject still null at this point
-            if (targetPRhObj.Attributes.Name.Contains("planeXY"))
+            if (movePlaneObj.Attributes.Name.Contains("planeXY"))
             {
-                ((Material.SingleColorMaterial)plane_m).mColor.B = .5f;
-                planeNormal = new OpenTK.Vector3(0, 0, 1);
-
+                planeNormal = new Rhino.Geometry.Vector3d(0, 0, 1);
             }
-            else if (targetPRhObj.Attributes.Name.Contains("planeYZ"))
+            else if (movePlaneObj.Attributes.Name.Contains("planeYZ"))
             {
-                ((Material.SingleColorMaterial)plane_m).mColor.R = .5f;
-                planeNormal = new OpenTK.Vector3(1, 0, 0);
+                planeNormal = new Rhino.Geometry.Vector3d(1, 0, 0);
             }
-            else if (targetPRhObj.Attributes.Name.Contains("planeXZ"))
+            else if (movePlaneObj.Attributes.Name.Contains("planeXZ"))
             {
-                ((Material.SingleColorMaterial)plane_m).mColor.G = .5f;
-                planeNormal = new OpenTK.Vector3(0, 1, 0);
+                planeNormal = new Rhino.Geometry.Vector3d(0, 1, 0);
             }
-
-            planeNormal.Normalize();
-
-            movePlane = targetPRhObj;
 
             OpenTK.Vector4 controller_p = Util.getControllerTipPosition(ref mScene, primaryControllerIdx == mScene.leftControllerIdx) * new OpenTK.Vector4(0, 0, 0, 1);
-            OpenTK.Vector3 controllerVector = Util.vrToPlatformPoint(ref mScene, new OpenTK.Vector3(controller_p.X, controller_p.Y, controller_p.Z)); //Rhino space
-            float translate = OpenTK.Vector3.Dot(controllerVector, planeNormal) / planeNormal.Length;
+            OpenTK.Vector3 controllerVector = Util.vrToPlatformPoint(ref mScene, new OpenTK.Vector3(controller_p.X, controller_p.Y, controller_p.Z));
+
+            float translate = OpenTK.Vector3.Dot(controllerVector, Util.RhinoToOpenTKVector(planeNormal)) / (float)planeNormal.Length;
             //move from the porjection point not origin
             moveControlerOrigin = new Point3d(0 + translate * planeNormal.X, 0 + translate * planeNormal.Y, 0 + translate * planeNormal.Z);
-
-            OpenTK.Vector3 planeVector = Util.vrToPlatformPoint(ref mScene, new OpenTK.Vector3(projectP.X, projectP.Y, projectP.Z));
-            float translate2 = OpenTK.Vector3.Dot(planeVector, planeNormal) / planeNormal.Length;
-            //move from the porjection point not origin
-            movePlaneOrigin = new Point3d(0 + translate2 * planeNormal.X, 0 + translate2 * planeNormal.Y, 0 + translate2 * planeNormal.Z);
-
 
         }
 
         protected override void onReleaseOculusGrip(ref VREvent_t vrEvent)
         {
-            isMove = false;
-            string name = movePlane.Attributes.Name;
-            Util.removeSceneNodeWithoutDraw(ref mScene, movePlaneRenderID);
-            Util.removeStaticSceneNode(ref mScene, movePlane.Id);
-            contourCurve = null;
-            //Util.addSceneNode(ref mScene, designPlane, ref plane_m, pointOnObj.Attributes.Name);
-
-            if (name.Contains("planeXY"))
-            {
-                mScene.xyPlane = new DesignPlane3(ref mScene, 2, endP, true);
-                mScene.xyPlane.setAlpha(0.4f);
-            }
-            else if (name.Contains("planeYZ"))
-            {
-
-                mScene.yzPlane = new DesignPlane3(ref mScene, 0, endP, true);
-                mScene.yzPlane.setAlpha(0.4f);
-            }
-            else if (name.Contains("planeXZ"))
-            {
-
-                mScene.xzPlane = new DesignPlane3(ref mScene, 1, endP, true);
-                mScene.xzPlane.setAlpha(0.4f);
-            }
+            currentState = State.READY;
+            movePlaneRef = null;
 
         }
+
+
+
+        private void computeContourCurve()
+        {
+            snapPointsList = new List<Point3d>();
+            Double tolerance = 0;
+            if (drawnType != DrawnType.In3D)
+            {
+                Brep targetBrep = (Brep)(pointOnObjRef.Object().Geometry);
+                //TODO- topLeftP won't be on the face in the 3D case. so probably use orgin
+                int faceIndex = -1;
+                for (int i = 0; i < targetBrep.Faces.Count; i++)
+                {
+                    //cast BrepFace to Brep for ClosestPoint(P) menthod
+                    double dist = targetBrep.Faces[i].DuplicateFace(false).ClosestPoint(projectP).DistanceTo(projectP);
+                    if (dist < mScene.rhinoDoc.ModelAbsoluteTolerance)
+                    {
+                        faceIndex = i;
+                        break;
+                    }
+                }
+                Surface s = targetBrep.Faces[faceIndex];
+                //surface might not be a perfect planar surface                     
+                while (tolerance < toleranceMax)
+                {
+                    if (s.TryGetPlane(out curvePlane, tolerance))
+                    {
+                        break;
+                    }
+                    tolerance++;
+                }
+
+                //testing finding the edge curve
+                Rhino.Geometry.Curve[] edgeCurves = (targetBrep.Faces[faceIndex].DuplicateFace(false)).DuplicateEdgeCurves(true);
+                double tol = mScene.rhinoDoc.ModelAbsoluteTolerance * 2.1;
+                edgeCurves = Rhino.Geometry.Curve.JoinCurves(edgeCurves, tol);
+                contourCurve = edgeCurves[0];
+
+                //detect whether it's rect or circle then generate a snap pointList
+                Circle circle;
+                Rhino.Geometry.Polyline polyline;
+                if (contourCurve.TryGetCircle(out circle))
+                {
+                    snapPointsList.Add(circle.Center);
+                    snapPointsList.Add(circle.PointAt(0));
+                    snapPointsList.Add(circle.PointAt(Math.PI / 2));
+                    snapPointsList.Add(circle.PointAt(Math.PI));
+                    snapPointsList.Add(circle.PointAt(Math.PI * 1.5));
+
+                }
+                else if (contourCurve.TryGetPolyline(out polyline))
+                {
+                    Rectangle3d rect = Rectangle3d.CreateFromPolyline(polyline);
+                    snapPointsList.Add(rect.Center);
+                    snapPointsList.Add(rect.Corner(0));
+                    snapPointsList.Add(rect.Corner(1));
+                    snapPointsList.Add(rect.Corner(2));
+                    snapPointsList.Add(rect.Corner(3));
+                }
+                else
+                {
+                    double u = 0;
+                    double v = 0;
+                    s.ClosestPoint(s.GetBoundingBox(true).Center, out u, out v);
+                    snapPointsList.Add(s.PointAt(u, v));
+                }
+            }
+
+
+            
+
+
+        }
+
+
+
 
     }
 }

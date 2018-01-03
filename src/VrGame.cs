@@ -6,6 +6,7 @@ using Valve.VR;
 using Rhino.Geometry;
 using Emgu.CV.Structure;
 using Emgu.CV;
+using static SparrowHawk.Scene;
 
 namespace SparrowHawk
 {
@@ -49,7 +50,7 @@ namespace SparrowHawk
         Matrix4 glmVRtoMarker;
         byte[] inliers;
 
-        DesignPlane3 xzPlane, xyPlane, yzPlane;
+        DesignPlane xzPlane, xyPlane, yzPlane;
 
         Geometry.Geometry printStroke;
         Material.Material printStroke_m;
@@ -233,16 +234,16 @@ namespace SparrowHawk
                             OpenTK.Vector3 p2 = new Vector3(s.data[4], s.data[5], s.data[6]);
                             p2 = Util.platformToVRPoint(ref mScene, p2);
 
-                            if (((Geometry.GeometryStroke2)printStroke).mPoints.Count == 0)
+                            if (((Geometry.RobotPrintStroke)printStroke).mPoints.Count == 0)
                             {
-                                printStroke = new Geometry.GeometryStroke2(ref mScene);
-                                ((Geometry.GeometryStroke2)printStroke).addEdge(p1, p2);
+                                printStroke = new Geometry.RobotPrintStroke(ref mScene);
+                                ((Geometry.RobotPrintStroke)printStroke).addEdge(p1, p2);
                                 printStrokeSN = new SceneNode("PrintStroke", ref printStroke, ref printStroke_m);
                                 mScene.tableGeometry.add(ref printStrokeSN);
                             }
                             else
                             {
-                                ((Geometry.GeometryStroke2)printStroke).addEdge(p1, p2);
+                                ((Geometry.RobotPrintStroke)printStroke).addEdge(p1, p2);
                                 printStrokeSN.geometry = printStroke;
                             }
 
@@ -252,17 +253,17 @@ namespace SparrowHawk
                             OpenTK.Vector3 p1 = new Vector3(s.data[1], s.data[2], s.data[3]);
                             p1 = Util.platformToVRPoint(ref mScene, p1);
                             //((Geometry.GeometryStroke2)printStroke).addPoint(p1);
-                            ((Geometry.GeometryStroke2)printStroke).addEdge(((Geometry.GeometryStroke2)printStroke).mPoints[((Geometry.GeometryStroke2)printStroke).mPoints.Count - 1], p1);
+                            ((Geometry.RobotPrintStroke)printStroke).addEdge(((Geometry.RobotPrintStroke)printStroke).mPoints[((Geometry.RobotPrintStroke)printStroke).mPoints.Count - 1], p1);
                             printStrokeSN.geometry = printStroke;
                         }
                     }
                     break;
                 case SparrowHawkSignal.ESparrowHawkSigalType.CutType:
-                    string guidStr = s.strData;
+                    string guidStr = s.strData;                  
                     Guid delId = new Guid(guidStr);
-                    Util.removeSceneNode(ref mScene, delId);
+                    Util.removeRhinoObjectSceneNode(ref mScene, delId);
                     //removePrintStroke and show the model again
-                    ((Geometry.GeometryStroke2)printStroke).removePoint();
+                    ((Geometry.RobotPrintStroke)printStroke).removePoint();
                     //mScene.tableGeometry.remove(ref printStrokeSN); //already remove
                     Rhino.DocObjects.ObjectEnumeratorSettings settings = new Rhino.DocObjects.ObjectEnumeratorSettings();
                     settings.ObjectTypeFilter = Rhino.DocObjects.ObjectType.Brep;
@@ -270,7 +271,7 @@ namespace SparrowHawk
                     {
                         if (rhObj.Attributes.Name.Contains("aprint"))
                         {
-                            SceneNode sn = mScene.brepToSceneNodeDic[rhObj.Id];
+                            SceneNode sn = mScene.BiDictionaryRhinoVR.GetByFirst(rhObj.Id);
                             Material.LambertianMaterial show_m = new Material.LambertianMaterial(((Material.LambertianMaterial)sn.material).mColor.R, ((Material.LambertianMaterial)sn.material).mColor.G, ((Material.LambertianMaterial)sn.material).mColor.B, .3f);
                             sn.material = show_m;
                         }
@@ -469,9 +470,9 @@ namespace SparrowHawk
             rayTraceL.transform = new Matrix4(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1);//mScene.mLeftControllerOffset;
 
 
-            mScene.xzPlane = new DesignPlane3(ref mScene, 1);
-            mScene.xyPlane = new DesignPlane3(ref mScene, 2);
-            mScene.yzPlane = new DesignPlane3(ref mScene, 0);
+            mScene.xzPlane = new DesignPlane(ref mScene, XYZPlanes.XZ);
+            mScene.xyPlane = new DesignPlane(ref mScene, XYZPlanes.XY);
+            mScene.yzPlane = new DesignPlane(ref mScene, XYZPlanes.YZ);
 
 
             /*
@@ -602,7 +603,7 @@ namespace SparrowHawk
             */
 
             //testing visualize printStroke
-            printStroke = new Geometry.GeometryStroke2(ref mScene);
+            printStroke = new Geometry.RobotPrintStroke(ref mScene);
             printStroke_m = new Material.SingleColorMaterial(1, 1, 0, 1.0f);
 
             return (eError == EVRInitError.None);
@@ -623,12 +624,6 @@ namespace SparrowHawk
                 mRenderer.ovrvision_controller.setDefaultMatrixHC();
 
 
-            if (e.KeyChar == 'G' || e.KeyChar == 'g')
-            {
-                mScene.popInteraction();
-                mScene.pushInteraction(new Interaction.Grip(ref mScene));
-            }
-
             if (e.KeyChar == 'J' || e.KeyChar == 'j')
             {
                 //mScene.popInteraction();
@@ -644,12 +639,6 @@ namespace SparrowHawk
                         break;
                     }
                 }
-            }
-
-            if (e.KeyChar == 'B' || e.KeyChar == 'b')
-            {
-                mScene.popInteraction();
-                mScene.pushInteraction(new Interaction.Delete(ref mScene));
             }
 
             if (e.KeyChar == 'M' || e.KeyChar == 'm')
@@ -696,9 +685,12 @@ namespace SparrowHawk
 
                 Material.Material mesh_m = new Material.LambertianMaterial(.7f, .7f, .7f, .3f);
                 string modelName = "aprint";
-                Util.addSceneNode(ref mScene, teapotBody, ref mesh_m, modelName);
-                Util.addSceneNode(ref mScene, teapotSprout, ref mesh_m, modelName);
-                Util.addSceneNode(ref mScene, teapotHandle, ref mesh_m, modelName);
+                SceneNode teapotBodySN;
+                Util.addRhinoObjectSceneNode(ref mScene, ref teapotBody, ref mesh_m, modelName, out teapotBodySN);
+                SceneNode teapotSproutSN;
+                Util.addRhinoObjectSceneNode(ref mScene, ref teapotSprout, ref mesh_m, modelName, out teapotSproutSN);
+                SceneNode teapotHandleSN;
+                Util.addRhinoObjectSceneNode(ref mScene, ref teapotHandle, ref mesh_m, modelName, out teapotHandleSN);
 
             }
 
@@ -729,7 +721,8 @@ namespace SparrowHawk
                 settings.ObjectTypeFilter = Rhino.DocObjects.ObjectType.Brep;
                 foreach (Rhino.DocObjects.RhinoObject rhObj in mScene.rhinoDoc.Objects.GetObjectList(settings))
                 {
-                    if (mScene.brepToSceneNodeDic.ContainsKey(rhObj.Id) && !rhObj.Attributes.Name.Contains("planeXY") && !rhObj.Attributes.Name.Contains("planeXZ")
+                    SceneNode sn;
+                    if (mScene.BiDictionaryRhinoVR.TryGetByFirst(rhObj.Id, out sn) && !rhObj.Attributes.Name.Contains("planeXY") && !rhObj.Attributes.Name.Contains("planeXZ")
                                                                             && !rhObj.Attributes.Name.Contains("planeYZ"))
                     {
                         //SceneNode sn = mScene.brepToSceneNodeDic[rhObj.Id];

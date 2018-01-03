@@ -54,7 +54,7 @@ namespace SparrowHawk
             material = null;
             guid = Guid.NewGuid();
             mRenderLate = false;
-        }
+        }   
 
         public void render(ref Matrix4 vp, Matrix4 model)
         {
@@ -95,6 +95,7 @@ namespace SparrowHawk
             children.Remove(child);
             child.parent = null;
         }
+
     }
 
     public class Scene
@@ -105,8 +106,7 @@ namespace SparrowHawk
         public SceneNode tableGeometry = new SceneNode("Encoder-Affected Geometry");
         public SceneNode leftControllerNode = new SceneNode("Right Controller Node");
         public SceneNode rightControllerNode = new SceneNode("Left Controller Node");
-        public Dictionary<Guid, SceneNode> brepToSceneNodeDic = new Dictionary<Guid, SceneNode>();
-        public Dictionary<Guid, Rhino.DocObjects.RhinoObject> SceneNodeToBrepDic = new Dictionary<Guid, Rhino.DocObjects.RhinoObject>();
+        public BiDictionaryOneToOne<Guid, SceneNode> BiDictionaryRhinoVR = new BiDictionaryOneToOne<Guid, SceneNode>();
         DateTime mLastFrameTime;
         DateTime mCurrentFrameTime;
         public double gameTime;
@@ -142,7 +142,7 @@ namespace SparrowHawk
         public bool mIsLefty;
 
         //for interaction chain
-        public List<Rhino.DocObjects.RhinoObject> iRhObjList = new List<Rhino.DocObjects.RhinoObject>();
+        public List<Rhino.DocObjects.ObjRef> iRhObjList = new List<Rhino.DocObjects.ObjRef>();
         public List<Rhino.Geometry.Curve> iCurveList = new List<Rhino.Geometry.Curve>();
         public List<OpenTK.Vector3> iPointList = new List<OpenTK.Vector3>();
         public List<Rhino.Geometry.Plane> iPlaneList = new List<Rhino.Geometry.Plane>(); //temporary solution for circle, rect
@@ -152,6 +152,7 @@ namespace SparrowHawk
             LoftC1, LoftD1Rect, LoftD1Curve, LoftD1Circle, LoftC2, LoftD2Rect, LoftD2Curve, LoftD2Circle, RevolveC1, RevolveD1Rect, RevolveD1Curve, RevolveD1Circle,
             SweepC1, SweepD1Rect, SweepD1Curve, SweepD1Circle, SweepC2, SweepD2Rect, SweepD2Curve, SweepD2Circle
         };
+        public enum XYZPlanes {YZ, XZ, XY};
         public enum FunctionType { None = -1, Loft, Sweep, Revolve, Extrude, Patch };
         public enum ShapeType { None = -1, Rect, Curve, Circle };
         public enum DrawnType { None = -1, Surface, In3D, Plane, Reference };
@@ -223,7 +224,7 @@ public Matrix4 vrToRobot = new Matrix4(-25.23433f, -1.428557f, -986.1774f, -619.
         public Point3d sStartP, eStartP;
 
         //visiable and hide designPlane
-        public DesignPlane3 xzPlane, xyPlane, yzPlane;
+        public DesignPlane xzPlane, xyPlane, yzPlane;
         public SceneNode xAxis, yAxis, zAxis;
 
         public float rhinoTheta = 0;

@@ -12,7 +12,7 @@ using static SparrowHawk.Scene;
 
 namespace SparrowHawk.Interaction
 {
-    class EditPoint3 : Interaction
+    class EditPoint : Interaction
     {
         public enum State
         {
@@ -22,15 +22,15 @@ namespace SparrowHawk.Interaction
         protected State currentState;
         public bool onPlane = false;
         public string dynamicRender = "none";
-        Guid renderObjId = Guid.Empty;
+        private SceneNode renderObjSN;
+        private SceneNode shapeSN;
         protected int primaryDeviceIndex;
-        protected SceneNode targetPSN;
-        protected RhinoObject targetPRhObj;
+        protected Guid targetPRhObjID;
         private int snapIndex = -1;
         private bool isSnap = false;
-        protected RhinoObject rhinoPlane;
+        protected ObjRef rhinoPlaneRef;
         SceneNode drawPoint;
-        OpenTK.Vector3 projectP;
+        Point3d projectP;
         private PolylineCurve polyline;
         private List<Curve> curveList = new List<Curve>();
         List<Point3d> curvePoints = new List<Point3d>();
@@ -80,13 +80,16 @@ namespace SparrowHawk.Interaction
         ShapeType shapeType = ShapeType.None;
         DrawnType drawnType = DrawnType.None;
 
-        public EditPoint3(ref Scene scene) : base(ref scene)
+        private List<ObjRef> rayCastingObjs;
+        private List<Point3d> snapPointsList = new List<Point3d>();
+
+        public EditPoint(ref Scene scene) : base(ref scene)
         {
             stroke_g2 = new Geometry.GeometryStroke(ref mScene);
 
         }
 
-        public EditPoint3(ref Scene scene, CurveID curveID) : base(ref scene)
+        public EditPoint(ref Scene scene, CurveID curveID) : base(ref scene)
         {
             stroke_g2 = new Geometry.GeometryStroke(ref mScene);
             FunctionType modelFun = (FunctionType)mScene.selectionDic[SelectionKey.ModelFun];
@@ -174,13 +177,12 @@ namespace SparrowHawk.Interaction
         public void resetVariable()
         {
             currentState = State.Start;
-            targetPSN = null;
-            targetPRhObj = null;
+            targetPRhObjID = Guid.Empty;
             snapIndex = -1;
             isSnap = false;
-            rhinoPlane = null;
+            rhinoPlaneRef = null;
             drawPoint = null;
-            projectP = new Vector3();
+            projectP = new Point3d();
             polyline = null;
             curveList = new List<Curve>();
             curvePoints = new List<Point3d>();
@@ -218,6 +220,11 @@ namespace SparrowHawk.Interaction
             selectedSector = 0;
 
             onPlane = false;
+
+            rayCastingObjs = new List<ObjRef>();
+            snapPointsList = new List<Point3d>();
+            shapeSN = null;
+            renderObjSN = null;
         }
 
         public override void leaveTop()
@@ -267,51 +274,26 @@ namespace SparrowHawk.Interaction
 
             if (onPlane)
             {
-                //add projectionPoint
-                drawPoint = Util.MarkProjectionPoint(ref mScene, new OpenTK.Vector3(0, 0, 0), 1, 1, 1);
-
-                rhinoPlane = mScene.iRhObjList.ElementAt(mScene.iRhObjList.Count - 1);
-
+                //init rayCastingObjs
+                rhinoPlaneRef = mScene.iRhObjList.ElementAt(mScene.iRhObjList.Count - 1);
                 //testing get curveOnplane here.
                 curvePlane = mScene.iPlaneList.ElementAt(mScene.iPlaneList.Count - 1);
+                rayCastingObjs.Add(rhinoPlaneRef);
+
+                Geometry.Geometry geo = new Geometry.DrawPointMarker(new OpenTK.Vector3(0, 0, 0));
+                Material.Material m = new Material.SingleColorMaterial(1, 1, 1, 0);//TODO: teseting alpha working or not
+                drawPoint = new SceneNode("drawPoint", ref geo, ref m);
+                Util.addSceneNode(ref mScene, ref drawPoint);
 
             }
 
-            //create editcurve, find the curve plane, render circle, rect
-            if (dynamicRender == "Extrude")
+            //need curvePlane.normal data
+            if(drawnType == DrawnType.In3D && dynamicRender == "Extrude")
             {
-                //TODO-PointStart should be the center and PointEnd and should be the vertial line
-                /* 
-                List<Point3d> extrudeCurveP = new List<Point3d>();
-                extrudeCurveP.Add(mScene.iCurveList[mScene.iCurveList.Count - 1].PointAtStart);
-                extrudeCurveP.Add(mScene.iCurveList[mScene.iCurveList.Count - 1].PointAtEnd);
-                //update the curve
-                mScene.iCurveList[mScene.iCurveList.Count - 1] = Rhino.Geometry.NurbsCurve.Create(false, 1, extrudeCurveP.ToArray());
-                */
-                NurbsCurve railCurve = mScene.iCurveList[mScene.iCurveList.Count - 1].ToNurbsCurve();
-                double height = 0;
-                if (mScene.iCurveList[mScene.iCurveList.Count - 2].TryGetPlane(out curvePlane))
-                {
-                    OpenTK.Vector3 heightVector = Util.RhinoToOpenTKPoint(railCurve.PointAtEnd) - Util.RhinoToOpenTKPoint(railCurve.PointAtStart);
-                    OpenTK.Vector3 planeNormal = Util.RhinoToOpenTKPoint(curvePlane.Normal);
-                    planeNormal.Normalize();
-                    height = OpenTK.Vector3.Dot(heightVector, planeNormal) / planeNormal.Length;
-
-                    //update rail curve and using sweepCap
-                    List<Point3d> extrudeCurveP = new List<Point3d>();
-                    //extrudeCurveP.Add(curvePlane.Origin); //plane origin will be in the corner
-                    //try using geting bounding box
-                    //TODO- fix the iCurveList should update if it extrude-circle pop
-                    Point3d startP = Brep.CreatePlanarBreps(mScene.iCurveList[mScene.iCurveList.Count - 2])[0].GetBoundingBox(true).Center;
-                    extrudeCurveP.Add(startP);
-                    Point3d endP = new Point3d(startP.X + height * planeNormal.X, startP.Y + height * planeNormal.Y, startP.Z + height * planeNormal.Z);
-                    extrudeCurveP.Add(endP);
-                    //update the edit curve
-                    editCurve = Rhino.Geometry.NurbsCurve.Create(false, 1, extrudeCurveP.ToArray());
-                    mScene.iCurveList[mScene.iCurveList.Count - 1] = editCurve;
-                }
+                mScene.iCurveList[mScene.iCurveList.Count - 2].TryGetPlane(out curvePlane);
             }
-            else if (isEditCircle)
+                
+            if (isEditCircle)
             {
                 if (mScene.iCurveList[mScene.iCurveList.Count - 1].TryGetCircle(out circle))
                 {
@@ -322,7 +304,8 @@ namespace SparrowHawk.Interaction
 
                     //curvePlane = circle.Plane;
                     radius = (float)circle.Radius;
-                }else
+                }
+                else
                 {
                     //if we project to a patch surface, the curve won't match a circle
                     editCurve = mScene.iCurveList[mScene.iCurveList.Count - 1].ToNurbsCurve();
@@ -346,7 +329,8 @@ namespace SparrowHawk.Interaction
 
                     width = (float)rect.Width;
                     height = (float)rect.Height;
-                }else
+                }
+                else
                 {
                     //if we project to a patch surface, the curve won't match a circle
                     editCurve = mScene.iCurveList[mScene.iCurveList.Count - 1].ToNurbsCurve();
@@ -356,35 +340,8 @@ namespace SparrowHawk.Interaction
             }
             else
             {
-                //editCurve might not in a planar surface
                 editCurve = mScene.iCurveList[mScene.iCurveList.Count - 1].ToNurbsCurve();
-                /*
-                Plane cPlane = new Plane();
-                Double tolerance = 0;
-                while (tolerance < 400)
-                {
-                    if (editCurve.TryGetPlane(out cPlane, tolerance))
-                    {
-                        curvePlane = cPlane;
-                        break;
-                    }
-                    tolerance++;
-                }*/
             }
-
-            //null check
-            /*
-            if (editCurve == null)
-            {
-                while (!mScene.interactionStackEmpty())
-                    mScene.popInteraction();
-                return;
-            }*/
-
-            //store the plane when we created a curve
-            //rotate the curvePlane to match roatation
-            //Transform rotPlatform = Transform.Rotation(mScene.rhinoTheta, new Rhino.Geometry.Vector3d(0, 0, 1), new Point3d(0, 0, 0));
-            //curvePlane.Transform(rotPlatform);
 
             d = new generateModel_Delegate(generateModel);
 
@@ -395,10 +352,12 @@ namespace SparrowHawk.Interaction
         }
 
 
-        public override void draw(bool inTop)
+        public override void draw(bool isTop)
         {
-            if (currentState == State.End)
+            if (!isTop || currentState == State.End)
+            {
                 return;
+            }
 
             //Joystick edit
             if (isEditCircle || isEditRect)
@@ -406,102 +365,51 @@ namespace SparrowHawk.Interaction
                 joystickControl();
             }
 
-            Vector3 pos = new Vector3();
-            if (onPlane)
+            OpenTK.Vector4 controller_p = Util.getControllerTipPosition(ref mScene, primaryDeviceIndex == mScene.leftControllerIdx) * new OpenTK.Vector4(0, 0, 0, 1);
+            OpenTK.Vector4 controller_pZ = Util.getControllerTipPosition(ref mScene, primaryDeviceIndex == mScene.leftControllerIdx) * new OpenTK.Vector4(0, 0, -1, 1);
+            Point3d controller_pRhino = Util.openTkToRhinoPoint(Util.vrToPlatformPoint(ref mScene, new OpenTK.Vector3(controller_p.X, controller_p.Y, controller_p.Z)));
+            Point3d controller_pZRhin = Util.openTkToRhinoPoint(Util.vrToPlatformPoint(ref mScene, new OpenTK.Vector3(controller_pZ.X, controller_pZ.Y, controller_pZ.Z)));
+            Rhino.Geometry.Vector3d direction = new Rhino.Geometry.Vector3d(controller_pZRhin.X - controller_pRhino.X, controller_pZRhin.Y - controller_pRhino.Y, controller_pZRhin.Z - controller_pRhino.Z);
+
+            if (drawnType != DrawnType.In3D)
             {
-                //ray casting to the targetObj
-                OpenTK.Vector4 controller_p = Util.getControllerTipPosition(ref mScene, primaryDeviceIndex == mScene.leftControllerIdx) * new OpenTK.Vector4(0, 0, 0, 1);
-                OpenTK.Vector4 controller_pZ = Util.getControllerTipPosition(ref mScene, primaryDeviceIndex == mScene.leftControllerIdx) * new OpenTK.Vector4(0, 0, -1, 1);
-                Point3d controller_pRhino = Util.openTkToRhinoPoint(Util.vrToPlatformPoint(ref mScene, new OpenTK.Vector3(controller_p.X, controller_p.Y, controller_p.Z)));
-                Point3d controller_pZRhin = Util.openTkToRhinoPoint(Util.vrToPlatformPoint(ref mScene, new OpenTK.Vector3(controller_pZ.X, controller_pZ.Y, controller_pZ.Z)));
-
-                Rhino.Geometry.Vector3d direction = new Rhino.Geometry.Vector3d(controller_pZRhin.X - controller_pRhino.X, controller_pZRhin.Y - controller_pRhino.Y, controller_pZRhin.Z - controller_pRhino.Z);
-                Ray3d ray = new Ray3d(controller_pRhino, direction);
-
-                //Todo- support multiple plane
-                List<GeometryBase> geometries = new List<GeometryBase>();
-                geometries.Add(rhinoPlane.Geometry);
-                //must be a brep or surface, not mesh
-                Point3d[] rayIntersections = Rhino.Geometry.Intersect.Intersection.RayShoot(ray, geometries, 1);
-                if (rayIntersections != null)
-                {
-                    projectP = Util.platformToVRPoint(ref mScene, new OpenTK.Vector3((float)rayIntersections[0].X, (float)rayIntersections[0].Y, (float)rayIntersections[0].Z));
-                    //targetPSN = mScene.brepToSceneNodeDic[rhinoPlane.Id];
-                    targetPRhObj = rhinoPlane;
-                }
-                else
-                {
-                    //targetPSN = null;
-                    targetPRhObj = null;
-                    //projectP = new OpenTK.Vector3(100, 100, 100); //make it invisable
-                    //testng using last frame position
-                    projectP = projectP;
-                }
-
-                pos = projectP;
-
+                Util.rayCasting(controller_pRhino, direction, ref rayCastingObjs, out projectP, out targetPRhObjID);
             }
             else
             {
-                pos = Util.getTranslationVector3(Util.getControllerTipPosition(ref mScene, primaryDeviceIndex == mScene.leftControllerIdx));
+                projectP = controller_pRhino;
             }
 
+            //generate snap points and check snap
             if (currentState == State.Start)
             {
-                mimD = 1000000f;
-                OpenTK.Vector3 snapP = new OpenTK.Vector3();
-                for (int i = 0; i < editCurve.Points.Count; i++)
+                snapIndex = -1;
+                if (isEditCircle || isEditRect || dynamicRender == "Sweep" || dynamicRender == "Extrude")
                 {
-                    //not allow to edit the center in Circle or topleft in Rect
-                    if (i == 0)
-                    {
-                        if (isEditCircle || isEditRect)
-                        {
-                            continue;
-                        }
-                    }
-
-                    ControlPoint cp = editCurve.Points.ElementAt(i);
-                    OpenTK.Vector3 pVR = Util.platformToVRPoint(ref mScene, new OpenTK.Vector3((float)cp.Location.X, (float)cp.Location.Y, (float)cp.Location.Z));
-                    float distance = (float)Math.Sqrt(Math.Pow(pos.X - pVR.X, 2) + Math.Pow(pos.Y - pVR.Y, 2) + Math.Pow(pos.Z - pVR.Z, 2));
-                    //snap to point
-                    if (distance <= 0.03 && distance <= mimD)
-                    {
-                        mimD = distance;
-                        snapP = pVR;
-                        snapIndex = i;
-                    }
-
+                    List<int> ignoreIndexes = new List<int>();
+                    ignoreIndexes.Add(0);
+                    snapIndex = Util.snapToPoints(ref projectP, ref curvePoints, ignoreIndexes);
+                }else
+                {
+                    snapIndex =Util.snapToPoints(ref projectP, ref curvePoints);
                 }
 
-                if (mimD <= 0.03f)
+                if (snapIndex != -1)
                 {
                     isSnap = true;
-                    pos = snapP;
-
-                    if (isEditCircle || isEditRect)
+                    //highlight the snap edit point
+                    for (int i = 0; i < pointMarkers.Count; i++)
                     {
-                        //render only 1 edit point
-                        pointMarkers[0].material = new Material.SingleColorMaterial(1, 1, 1, 1);
-                    }
-                    else
-                    {
-
-                        for (int i = 0; i < pointMarkers.Count; i++)
+                        if (i == snapIndex)
                         {
-                            if (i == snapIndex)
-                            {
-                                pointMarkers[i].material = new Material.SingleColorMaterial(1, 1, 1, 1);
-                            }
-                            else
-                            {
-                                pointMarkers[i].material = new Material.SingleColorMaterial(0, 1, 0, 1);
-                            }
+                            pointMarkers[i].material = new Material.SingleColorMaterial(1, 1, 1, 1);
+                        }
+                        else
+                        {
+                            pointMarkers[i].material = new Material.SingleColorMaterial(0, 1, 0, 1);
                         }
                     }
-
-                }
-                else
+                }else
                 {
                     isSnap = false;
                     //set to default color
@@ -510,13 +418,30 @@ namespace SparrowHawk.Interaction
                         sn.material = new Material.SingleColorMaterial(0, 1, 0, 1);
                     }
                 }
-
             }
-            else if (currentState == State.Snap)
-            {
 
+            //render project point
+            Vector3 projectPVR = Util.platformToVRPoint(ref mScene, Util.RhinoToOpenTKPoint(projectP));
+            if (drawnType != DrawnType.In3D)
+            {
+                OpenTK.Matrix4 t = OpenTK.Matrix4.CreateTranslation(projectPVR);
+                t.Transpose();
+                drawPoint.transform = t;
+                if (targetPRhObjID != Guid.Empty)
+                {
+                    drawPoint.material = new Material.SingleColorMaterial(1, 1, 1, 1);
+                }
+                else
+                {
+                    drawPoint.material = new Material.SingleColorMaterial(1, 1, 1, 0);
+                }
+            }
+
+            //snap state - edit curve
+            if (currentState == State.Snap)
+            {
                 //update the curve- we can't update editCurve.Points[snapIndex] directly (bug)
-                OpenTK.Vector3 ep = Util.vrToPlatformPoint(ref mScene, pos);
+                OpenTK.Vector3 ep = Util.RhinoToOpenTKPoint(projectP);
                 //accumulate displacement
                 displacement = displacement + (float)Math.Sqrt(Math.Pow(ep.X - curvePoints[snapIndex].X, 2) + Math.Pow(ep.Y - curvePoints[snapIndex].Y, 2) + Math.Pow(ep.Z - curvePoints[snapIndex].Z, 2));
                 curvePoints[snapIndex] = Util.openTkToRhinoPoint(ep);
@@ -545,16 +470,6 @@ namespace SparrowHawk.Interaction
                     }
                 }
 
-                //prevent crash
-                /*
-                if (editCurve == null)
-                {
-                    while (!mScene.interactionStackEmpty())
-                        mScene.popInteraction();
-                    return;
-                }*/
-
-
                 renderEditCurve();
                 updateEditCurve();
 
@@ -566,15 +481,6 @@ namespace SparrowHawk.Interaction
                 }
 
             }
-
-            //visualize the projection point on the plane
-            if (onPlane)
-            {
-                OpenTK.Matrix4 t = OpenTK.Matrix4.CreateTranslation(Util.transformPoint(mScene.tableGeometry.transform.Inverted(), pos));
-                t.Transpose();
-                drawPoint.transform = t;
-            }
-
 
         }
 
@@ -588,52 +494,36 @@ namespace SparrowHawk.Interaction
                 {
                     Point3d ep = new Point3d(editCurve.Points.ElementAt(i).Location.X, editCurve.Points.ElementAt(i).Location.Y, editCurve.Points.ElementAt(i).Location.Z);
                     curvePoints.Add(ep);
-
-                    //TODO-force not to move the center in Circle or topleft in Rect
-                    if (i == 0)
-                    {
-                        if (isEditCircle || isEditRect)
-                        {
-                            continue;
-                        }
-                    }
-                    // p is the point before apply tableGeometry.transform inverted so we need to transfrom here
-                    SceneNode sn = Util.MarkPointSN(ref mScene.tableGeometry, Util.transformPoint(mScene.tableGeometry.transform.Inverted(), Util.platformToVRPoint(ref mScene, new OpenTK.Vector3((float)ep.X, (float)ep.Y, (float)ep.Z))), 0, 1, 0);
-                    pointMarkers.Add(sn);
+                    Geometry.Geometry geo = new Geometry.DrawPointMarker(new Vector3(0,0,0));
+                    Material.Material m = new Material.SingleColorMaterial(0, 1, 0, 1);
+                    SceneNode epSN;
+                    Util.MarkPointVR(ref mScene, Util.platformToVRPoint(ref mScene, new OpenTK.Vector3((float)ep.X, (float)ep.Y, (float)ep.Z)), ref geo, ref m, out epSN);
+                    pointMarkers.Add(epSN);
                 }
 
             }
             else
             {
-                //remove and visualize the new control points
+                //remove and visualize the new control points--not efficient bur easy to implement
                 for (int i = 0; i < pointMarkers.Count; i++)
                 {
-                    SceneNode sn = pointMarkers[i];
-                    mScene.tableGeometry.remove(ref sn);
+                    SceneNode epSN = pointMarkers[i];
+                    Util.removeSceneNode(ref mScene, ref epSN);
                 }
                 pointMarkers.Clear();
 
                 for (int i = 0; i < editCurve.Points.Count; i++)
                 {
-
-                    //TODO-force not to move the center in Circle or topleft in Rect
-                    if (i == 0)
-                    {
-                        if (isEditCircle || isEditRect)
-                        {
-                            continue;
-                        }
-                    }
-
-                    Point3d cp = new Point3d(editCurve.Points.ElementAt(i).Location.X, editCurve.Points.ElementAt(i).Location.Y, editCurve.Points.ElementAt(i).Location.Z);
-
-                    //rotation inverted before visualizing
-                    SceneNode sn = Util.MarkPointSN(ref mScene.tableGeometry, Util.transformPoint(mScene.tableGeometry.transform.Inverted(), Util.platformToVRPoint(ref mScene, new OpenTK.Vector3((float)cp.X, (float)cp.Y, (float)cp.Z))), 0, 1, 0);
-                    pointMarkers.Add(sn);
+                    Point3d ep = new Point3d(editCurve.Points.ElementAt(i).Location.X, editCurve.Points.ElementAt(i).Location.Y, editCurve.Points.ElementAt(i).Location.Z);
+                    Geometry.Geometry geo = new Geometry.DrawPointMarker(Util.platformToVRPoint(ref mScene, new OpenTK.Vector3((float)ep.X, (float)ep.Y, (float)ep.Z)));
+                    Material.Material m = new Material.SingleColorMaterial(0, 1, 0, 1);
+                    SceneNode epSN;
+                    Util.MarkPointVR(ref mScene, Util.platformToVRPoint(ref mScene, new OpenTK.Vector3((float)ep.X, (float)ep.Y, (float)ep.Z)), ref geo, ref m, out epSN);
+                    pointMarkers.Add(epSN);
                 }
             }
 
-            //render the rhino curve
+            //Render curve
             polyline = editCurve.ToPolyline(0, 0, 0, 0, 0, 1, 1, 0, true);
             if (stroke == null)
             {
@@ -643,7 +533,7 @@ namespace SparrowHawk.Interaction
 
                 }
                 stroke = new SceneNode("EditCurve", ref stroke_g2, ref stroke_m2);
-                mScene.tableGeometry.add(ref stroke);
+                Util.addSceneNode(ref mScene, ref stroke);
             }
             else
             {
@@ -661,17 +551,10 @@ namespace SparrowHawk.Interaction
             //create and render interaction curve and editcurve
             if (dynamicRender == "Extrude")
             {
-                /*
-                List<Point3d> extrudeCurveP = new List<Point3d>();
-                extrudeCurveP.Add(editCurve.PointAtStart);
-                extrudeCurveP.Add(editCurve.PointAtEnd);
-                //update the curve
-                mScene.iCurveList[mScene.iCurveList.Count - 1] = Rhino.Geometry.NurbsCurve.Create(false, 1, extrudeCurveP.ToArray());*/
-
                 if (curvePlane != null)
                 {
                     OpenTK.Vector3 heightVector = Util.RhinoToOpenTKPoint(editCurve.PointAtEnd) - Util.RhinoToOpenTKPoint(editCurve.PointAtStart);
-                    OpenTK.Vector3 planeNormal = Util.RhinoToOpenTKPoint(curvePlane.Normal);
+                    OpenTK.Vector3 planeNormal = Util.RhinoToOpenTKVector(curvePlane.Normal);
                     planeNormal.Normalize();
                     height = OpenTK.Vector3.Dot(heightVector, planeNormal) / planeNormal.Length;
 
@@ -699,8 +582,8 @@ namespace SparrowHawk.Interaction
                     circleCurve = circle.ToNurbsCurve();
                     Brep[] shapes = Brep.CreatePlanarBreps(circleCurve);
                     Brep circle_s = shapes[0];
-                    //don't need to update the RhinoView
-                    renderObjId = Util.addSceneNodeWithoutDraw(ref mScene, circle_s, ref profile_m, "Circle");
+
+                    Util.updateSceneNode(ref mScene, circle_s, ref mesh_m, "Circle", out shapeSN);
 
                     //updating the iPointList and iCurveList
                     mScene.iCurveList[mScene.iCurveList.Count - 1] = circleCurve;
@@ -726,8 +609,7 @@ namespace SparrowHawk.Interaction
                     Brep[] shapes = Brep.CreatePlanarBreps(rectCurve);
                     Brep rectBrep = shapes[0];
 
-                    //don't need to update the RhinoView
-                    renderObjId = Util.addSceneNodeWithoutDraw(ref mScene, rectBrep, ref profile_m, "Rect");
+                    Util.updateSceneNode(ref mScene, rectBrep, ref mesh_m, "Rect", out shapeSN);
 
                     //updating the iPointList and iCurveList
                     mScene.iCurveList[mScene.iCurveList.Count - 1] = rectCurve;
@@ -797,7 +679,7 @@ namespace SparrowHawk.Interaction
             {
                 if (modelName == "tprint")
                 {
-                    renderObjId = Util.addSceneNodeWithoutDraw(ref mScene, dynamicBrep, ref mesh_m, modelName);
+                    Util.updateSceneNode(ref mScene, dynamicBrep, ref mesh_m, modelName, out renderObjSN);
 
                     //SweepCapFun debugging
                     if (dynamicRender == "Sweep-Circle" || dynamicRender == "Sweep-Rect" || dynamicRender == "Extrude-Circle" || dynamicRender == "Loft")
@@ -814,18 +696,21 @@ namespace SparrowHawk.Interaction
                 }
                 else if (modelName.Contains("aprint"))
                 {
-                    //don't need to removeSceneNode since we only create rhinoObj when we press button
-                    /*
-                    if (renderObjId != Guid.Empty)
-                        Util.removeSceneNode(ref mScene, renderObjId);
-                    */
-                    //remove the dynamicaly render sceneNode
-                    //Util.removeSceneNodeWithoutDraw(ref mScene, renderObjId);
-                    renderObjId = Util.addSceneNode(ref mScene, dynamicBrep, ref profile_m, modelName);
+                    Guid guid = Util.addRhinoObjectSceneNode(ref mScene, ref dynamicBrep, ref profile_m, modelName, out renderObjSN, false, true);
 
                     clearDrawing(false);
                     Util.clearPlanePoints(ref mScene);
                     Util.clearCurveTargetRhObj(ref mScene);
+                    //TODO- figure out a better cleaardrawing methods
+                    for (int i = 0; i < mScene.tableGeometry.children.Count; i++)
+                    {
+                        SceneNode sn = mScene.tableGeometry.children[i];
+                        if (sn.name.Contains("railPlane"))
+                        {
+                            Util.removeRhinoObjectSceneNode(ref mScene, ref sn);
+                        }
+                    }
+
                     //TODO- OpenGL compile error why?
                     //Util.setPlaneAlpha(ref mScene, 0.0f);
 
@@ -865,13 +750,14 @@ namespace SparrowHawk.Interaction
 
         private void clearDrawing(bool hasNextI)
         {
-            //clear the curve and points
+            //since we will clear different SceneNode depends on the situation so it migit be better loop throung the tableGeometry instead of checking sceneNode != null
             if (mScene.tableGeometry.children.Count > 0)
             {
                 // need to remove rerverse since the list update dynamically
-                //TODO- check if reverse is ok
-                foreach (SceneNode sn in mScene.tableGeometry.children.Reverse<SceneNode>())
+
+                for(int i = 0; i < mScene.tableGeometry.children.Count; i++)
                 {
+                    SceneNode sn = mScene.tableGeometry.children[i];
                     if (dynamicRender == "Revolve" || dynamicRender == "Loft" || dynamicRender == "Sweep-Circle" || dynamicRender == "Sweep-Rect" || dynamicRender == "Extrude-Circle" || dynamicRender == "Extrude-Rect")
                     {
                         if (sn.name.Contains("tprint") || sn.name == "EditCurve" || sn.name == "drawPoint" || sn.name == "EditPoint" || sn.name.Contains("panel") || sn.name.Contains("Circle") || sn.name.Contains("Rect") || sn.name.Contains("railPlane") || sn.name.Contains("patchSurface"))
@@ -879,10 +765,8 @@ namespace SparrowHawk.Interaction
                             //We don't delete the patch surface for later use
                             if (sn.name.Contains("railPlane"))
                             {
-                                //panel didn't have the sceneNode in VR.
-                                RhinoObject delObj = mScene.SceneNodeToBrepDic[sn.guid];
-                                Util.removeSceneNode(ref mScene, delObj.Id);
-
+                                //we might still need this if we use undo button
+                                //Util.removeRhinoObjectSceneNode(ref mScene, ref sn);
                             }
                             else
                             {
@@ -897,7 +781,7 @@ namespace SparrowHawk.Interaction
                         {
                             if (sn.name.Contains("tprint"))
                             {
-                                mScene.tableGeometry.children.Remove(sn);
+                                Util.removeSceneNode(ref mScene, ref sn);
                             }
                         }
 
@@ -907,14 +791,14 @@ namespace SparrowHawk.Interaction
                             //clear the drawpoint, editpoint, editcurve. save editcurve if shapetype is curve
                             if (sn.name == "drawPoint" || sn.name == "EditPoint" || (sn.name == "EditCurve" && shapeType != ShapeType.Curve))
                             {
-                                mScene.tableGeometry.children.Remove(sn);
+                                Util.removeSceneNode(ref mScene, ref sn);
                             }
                         }
                         else
                         {
                             if (sn.name == "drawPoint" || sn.name == "EditPoint" || sn.name == "EditCurve")
                             {
-                                mScene.tableGeometry.children.Remove(sn);
+                                Util.removeSceneNode(ref mScene, ref sn);
                             }
                         }
 
@@ -922,6 +806,7 @@ namespace SparrowHawk.Interaction
 
                 }
             }
+
         }
 
         protected override void onClickOculusAX(ref VREvent_t vrEvent)
@@ -1011,9 +896,9 @@ namespace SparrowHawk.Interaction
             }
 
             OpenTK.Vector3 railStartPoint = Util.RhinoToOpenTKPoint(rail.PointAtStart);
-            OpenTK.Vector3 railStartNormal = Util.RhinoToOpenTKPoint(rail.TangentAtStart);
+            OpenTK.Vector3 railStartNormal = Util.RhinoToOpenTKVector(rail.TangentAtStart);
             OpenTK.Vector3 railEndPoint = Util.RhinoToOpenTKPoint(rail.PointAtEnd);
-            OpenTK.Vector3 railEndNormal = Util.RhinoToOpenTKPoint(rail.TangentAtEnd);
+            OpenTK.Vector3 railEndNormal = Util.RhinoToOpenTKVector(rail.TangentAtEnd);
 
             Plane endPlane = new Plane(rail.PointAtEnd, rail.TangentAtEnd);
             //compute the transform from profile curve to railstart and railend
@@ -1052,9 +937,11 @@ namespace SparrowHawk.Interaction
                     mScene.iPointList.Add(Util.platformToVRPoint(ref mScene, Util.RhinoToOpenTKPoint(endCircle.PointAt(0))));
                 }
 
+                /*
                 Brep[] shapes = Brep.CreatePlanarBreps(mScene.iCurveList[mScene.iCurveList.Count - 1]);
                 //don't need to update the RhinoView
-                renderObjId = Util.addSceneNodeWithoutDraw(ref mScene, shapes[0], ref mesh_m, ShapeType.Circle.ToString());
+                Util.addSceneNode(ref mScene, ref shapes[0], ref mesh_m, ShapeType.Circle.ToString(), out shapeSN);
+                */
 
             }
             else if ((ShapeType)mScene.selectionDic[SelectionKey.Profile1Shape] == ShapeType.Rect)
@@ -1096,37 +983,16 @@ namespace SparrowHawk.Interaction
 
                 //method4- create new rect and add iPointList 
 
-
+                /*
                 Brep[] shapes = Brep.CreatePlanarBreps(mScene.iCurveList[mScene.iCurveList.Count - 1]);
                 //don't need to update the RhinoView
-                renderObjId = Util.addSceneNodeWithoutDraw(ref mScene, shapes[0], ref mesh_m, ShapeType.Rect.ToString());
+                Util.addSceneNode(ref mScene, ref shapes[0], ref mesh_m, ShapeType.Rect.ToString(), out shapeSN);
+                */
 
             }
             else
             {
-                //Can only use method 2--Add endCurve
-                NurbsCurve endCurve = mScene.iCurveList[mScene.iCurveList.Count - 2].DuplicateCurve().ToNurbsCurve();
-                endCurve.Transform(tEnd);
-
-                mScene.iCurveList.Add(endCurve);
-
-                if (mScene.iCurveList[mScene.iCurveList.Count - 1].IsClosed)
-                {
-                    Brep[] shapes = Brep.CreatePlanarBreps(mScene.iCurveList[mScene.iCurveList.Count - 1]);
-                    //don't need to update the RhinoView
-                    renderObjId = Util.addSceneNodeWithoutDraw(ref mScene, shapes[0], ref mesh_m, "ClosedCurve");
-                    mScene.iPlaneList.Add(endPlane);
-                }
-
-                if (mScene.iCurveList[mScene.iCurveList.Count - 1].IsPlanar())
-                {
-                    mScene.iPlaneList.Add(endPlane);
-                }
-                else
-                {
-                    Plane plane = new Plane(new Point3d(-100, -100, -100), new Rhino.Geometry.Vector3d(0, 0, 0));
-                    mScene.iPlaneList.Add(plane);
-                }
+                //we only support rect and circle cap curve
 
             }
 
@@ -1139,8 +1005,8 @@ namespace SparrowHawk.Interaction
 
             if (designPlane != null)
             {
-                Guid guid = Util.addSceneNodeWithoutVR(ref mScene, designPlane, "panel");
-                mScene.iRhObjList.Add(mScene.rhinoDoc.Objects.Find(guid));
+                Guid guid = Util.addRhinoObject(ref mScene, ref designPlane, "panel");
+                mScene.iRhObjList.Add(new ObjRef(guid));
             }
         }
 
@@ -1185,26 +1051,19 @@ namespace SparrowHawk.Interaction
                 {
                     selectedSector = 0;
                 }
-
                 editCircleRect(selectedSector);
 
             }
-            else // //trigger change size. discrete changing
+            else 
             {
-                //trigger change size. discrete changing
-                /*
-                if (selectedSector != 0)
-                {
-                    editCircleRect(selectedSector);
-                    selectedSector = 0;
-                }*/
+
             }
         }
 
         private void editCircleRect(int sector)
         {
             //Rhino.RhinoApp.WriteLine("sector:" + sector);
-            if (isEditCircle)
+            if (isEditCircle && (sector == 1 || sector == 3))
             {
                 if (sector == 1)
                 {
@@ -1218,16 +1077,16 @@ namespace SparrowHawk.Interaction
                         radius = 1;
                     }
                 }
-
+                //TODO- need to change the curvePoint[1], find the direction and move the point directly
                 //using the original x-axis and y-axis align, but adjust the center of the plane
                 Plane newPlane = new Plane(circle.Center, curvePlane.Normal);
                 newPlane.XAxis = curvePlane.XAxis;
                 newPlane.YAxis = curvePlane.YAxis;
                 Circle newCircle = new Circle(newPlane, radius);
-                List<Point3d> circlePoints = new List<Point3d>();
-                circlePoints.Add(newCircle.Center);
-                circlePoints.Add(newCircle.ToNurbsCurve().PointAtStart);
-                editCurve = Rhino.Geometry.NurbsCurve.Create(false, 1, circlePoints.ToArray());
+                curvePoints.Clear();
+                curvePoints.Add(newCircle.Center);
+                curvePoints.Add(newCircle.ToNurbsCurve().PointAtStart);
+                editCurve = Rhino.Geometry.NurbsCurve.Create(false, 1, curvePoints.ToArray()); 
                 renderEditCurve();
                 updateEditCurve();
 
@@ -1268,10 +1127,10 @@ namespace SparrowHawk.Interaction
                 newPlane.XAxis = curvePlane.XAxis;
                 newPlane.YAxis = curvePlane.YAxis;
                 Rectangle3d newRect = new Rectangle3d(newPlane, new Interval(-width / 2, width / 2), new Interval(-height / 2, height / 2));
-                List<Point3d> rectPoints = new List<Point3d>();
-                rectPoints.Add(newRect.Center);
-                rectPoints.Add(newRect.Corner(3));
-                editCurve = Rhino.Geometry.NurbsCurve.Create(false, 1, rectPoints.ToArray());
+                curvePoints.Clear();
+                curvePoints.Add(newRect.Center);
+                curvePoints.Add(newRect.Corner(3));
+                editCurve = Rhino.Geometry.NurbsCurve.Create(false, 1, curvePoints.ToArray());
                 renderEditCurve();
                 updateEditCurve();
 

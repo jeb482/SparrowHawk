@@ -205,6 +205,13 @@ namespace SparrowHawk
             solveForAffineTransform(xs, bs, ref M, true);
         }
 
+        public static void MarkPointVR(ref Scene mScene, OpenTK.Vector3 p, ref Geometry.Geometry geo, ref Material.Material m, out SceneNode pointSN)
+        {
+            pointSN = new SceneNode("EditPoint", ref geo, ref m);
+            pointSN.transform = new OpenTK.Matrix4(1, 0, 0, p.X, 0, 1, 0, p.Y, 0, 0, 1, p.Z, 0, 0, 0, 1);
+            Util.addSceneNode(ref mScene, ref pointSN);
+        }
+
         public static SceneNode MarkProjectionPoint(ref Scene mScene, OpenTK.Vector3 p, float r, float g, float b)
         {
             Geometry.Geometry geo = new Geometry.DrawPointMarker(new OpenTK.Vector3(0, 0, 0));
@@ -363,7 +370,7 @@ namespace SparrowHawk
             return new Vector3((float)p.X, (float)p.Y, (float)p.Z);
         }
 
-        public static Vector3 RhinoToOpenTKPoint(Rhino.Geometry.Vector3d p)
+        public static Vector3 RhinoToOpenTKVector(Rhino.Geometry.Vector3d p)
         {
             return new Vector3((float)p.X, (float)p.Y, (float)p.Z);
         }
@@ -568,6 +575,7 @@ namespace SparrowHawk
                                                              -1, 0, 0, 0,
                                                              0, 0, 0, 1);
 
+
         public static void setPlaneAlpha(ref Scene mScene, float alpha)
         {
             mScene.xyPlane.setAlpha(alpha);
@@ -576,15 +584,15 @@ namespace SparrowHawk
 
             if (alpha > 0)
             {
-                mScene.xAxis.material = new Material.SingleColorMaterial(1, 1, 1, 1);
-                mScene.yAxis.material = new Material.SingleColorMaterial(1, 1, 1, 1);
-                mScene.zAxis.material = new Material.SingleColorMaterial(1, 1, 1, 1);
+                ((Material.SingleColorMaterial)mScene.xAxis.material).setAlpha(1.0f);
+                ((Material.SingleColorMaterial)mScene.yAxis.material).setAlpha(1.0f);
+                ((Material.SingleColorMaterial)mScene.zAxis.material).setAlpha(1.0f);
             }
             else
             {
-                mScene.xAxis.material = new Material.SingleColorMaterial(1, 1, 1, 0);
-                mScene.yAxis.material = new Material.SingleColorMaterial(1, 1, 1, 0);
-                mScene.zAxis.material = new Material.SingleColorMaterial(1, 1, 1, 0);
+                ((Material.SingleColorMaterial)mScene.xAxis.material).setAlpha(0.0f);
+                ((Material.SingleColorMaterial)mScene.yAxis.material).setAlpha(0.0f);
+                ((Material.SingleColorMaterial)mScene.zAxis.material).setAlpha(0.0f);
             }
         }
 
@@ -595,42 +603,146 @@ namespace SparrowHawk
                 mScene.xyPlane.setAlpha(0.4f);
                 mScene.yzPlane.setAlpha(0f);
                 mScene.xzPlane.setAlpha(0f);
-                mScene.xAxis.material = new Material.SingleColorMaterial(1, 1, 1, 1);
-                mScene.yAxis.material = new Material.SingleColorMaterial(1, 1, 1, 1);
-                mScene.zAxis.material = new Material.SingleColorMaterial(1, 1, 1, 0);
+                ((Material.SingleColorMaterial)mScene.xAxis.material).setAlpha(1.0f);
+                ((Material.SingleColorMaterial)mScene.yAxis.material).setAlpha(1.0f);
+                ((Material.SingleColorMaterial)mScene.zAxis.material).setAlpha(0.0f);
+
             }
             else if (name.Contains("planeYZ"))
             {
                 mScene.xyPlane.setAlpha(0f);
                 mScene.yzPlane.setAlpha(0.4f);
                 mScene.xzPlane.setAlpha(0f);
-                mScene.xAxis.material = new Material.SingleColorMaterial(1, 1, 1, 0);
-                mScene.yAxis.material = new Material.SingleColorMaterial(1, 1, 1, 1);
-                mScene.zAxis.material = new Material.SingleColorMaterial(1, 1, 1, 1);
+                ((Material.SingleColorMaterial)mScene.xAxis.material).setAlpha(0.0f);
+                ((Material.SingleColorMaterial)mScene.yAxis.material).setAlpha(1.0f);
+                ((Material.SingleColorMaterial)mScene.zAxis.material).setAlpha(1.0f);
             }
             else if (name.Contains("planeXZ"))
             {
                 mScene.xyPlane.setAlpha(0f);
                 mScene.yzPlane.setAlpha(0f);
                 mScene.xzPlane.setAlpha(0.4f);
-                mScene.xAxis.material = new Material.SingleColorMaterial(1, 1, 1, 1);
-                mScene.yAxis.material = new Material.SingleColorMaterial(1, 1, 1, 0);
-                mScene.zAxis.material = new Material.SingleColorMaterial(1, 1, 1, 1);
+                ((Material.SingleColorMaterial)mScene.xAxis.material).setAlpha(1.0f);
+                ((Material.SingleColorMaterial)mScene.yAxis.material).setAlpha(0.0f);
+                ((Material.SingleColorMaterial)mScene.zAxis.material).setAlpha(1.0f);
             }
             else if (name.Contains("all"))
             {
                 mScene.xyPlane.setAlpha(0f);
                 mScene.yzPlane.setAlpha(0f);
                 mScene.xzPlane.setAlpha(0f);
-                mScene.xAxis.material = new Material.SingleColorMaterial(1, 1, 1, 0);
-                mScene.yAxis.material = new Material.SingleColorMaterial(1, 1, 1, 0);
-                mScene.zAxis.material = new Material.SingleColorMaterial(1, 1, 1, 0);
+                ((Material.SingleColorMaterial)mScene.xAxis.material).setAlpha(0.0f);
+                ((Material.SingleColorMaterial)mScene.yAxis.material).setAlpha(0.0f);
+                ((Material.SingleColorMaterial)mScene.zAxis.material).setAlpha(0.0f);
             }
         }
 
-        public static Guid addSceneNodeWithoutDraw(ref Scene mScene, Brep brep, ref Material.Material mesh_m, string name)
+        public static int snapToPoints(ref Point3d projectP, ref List<Point3d> pointsList, List<int> ignoreIndexes = null)
         {
-            //testing update the current sceneNode
+            if (pointsList.Count == 0)
+            {
+                return -1;
+            }
+
+            bool snap = false;
+            float minD = 1000000f;
+            int minIndex = -1;
+
+            for (int i = 0; i < pointsList.Count; i++)
+            {
+                if (ignoreIndexes != null && ignoreIndexes.Contains(i))
+                {
+                    continue;
+                }
+
+                float distance = (float)Math.Sqrt(Math.Pow(projectP.X - pointsList[i].X, 2) + Math.Pow(projectP.Y - pointsList[i].Y, 2) + Math.Pow(projectP.Z - pointsList[i].Z, 2));
+                if (distance < minD && distance < 20) //mm unit
+                {
+                    snap = true;
+                    minIndex = i;
+                    minD = distance;
+                }
+            }
+
+            if (snap)
+            {
+                projectP = pointsList[minIndex];
+                return minIndex;
+            }
+            else
+            {
+                return -1;
+            }
+        }
+
+
+        public static void rayCasting(Point3d pos, Rhino.Geometry.Vector3d dir, ref List<Rhino.DocObjects.ObjRef> rhinoObjs, out Point3d projectP, out Guid projectObjID)
+        {
+            //deal with empty scene or drawing in 3D case         
+            if (rhinoObjs.Count == 0)
+            {
+                projectP = pos;
+                projectObjID = Guid.Empty;
+                return;
+            }
+
+            float minD = 1000000f;
+            int minIndex = -1;
+            Point3d tmpProjectP = new Point3d();
+            Rhino.DocObjects.RhinoObject tmpprojectObj = null;
+
+            Ray3d ray = new Ray3d(pos, dir);
+            //project to the closest one
+            for (int i = 0; i < rhinoObjs.Count; i++)
+            {
+                List<GeometryBase> geometries = new List<GeometryBase>();
+                //Rhino.DocObjects.ObjRef obj = new Rhino.DocObjects.ObjRef(rhinoObjs[i]);
+                geometries.Add(rhinoObjs[i].Object().Geometry);
+                Point3d[] rayIntersections = Rhino.Geometry.Intersect.Intersection.RayShoot(ray, geometries, 1);
+                if (rayIntersections != null)
+                {
+                    float distance = (float)Math.Sqrt(Math.Pow(rayIntersections[0].X - pos.X, 2) + Math.Pow(rayIntersections[0].Y - pos.Y, 2) + Math.Pow(rayIntersections[0].Z - pos.Z, 2));
+                    if (distance < minD)
+                    {
+                        minIndex = i;
+                        minD = distance;
+                        tmpProjectP = rayIntersections[0];
+                        tmpprojectObj = rhinoObjs[i].Object();
+                    }
+                }
+            }
+
+            //hit object
+            if (tmpprojectObj != null)
+            {
+                projectP = tmpProjectP;
+                projectObjID = tmpprojectObj.Id;
+            }
+            else
+            {
+                projectP = pos;
+                projectObjID = Guid.Empty;
+            }
+
+        }
+
+        //add sceneNode with SceneNode data
+        public static void addSceneNode(ref Scene mScene, ref SceneNode SN, bool isStatic = false)
+        {
+            if (!isStatic)
+            {
+                SN.transform = mScene.tableGeometry.transform.Inverted() * SN.transform;
+                mScene.tableGeometry.add(ref SN);
+            }
+            else
+            {
+                mScene.staticGeometry.add(ref SN);
+            }
+        }
+
+        //add sceneNode with Brep data
+        public static bool addSceneNode(ref Scene mScene, ref Brep brep, ref Material.Material mesh_m, string name, out SceneNode SN, bool isStatic = false)
+        {
             Mesh base_mesh = new Mesh();
             if (brep != null)
             {
@@ -641,8 +753,36 @@ namespace SparrowHawk
                     base_mesh.Append(mesh);
                 }
 
-                Geometry.Geometry meshStroke_g = new Geometry.RhinoMesh(ref mScene, mScene.platformRotation);
+                Geometry.Geometry meshStroke_g = new Geometry.RhinoMesh(ref mScene);
                 ((Geometry.RhinoMesh)meshStroke_g).setMesh(ref base_mesh);
+
+                SceneNode ccMeshSN = new SceneNode(name, ref meshStroke_g, ref mesh_m);
+                if (!isStatic)
+                {
+                    ccMeshSN.transform = mScene.tableGeometry.transform.Inverted() * ccMeshSN.transform;
+                    mScene.tableGeometry.add(ref ccMeshSN);
+                }
+                else
+                {
+                    mScene.staticGeometry.add(ref ccMeshSN);
+                }
+
+                SN = ccMeshSN;
+
+                return true;
+            }else
+            {
+                SN = null;
+
+                return false;
+            }
+        }
+
+        //update sceneNode with Brep data, create one if necessary, try not use ref for brep, there are some werid bugs
+        public static bool updateSceneNode(ref Scene mScene, Brep brep, ref Material.Material mesh_m, string name, out SceneNode SN, bool isStatic = false)
+        {      
+            if (brep != null)
+            {
 
                 SceneNode modelSN = null;
                 foreach (SceneNode sn in mScene.tableGeometry.children)
@@ -655,15 +795,45 @@ namespace SparrowHawk
                 }
                 if (modelSN == null)
                 {
-                    SceneNode ccMeshSN = new SceneNode(name, ref meshStroke_g, ref mesh_m);
-                    mScene.tableGeometry.add(ref ccMeshSN);
-                    return ccMeshSN.guid;
+                    addSceneNode(ref mScene, ref brep, ref mesh_m, name, out modelSN);
                 }
                 else
                 {
+                    Mesh base_mesh = new Mesh();
+                    Mesh[] meshes = Mesh.CreateFromBrep(brep, MeshingParameters.Default);
+
+                    foreach (Mesh mesh in meshes)
+                    {
+                        base_mesh.Append(mesh);
+                    }
+
+                    Geometry.Geometry meshStroke_g = new Geometry.RhinoMesh(ref mScene);
+                    ((Geometry.RhinoMesh)meshStroke_g).setMesh(ref base_mesh);
                     modelSN.geometry = meshStroke_g;
-                    return modelSN.guid;
                 }
+                SN = modelSN;
+                return true;
+            }
+            else
+            {
+                SN = null;
+                return false;
+            }
+        }
+
+        //rendering a brep ONLY in Rhino, e.g. create an invisable edit plane
+        public static Guid addRhinoObject(ref Scene mScene, ref Brep brep, string name)
+        {
+            if (brep != null)
+            {
+                string timeuid = generateUniqueTimeID();
+
+                Rhino.DocObjects.ObjectAttributes attr = new Rhino.DocObjects.ObjectAttributes();
+                attr.Name = name + timeuid;
+                Guid guid = mScene.rhinoDoc.Objects.AddBrep(brep, attr);
+                mScene.rhinoDoc.Views.Redraw();
+
+                return guid;
             }
             else
             {
@@ -671,305 +841,179 @@ namespace SparrowHawk
             }
         }
 
-        public static void removeSceneNodeWithoutDraw(ref Scene mScene, Guid guid)
+        //render a brep in both Rhino and VR, boolean OP has a strong assumption
+        public static Guid addRhinoObjectSceneNode(ref Scene mScene, ref Brep brep, ref Material.Material mesh_m, string name, out SceneNode renderObjSN, bool isStatic = false, bool booleanOP = false)
         {
-            foreach (SceneNode sn in mScene.tableGeometry.children)
+            //TODO: detect the # of faces
+            Mesh base_mesh = new Mesh();
+            renderObjSN = null;
+            if (brep != null)
             {
-                if (sn.guid == guid)
+
+                Guid guid = addRhinoObject(ref mScene, ref brep, name);
+                Rhino.DocObjects.RhinoObject rhinoObj = mScene.rhinoDoc.Objects.Find(guid);
+
+                if (booleanOP)
                 {
-                    mScene.tableGeometry.children.Remove(sn);
-                    break;
+                    boolOPwithModel(ref mScene, ref rhinoObj, out brep);
                 }
-            }
-        }
 
+                addSceneNode(ref mScene, ref brep, ref mesh_m, name, out renderObjSN);
 
-        public static Guid addStaticNode(ref Scene mScene, Brep brep, ref Material.Material mesh_m, string name)
-        {
-            //TODO: detect the # of faces
-            Mesh base_mesh = new Mesh();
-            if (brep != null)
-            {
-                Mesh[] meshes = Mesh.CreateFromBrep(brep, MeshingParameters.Default);
-
-                foreach (Mesh mesh in meshes)
-                    base_mesh.Append(mesh);
-
-                long ticks = DateTime.Now.Ticks;
-                byte[] bytes = BitConverter.GetBytes(ticks);
-                string timeuid = Convert.ToBase64String(bytes).Replace('+', '_').Replace('/', '-').TrimEnd('=');
-
-                Rhino.DocObjects.ObjectAttributes attr = new Rhino.DocObjects.ObjectAttributes();
-                attr.Name = name + timeuid;
-                Guid guid = mScene.rhinoDoc.Objects.AddBrep(brep, attr);
-                mScene.rhinoDoc.Views.Redraw();
-
-                //testing rotation
-                Geometry.Geometry meshStroke_g = new Geometry.RhinoMesh(ref mScene, mScene.platformRotation);
-                ((Geometry.RhinoMesh)meshStroke_g).setMesh(ref base_mesh);
-
-                SceneNode ccMeshSN = new SceneNode(name, ref meshStroke_g, ref mesh_m);
-                mScene.staticGeometry.add(ref ccMeshSN);
-
-                //add reference SceneNode to brep and vice versa
-                mScene.brepToSceneNodeDic.Add(guid, ccMeshSN);
-                mScene.SceneNodeToBrepDic.Add(ccMeshSN.guid, mScene.rhinoDoc.Objects.Find(guid));
-
-                return guid;
-
-            }
-            else
-            {
-                return Guid.Empty;
-            }
-        }
-
-        public static Guid addSceneNode(ref Scene mScene, Brep brep, ref Material.Material mesh_m)
-        {
-            //TODO: detect the # of faces
-            Mesh base_mesh = new Mesh();
-            if (brep != null)
-            {
-                Mesh[] meshes = Mesh.CreateFromBrep(brep, MeshingParameters.Default);
-
-                foreach (Mesh mesh in meshes)
-                    base_mesh.Append(mesh);
-
-                Rhino.DocObjects.ObjectAttributes attr = new Rhino.DocObjects.ObjectAttributes();
-                attr.Name = "brepMesh";
-                Guid guid = mScene.rhinoDoc.Objects.AddBrep(brep, attr);
-                //mScene.rhinoDoc.Objects.Transform(guid, mScene.transM, true);
-                mScene.rhinoDoc.Views.Redraw();
-
-                //testing platform rotation
-                Geometry.Geometry meshStroke_g = new Geometry.RhinoMesh(ref mScene, mScene.platformRotation);
-                ((Geometry.RhinoMesh)meshStroke_g).setMesh(ref base_mesh);
-
-                SceneNode ccMeshSN = new SceneNode("brepMesh", ref meshStroke_g, ref mesh_m);
-                mScene.tableGeometry.add(ref ccMeshSN);
-
-                //add reference SceneNode to brep and vice versa
-                mScene.brepToSceneNodeDic.Add(guid, ccMeshSN);
-                mScene.SceneNodeToBrepDic.Add(ccMeshSN.guid, mScene.rhinoDoc.Objects.Find(guid));
-
-                return guid;
-            }
-            else
-            {
-                return Guid.Empty;
-            }
-        }
-
-        //only used in create plane for invisable edit plane
-        public static Guid addSceneNodeWithoutVR(ref Scene mScene, Brep brep, string name)
-        {
-            if (brep != null)
-            {
-                long ticks = DateTime.Now.Ticks;
-                byte[] bytes = BitConverter.GetBytes(ticks);
-                string timeuid = Convert.ToBase64String(bytes).Replace('+', '_').Replace('/', '-').TrimEnd('=');
-
-                Rhino.DocObjects.ObjectAttributes attr = new Rhino.DocObjects.ObjectAttributes();
-                attr.Name = name + timeuid;
-                Guid guid = mScene.rhinoDoc.Objects.AddBrep(brep, attr);
-                mScene.rhinoDoc.Views.Redraw();
-
-                return guid;
-            }
-            else
-            {
-                return Guid.Empty;
-            }
-        }
-
-        //TODO- Remove the collision part
-        public static Guid addSceneNode(ref Scene mScene, Brep brep, ref Material.Material mesh_m, string name)
-        {
-            //TODO: detect the # of faces
-            Mesh base_mesh = new Mesh();
-            if (brep != null)
-            {
-                long ticks = DateTime.Now.Ticks;
-                byte[] bytes = BitConverter.GetBytes(ticks);
-                string timeuid = Convert.ToBase64String(bytes).Replace('+', '_').Replace('/', '-').TrimEnd('=');
-
-                Rhino.DocObjects.ObjectAttributes attr = new Rhino.DocObjects.ObjectAttributes();
-                attr.Name = name + timeuid;
-                Guid guid = mScene.rhinoDoc.Objects.AddBrep(brep, attr);
-                mScene.rhinoDoc.Views.Redraw();
-
-                //remove the collision part and generate the new brep for rendering in VR
-                //testing boolean
-                Brep newBrep = null;
-                if (attr.Name.Contains("aprint"))
+                //map reference brep to SceneNode and vice versa 
+                if (renderObjSN != null)
                 {
-                    Rhino.DocObjects.ObjectEnumeratorSettings settings = new Rhino.DocObjects.ObjectEnumeratorSettings();
-                    settings.ObjectTypeFilter = Rhino.DocObjects.ObjectType.Brep;
+                    mScene.BiDictionaryRhinoVR.Add(guid, renderObjSN);
+                    return guid;
+                }
+                else
+                {
+                    return Guid.Empty;
+                }
 
-                    List<Brep> boolResultBrep = new List<Brep>();
-                    if (mScene.rhinoDoc.Objects.Count() > 1)
+            }
+            else
+            {
+                return Guid.Empty;
+            }
+        }
+
+        
+        public static void updateRhinoObjectSceneNode(ref Scene mScene, ref Rhino.DocObjects.ObjRef rhinoObjRef, Rhino.Geometry.Transform transM)
+        {
+            //TODO-WTF https://discourse.mcneel.com/t/continuous-transformation-in-a-loop/37093/6
+            Rhino.DocObjects.RhinoObject rhinoObj = rhinoObjRef.Object();
+            Point3d c1 = rhinoObjRef.Object().Geometry.GetBoundingBox(true).Center;
+            SceneNode updateSN = mScene.BiDictionaryRhinoVR.GetByFirst(rhinoObjRef.ObjectId);           
+            mScene.rhinoDoc.Objects.Transform(rhinoObjRef.ObjectId, transM, true);          
+            mScene.rhinoDoc.Views.Redraw();
+
+            //debug
+            Point3d c2 = rhinoObjRef.Brep().GetBoundingBox(true).Center;
+            Matrix4 transMVR =  mScene.vrToRobot.Inverted() * mScene.robotToPlatform.Inverted() * Util.rhinoToOpenTKTransform(transM) * mScene.robotToPlatform * mScene.vrToRobot;
+            updateSN.transform = mScene.tableGeometry.transform.Inverted() * transMVR * updateSN.transform;
+        }
+
+        
+        public static void setSceneNodeTrasnform (ref Scene mScene, ref SceneNode updateSN, Matrix4 transMVR)
+        {
+            updateSN.transform = mScene.tableGeometry.transform.Inverted() * transMVR * updateSN.transform;
+        }
+
+        public static string generateUniqueTimeID()
+        {
+            long ticks = DateTime.Now.Ticks;
+            byte[] bytes = BitConverter.GetBytes(ticks);
+            return Convert.ToBase64String(bytes).Replace('+', '_').Replace('/', '-').TrimEnd('=');
+        }
+
+        //TODO- for extrude and sweeep
+        public static void boolOPwithSurface()
+        {
+
+        }
+
+        public static void boolOPwithModel(ref Scene mScene, ref Rhino.DocObjects.RhinoObject rhinoObj, out Brep newBrep)
+        {
+            Rhino.DocObjects.ObjectEnumeratorSettings settings = new Rhino.DocObjects.ObjectEnumeratorSettings();
+            settings.ObjectTypeFilter = Rhino.DocObjects.ObjectType.Brep;
+
+            List<Brep> boolResultBrep = new List<Brep>();
+            Brep brep = (Brep)rhinoObj.Geometry;
+            newBrep = brep;
+
+            if (mScene.rhinoDoc.Objects.Count() > 1)
+            {
+                
+                foreach (Rhino.DocObjects.RhinoObject rhObj in mScene.rhinoDoc.Objects.GetObjectList(settings))
+                {
+                    //assume only intersect with one object at most
+                    if (rhObj.Attributes.Name.Contains("aprint") && rhObj.Attributes.Name != rhinoObj.Name)
                     {
 
-                        foreach (Rhino.DocObjects.RhinoObject rhObj in mScene.rhinoDoc.Objects.GetObjectList(settings))
+                        Brep[] boolBrep = brep.Split((Brep)rhObj.Geometry, mScene.rhinoDoc.ModelAbsoluteTolerance);
+                        if (boolBrep != null && boolBrep.Length > 0)
                         {
-                            //assume only intersect with one object at most
-                            if (rhObj.Attributes.Name.Contains("aprint") && rhObj.Attributes.Name != attr.Name)
+                            float maxD = 0f;
+                            int maxIndex = -1;
+                            for (int i = 0; i < boolBrep.Length; i++)
                             {
 
-                                Brep[] boolBrep = brep.Split((Brep)rhObj.Geometry, mScene.rhinoDoc.ModelAbsoluteTolerance);
-                                if (boolBrep != null && boolBrep.Length > 0)
+                                //get the correct split brep by comparing their center
+                                float distance = computePointDistance(RhinoToOpenTKPoint(boolBrep[i].GetBoundingBox(true).Center), RhinoToOpenTKPoint(rhObj.Geometry.GetBoundingBox(true).Center));
+
+                                if (distance > maxD)
                                 {
-                                    float maxD = 0f;
-                                    int maxIndex = -1;
-                                    for (int i = 0; i < boolBrep.Length; i++)
-                                    {
-
-                                        //get the correct split brep by comparing their center
-                                        float distance = computePointDistance(RhinoToOpenTKPoint(boolBrep[i].GetBoundingBox(true).Center), RhinoToOpenTKPoint(rhObj.Geometry.GetBoundingBox(true).Center));
-
-                                        if (distance > maxD)
-                                        {
-                                            maxD = distance;
-                                            maxIndex = i;
-                                        }
-
-                                    }
-                                    if (maxIndex != -1)
-                                    {
-                                        //get the correct split brep by comparing their center
-                                        newBrep = boolBrep[maxIndex];
-                                    }
-                                    else
-                                    {
-                                        newBrep = brep;
-                                    }
-                                    break;
+                                    maxD = distance;
+                                    maxIndex = i;
                                 }
+
                             }
+                            if (maxIndex != -1)
+                            {
+                                //get the correct split brep by comparing their center
+                                newBrep = boolBrep[maxIndex];
+                            }
+                            else
+                            {
+                                newBrep = brep;
+                            }
+                            break;
                         }
-
-                    }
-
-                    if (newBrep == null)
-                    {
-                        newBrep = brep;
                     }
                 }
-                else
-                {
-                    newBrep = brep;
-                }
+            }else
+            {
+                newBrep = brep;
+            }
+        }
 
 
-                Mesh[] meshes = Mesh.CreateFromBrep(newBrep, MeshingParameters.Default);
-                foreach (Mesh mesh in meshes)
-                    base_mesh.Append(mesh);
+        public static bool removeRhinoObject(ref Scene mScene, Guid guid)
+        {
+            bool isSucceed = mScene.rhinoDoc.Objects.Delete(guid, true);
+            mScene.rhinoDoc.Views.Redraw();
+            return isSucceed;
+        }
 
-                Geometry.Geometry meshStroke_g = new Geometry.RhinoMesh(ref mScene, mScene.platformRotation);
-                ((Geometry.RhinoMesh)meshStroke_g).setMesh(ref base_mesh);
-
-                SceneNode ccMeshSN = new SceneNode(name, ref meshStroke_g, ref mesh_m);
-                mScene.tableGeometry.add(ref ccMeshSN);
-
-                //add reference SceneNode to brep and vice versa
-                mScene.brepToSceneNodeDic.Add(guid, ccMeshSN);
-                mScene.SceneNodeToBrepDic.Add(ccMeshSN.guid, mScene.rhinoDoc.Objects.Find(guid));
-
-                return guid;
-
+        public static void removeSceneNode(ref Scene mScene, ref SceneNode SN, bool isStatic = false)
+        {
+            if (!isStatic)
+            {
+                mScene.tableGeometry.children.Remove(SN);
             }
             else
             {
-                return Guid.Empty;
+                mScene.staticGeometry.children.Remove(SN);
             }
+            mScene.rhinoDoc.Views.Redraw();
         }
 
-        public static Guid addSceneNode(ref Scene mScene, Brep brep, ref Material.Material mesh_m, string name, Transform t, bool renderLate = false)
+        public static void removeRhinoObjectSceneNode(ref Scene mScene, Guid guid, bool isStatic = false)
         {
-            //TODO: detect the # of faces
-            Mesh base_mesh = new Mesh();
-            if (brep != null)
-            {
-                Mesh[] meshes = Mesh.CreateFromBrep(brep, MeshingParameters.Default);
-
-                foreach (Mesh mesh in meshes)
-                    base_mesh.Append(mesh);
-                Rhino.DocObjects.ObjectAttributes attr = new Rhino.DocObjects.ObjectAttributes();
-                attr.Name = name;
-                Guid guid = mScene.rhinoDoc.Objects.AddBrep(brep, attr);
-                //add name attribute for printing
-                //mScene.rhinoDoc.Objects.Find(guid).Attributes.Name = "a" + guid.ToString();
-                //mScene.rhinoDoc.Objects.Find(guid).CommitChanges();
-                mScene.rhinoDoc.Views.Redraw();
-
-                Geometry.Geometry meshStroke_g = new Geometry.RhinoMesh2(ref mScene, t);
-                ((Geometry.RhinoMesh2)meshStroke_g).setMesh(ref base_mesh);
-
-                SceneNode ccMeshSN = new SceneNode(name, ref meshStroke_g, ref mesh_m, renderLate);
-                if (name == "planeXY" || name == "planeYZ" || name == "planeXZ")
-                    mScene.staticGeometry.add(ref ccMeshSN);
-                else
-                    mScene.tableGeometry.add(ref ccMeshSN);
-
-                //add reference SceneNode to brep and vice versa
-                mScene.brepToSceneNodeDic.Add(guid, ccMeshSN);
-                mScene.SceneNodeToBrepDic.Add(ccMeshSN.guid, mScene.rhinoDoc.Objects.Find(guid));
-
-                return guid;
-
-            }
-            else
-            {
-                return Guid.Empty;
-            }
-        }
-
-        public static void removeSceneNode(ref Scene mScene, Guid guid)
-        {
-            SceneNode deleteSN = mScene.brepToSceneNodeDic[guid];
-            mScene.brepToSceneNodeDic.Remove(guid);
-            mScene.SceneNodeToBrepDic.Remove(deleteSN.guid);
+            SceneNode deleteSN = mScene.BiDictionaryRhinoVR.GetByFirst(guid);
 
             mScene.rhinoDoc.Objects.Delete(guid, true);
-            foreach (SceneNode sn in mScene.tableGeometry.children)
-            {
-                if (sn.guid == deleteSN.guid)
-                {
-                    mScene.tableGeometry.children.Remove(sn);
-                    break;
-                }
-            }
+
+            removeSceneNode(ref mScene, ref deleteSN, isStatic);
+
+            mScene.BiDictionaryRhinoVR.RemoveByFirst(guid);
+
+            mScene.rhinoDoc.Views.Redraw();
 
         }
 
-        public static void removeStaticSceneNode(ref Scene mScene, Guid guid)
+        public static void removeRhinoObjectSceneNode(ref Scene mScene, ref SceneNode deleteSN, bool isStatic = false)
         {
-            SceneNode deleteSN = mScene.brepToSceneNodeDic[guid];
-            mScene.brepToSceneNodeDic.Remove(guid);
-            mScene.SceneNodeToBrepDic.Remove(deleteSN.guid);
+            Guid delGuid = mScene.BiDictionaryRhinoVR.GetBySecond(deleteSN);
+            mScene.rhinoDoc.Objects.Delete(delGuid, true);
 
-            mScene.rhinoDoc.Objects.Delete(guid, true);
-            foreach (SceneNode sn in mScene.staticGeometry.children)
-            {
-                if (sn.guid == deleteSN.guid)
-                {
-                    mScene.staticGeometry.children.Remove(sn);
-                    break;
-                }
-            }
-        }
+            removeSceneNode(ref mScene, ref deleteSN, isStatic);
 
-        public static void removeStaticSceneNodeKeepRhio(ref Scene mScene, Guid guid)
-        {
-            SceneNode deleteSN = mScene.brepToSceneNodeDic[guid];
-            foreach (SceneNode sn in mScene.staticGeometry.children)
-            {
-                if (sn.guid == deleteSN.guid)
-                {
-                    mScene.staticGeometry.children.Remove(sn);
-                    break;
-                }
-            }
+            mScene.BiDictionaryRhinoVR.RemoveByFirst(delGuid);
+
+            mScene.rhinoDoc.Views.Redraw();
+
         }
 
 
@@ -982,9 +1026,11 @@ namespace SparrowHawk
             {
                 if (rhObj.Attributes.Name.Contains("aprint") || rhObj.Attributes.Name.Contains("patchSurface"))
                 {
-                    removeSceneNode(ref mScene, rhObj.Id);
+                    removeRhinoObjectSceneNode(ref mScene, rhObj.Id);
                 }
             }
+
+            mScene.rhinoDoc.Views.Redraw();
         }
 
         public static void clearPlanePoints(ref Scene mScene)
@@ -1011,6 +1057,8 @@ namespace SparrowHawk
 
             mScene.iCurveList.Clear();
             mScene.iRhObjList.Clear();
+
+            mScene.rhinoDoc.Views.Redraw();
         }
 
         public static Brep RevolveFunc(ref Scene mScene, ref List<Curve> curveList)
@@ -1061,16 +1109,16 @@ namespace SparrowHawk
             {
                 Transform projectTranslate = Transform.Translation(50 * mScene.iPlaneList[0].Normal);
                 profileCurves[0].Transform(projectTranslate);
-                Curve projectCurve = Curve.ProjectToBrep(profileCurves[0], (Brep)mScene.iRhObjList[0].Geometry, -mScene.iPlaneList[0].Normal, mScene.rhinoDoc.ModelAbsoluteTolerance)[0].ToNurbsCurve();
+                Curve projectCurve = Curve.ProjectToBrep(profileCurves[0], (Brep)mScene.iRhObjList[0].Object().Geometry, -mScene.iPlaneList[0].Normal, mScene.rhinoDoc.ModelAbsoluteTolerance)[0].ToNurbsCurve();
                 profileCurves[0] = projectCurve;
 
                 Point3d sPlaneCenter = profileCurves[0].GetBoundingBox(true).Center;
                 Point3d ePlaneCenter = profileCurves[1].GetBoundingBox(true).Center;
                 Rhino.Geometry.Vector3d direction = new Rhino.Geometry.Vector3d(ePlaneCenter.X - sPlaneCenter.X, ePlaneCenter.Y - sPlaneCenter.Y, ePlaneCenter.Z - sPlaneCenter.Z);
-                Vector3 loftDirection = Util.RhinoToOpenTKPoint(direction);
+                Vector3 loftDirection = Util.RhinoToOpenTKVector(direction);
 
-                OpenTK.Vector3 n1 = Util.RhinoToOpenTKPoint(mScene.iPlaneList[0].Normal);
-                OpenTK.Vector3 n2 = Util.RhinoToOpenTKPoint(mScene.iPlaneList[1].Normal);
+                OpenTK.Vector3 n1 = Util.RhinoToOpenTKVector(mScene.iPlaneList[0].Normal);
+                OpenTK.Vector3 n2 = Util.RhinoToOpenTKVector(mScene.iPlaneList[1].Normal);
 
                 //n1,n2 should be the same with railNormal and railEndNormal
                 n1.Normalize();
@@ -1121,7 +1169,7 @@ namespace SparrowHawk
                 //mScene.sStartP = profileCurves[0].GetBoundingBox(true).Center;
 
                 List<GeometryBase> geometries = new List<GeometryBase>();
-                geometries.Add(mScene.iRhObjList[mScene.iRhObjList.Count - 1].Geometry);
+                geometries.Add(mScene.iRhObjList[mScene.iRhObjList.Count - 1].Object().Geometry);
                 //must be a brep or surface, not mesh
                 Point3d[] rayIntersections = Rhino.Geometry.Intersect.Intersection.RayShoot(ray1, geometries, 1);
                 if (rayIntersections != null)
@@ -1181,9 +1229,9 @@ namespace SparrowHawk
             NurbsCurve rail = (NurbsCurve)curveList[1];
             PolylineCurve railPL = rail.ToPolyline(0, 0, 0, 0, 0, 1, 1, 0, true);
             OpenTK.Vector3 railStartPoint = Util.RhinoToOpenTKPoint(railPL.PointAtStart);
-            OpenTK.Vector3 railstartNormal = Util.RhinoToOpenTKPoint(railPL.TangentAtStart);
+            OpenTK.Vector3 railstartNormal = Util.RhinoToOpenTKVector(railPL.TangentAtStart);
             OpenTK.Vector3 railEndPoint = Util.RhinoToOpenTKPoint(railPL.PointAtEnd);
-            OpenTK.Vector3 railEndNormal = Util.RhinoToOpenTKPoint(railPL.TangentAtEnd);
+            OpenTK.Vector3 railEndNormal = Util.RhinoToOpenTKVector(railPL.TangentAtEnd);
 
             //changing seam
             OpenTK.Matrix4 transMEnd = Util.getCoordinateTransM(railStartPoint, railEndPoint, railstartNormal, railEndNormal);
@@ -1241,10 +1289,11 @@ namespace SparrowHawk
                     //how we pre-move the profile curves to make it's seam to the orginal center position. only tranlation?
                     //try create the profile curve on the same plane first to match the cornel points then transform to the end
                     Rectangle3d tmpRect2 = new Rectangle3d(testPlane2, topLeftP2, Util.openTkToRhinoPoint(rectBottomRightRhino2));
-                    //Rectangle3d rect2 = new Rectangle3d(testPlane1, tmpRect2.Width, tmpRect2.Height);
+                    Rectangle3d rect2 = new Rectangle3d(testPlane2, new Interval(-tmpRect2.Width / 2, tmpRect2.Width / 2), new Interval(-tmpRect2.Height / 2, tmpRect2.Height / 2));
+                    /*
                     Rectangle3d rect2 = new Rectangle3d(testPlane1, new Interval(-tmpRect2.Width / 2, tmpRect2.Width / 2), new Interval(-tmpRect2.Height / 2, tmpRect2.Height / 2));
                     Transform tEnd = Util.OpenTKToRhinoTransform(transMEnd);
-                    rect2.Transform(tEnd);
+                    rect2.Transform(tEnd);*/
                     profileCurves[0] = rect1.ToNurbsCurve();
                     profileCurves[1] = rect2.ToNurbsCurve();
 
@@ -1271,8 +1320,8 @@ namespace SparrowHawk
 
                 //angle = atan2(norm(cross(a,b)), dot(a,b))
                 float angle = Vector3.Dot(n1, n2);
-                CurveOrientation dir = profileCurves[0].ClosedCurveOrientation(Util.openTkToRhinoVector(railstartNormal)); //new Vector3(0,0,1)
-                CurveOrientation dir2 = profileCurves[1].ClosedCurveOrientation(Util.openTkToRhinoVector(railEndNormal)); //new Vector3(0,0,1)
+                CurveOrientation dir = profileCurves[0].ClosedCurveOrientation(railPL.TangentAtStart); //new Vector3(0,0,1)
+                CurveOrientation dir2 = profileCurves[1].ClosedCurveOrientation(railPL.TangentAtStart); //new Vector3(0,0,1)
 
                 //debugging
                 mScene.angleD = angle;
@@ -1348,9 +1397,9 @@ namespace SparrowHawk
             {
                 //TODO-rotating to align rect. but need to know the drawplane noraml to allign with
                 curvePlane.Transform(Util.OpenTKToRhinoTransform(transM));
-                OpenTK.Vector3 testAxis = Util.RhinoToOpenTKPoint(curvePlane.XAxis).Normalized();
+                OpenTK.Vector3 testAxis = Util.RhinoToOpenTKVector(curvePlane.XAxis).Normalized();
                 //OpenTK.Matrix4 transM2 = Util.getTransMAroundAxis(railStartPoint, testAxis, new Vector3(1, 0, 0), Util.RhinoToOpenTKPoint(curvePlane.Normal)); //still affect by the different normal
-                OpenTK.Matrix4 transM2 = Util.getCoordinateTransM(railStartPoint, railStartPoint, testAxis, Util.RhinoToOpenTKPoint(mScene.iPlaneList[mScene.iPlaneList.Count - 1].Normal));
+                OpenTK.Matrix4 transM2 = Util.getCoordinateTransM(railStartPoint, railStartPoint, testAxis, Util.RhinoToOpenTKVector(mScene.iPlaneList[mScene.iPlaneList.Count - 1].Normal));
                 t = Util.OpenTKToRhinoTransform(transM2 * transM);
                 Rhino.RhinoApp.WriteLine("angle: " + OpenTK.Vector3.CalculateAngle(testAxis, new Vector3(1, 0, 0)));
 
@@ -1380,9 +1429,9 @@ namespace SparrowHawk
             //compute the transfrom from railStart to railEnd
             NurbsCurve rail = mScene.iCurveList[mScene.iCurveList.Count - 2].ToNurbsCurve();
             OpenTK.Vector3 railStartPoint = Util.RhinoToOpenTKPoint(rail.PointAtStart);
-            OpenTK.Vector3 railStartNormal = Util.RhinoToOpenTKPoint(rail.TangentAtStart);
+            OpenTK.Vector3 railStartNormal = Util.RhinoToOpenTKVector(rail.TangentAtStart);
             OpenTK.Vector3 railEndPoint = Util.RhinoToOpenTKPoint(rail.PointAtEnd);
-            OpenTK.Vector3 railEndNormal = Util.RhinoToOpenTKPoint(rail.TangentAtEnd);
+            OpenTK.Vector3 railEndNormal = Util.RhinoToOpenTKVector(rail.TangentAtEnd);
 
             OpenTK.Matrix4 transMStartEnd = new Matrix4();
             transMStartEnd = Util.getCoordinateTransM(railStartPoint, railEndPoint, railStartNormal, railEndNormal);
@@ -1431,7 +1480,7 @@ namespace SparrowHawk
                 mScene.angleD = angle;
                 mScene.c1D = dir.ToString();
                 mScene.c2D = dir2.ToString();
-
+                Rhino.RhinoApp.WriteLine("angle: " + mScene.angleD + ", c1D: " + mScene.c1D + ", c2D:" + mScene.c2D);
                 //testing seems bug, try compare by ourselves
                 //if(!Curve.DoDirectionsMatch(profileCurves[0], profileCurves[1]))
                 //If the dot product is greater than 0 both vectors are pointing in the same direction
@@ -1468,12 +1517,39 @@ namespace SparrowHawk
             }
             else if ((Scene.ShapeType)mScene.selectionDic[Scene.SelectionKey.Profile1Shape] == Scene.ShapeType.Rect)
             {
+
+                //changing the curve direction
+                OpenTK.Vector3 n1 = new Vector3((float)curvePlane1.Normal.X, (float)curvePlane1.Normal.Y, (float)curvePlane1.Normal.Z);
+                OpenTK.Vector3 n2 = new Vector3((float)curvePlane2.Normal.X, (float)curvePlane2.Normal.Y, (float)curvePlane2.Normal.Z);
+
+                //n1,n2 should be the same with railNormal and railEndNormal
+                n1.Normalize();
+                n2.Normalize();
+
+                //angle = atan2(norm(cross(a,b)), dot(a,b))
+                float angle = Vector3.Dot(n1, n2);
+                CurveOrientation dir = profileCurves[0].ClosedCurveOrientation(Util.openTkToRhinoVector(n1)); //new Vector3(0,0,1)
+                CurveOrientation dir2 = profileCurves[1].ClosedCurveOrientation(Util.openTkToRhinoVector(n1)); //new Vector3(0,0,1)
+
+                //debugging
+                mScene.angleD = angle;
+                mScene.c1D = dir.ToString();
+                mScene.c2D = dir2.ToString();
+                Rhino.RhinoApp.WriteLine("angle: " + mScene.angleD + ", c1D: " + mScene.c1D + ", c2D:" + mScene.c2D);
+                //testing seems bug, try compare by ourselves
+                //if(!Curve.DoDirectionsMatch(profileCurves[0], profileCurves[1]))
+                if (dir != dir2)
+                {
+                    profileCurves[1].Reverse();
+                }
+
                 //TODO- create the endRect on startPlane to locate the reference corner
                 Rhino.Geometry.Polyline polylineStart;
                 Rhino.Geometry.Polyline polylineEnd;
                 if (profileCurves[0].TryGetPolyline(out polylineStart) && profileCurves[1].TryGetPolyline(out polylineEnd))
                 {
                     //testing changing seam
+                    
                     Rectangle3d startRect = Rectangle3d.CreateFromPolyline(polylineStart);
                     Rectangle3d endRect = Rectangle3d.CreateFromPolyline(polylineEnd);
 
@@ -1493,7 +1569,7 @@ namespace SparrowHawk
                     double curveT = 0;
                     profileCurves[1].ClosestPoint(endRect.Corner(minIndex), out curveT);
                     profileCurves[1].ChangeClosedCurveSeam(curveT);
-
+                    
                     //method 1- rebuild rect but sometimes it rotate 90 degrees so width become height
                     /*
                     Rectangle3d startRect = Rectangle3d.CreateFromPolyline(polylineStart);
@@ -1540,7 +1616,6 @@ namespace SparrowHawk
                     mScene.sStartP = new Point3d(startRect.Corner(3));
                     mScene.eStartP = new Point3d(referencePoint);
                     */
-
                 }
 
             }
