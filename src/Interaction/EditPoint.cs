@@ -250,8 +250,16 @@ namespace SparrowHawk.Interaction
             {
                 //remove the end cap curve and it's plane
                 mScene.iCurveList.RemoveAt(mScene.iCurveList.Count - 1);
-                mScene.iPlaneList.RemoveAt(mScene.iPlaneList.Count - 1);
-                mScene.iRhObjList.RemoveAt(mScene.iRhObjList.Count - 1);
+                if (mScene.iCurveList[mScene.iCurveList.Count - 1].GetUserString(CurveData.CurveOnObj.ToString()) != null)
+                {
+                    Guid curveOnObjId = new Guid(mScene.iCurveList[mScene.iCurveList.Count - 1].GetUserString(CurveData.CurveOnObj.ToString()));
+                    ObjRef curveOnObjRef = new ObjRef(curveOnObjId);
+                    if (curveOnObjRef.Object().Attributes.Name.Contains("Panel"))
+                    {
+                        Util.removeRhinoObject(ref mScene, curveOnObjRef.ObjectId);
+                    }
+
+                }
             }
 
         }
@@ -275,9 +283,11 @@ namespace SparrowHawk.Interaction
             if (onPlane)
             {
                 //init rayCastingObjs
-                rhinoPlaneRef = mScene.iRhObjList.ElementAt(mScene.iRhObjList.Count - 1);
+                Guid rhinoPlaneID = new Guid(mScene.iCurveList[mScene.iCurveList.Count - 1].GetUserString(CurveData.CurveOnObj.ToString()));
+                rhinoPlaneRef = new ObjRef(rhinoPlaneID);
                 //testing get curveOnplane here.
-                curvePlane = mScene.iPlaneList.ElementAt(mScene.iPlaneList.Count - 1);
+                curvePlane = new Plane(Util.getPointfromString(mScene.iCurveList[mScene.iCurveList.Count - 1].GetUserString(CurveData.PlaneOrigin.ToString())),
+                    Util.getVectorfromString(mScene.iCurveList[mScene.iCurveList.Count - 1].GetUserString(CurveData.PlaneNormal.ToString())));
                 rayCastingObjs.Add(rhinoPlaneRef);
 
                 Geometry.Geometry geo = new Geometry.DrawPointMarker(new OpenTK.Vector3(0, 0, 0));
@@ -345,7 +355,8 @@ namespace SparrowHawk.Interaction
 
             d = new generateModel_Delegate(generateModel);
 
-            renderEditCurve();
+            renderEditCurve(); //render curve
+            updateEditCurve(); //render shape
             //render model
             R = d.BeginInvoke(new AsyncCallback(modelCompleted), null);
 
@@ -910,6 +921,14 @@ namespace SparrowHawk.Interaction
             transMEnd = Util.getCoordinateTransM(shapeCenter, railEndPoint, shapeNormal, railEndNormal);
             Transform tEnd = Util.OpenTKToRhinoTransform(transMEnd);
 
+            //create endPlane Rhino Object                
+            PlaneSurface plane_surface = new PlaneSurface(endPlane, new Interval(-120, 120), new Interval(-120, 120));
+            Brep designPlane = Brep.CreateFromSurface(plane_surface);
+
+
+            Guid guid = Util.addRhinoObject(ref mScene, ref designPlane, "panel");
+
+
             if ((ShapeType)mScene.selectionDic[SelectionKey.Profile1Shape] == ShapeType.Circle)
             {
                 //Method 1--Add iPointList for endCurve. Careful it's in VR space
@@ -931,8 +950,15 @@ namespace SparrowHawk.Interaction
                 if (mScene.iCurveList[mScene.iCurveList.Count - 2].TryGetCircle(out circle, mScene.rhinoDoc.ModelAbsoluteTolerance * 2.1))
                 {
                     Circle endCircle = new Circle(endPlane, circle.Radius);
-                    mScene.iCurveList.Add(endCircle.ToNurbsCurve());
-                    mScene.iPlaneList.Add(endPlane);
+                    NurbsCurve endCurve = endCircle.ToNurbsCurve();
+                    endCurve.SetUserString(CurveData.PlaneOrigin.ToString(), endPlane.Origin.ToString());
+                    endCurve.SetUserString(CurveData.PlaneNormal.ToString(), endPlane.Normal.ToString());
+                    if (designPlane != null)
+                    {
+                        endCurve.SetUserString(CurveData.CurveOnObj.ToString(), guid.ToString());
+                    }
+                    mScene.iCurveList.Add(endCurve);
+ 
                     mScene.iPointList.Add(Util.platformToVRPoint(ref mScene, Util.RhinoToOpenTKPoint(endCircle.Center)));
                     mScene.iPointList.Add(Util.platformToVRPoint(ref mScene, Util.RhinoToOpenTKPoint(endCircle.PointAt(0))));
                 }
@@ -960,8 +986,13 @@ namespace SparrowHawk.Interaction
                 //Method 2--Add endCurve
                 NurbsCurve endCurve = mScene.iCurveList[mScene.iCurveList.Count - 2].DuplicateCurve().ToNurbsCurve();
                 endCurve.Transform(tEnd);
+                endCurve.SetUserString(CurveData.PlaneOrigin.ToString(), endPlane.Origin.ToString());
+                endCurve.SetUserString(CurveData.PlaneNormal.ToString(), endPlane.Normal.ToString());
+                if (designPlane != null)
+                {
+                    endCurve.SetUserString(CurveData.CurveOnObj.ToString(), guid.ToString());
+                }
                 mScene.iCurveList.Add(endCurve);
-                mScene.iPlaneList.Add(endPlane);
 
                 Rhino.Geometry.Polyline polyline;
                 if (endCurve.TryGetPolyline(out polyline))
@@ -999,15 +1030,7 @@ namespace SparrowHawk.Interaction
             //update the profile curve1 to the railStart
             mScene.iCurveList[mScene.iCurveList.Count - 3].Transform(tStart);
 
-            //create endPlane Rhino Object                
-            PlaneSurface plane_surface = new PlaneSurface(endPlane, new Interval(-120, 120), new Interval(-120, 120));
-            Brep designPlane = Brep.CreateFromSurface(plane_surface);
-
-            if (designPlane != null)
-            {
-                Guid guid = Util.addRhinoObject(ref mScene, ref designPlane, "panel");
-                mScene.iRhObjList.Add(new ObjRef(guid));
-            }
+           
         }
 
         private void joystickControl()

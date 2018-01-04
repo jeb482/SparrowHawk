@@ -42,6 +42,9 @@ namespace SparrowHawk.Interaction
         private DrawnType drawnType = DrawnType.None;
         private bool isProjection = false;
 
+        private int beforeCurveCount = 0;
+        private int afterCurveCount = 0;
+
         public CreatePlane(ref Scene scene) : base(ref scene)
         {
             mesh_m = new Material.SingleColorMaterial(0.5f, 0, 0, 0.4f);
@@ -49,6 +52,8 @@ namespace SparrowHawk.Interaction
 
         public CreatePlane(ref Scene scene, CurveID curveID) : base(ref scene)
         {
+            beforeCurveCount = mScene.iCurveList.Count;
+
             mScene = scene;
 
             mesh_m = new Material.SingleColorMaterial(0.5f, 0.5f, 0, 0.4f);
@@ -86,22 +91,8 @@ namespace SparrowHawk.Interaction
             return (float)(-2 * Math.PI) / (2 * numOptions);
         }
 
-        public override void leaveTop()
-        {
-            //clearDrawing is a bit tricky here since we need to save the shape for later.
-        }
 
-        public override void deactivate()
-        {
-            if (previewObjSN != null)
-            {
-                Util.removeSceneNode(ref mScene, ref previewObjSN);
-                previewObjSN = null;
-            }
-
-            resetVariables();
-        }
-
+        //renderObjSN (need to save after leave), previewObjSN
         private void resetVariables()
         {
             mCurrentSelection = -1;
@@ -120,21 +111,16 @@ namespace SparrowHawk.Interaction
         public override void init()
         {
             resetVariables();
-            //support undo function
-            if (mScene != null)
-            {
-                if (previewObjSN != null)
-                {
-                    Util.removeSceneNode(ref mScene, ref previewObjSN);
-                }
 
-                //already click confirm button
+            //support undo function
+            if (mScene != null && (afterCurveCount - beforeCurveCount) > 0)
+            {
+                mScene.iCurveList.RemoveAt(mScene.iCurveList.Count - 1);
+                //don't have curveOnObject don't need to do anything
                 if (renderObjSN != null)
                 {
                     Util.removeSceneNode(ref mScene, ref renderObjSN);
-                    mScene.iCurveList.RemoveAt(mScene.iCurveList.Count - 1);
-                    mScene.iPlaneList.RemoveAt(mScene.iPlaneList.Count - 1);
-                    mScene.iPlaneList.RemoveAt(mScene.iPlaneList.Count - 1);
+                    renderObjSN = null;
                 }
             }
 
@@ -155,6 +141,42 @@ namespace SparrowHawk.Interaction
         {
 
 
+        }
+
+        public override void leaveTop()
+        {
+            clearDrawingLeaveTop();
+        }
+
+        public override void deactivate()
+        {
+            clearDrawingPop();
+
+        }
+
+        private void clearDrawingLeaveTop()
+        {
+            if (previewObjSN != null)
+            {
+                Util.removeSceneNode(ref mScene, ref previewObjSN);
+                previewObjSN = null;
+            }
+
+        }
+
+        private void clearDrawingPop()
+        {
+            if (previewObjSN != null)
+            {
+                Util.removeSceneNode(ref mScene, ref previewObjSN);
+                previewObjSN = null;
+            }
+
+            if (renderObjSN != null)
+            {
+                Util.removeSceneNode(ref mScene, ref renderObjSN);
+                renderObjSN = null;
+            }
         }
 
         public override void draw(bool isTop)
@@ -336,8 +358,7 @@ namespace SparrowHawk.Interaction
             Point3d planeCenter = new Point3d();
             if (!isProjection)
             {
-                Util.removeSceneNode(ref mScene, ref previewObjSN);
-                previewObjSN = null;
+
                 Brep[] shapes = Brep.CreatePlanarBreps(modelcurve);
                 modelBrep = shapes[0];
                 Util.addRhinoObjectSceneNode(ref mScene, ref modelBrep, ref mesh_m, shapeType.ToString(), out renderObjSN);
@@ -434,77 +455,13 @@ namespace SparrowHawk.Interaction
 
 
             //add icurveList since we don't use EditPoint2 for circle and rect
+            modelcurve.SetUserString(CurveData.PlaneOrigin.ToString(), curvePlane.Origin.ToString());
+            modelcurve.SetUserString(CurveData.PlaneNormal.ToString(), curvePlane.Normal.ToString());
+
             mScene.iCurveList.Add(modelcurve);
-            mScene.iPlaneList.Add(curvePlane);
-            mScene.iPlaneList.Add(plane2);
-
-            //updating iPointList
-            /*
-            if (renderType == "circle")
-            {
-                mScene.selectionList.Add("Sweep");
-                mScene.selectionList.Add("Circle");
-                mScene.selectionList.Add("Curve");
-                Circle circle;
-                if (modelcurve.TryGetCircle(out circle))
-                {
-                    mScene.iPointList.Add(Util.platformToVRPoint(ref mScene, Util.RhinoToOpenTKPoint(circle.Center)));
-                    mScene.iPointList.Add(Util.platformToVRPoint(ref mScene, Util.RhinoToOpenTKPoint(modelcurve.PointAtStart)));
-                }
-
-            }
-            else if (renderType == "rect")
-            {
-                mScene.selectionList.Add("Sweep");
-                mScene.selectionList.Add("Rect");
-                mScene.selectionList.Add("Curve");
-                Polyline polyline;
-                if (modelcurve.TryGetPolyline(out polyline))
-                {
-                    Rectangle3d rect = Rectangle3d.CreateFromPolyline(polyline);
-                    mScene.iPointList.Add(Util.platformToVRPoint(ref mScene, Util.RhinoToOpenTKPoint(rect.Center)));
-                    mScene.iPointList.Add(Util.platformToVRPoint(ref mScene, Util.RhinoToOpenTKPoint(rect.Corner(3))));
-                }
-            }
-            else if (renderType == "projection")
-            {
-                //check if it's can still be a circle or rect since it might be a planar surface
-                Circle circle;
-                if (modelcurve.TryGetCircle(out circle))
-                {
-                    mScene.selectionList.Add("Sweep");
-                    mScene.selectionList.Add("Circle");
-                    mScene.selectionList.Add("Curve");
-                }
-                else
-                {
-                    Polyline polyline;
-                    if (modelcurve.TryGetPolyline(out polyline))
-                    {
-                        mScene.selectionList.Add("Sweep");
-                        mScene.selectionList.Add("Rect");
-                        mScene.selectionList.Add("Curve");
-                    }
-                    else
-                    {
-                        //3D curve Sweep
-                        mScene.selectionList.Add("Sweep");
-                        mScene.selectionList.Add("Curve");
-                        mScene.selectionList.Add("Curve");
-                    }
-                }
-
-
-            }
-            */
-            //push creatcurve for rail curve type-3 for railPlane
-
-            //mScene.popInteraction();
-            //mScene.pushInteraction(new EditPoint3(ref mScene, true, "Sweep"));
-            //mScene.pushInteraction(new CreateCurve(ref mScene, 3, false, "Sweep"));
-            //mScene.peekInteraction().init();
 
             //call next interaction in the chain
+            afterCurveCount = mScene.iCurveList.Count;
             mScene.pushInteractionFromChain();
 
         }

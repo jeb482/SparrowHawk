@@ -30,7 +30,6 @@ namespace SparrowHawk.Interaction
         protected Rhino.Geometry.Point3d projectP;
 
         protected Rhino.DocObjects.ObjRef pointOnObjRef; //in case that before modelComplete targetPRhObj become null
-        private SceneNode renderObjSN;
         private List<Point3d> pointsList = new List<Point3d>();
         List<SceneNode> pointMarkers = new List<SceneNode>();
         private Rhino.Geometry.Curve contourCurve = null;
@@ -88,7 +87,7 @@ namespace SparrowHawk.Interaction
 
         }
 
-        //addRhinoObjectSceneNode-renderObjSN (shape), addRhinoObject-pointOnObjRef (where shape on)
+        //addRhinoObject-pointOnObjRef (where curve on)
         //drawPoint,editPointSN in PointMarkers-addSceneNode  
         public void resetVariables()
         {
@@ -123,12 +122,13 @@ namespace SparrowHawk.Interaction
 
         public override void leaveTop()
         {
-            clearDrawing();
+            clearDrawingLeaveTop();
         }
 
         public override void deactivate()
         {
-            clearDrawing();
+            clearDrawingPop();
+
         }
 
         public override void init()
@@ -138,42 +138,19 @@ namespace SparrowHawk.Interaction
             //support undo function
             if (mScene != null && pointOnObjRef != null)
             {
-                //TODO-check if it does clear the points
-                if (pointMarkers.Count > 0)
-                {
-                    for (int i = 0; i < pointMarkers.Count; i++)
-                    {
-                        SceneNode sn = pointMarkers[i];
-                        Util.removeSceneNode(ref mScene, ref sn);                     
-                    }
-                    pointMarkers = new List<SceneNode>();
-                }
-
-                //TODO-make sure it won't remove the obj we created 
-                if (pointOnObjRef != null)
-                {
-                    //Util.removeRhinoObject(ref mScene, pointOnObjRef.ObjectId);
-                    pointOnObjRef = null;
-                }
-
-                if (renderObjSN != null)
-                {
-                    Util.removeRhinoObjectSceneNode(ref mScene, ref renderObjSN);
-                    renderObjSN = null;
-                }
                 
                 mScene.iCurveList.RemoveAt(mScene.iCurveList.Count - 1);
-
-                if (drawnType != DrawnType.In3D)
+                if(mScene.iCurveList[mScene.iCurveList.Count - 1].GetUserString(CurveData.CurveOnObj.ToString()) != null)
                 {
-                    mScene.iRhObjList.RemoveAt(mScene.iRhObjList.Count - 1); //pointOnObj is new plane after we move
-                    mScene.iPlaneList.RemoveAt(mScene.iPlaneList.Count - 1);
+                    Guid curveOnObjId = new Guid(mScene.iCurveList[mScene.iCurveList.Count - 1].GetUserString(CurveData.CurveOnObj.ToString()));
+                    ObjRef curveOnObjRef = new ObjRef(curveOnObjId);
+                    if (curveOnObjRef.Object().Attributes.Name.Contains("MoveP"))
+                    {
+                        Util.removeRhinoObject(ref mScene, curveOnObjRef.ObjectId);
+                    }
 
                 }
-                else
-                {
-                    mScene.iPlaneList.Remove(curvePlane);
-                }
+                pointOnObjRef = null;
             }
 
             if (drawnType != DrawnType.In3D && drawnType != DrawnType.None)
@@ -344,11 +321,11 @@ namespace SparrowHawk.Interaction
 
                 }
 
+                /*
                 Brep[] shapes = Brep.CreatePlanarBreps(modelcurve);
                 modelBrep = shapes[0];
-
                 Guid guid = Util.addRhinoObjectSceneNode(ref mScene, ref modelBrep, ref profile_m, modelName, out renderObjSN);
-                mScene.iCurveList.Add(modelcurve);
+                */            
 
                 //generate new curveOnObj for mvoingPlane cases sicne and move the XYZPlanes to origial positons
                 if (drawnType == DrawnType.Plane)
@@ -385,15 +362,19 @@ namespace SparrowHawk.Interaction
                     pointOnObjRef = null;
                     pointOnObjRef = new ObjRef(newPlaneID);
 
-                    mScene.iPlaneList.Add(newPlane);
-                    mScene.iRhObjList.Add(pointOnObjRef);
+                    modelcurve.SetUserString(CurveData.CurveOnObj.ToString(), newPlaneID.ToString());
+                    modelcurve.SetUserString(CurveData.PlaneOrigin.ToString(), newPlane.Origin.ToString());
+                    modelcurve.SetUserString(CurveData.PlaneNormal.ToString(), newPlane.Normal.ToString());
 
                 }
                 else if (drawnType == DrawnType.Surface)
                 {
-                    mScene.iPlaneList.Add(curvePlane);
-                    mScene.iRhObjList.Add(pointOnObjRef);
+                    modelcurve.SetUserString(CurveData.CurveOnObj.ToString(), pointOnObjRef.ObjectId.ToString());
+                    modelcurve.SetUserString(CurveData.PlaneOrigin.ToString(), curvePlane.Origin.ToString());
+                    modelcurve.SetUserString(CurveData.PlaneNormal.ToString(), curvePlane.Normal.ToString());
                 }
+
+                mScene.iCurveList.Add(modelcurve);
 
                 //call next interaction in the chain
                 mScene.pushInteractionFromChain();
@@ -408,7 +389,7 @@ namespace SparrowHawk.Interaction
            
         }
 
-        private void clearDrawing()
+        private void clearDrawingLeaveTop()
         {
             if (drawnType == DrawnType.Plane)
             {
@@ -431,6 +412,31 @@ namespace SparrowHawk.Interaction
             //clear drawPoint
             Util.removeSceneNode(ref mScene, ref drawPoint);
           
+        }
+
+        private void clearDrawingPop()
+        {
+            if (drawnType == DrawnType.Plane)
+            {
+                //resetPlane
+                mScene.xyPlane.resetOrgin();
+                mScene.yzPlane.resetOrgin();
+                mScene.xzPlane.resetOrgin();
+                Util.setPlaneAlpha(ref mScene, 0.0f);
+            }
+
+            for (int i = 0; i < pointMarkers.Count; i++)
+            {
+                SceneNode sn = pointMarkers[i];
+                Util.removeSceneNode(ref mScene, ref sn);
+            }
+
+            pointMarkers.Clear();
+            pointsList.Clear();
+
+            //clear drawPoint
+            Util.removeSceneNode(ref mScene, ref drawPoint);
+
         }
 
         protected override void onClickOculusGrip(ref VREvent_t vrEvent)

@@ -142,10 +142,10 @@ namespace SparrowHawk
         public bool mIsLefty;
 
         //for interaction chain
-        public List<Rhino.DocObjects.ObjRef> iRhObjList = new List<Rhino.DocObjects.ObjRef>();
+        //public List<Rhino.DocObjects.ObjRef> iRhObjList = new List<Rhino.DocObjects.ObjRef>();
         public List<Rhino.Geometry.Curve> iCurveList = new List<Rhino.Geometry.Curve>();
         public List<OpenTK.Vector3> iPointList = new List<OpenTK.Vector3>();
-        public List<Rhino.Geometry.Plane> iPlaneList = new List<Rhino.Geometry.Plane>(); //temporary solution for circle, rect
+        //public List<Rhino.Geometry.Plane> iPlaneList = new List<Rhino.Geometry.Plane>(); //temporary solution for circle, rect
         public enum MenuLayout //make sure the order matches the selection numbers rect-curve-circle.
         {
             MainMenu, ExtrudeC1, ExtrudeD1Rect, ExtrudeD1Curve, ExtrudeD1Circle, ExtrudeC2, ExtrudeD2Rect, ExtrudeD2Curve, ExtrudeD2Circle,
@@ -157,6 +157,7 @@ namespace SparrowHawk
         public enum ShapeType { None = -1, Rect, Curve, Circle };
         public enum DrawnType { None = -1, Surface, In3D, Plane, Reference };
         public enum CurveID { ProfileCurve1, ProfileCurve2, EndCapCurve }
+        public enum CurveData { CurveOnObj, PlaneOrigin, PlaneNormal };
         //public List<MenuLayout> menuList = new List<MenuLayout>();
         //public List<string> selectionList = new List<string>();
         public enum SelectionKey { Null = -1, ModelFun, Profile1Shape, Profile1On, Profile2Shape, Profile2On };

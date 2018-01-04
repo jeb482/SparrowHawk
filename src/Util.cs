@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+//using static SparrowHawk.Scene;
 
 
 namespace SparrowHawk
@@ -1035,7 +1036,6 @@ namespace SparrowHawk
 
         public static void clearPlanePoints(ref Scene mScene)
         {
-            mScene.iPlaneList.Clear();
             mScene.iPointList.Clear();
         }
 
@@ -1056,9 +1056,24 @@ namespace SparrowHawk
             }
 
             mScene.iCurveList.Clear();
-            mScene.iRhObjList.Clear();
 
             mScene.rhinoDoc.Views.Redraw();
+        }
+
+        public static Point3d getPointfromString(string str)
+        {
+            char[] delimiters = { ' ', ',' };
+            string[] substrings = str.Split(delimiters, StringSplitOptions.RemoveEmptyEntries);
+
+            return new Point3d(Double.Parse(substrings[0]), Double.Parse(substrings[1]), Double.Parse(substrings[2]));
+        }
+
+        public static Rhino.Geometry.Vector3d getVectorfromString(string str)
+        {
+            char[] delimiters = { ' ', ',' };
+            string[] substrings = str.Split(delimiters, StringSplitOptions.RemoveEmptyEntries);
+
+            return new Rhino.Geometry.Vector3d(Double.Parse(substrings[0]), Double.Parse(substrings[1]), Double.Parse(substrings[2]));
         }
 
         public static Brep RevolveFunc(ref Scene mScene, ref List<Curve> curveList)
@@ -1107,9 +1122,18 @@ namespace SparrowHawk
             //need to project to the first RhinoObj, but need to translate profile curve along it's normal first and project -normal
             if ((Scene.ShapeType)mScene.selectionDic[Scene.SelectionKey.Profile1Shape] == Scene.ShapeType.Circle || (Scene.ShapeType)mScene.selectionDic[Scene.SelectionKey.Profile1Shape] == Scene.ShapeType.Rect)
             {
-                Transform projectTranslate = Transform.Translation(50 * mScene.iPlaneList[0].Normal);
+                Rhino.DocObjects.ObjRef curveOnObj1Ref = new Rhino.DocObjects.ObjRef(new Guid(profileCurves[0].GetUserString("CurveOnObj")));
+
+                Plane plane1 = new Plane(Util.getPointfromString(profileCurves[0].GetUserString("PlaneOrigin")),
+                    Util.getVectorfromString(profileCurves[0].GetUserString("PlaneNormal")));
+
+                Plane plane2 = new Plane(Util.getPointfromString(profileCurves[1].GetUserString("PlaneOrigin")),
+                   Util.getVectorfromString(profileCurves[1].GetUserString("PlaneNormal")));
+
+                Transform projectTranslate = Transform.Translation(50 * plane1.Normal);
                 profileCurves[0].Transform(projectTranslate);
-                Curve projectCurve = Curve.ProjectToBrep(profileCurves[0], (Brep)mScene.iRhObjList[0].Object().Geometry, -mScene.iPlaneList[0].Normal, mScene.rhinoDoc.ModelAbsoluteTolerance)[0].ToNurbsCurve();
+
+                Curve projectCurve = Curve.ProjectToBrep(profileCurves[0], (Brep)curveOnObj1Ref.Object().Geometry, -plane1.Normal, mScene.rhinoDoc.ModelAbsoluteTolerance)[0].ToNurbsCurve();
                 profileCurves[0] = projectCurve;
 
                 Point3d sPlaneCenter = profileCurves[0].GetBoundingBox(true).Center;
@@ -1117,8 +1141,8 @@ namespace SparrowHawk
                 Rhino.Geometry.Vector3d direction = new Rhino.Geometry.Vector3d(ePlaneCenter.X - sPlaneCenter.X, ePlaneCenter.Y - sPlaneCenter.Y, ePlaneCenter.Z - sPlaneCenter.Z);
                 Vector3 loftDirection = Util.RhinoToOpenTKVector(direction);
 
-                OpenTK.Vector3 n1 = Util.RhinoToOpenTKVector(mScene.iPlaneList[0].Normal);
-                OpenTK.Vector3 n2 = Util.RhinoToOpenTKVector(mScene.iPlaneList[1].Normal);
+                OpenTK.Vector3 n1 = Util.RhinoToOpenTKVector(plane1.Normal);
+                OpenTK.Vector3 n2 = Util.RhinoToOpenTKVector(plane2.Normal);
 
                 //n1,n2 should be the same with railNormal and railEndNormal
                 n1.Normalize();
@@ -1168,8 +1192,9 @@ namespace SparrowHawk
                 mScene.sStartP = new Point3d(profileCurves[0].PointAt(curveT0));
                 //mScene.sStartP = profileCurves[0].GetBoundingBox(true).Center;
 
+                Rhino.DocObjects.ObjRef curveOnObj2Ref = new Rhino.DocObjects.ObjRef(new Guid(mScene.iCurveList[mScene.iCurveList.Count - 1].GetUserString("CurveOnObj")));
                 List<GeometryBase> geometries = new List<GeometryBase>();
-                geometries.Add(mScene.iRhObjList[mScene.iRhObjList.Count - 1].Object().Geometry);
+                geometries.Add(curveOnObj2Ref.Object().Geometry);
                 //must be a brep or surface, not mesh
                 Point3d[] rayIntersections = Rhino.Geometry.Intersect.Intersection.RayShoot(ray1, geometries, 1);
                 if (rayIntersections != null)
@@ -1399,7 +1424,10 @@ namespace SparrowHawk
                 curvePlane.Transform(Util.OpenTKToRhinoTransform(transM));
                 OpenTK.Vector3 testAxis = Util.RhinoToOpenTKVector(curvePlane.XAxis).Normalized();
                 //OpenTK.Matrix4 transM2 = Util.getTransMAroundAxis(railStartPoint, testAxis, new Vector3(1, 0, 0), Util.RhinoToOpenTKPoint(curvePlane.Normal)); //still affect by the different normal
-                OpenTK.Matrix4 transM2 = Util.getCoordinateTransM(railStartPoint, railStartPoint, testAxis, Util.RhinoToOpenTKVector(mScene.iPlaneList[mScene.iPlaneList.Count - 1].Normal));
+                Plane plane1 = new Plane(Util.getPointfromString(mScene.iCurveList[mScene.iCurveList.Count - 1].GetUserString("PlaneOrigin")),
+                    Util.getVectorfromString(mScene.iCurveList[mScene.iCurveList.Count - 1].GetUserString("PlaneNormal")));
+
+                OpenTK.Matrix4 transM2 = Util.getCoordinateTransM(railStartPoint, railStartPoint, testAxis, Util.RhinoToOpenTKVector(plane1.Normal));
                 t = Util.OpenTKToRhinoTransform(transM2 * transM);
                 Rhino.RhinoApp.WriteLine("angle: " + OpenTK.Vector3.CalculateAngle(testAxis, new Vector3(1, 0, 0)));
 
@@ -1528,6 +1556,8 @@ namespace SparrowHawk
 
                 //angle = atan2(norm(cross(a,b)), dot(a,b))
                 float angle = Vector3.Dot(n1, n2);
+                //testing
+                n1 = railStartNormal;
                 CurveOrientation dir = profileCurves[0].ClosedCurveOrientation(Util.openTkToRhinoVector(n1)); //new Vector3(0,0,1)
                 CurveOrientation dir2 = profileCurves[1].ClosedCurveOrientation(Util.openTkToRhinoVector(n1)); //new Vector3(0,0,1)
 
