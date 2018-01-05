@@ -355,6 +355,10 @@ namespace SparrowHawk
                     Util.MarkPoint(ref mScene.staticGeometry, new Vector3(v4.X, v4.Y, v4.Z), 0, 1, 0);
                 }
                 Rhino.RhinoApp.WriteLine(mScene.vrToRobot.ToString());
+                Rhino.RhinoApp.WriteLine(mScene.vrToRobot.M11 + "f, " + mScene.vrToRobot.M12 + "f, " + mScene.vrToRobot.M13 + "f, " + mScene.vrToRobot.M14 + "f,");
+                Rhino.RhinoApp.WriteLine(mScene.vrToRobot.M21 + "f, " + mScene.vrToRobot.M22 + "f, " + mScene.vrToRobot.M23 + "f, " + mScene.vrToRobot.M24 + "f,");
+                Rhino.RhinoApp.WriteLine(mScene.vrToRobot.M31 + "f, " + mScene.vrToRobot.M32 + "f, " + mScene.vrToRobot.M33 + "f, " + mScene.vrToRobot.M34 + "f,");
+                Rhino.RhinoApp.WriteLine(mScene.vrToRobot.M41 + "f, " + mScene.vrToRobot.M42 + "f, " + mScene.vrToRobot.M43 + "f, " + mScene.vrToRobot.M44 + "f");
                 robotCallibrationPoints.Clear();
                 vrCallibrationPoints.Clear();
             }
