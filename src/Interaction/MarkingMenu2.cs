@@ -776,49 +776,79 @@ namespace SparrowHawk.Interaction
             FunctionType modelFun = (FunctionType)mScene.selectionDic[SelectionKey.ModelFun];
             ShapeType shapeType = ShapeType.None;
             DrawnType drawnType = DrawnType.None;
-            MarkingMenu nextMenu = null;
+            AxisType axisType = AxisType.None;
+            MarkingMenu2 nextMenu = null;
 
             if (curveID == CurveID.ProfileCurve1)
             {
-                shapeType = (ShapeType)mScene.selectionDic[SelectionKey.Profile1Shape];
-                drawnType = (DrawnType)mScene.selectionDic[SelectionKey.Profile1On];
 
-                //create next menu interaction based on different modelFun, it will be at the bottom of the interactionChain
-                switch (modelFun)
+                if(modelFun == FunctionType.Loft)
                 {
-                    case FunctionType.Extrude:
-                        nextMenu = new MarkingMenu(ref mScene, MenuLayout.ExtrudeC2);
-                        nextMenu.setVisible(true);
-                        pushInteractionChain(nextMenu);
-                        break;
-                    case FunctionType.Sweep:
-                        nextMenu = new MarkingMenu(ref mScene, MenuLayout.SweepC2);
-                        nextMenu.setVisible(true);
-                        pushInteractionChain(nextMenu);
-                        break;
-                    case FunctionType.Loft:
-                        nextMenu = new MarkingMenu(ref mScene, MenuLayout.LoftC2);
-                        nextMenu.setVisible(true);
-                        pushInteractionChain(nextMenu);
-                        break;
+                    shapeType = (ShapeType)mScene.selectionDic[SelectionKey.Profile1Shape];
+                    drawnType = (DrawnType)mScene.selectionDic[SelectionKey.Profile1On];
+                    if(shapeType == ShapeType.Curve)
+                    {
+                        nextMenu = new MarkingMenu2(ref mScene, MenuLayout2.LoftC2D2);
+                    }else
+                    {
+                        nextMenu = new MarkingMenu2(ref mScene, MenuLayout2.LoftC2);
+                    }
+                   
+                    nextMenu.setVisible(true);
+                    pushInteractionChain(nextMenu);
+                }
+                else if (modelFun == FunctionType.Sweep)
+                {
+                    shapeType = (ShapeType)mScene.selectionDic[SelectionKey.Profile1Shape];
+                    drawnType = (DrawnType)mScene.selectionDic[SelectionKey.Profile1On];
+                    nextMenu = new MarkingMenu2(ref mScene, MenuLayout2.SweepC2D2);
+                    nextMenu.setVisible(true);
+                    pushInteractionChain(nextMenu);
+                }
+                else if (modelFun == FunctionType.Extrude)
+                {
+                    shapeType = (ShapeType)mScene.selectionDic[SelectionKey.Profile1Shape];
+                    drawnType = (DrawnType)mScene.selectionDic[SelectionKey.Profile1On];
+                    nextMenu = new MarkingMenu2(ref mScene, MenuLayout2.ExtrudeC2D2);
+                    nextMenu.setVisible(true);
+                    pushInteractionChain(nextMenu);
+                }
+                else if(modelFun == FunctionType.Revolve)
+                {
+                    shapeType = (ShapeType)mScene.selectionDic[SelectionKey.ShapeOnPlanes];
+                    drawnType = DrawnType.Plane;
+                    axisType = (AxisType)mScene.selectionDic[SelectionKey.RevolveAxis];
                 }
 
             }
             else if (curveID == CurveID.ProfileCurve2)
             {
-                ShapeType shapeType1 = (ShapeType)mScene.selectionDic[SelectionKey.Profile1Shape];
-                DrawnType drawnType1 = (DrawnType)mScene.selectionDic[SelectionKey.Profile1On];
 
-                //add the editing end cap interactaion here
-                if (modelFun == FunctionType.Extrude || modelFun == FunctionType.Sweep)
+                if (modelFun == FunctionType.Loft)
                 {
+                    if (mScene.selectionDic.ContainsKey(SelectionKey.CurveOn))
+                    {
+                        shapeType = ShapeType.Curve;
+                        drawnType = (DrawnType)mScene.selectionDic[SelectionKey.Profile2On];
+                    }else
+                    {
+                        shapeType = (ShapeType)mScene.selectionDic[SelectionKey.Profile2Shape];
+                        drawnType = (DrawnType)mScene.selectionDic[SelectionKey.Profile2On];
+
+                    }
+                }
+                else if (modelFun == FunctionType.Sweep || modelFun == FunctionType.Extrude)
+                {
+                    ShapeType shapeType1 = (ShapeType)mScene.selectionDic[SelectionKey.Profile1Shape];
+                    DrawnType drawnType1 = (DrawnType)mScene.selectionDic[SelectionKey.Profile1On];
+
+                    shapeType = ShapeType.Curve;
+                    drawnType = (DrawnType)mScene.selectionDic[SelectionKey.Profile2On];
+                    //add the editing end cap interactaion here
                     if (shapeType1 == ShapeType.Circle || shapeType1 == ShapeType.Rect)
                         pushInteractionChain(new EditPoint(ref mScene, CurveID.EndCapCurve));
                 }
-
-                shapeType = (ShapeType)mScene.selectionDic[SelectionKey.Profile2Shape];
-                drawnType = (DrawnType)mScene.selectionDic[SelectionKey.Profile2On];
-
+             
             }
 
             if (drawnType == DrawnType.Surface)
