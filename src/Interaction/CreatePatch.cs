@@ -24,6 +24,7 @@ namespace SparrowHawk.Interaction
 
         public CreatePatch(ref Scene s) : base(ref s)
         {
+            mScene = s;
             stroke_g = new Geometry.GeometryStroke(ref mScene);
             stroke_m = new Material.SingleColorMaterial(1, 0, 0, 1);
             mesh_m = new Material.RGBNormalMaterial(.5f);
@@ -34,6 +35,8 @@ namespace SparrowHawk.Interaction
                 primaryDeviceIndex = (uint)mScene.leftControllerIdx;
             else
                 primaryDeviceIndex = (uint)mScene.rightControllerIdx;
+
+            Util.showLaser(ref mScene, false);
 
         }
 

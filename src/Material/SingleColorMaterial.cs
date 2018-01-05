@@ -20,7 +20,8 @@ namespace SparrowHawk.Material
             mShader.init("SingleColorMaterial", ShaderSource.SingleColorVertShader, ShaderSource.SingleColorFragShader);
         }
 
-        public void setAlpha(float alpha)
+
+        public override void setAlpha(float alpha)
         {
             mColor = new OpenTK.Graphics.Color4(mColor.R, mColor.G, mColor.B, alpha);
         }

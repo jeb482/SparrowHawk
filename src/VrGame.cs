@@ -184,9 +184,9 @@ namespace SparrowHawk
                 current_i = mScene.peekInteraction();
                 current_i.init();
             }
-
-            current_i.handleInput();
+           
             current_i.draw(true);
+            current_i.handleInput();
 
         }
 
@@ -469,6 +469,7 @@ namespace SparrowHawk
                 mScene.rightControllerNode.add(ref rayTraceL);
             rayTraceL.transform = new Matrix4(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1);//mScene.mLeftControllerOffset;
 
+            Util.showLaser(ref mScene, false);
 
             mScene.xzPlane = new DesignPlane(ref mScene, XYZPlanes.XZ);
             mScene.xyPlane = new DesignPlane(ref mScene, XYZPlanes.XY);
@@ -771,12 +772,14 @@ namespace SparrowHawk
             {
                 mScene.popInteraction();
                 mScene.pushInteraction(new Interaction.PickPoint(ref mScene, ref mLeftControllerPoses));
+                current_i = null;
             }
 
             if (e.KeyChar == ']' || e.KeyChar == '}')
             {
                 mScene.popInteraction();
                 mScene.pushInteraction(new Interaction.PickPoint(ref mScene, ref mRightControllerPoses));
+                current_i = null;
             }
 
         }

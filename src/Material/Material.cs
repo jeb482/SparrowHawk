@@ -19,5 +19,7 @@ namespace SparrowHawk.Material
                 mShader.free();
             }
         }
+        
+        public virtual void setAlpha(float alpha){}
     }
 }

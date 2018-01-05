@@ -4,7 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-//using static SparrowHawk.Scene;
+using static SparrowHawk.Scene;
 
 
 namespace SparrowHawk
@@ -243,15 +243,14 @@ namespace SparrowHawk
             return child;
         }
 
-        public static SceneNode MarkDebugPoint(ref SceneNode node, OpenTK.Vector3 p, float r, float g, float b)
+        public static void MarkDebugPoint(ref Scene mScene, OpenTK.Vector3 p, float r, float g, float b)
         {
             // p is already rotation inverted.
             Geometry.Geometry geo = new Geometry.DrawPointMarker(p);
             Material.Material m = new Material.SingleColorMaterial(r, g, b, 1);
             SceneNode child = new SceneNode("DebugPoint", ref geo, ref m);
             child.transform = new OpenTK.Matrix4(1, 0, 0, p.X, 0, 1, 0, p.Y, 0, 0, 1, p.Z, 0, 0, 0, 1);
-            node.add(ref child);
-            return child;
+            Util.addSceneNode(ref mScene, ref child);
         }
 
         public static OpenTK.Vector3 vrToPlatformVector(ref Scene scene, OpenTK.Vector3 v)
@@ -677,7 +676,7 @@ namespace SparrowHawk
         }
 
 
-        public static void rayCasting(Point3d pos, Rhino.Geometry.Vector3d dir, ref List<Rhino.DocObjects.ObjRef> rhinoObjs, out Point3d projectP, out Guid projectObjID)
+        public static void rayCasting(Point3d pos, Rhino.Geometry.Vector3d dir, ref List<Rhino.DocObjects.ObjRef> rhinoObjs, ref Point3d projectP, out Guid projectObjID)
         {
             //deal with empty scene or drawing in 3D case         
             if (rhinoObjs.Count == 0)
@@ -721,7 +720,7 @@ namespace SparrowHawk
             }
             else
             {
-                projectP = pos;
+                projectP = projectP; //last projection point position, deal with the case when users draw out  of the surface
                 projectObjID = Guid.Empty;
             }
 
@@ -780,11 +779,11 @@ namespace SparrowHawk
         }
 
         //update sceneNode with Brep data, create one if necessary, try not use ref for brep, there are some werid bugs
-        public static bool updateSceneNode(ref Scene mScene, Brep brep, ref Material.Material mesh_m, string name, out SceneNode SN, bool isStatic = false)
+        public static bool updateSceneNode(ref Scene mScene, Brep brep, ref Material.Material mesh_m, string name, ref SceneNode SN, bool isStatic = false)
         {      
             if (brep != null)
             {
-
+                /*
                 SceneNode modelSN = null;
                 foreach (SceneNode sn in mScene.tableGeometry.children)
                 {
@@ -814,12 +813,48 @@ namespace SparrowHawk
                 }
                 SN = modelSN;
                 return true;
+                */
+                
+                if(SN == null)
+                {
+                    addSceneNode(ref mScene, ref brep, ref mesh_m, name, out SN);
+                }
+                else
+                {
+                    //check if there is one in tableGeometry
+                    SceneNode modelSN = null;
+                    for (int i = 0; i < mScene.tableGeometry.children.Count; i++)
+                    {
+                        SceneNode sn = mScene.tableGeometry.children[i];
+                        if (sn.guid == SN.guid)
+                        {
+                            modelSN = sn;
+                            Mesh base_mesh = new Mesh();
+                            Mesh[] meshes = Mesh.CreateFromBrep(brep, MeshingParameters.Default);
+
+                            foreach (Mesh mesh in meshes)
+                            {
+                                base_mesh.Append(mesh);
+                            }
+
+                            Geometry.Geometry meshStroke_g = new Geometry.RhinoMesh(ref mScene);
+                            ((Geometry.RhinoMesh)meshStroke_g).setMesh(ref base_mesh);
+                            modelSN.geometry = meshStroke_g;
+                            break;
+                        }
+                    }
+                    SN = modelSN;
+
+                }
+                return true;
+                
             }
             else
             {
                 SN = null;
                 return false;
             }
+            
         }
 
         //rendering a brep ONLY in Rhino, e.g. create an invisable edit plane
@@ -1076,6 +1111,23 @@ namespace SparrowHawk
             return new Rhino.Geometry.Vector3d(Double.Parse(substrings[0]), Double.Parse(substrings[1]), Double.Parse(substrings[2]));
         }
 
+        public static void showLaser(ref Scene mScene, bool isShowing)
+        {
+           foreach(SceneNode sn in mScene.rightControllerNode.children)
+            {
+                if(sn.name == "ControllerRay")
+                {
+                    if (isShowing)
+                    {
+                        sn.material.setAlpha(1.0f);
+                    }else
+                    {
+                        sn.material.setAlpha(0.0f);
+                    }
+                }
+            }
+        }
+
         public static Brep RevolveFunc(ref Scene mScene, ref List<Curve> curveList)
         {
             Line axis = new Line(new Point3d(0, 0, 0), new Point3d(0, 0, 1));
@@ -1095,14 +1147,6 @@ namespace SparrowHawk
                 OpenTK.Vector3 planeNormal = new OpenTK.Vector3((float)curvePlane.Normal.X, (float)curvePlane.Normal.Y, (float)curvePlane.Normal.Z);
                 planeNormal.Normalize();
                 height = OpenTK.Vector3.Dot(heightVector, planeNormal) / planeNormal.Length;
-
-                //update rail curve and using sweepCap
-                List<Point3d> extrudeCurveP = new List<Point3d>();
-                extrudeCurveP.Add(railCurve.PointAtStart);
-                Point3d endP = new Point3d(railCurve.PointAtStart.X + height * planeNormal.X, railCurve.PointAtStart.Y + height * planeNormal.Y, railCurve.PointAtStart.Z + height * planeNormal.Z);
-                extrudeCurveP.Add(endP);
-                //update the edit curve
-                curveList[curveList.Count - 1] = Rhino.Geometry.NurbsCurve.Create(false, 1, extrudeCurveP.ToArray());
             }
 
             Rhino.Geometry.Extrusion extrusion = Rhino.Geometry.Extrusion.Create(curveList[curveList.Count - 2], height, true);
@@ -1119,16 +1163,25 @@ namespace SparrowHawk
                 profileCurves.Add(curve);
             }
 
+            //pass the user data to new curve
+            string oldCurveOnObjID0 = profileCurves[0].GetUserString(CurveData.CurveOnObj.ToString());
+            string oldPlaneOrigin0 = profileCurves[0].GetUserString(CurveData.PlaneOrigin.ToString());
+            string oldPlaneNormal0 = profileCurves[0].GetUserString(CurveData.PlaneNormal.ToString());
+
+            string oldCurveOnObjID1 = profileCurves[1].GetUserString(CurveData.CurveOnObj.ToString());
+            string oldPlaneOrigin1 = profileCurves[1].GetUserString(CurveData.PlaneOrigin.ToString());
+            string oldPlaneNormal1 = profileCurves[1].GetUserString(CurveData.PlaneNormal.ToString());
+
             //need to project to the first RhinoObj, but need to translate profile curve along it's normal first and project -normal
             if ((Scene.ShapeType)mScene.selectionDic[Scene.SelectionKey.Profile1Shape] == Scene.ShapeType.Circle || (Scene.ShapeType)mScene.selectionDic[Scene.SelectionKey.Profile1Shape] == Scene.ShapeType.Rect)
             {
-                Rhino.DocObjects.ObjRef curveOnObj1Ref = new Rhino.DocObjects.ObjRef(new Guid(profileCurves[0].GetUserString("CurveOnObj")));
+                Rhino.DocObjects.ObjRef curveOnObj1Ref = new Rhino.DocObjects.ObjRef(new Guid(profileCurves[0].GetUserString(CurveData.CurveOnObj.ToString())));
 
-                Plane plane1 = new Plane(Util.getPointfromString(profileCurves[0].GetUserString("PlaneOrigin")),
-                    Util.getVectorfromString(profileCurves[0].GetUserString("PlaneNormal")));
+                Plane plane1 = new Plane(Util.getPointfromString(profileCurves[0].GetUserString(CurveData.PlaneOrigin.ToString())),
+                    Util.getVectorfromString(profileCurves[0].GetUserString(CurveData.PlaneNormal.ToString())));
 
-                Plane plane2 = new Plane(Util.getPointfromString(profileCurves[1].GetUserString("PlaneOrigin")),
-                   Util.getVectorfromString(profileCurves[1].GetUserString("PlaneNormal")));
+                Plane plane2 = new Plane(Util.getPointfromString(profileCurves[1].GetUserString(CurveData.PlaneOrigin.ToString())),
+                   Util.getVectorfromString(profileCurves[1].GetUserString(CurveData.PlaneNormal.ToString())));
 
                 Transform projectTranslate = Transform.Translation(50 * plane1.Normal);
                 profileCurves[0].Transform(projectTranslate);
@@ -1192,7 +1245,7 @@ namespace SparrowHawk
                 mScene.sStartP = new Point3d(profileCurves[0].PointAt(curveT0));
                 //mScene.sStartP = profileCurves[0].GetBoundingBox(true).Center;
 
-                Rhino.DocObjects.ObjRef curveOnObj2Ref = new Rhino.DocObjects.ObjRef(new Guid(mScene.iCurveList[mScene.iCurveList.Count - 1].GetUserString("CurveOnObj")));
+                Rhino.DocObjects.ObjRef curveOnObj2Ref = new Rhino.DocObjects.ObjRef(new Guid(mScene.iCurveList[mScene.iCurveList.Count - 1].GetUserString(CurveData.CurveOnObj.ToString())));
                 List<GeometryBase> geometries = new List<GeometryBase>();
                 geometries.Add(curveOnObj2Ref.Object().Geometry);
                 //must be a brep or surface, not mesh
@@ -1213,6 +1266,14 @@ namespace SparrowHawk
             {
                 profileCurves[0] = profileCurves[0].Rebuild(((NurbsCurve)profileCurves[0]).Points.Count, profileCurves[0].Degree, true);
                 profileCurves[1] = profileCurves[1].Rebuild(((NurbsCurve)profileCurves[1]).Points.Count, profileCurves[1].Degree, true);
+
+                curveList[0].SetUserString(CurveData.CurveOnObj.ToString(), oldCurveOnObjID0);
+                curveList[0].SetUserString(CurveData.PlaneOrigin.ToString(), oldPlaneOrigin0);
+                curveList[0].SetUserString(CurveData.PlaneNormal.ToString(), oldPlaneNormal0);
+
+                curveList[1].SetUserString(CurveData.CurveOnObj.ToString(), oldCurveOnObjID1);
+                curveList[1].SetUserString(CurveData.PlaneOrigin.ToString(), oldPlaneOrigin1);
+                curveList[1].SetUserString(CurveData.PlaneNormal.ToString(), oldPlaneNormal1);
             }
 
             //debug
@@ -1384,6 +1445,7 @@ namespace SparrowHawk
 
         public static Brep SweepFun(ref Scene mScene, ref List<Curve> curveList)
         {
+            /*
             //compute the normal of the first point of the rail curve
             NurbsCurve rail = (NurbsCurve)curveList[curveList.Count - 1];
             PolylineCurve railPL = rail.ToPolyline(0, 0, 0, 0, 0, 1, 1, 0, true);
@@ -1424,8 +1486,8 @@ namespace SparrowHawk
                 curvePlane.Transform(Util.OpenTKToRhinoTransform(transM));
                 OpenTK.Vector3 testAxis = Util.RhinoToOpenTKVector(curvePlane.XAxis).Normalized();
                 //OpenTK.Matrix4 transM2 = Util.getTransMAroundAxis(railStartPoint, testAxis, new Vector3(1, 0, 0), Util.RhinoToOpenTKPoint(curvePlane.Normal)); //still affect by the different normal
-                Plane plane1 = new Plane(Util.getPointfromString(mScene.iCurveList[mScene.iCurveList.Count - 1].GetUserString("PlaneOrigin")),
-                    Util.getVectorfromString(mScene.iCurveList[mScene.iCurveList.Count - 1].GetUserString("PlaneNormal")));
+                Plane plane1 = new Plane(Util.getPointfromString(mScene.iCurveList[mScene.iCurveList.Count - 1].GetUserString(CurveData.PlaneNormal.ToString())),
+                    Util.getVectorfromString(mScene.iCurveList[mScene.iCurveList.Count - 1].GetUserString(CurveData.PlaneOrigin.ToString())));
 
                 OpenTK.Matrix4 transM2 = Util.getCoordinateTransM(railStartPoint, railStartPoint, testAxis, Util.RhinoToOpenTKVector(plane1.Normal));
                 t = Util.OpenTKToRhinoTransform(transM2 * transM);
@@ -1437,25 +1499,32 @@ namespace SparrowHawk
 
 
             NurbsCurve circleCurve = (NurbsCurve)curveList[curveList.Count - 2];
+            
 
             //cruves coordinate are in rhino, somehow cap didn't work and need to call CapPlanarHoles
             Brep[] breps = Brep.CreateFromSweep(curveList[curveList.Count - 1], circleCurve, false, mScene.rhinoDoc.ModelAbsoluteTolerance);
             Brep brep = breps[0];
 
-
+            
             Transform invT;
             if (t.TryGetInverse(out invT))
                 ((NurbsCurve)curveList[curveList.Count - 2]).Transform(invT);
+            */
+
+            //we assume that the rail curve always start from the center of the profile curve
+            Brep[] breps = Brep.CreateFromSweep(curveList[curveList.Count - 1], curveList[curveList.Count - 2], false, mScene.rhinoDoc.ModelAbsoluteTolerance);
+            Brep brep = breps[0];
 
             return brep;
         }
 
+        //TODO- Profile Curve 1 has been changed before we call SweepCapFun
         public static Brep SweepCapFun(ref Scene mScene, ref List<Curve> curveList)
         {
-            //Count-1: endCurve, Count - 2: rail, Count-3: startCurve(already at railStart)      
 
+           
             //compute the transfrom from railStart to railEnd
-            NurbsCurve rail = mScene.iCurveList[mScene.iCurveList.Count - 2].ToNurbsCurve();
+            NurbsCurve rail = curveList[curveList.Count - 2].ToNurbsCurve();
             OpenTK.Vector3 railStartPoint = Util.RhinoToOpenTKPoint(rail.PointAtStart);
             OpenTK.Vector3 railStartNormal = Util.RhinoToOpenTKVector(rail.TangentAtStart);
             OpenTK.Vector3 railEndPoint = Util.RhinoToOpenTKPoint(rail.PointAtEnd);
@@ -1468,6 +1537,15 @@ namespace SparrowHawk
             List<Curve> profileCurves = new List<Curve>();
             profileCurves.Add(curveList[curveList.Count - 3]);
             profileCurves.Add(curveList[curveList.Count - 1]);
+
+            //pass the user data to new curve
+            string oldCurveOnObjID0 = profileCurves[0].GetUserString(CurveData.CurveOnObj.ToString());
+            string oldPlaneOrigin0 = profileCurves[0].GetUserString(CurveData.PlaneOrigin.ToString());
+            string oldPlaneNormal0 = profileCurves[0].GetUserString(CurveData.PlaneNormal.ToString());
+
+            string oldCurveOnObjID1 = profileCurves[1].GetUserString(CurveData.CurveOnObj.ToString());
+            string oldPlaneOrigin1 = profileCurves[1].GetUserString(CurveData.PlaneOrigin.ToString());
+            string oldPlaneNormal1 = profileCurves[1].GetUserString(CurveData.PlaneNormal.ToString());
 
             //debugging
             //mScene.rhinoDoc.Objects.AddCurve(profileCurves[0]);
@@ -1547,8 +1625,10 @@ namespace SparrowHawk
             {
 
                 //changing the curve direction
-                OpenTK.Vector3 n1 = new Vector3((float)curvePlane1.Normal.X, (float)curvePlane1.Normal.Y, (float)curvePlane1.Normal.Z);
-                OpenTK.Vector3 n2 = new Vector3((float)curvePlane2.Normal.X, (float)curvePlane2.Normal.Y, (float)curvePlane2.Normal.Z);
+                //OpenTK.Vector3 n1 = new Vector3((float)curvePlane1.Normal.X, (float)curvePlane1.Normal.Y, (float)curvePlane1.Normal.Z);
+                //OpenTK.Vector3 n2 = new Vector3((float)curvePlane2.Normal.X, (float)curvePlane2.Normal.Y, (float)curvePlane2.Normal.Z);
+                OpenTK.Vector3 n1 = railStartNormal;
+                OpenTK.Vector3 n2 = railEndNormal;
 
                 //n1,n2 should be the same with railNormal and railEndNormal
                 n1.Normalize();
@@ -1556,10 +1636,8 @@ namespace SparrowHawk
 
                 //angle = atan2(norm(cross(a,b)), dot(a,b))
                 float angle = Vector3.Dot(n1, n2);
-                //testing
-                n1 = railStartNormal;
                 CurveOrientation dir = profileCurves[0].ClosedCurveOrientation(Util.openTkToRhinoVector(n1)); //new Vector3(0,0,1)
-                CurveOrientation dir2 = profileCurves[1].ClosedCurveOrientation(Util.openTkToRhinoVector(n1)); //new Vector3(0,0,1)
+                CurveOrientation dir2 = profileCurves[1].ClosedCurveOrientation(Util.openTkToRhinoVector(n2)); //new Vector3(0,0,1)
 
                 //debugging
                 mScene.angleD = angle;
@@ -1592,6 +1670,8 @@ namespace SparrowHawk
                     float[] distaneArr = { d0, d1, d2, d3 };
                     int minIndex = Array.IndexOf(distaneArr, distaneArr.Min());
 
+                    //testing manually align
+                    /*
                     double curveT0 = 0;
                     profileCurves[0].ClosestPoint(startRect.Corner(0), out curveT0);
                     profileCurves[0].ChangeClosedCurveSeam(curveT0);
@@ -1599,7 +1679,11 @@ namespace SparrowHawk
                     double curveT = 0;
                     profileCurves[1].ClosestPoint(endRect.Corner(minIndex), out curveT);
                     profileCurves[1].ChangeClosedCurveSeam(curveT);
+                    */
+                    mScene.sStartP = startRect.Corner(0);
+                    mScene.eStartP = endRect.Corner(minIndex);
                     
+
                     //method 1- rebuild rect but sometimes it rotate 90 degrees so width become height
                     /*
                     Rectangle3d startRect = Rectangle3d.CreateFromPolyline(polylineStart);
@@ -1651,10 +1735,24 @@ namespace SparrowHawk
             }
 
             //solving the issue of mutilple faces in Brep by rebuilding curve
+            
             if ((Scene.ShapeType)mScene.selectionDic[Scene.SelectionKey.Profile1Shape] == Scene.ShapeType.Circle)
             {
+                //we assign a new reference here so profileCurves[0] isn't reference to  curveList anymore
+                //the above process somehow replace profileCurves/curveList a new curve, so we need to pass the user data to curvelist again
+
                 profileCurves[0] = profileCurves[0].Rebuild(((NurbsCurve)profileCurves[0]).Points.Count, profileCurves[0].Degree, true);
                 profileCurves[1] = profileCurves[1].Rebuild(((NurbsCurve)profileCurves[1]).Points.Count, profileCurves[1].Degree, true);
+
+                curveList[curveList.Count - 3].SetUserString(CurveData.CurveOnObj.ToString(), oldCurveOnObjID0);
+                curveList[curveList.Count - 3].SetUserString(CurveData.PlaneOrigin.ToString(), oldPlaneOrigin0);
+                curveList[curveList.Count - 3].SetUserString(CurveData.PlaneNormal.ToString(), oldPlaneNormal0);
+
+                curveList[curveList.Count - 1].SetUserString(CurveData.CurveOnObj.ToString(), oldCurveOnObjID1);
+                curveList[curveList.Count - 1].SetUserString(CurveData.PlaneOrigin.ToString(), oldPlaneOrigin1);
+                curveList[curveList.Count - 1].SetUserString(CurveData.PlaneNormal.ToString(), oldPlaneNormal1);
+
+
             }
             else if ((Scene.ShapeType)mScene.selectionDic[Scene.SelectionKey.Profile1Shape] == Scene.ShapeType.Rect)
             {
@@ -1663,8 +1761,21 @@ namespace SparrowHawk
                 //profileCurves[1] = new NurbsCurve((NurbsCurve)profileCurves[1]);
             }
 
+            //mScene.rhinoDoc.ModelAbsoluteTolerance
+            //Brep[] breps = Brep.CreateFromSweep(curveList[curveList.Count - 2], profileCurves, false, mScene.rhinoDoc.ModelAbsoluteTolerance);
 
-            Brep[] breps = Brep.CreateFromSweep(curveList[curveList.Count - 2], profileCurves, false, mScene.rhinoDoc.ModelAbsoluteTolerance);
+            //testing SweepOneRail function
+            //https://github.com/mcneel/rhinocommon/blob/master/dotnet/rhino/rhinosdksweep.cs
+            
+            Rhino.Geometry.SweepOneRail sweep = new Rhino.Geometry.SweepOneRail();
+            sweep.AngleToleranceRadians = mScene.rhinoDoc.ModelAngleToleranceRadians;
+            //sweep.AngleToleranceRadians = 2*Math.PI;
+            sweep.ClosedSweep = false;
+            sweep.SweepTolerance = mScene.rhinoDoc.ModelAbsoluteTolerance;
+            //sweep.SweepTolerance = 1000000000;
+            //sweep.SetToRoadlikeTop();
+            Brep[] breps = sweep.PerformSweep(curveList[curveList.Count - 2], profileCurves);
+            
 
             if ((Scene.FunctionType)mScene.selectionDic[Scene.SelectionKey.ModelFun] == Scene.FunctionType.Sweep)
             {

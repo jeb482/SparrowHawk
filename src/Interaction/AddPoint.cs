@@ -52,7 +52,8 @@ namespace SparrowHawk.Interaction
         private ObjRef movePlaneRef;
 
         private float lastTranslate = 0.0f;
-
+        private int beforeCurveCount = 0;
+        private int afterCurveCount = 0;
 
         public AddPoint(ref Scene scene) : base(ref scene)
         {
@@ -65,6 +66,7 @@ namespace SparrowHawk.Interaction
         public AddPoint(ref Scene scene, int num, CurveID curveID) : base(ref scene)
         {
             mScene = scene;
+            beforeCurveCount = mScene.iCurveList.Count;
             point_g = new Geometry.PointMarker(new Vector3());
             point_m = new Material.SingleColorMaterial(0f, .5f, 1f, 1f);
 
@@ -136,11 +138,9 @@ namespace SparrowHawk.Interaction
             resetVariables();
 
             //support undo function
-            if (mScene != null && pointOnObjRef != null)
+            if (mScene != null && (afterCurveCount-beforeCurveCount) >  0)
             {
-                
-                mScene.iCurveList.RemoveAt(mScene.iCurveList.Count - 1);
-                if(mScene.iCurveList[mScene.iCurveList.Count - 1].GetUserString(CurveData.CurveOnObj.ToString()) != null)
+                if (mScene.iCurveList[mScene.iCurveList.Count - 1].GetUserString(CurveData.CurveOnObj.ToString()) != "")
                 {
                     Guid curveOnObjId = new Guid(mScene.iCurveList[mScene.iCurveList.Count - 1].GetUserString(CurveData.CurveOnObj.ToString()));
                     ObjRef curveOnObjRef = new ObjRef(curveOnObjId);
@@ -150,12 +150,15 @@ namespace SparrowHawk.Interaction
                     }
 
                 }
+                mScene.iCurveList.RemoveAt(mScene.iCurveList.Count - 1);
+                
                 pointOnObjRef = null;
+
             }
 
             if (drawnType != DrawnType.In3D && drawnType != DrawnType.None)
             {
-
+                Util.showLaser(ref mScene, true);
                 if (drawnType == DrawnType.Plane)
                 {
                     Util.setPlaneAlpha(ref mScene, 0.4f);
@@ -181,6 +184,9 @@ namespace SparrowHawk.Interaction
                 drawPoint = new SceneNode("drawPoint", ref geo, ref m);
                 Util.addSceneNode(ref mScene, ref drawPoint);
 
+            }else
+            {
+                Util.showLaser(ref mScene, false);
             }
 
         }
@@ -202,15 +208,19 @@ namespace SparrowHawk.Interaction
 
             if (drawnType != DrawnType.In3D)
             {
-                Util.rayCasting(controller_pRhino, direction, ref rayCastingObjs, out projectP, out targetPRhObjID);
+                Util.rayCasting(controller_pRhino, direction, ref rayCastingObjs, ref projectP, out targetPRhObjID);
             }
             else
             {
                 projectP = controller_pRhino;
             }
 
-            //only snap for the first drawing point
-            Util.snapToPoints(ref projectP, ref snapPointsList);
+            //TODO-only snap for the first drawing point
+            if(pointMarkers.Count == 0 && targetPRhObjID != Guid.Empty)
+            {
+                computeContourCurve();
+                Util.snapToPoints(ref projectP, ref snapPointsList);
+            }       
 
             Vector3 projectPVR = Util.platformToVRPoint(ref mScene, Util.RhinoToOpenTKPoint(projectP));
             if (drawnType != DrawnType.In3D)
@@ -252,7 +262,7 @@ namespace SparrowHawk.Interaction
         {
 
             primaryDeviceIndex = vrEvent.trackedDeviceIndex;
-            if (currentState != State.READY && targetPRhObjID == null)
+            if (currentState != State.READY || targetPRhObjID == Guid.Empty)
             {
                 return;
             }
@@ -377,6 +387,7 @@ namespace SparrowHawk.Interaction
                 mScene.iCurveList.Add(modelcurve);
 
                 //call next interaction in the chain
+                afterCurveCount = mScene.iCurveList.Count;
                 mScene.pushInteractionFromChain();
                 currentState = State.READY;
 
@@ -485,24 +496,31 @@ namespace SparrowHawk.Interaction
 
         private void computeContourCurve()
         {
+            if(targetPRhObjID == Guid.Empty)
+            {
+                return;
+            }
+            ObjRef targetpObjRef = new ObjRef(targetPRhObjID);
             snapPointsList = new List<Point3d>();
             Double tolerance = 0;
             if (drawnType != DrawnType.In3D)
             {
-                Brep targetBrep = (Brep)(pointOnObjRef.Object().Geometry);
+                Brep targetBrep = (Brep)(targetpObjRef.Object().Geometry);
                 //TODO- topLeftP won't be on the face in the 3D case. so probably use orgin
-                int faceIndex = -1;
+                float minD = 1000000f;
+                int minIndex = -1;
                 for (int i = 0; i < targetBrep.Faces.Count; i++)
                 {
                     //cast BrepFace to Brep for ClosestPoint(P) menthod
                     double dist = targetBrep.Faces[i].DuplicateFace(false).ClosestPoint(projectP).DistanceTo(projectP);
-                    if (dist < mScene.rhinoDoc.ModelAbsoluteTolerance)
+                    if (dist < minD)
                     {
-                        faceIndex = i;
-                        break;
+                        minD = (float)dist;
+                        minIndex = i;
+                    
                     }
                 }
-                Surface s = targetBrep.Faces[faceIndex];
+                Surface s = targetBrep.Faces[minIndex];
                 //surface might not be a perfect planar surface                     
                 while (tolerance < toleranceMax)
                 {
@@ -514,7 +532,7 @@ namespace SparrowHawk.Interaction
                 }
 
                 //testing finding the edge curve
-                Rhino.Geometry.Curve[] edgeCurves = (targetBrep.Faces[faceIndex].DuplicateFace(false)).DuplicateEdgeCurves(true);
+                Rhino.Geometry.Curve[] edgeCurves = (targetBrep.Faces[minIndex].DuplicateFace(false)).DuplicateEdgeCurves(true);
                 double tol = mScene.rhinoDoc.ModelAbsoluteTolerance * 2.1;
                 edgeCurves = Rhino.Geometry.Curve.JoinCurves(edgeCurves, tol);
                 contourCurve = edgeCurves[0];

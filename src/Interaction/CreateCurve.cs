@@ -15,7 +15,7 @@ namespace SparrowHawk.Interaction
     {
         public enum State
         {
-            READY = 0, PAINT = 1, MOVEPLANE =2
+            READY = 0, PAINT = 1, MOVEPLANE =2, END = 3
         };
 
         protected State currentState;
@@ -73,6 +73,15 @@ namespace SparrowHawk.Interaction
 
         private Plane curvePlane;
 
+        //testing thread issues
+        private List<Curve> localListCurve = new List<Curve>();
+
+        private int beforeCurveCount = 0;
+        private int afterCurveCount = 0;
+        string oldCurveOnObjID;
+        string oldPlaneOrigin;
+        string oldPlaneNormal;
+
         public CreateCurve(ref Scene scene) : base(ref scene)
         {
             stroke_g = new Geometry.GeometryStroke(ref mScene);
@@ -83,6 +92,7 @@ namespace SparrowHawk.Interaction
         public CreateCurve(ref Scene scene, bool _isClosed, CurveID curveID) : base(ref scene)
         {
             mScene = scene;
+            beforeCurveCount = mScene.iCurveList.Count;
             stroke_g = new Geometry.GeometryStroke(ref mScene);
             stroke_m = new Material.SingleColorMaterial(1, 0, 0, 1);
             mesh_m = new Material.RGBNormalMaterial(0.5f);
@@ -122,7 +132,16 @@ namespace SparrowHawk.Interaction
 
             }
 
-          
+            /*
+            foreach(Curve c in mScene.iCurveList)
+            {
+                localListCurve.Add(c);
+            }
+            */
+
+            //testing
+            localListCurve = mScene.iCurveList;
+
         }
 
         //TODO- check if the x,y axis of the plane will change whenever we call tryGetPlane
@@ -170,6 +189,11 @@ namespace SparrowHawk.Interaction
             curvePlane = new Plane();
             lastTranslate = 0.0f;
             d = null;
+
+            localListCurve = mScene.iCurveList;
+            oldCurveOnObjID = "";
+            oldPlaneOrigin = "";
+            oldPlaneNormal = "";
         }
 
         public override void leaveTop()
@@ -187,19 +211,20 @@ namespace SparrowHawk.Interaction
             resetVariables();
 
             //support undo function
-            if (mScene != null && strokeSN != null)
+            if (mScene != null && (afterCurveCount - beforeCurveCount) > 0)
             {
-                mScene.iCurveList.RemoveAt(mScene.iCurveList.Count - 1);
-                if (mScene.iCurveList[mScene.iCurveList.Count - 1].GetUserString(CurveData.CurveOnObj.ToString()) != null)
+                
+                if (mScene.iCurveList[mScene.iCurveList.Count - 1].GetUserString(CurveData.CurveOnObj.ToString()) != "")
                 {
                     Guid curveOnObjId = new Guid(mScene.iCurveList[mScene.iCurveList.Count - 1].GetUserString(CurveData.CurveOnObj.ToString()));
                     ObjRef curveOnObjRef = new ObjRef(curveOnObjId);
-                    if (curveOnObjRef.Object().Attributes.Name.Contains("MoveP"))
+                    if (curveOnObjRef.Object().Attributes.Name.Contains("railPlane") || curveOnObjRef.Object().Attributes.Name.Contains("MoveP"))
                     {
                         Util.removeRhinoObject(ref mScene, curveOnObjRef.ObjectId);
                     }
 
                 }
+                mScene.iCurveList.RemoveAt(mScene.iCurveList.Count - 1);               
 
                 Util.removeSceneNode(ref mScene, ref strokeSN);
                 strokeSN = null;
@@ -226,6 +251,7 @@ namespace SparrowHawk.Interaction
 
             if (drawnType != DrawnType.In3D && drawnType != DrawnType.None)
             {
+                Util.showLaser(ref mScene, true);
                 //create and add referece planes to scene            
                 if (drawnType == DrawnType.Reference)
                 {
@@ -263,6 +289,9 @@ namespace SparrowHawk.Interaction
                 Material.Material m = new Material.SingleColorMaterial(1, 1, 1, 0);//TODO: teseting alpha working or not
                 drawPoint = new SceneNode("drawPoint", ref geo, ref m);            
                 Util.addSceneNode(ref mScene, ref drawPoint);
+            }else
+            {
+                Util.showLaser(ref mScene, false);
             }
 
             //generate snap points when we need to draw from the center of the shapes, drawnType could be DrawnType.Reference or DrawnType.In3D
@@ -314,7 +343,7 @@ namespace SparrowHawk.Interaction
 
             if (drawnType != DrawnType.In3D)
             {
-                Util.rayCasting(controller_pRhino, direction, ref rayCastingObjs, out projectP, out targetPRhObjID);
+                Util.rayCasting(controller_pRhino, direction, ref rayCastingObjs, ref projectP, out targetPRhObjID);
             }else
             {
                 projectP = controller_pRhino;
@@ -457,6 +486,15 @@ namespace SparrowHawk.Interaction
                 }
                 else
                 {
+                    //get the curve info for later update use
+                    string oldCurveOnObjID = mScene.iCurveList[mScene.iCurveList.Count - 1].GetUserString(CurveData.CurveOnObj.ToString());
+                    string oldPlaneOrigin = mScene.iCurveList[mScene.iCurveList.Count - 1].GetUserString(CurveData.PlaneOrigin.ToString());
+                    string oldPlaneNormal = mScene.iCurveList[mScene.iCurveList.Count - 1].GetUserString(CurveData.PlaneNormal.ToString());
+
+                    simplifiedCurve.SetUserString(CurveData.CurveOnObj.ToString(), oldCurveOnObjID);
+                    simplifiedCurve.SetUserString(CurveData.PlaneOrigin.ToString(), oldPlaneOrigin);
+                    simplifiedCurve.SetUserString(CurveData.PlaneNormal.ToString(), oldPlaneNormal);
+
                     mScene.iCurveList[0] = simplifiedCurve;
                 }
 
@@ -472,10 +510,20 @@ namespace SparrowHawk.Interaction
                         simplifiedCurve.SetUserString(CurveData.PlaneOrigin.ToString(), curvePlane.Origin.ToString());
                         simplifiedCurve.SetUserString(CurveData.PlaneNormal.ToString(), curvePlane.Normal.ToString());
                     }
-                    mScene.iCurveList.Add(simplifiedCurve);            
+                    mScene.iCurveList.Add(simplifiedCurve);
+                    //get the curve info for later update use
+                    oldCurveOnObjID = mScene.iCurveList[mScene.iCurveList.Count - 1].GetUserString(CurveData.CurveOnObj.ToString());
+                    oldPlaneOrigin = mScene.iCurveList[mScene.iCurveList.Count - 1].GetUserString(CurveData.PlaneOrigin.ToString());
+                    oldPlaneNormal = mScene.iCurveList[mScene.iCurveList.Count - 1].GetUserString(CurveData.PlaneNormal.ToString());
                 }
                 else
                 {
+
+
+                    simplifiedCurve.SetUserString(CurveData.CurveOnObj.ToString(), oldCurveOnObjID);
+                    simplifiedCurve.SetUserString(CurveData.PlaneOrigin.ToString(), oldPlaneOrigin);
+                    simplifiedCurve.SetUserString(CurveData.PlaneNormal.ToString(), oldPlaneNormal);
+
                     mScene.iCurveList[1] = simplifiedCurve;
                 }
 
@@ -486,7 +534,7 @@ namespace SparrowHawk.Interaction
 
                 //Rhino.Geometry.Vector3d heightVector = simplifiedCurve.PointAtEnd - simplifiedCurve.PointAtStart;
                 Rhino.Geometry.Vector3d heightVector = simplifiedCurve.PointAtEnd - snapPointsList[0];
-                Rhino.Geometry.Vector3d planeNormal = Util.getVectorfromString(mScene.iCurveList[0].GetUserString(CurveData.PlaneNormal.ToString()));
+                Rhino.Geometry.Vector3d planeNormal = Util.getVectorfromString(localListCurve[0].GetUserString(CurveData.PlaneNormal.ToString()));
                 planeNormal.Unitize();
                 double height = Rhino.Geometry.Vector3d.Multiply(heightVector,planeNormal) / planeNormal.Length;
 
@@ -498,7 +546,7 @@ namespace SparrowHawk.Interaction
                 //update the edit curve
                 editCurve = Rhino.Geometry.NurbsCurve.Create(false, 1, extrudeCurveP.ToArray());
 
-                if (mScene.iCurveList.Count == 1)
+                if (localListCurve.Count == 1)
                 {
                     if (drawnType != DrawnType.In3D && curveOnObjRef != null)
                     {
@@ -507,20 +555,28 @@ namespace SparrowHawk.Interaction
                         editCurve.SetUserString(CurveData.PlaneNormal.ToString(), curvePlane.Normal.ToString());
                     }
 
-                    mScene.iCurveList.Add(editCurve);
-                    
+                    localListCurve.Add(editCurve);
+                    //get the curve info for later update use
+                    oldCurveOnObjID = localListCurve[localListCurve.Count - 1].GetUserString(CurveData.CurveOnObj.ToString());
+                    oldPlaneOrigin = localListCurve[localListCurve.Count - 1].GetUserString(CurveData.PlaneOrigin.ToString());
+                    oldPlaneNormal = localListCurve[localListCurve.Count - 1].GetUserString(CurveData.PlaneNormal.ToString());
                 }
                 else
                 {
-                    mScene.iCurveList[1] = editCurve;
+
+
+                    editCurve.SetUserString(CurveData.CurveOnObj.ToString(), oldCurveOnObjID);
+                    editCurve.SetUserString(CurveData.PlaneOrigin.ToString(), oldPlaneOrigin);
+                    editCurve.SetUserString(CurveData.PlaneNormal.ToString(), oldPlaneNormal);
+                    localListCurve[1] = editCurve;
                 }
 
-                dynamicBrep = Util.ExtrudeFunc(ref mScene, ref mScene.iCurveList);
+                dynamicBrep = Util.ExtrudeFunc(ref mScene, ref localListCurve);
                 
             }
             else if (dynamicRender == "Sweep")
             {
-                if (mScene.iCurveList.Count == 1)
+                if (localListCurve.Count == 1)
                 {
                     if (drawnType != DrawnType.In3D && curveOnObjRef != null)
                     {
@@ -528,17 +584,32 @@ namespace SparrowHawk.Interaction
                         simplifiedCurve.SetUserString(CurveData.PlaneOrigin.ToString(), curvePlane.Origin.ToString());
                         simplifiedCurve.SetUserString(CurveData.PlaneNormal.ToString(), curvePlane.Normal.ToString());
                     }
-                    mScene.iCurveList.Add(simplifiedCurve);
+                    localListCurve.Add(simplifiedCurve);
+                    //get the curve info for later update use
+                    oldCurveOnObjID = localListCurve[localListCurve.Count - 1].GetUserString(CurveData.CurveOnObj.ToString());
+                    oldPlaneOrigin = localListCurve[localListCurve.Count - 1].GetUserString(CurveData.PlaneOrigin.ToString());
+                    oldPlaneNormal = localListCurve[localListCurve.Count - 1].GetUserString(CurveData.PlaneNormal.ToString());
 
                 }
                 else
                 {
-                    mScene.iCurveList[1] = simplifiedCurve;
+                    simplifiedCurve.SetUserString(CurveData.CurveOnObj.ToString(), oldCurveOnObjID);
+                    simplifiedCurve.SetUserString(CurveData.PlaneOrigin.ToString(), oldPlaneOrigin);
+                    simplifiedCurve.SetUserString(CurveData.PlaneNormal.ToString(), oldPlaneNormal);
+                    localListCurve[1] = simplifiedCurve;
                 }
 
-                dynamicBrep = Util.SweepFun(ref mScene, ref mScene.iCurveList);
+                dynamicBrep = Util.SweepFun(ref mScene, ref localListCurve);
             }
 
+            /*
+            mScene.iCurveList.Clear();
+            //mScene.iCurveList = localListCurve;
+            foreach (Curve c in localListCurve)
+            {
+                mScene.iCurveList.Add(c);
+            }
+            */
         }
 
         public void modelCompleted(IAsyncResult R)
@@ -547,13 +618,29 @@ namespace SparrowHawk.Interaction
             {
                 if (modelName == "tprint")
                 {
-                    Util.updateSceneNode(ref mScene, dynamicBrep, ref mesh_m, modelName, out this.renderObjSN);
+                    Util.updateSceneNode(ref mScene, dynamicBrep, ref mesh_m, modelName, ref renderObjSN);
                 }
+
+                //fix the issue, update mSceneNode
+                /*
+                if (currentState == State.READY)
+                {
+                    mScene.iCurveList.Clear();
+                    mScene.iCurveList = localListCurve;
+                    afterCurveCount = mScene.iCurveList.Count;
+                    mScene.pushInteractionFromChain();
+                }
+                */
             }
 
             dynamicBrep = null;
             backgroundStart = false;
             displacement = 0;
+
+            if(currentState == State.END)
+            {
+                mScene.pushInteractionFromChain();
+            }
 
         }
 
@@ -606,19 +693,20 @@ namespace SparrowHawk.Interaction
                         if (drawnType != DrawnType.In3D)
                         {
                             Brep targetBrep = (Brep)(curveOnObjRef.Object().Geometry);
-                            //TODO- topLeftP won't be on the face in the 3D case. so probably use orgin
-                            int faceIndex = -1;
+
+                            float minD = 1000000f;
+                            int minIndex = -1;
                             for (int i = 0; i < targetBrep.Faces.Count; i++)
                             {
                                 //cast BrepFace to Brep for ClosestPoint(P) menthod
                                 double dist = targetBrep.Faces[i].DuplicateFace(false).ClosestPoint(projectP).DistanceTo(projectP);                   
-                                if (dist < mScene.rhinoDoc.ModelAbsoluteTolerance)
+                                if (dist < minD)
                                 {
-                                    faceIndex = i;
-                                    break;
+                                    minD = (float)dist;
+                                    minIndex = i;
                                 }
                             }
-                            Surface s = targetBrep.Faces[faceIndex];
+                            Surface s = targetBrep.Faces[minIndex];
                             //surface might not be a perfect planar surface                     
                             while (tolerance < toleranceMax)
                             {
@@ -660,8 +748,8 @@ namespace SparrowHawk.Interaction
                 //simplfy the curve first before doing next interaction
                 if (((Geometry.GeometryStroke)(stroke_g)).mPoints.Count >= 2)
                 {
-
-                    simplifyCurve(ref ((Geometry.GeometryStroke)(stroke_g)).mPoints);
+                   
+                    //simplifyCurve(ref ((Geometry.GeometryStroke)(stroke_g)).mPoints);
 
                     //add to Scene curve object ,targetRhobj and check the next interaction
 
@@ -697,43 +785,35 @@ namespace SparrowHawk.Interaction
                         curveOnObjRef = null;
                         curveOnObjRef = new ObjRef(newPlaneID);
 
+                        //update curveOnObj to new plane
+                        localListCurve[localListCurve.Count-1].SetUserString(CurveData.CurveOnObj.ToString(), curveOnObjRef.ObjectId.ToString());
                     }
 
+                    //since dynamicRender  == "none" then it didn't enter generateModel function
                     if (dynamicRender == "none")
                     {
                         if (drawnType != DrawnType.In3D && curveOnObjRef != null)
                         {
+                            simplifyCurve(ref ((Geometry.GeometryStroke)(stroke_g)).mPoints);
                             simplifiedCurve.SetUserString(CurveData.CurveOnObj.ToString(), curveOnObjRef.ObjectId.ToString());
                         }
 
-                        mScene.iCurveList.Add(simplifiedCurve);
-
-                    }
-                    else
-                    {
-                        
-                        if (dynamicRender == "Extrude")
-                        {
-                            mScene.iCurveList[mScene.iCurveList.Count - 1] = editCurve;
-                        }
-                        else
-                        {
-                            mScene.iCurveList[mScene.iCurveList.Count - 1] = simplifiedCurve;
-                        }
-
-                        /*
-                        if (drawnType != DrawnType.In3D && curveOnObjRef != null)
-                        {
-                            mScene.iRhObjList[mScene.iRhObjList.Count - 1] = curveOnObjRef;
-
-                        }*/
+                        localListCurve.Add(simplifiedCurve);
 
                     }
 
                     //call next interaction in the chain
-                    mScene.pushInteractionFromChain();
-
-                    currentState = State.READY;
+                    currentState = State.END;
+                    afterCurveCount = localListCurve.Count;
+                    if (dynamicRender != "none" && backgroundStart == false)
+                    {
+                        backgroundStart = true;
+                        R = d.BeginInvoke(new AsyncCallback(modelCompleted), null);
+                    }else if (dynamicRender == "none")
+                    {
+                        mScene.pushInteractionFromChain();
+                    }
+                    //mScene.pushInteractionFromChain();                  
                     //curveOnObjRef = null;
 
                 }
@@ -754,22 +834,30 @@ namespace SparrowHawk.Interaction
 
             }
 
-            //clear the curve and points
-            Util.removeSceneNode(ref mScene, ref strokeSN);
             Util.removeSceneNode(ref mScene, ref drawPoint);
             if (snapPointSN != null)
             {
                 Util.removeSceneNode(ref mScene, ref snapPointSN);
             }
 
+            //clear the curve and points (since editCurve will render it again)
+            Util.removeSceneNode(ref mScene, ref strokeSN);
+
+            if(renderObjSN != null)
+            {
+                Util.removeSceneNode(ref mScene, ref renderObjSN);
+                renderObjSN = null;
+            }
+
             //remove railPlane
+            /*
             if (drawnType == DrawnType.Reference && railPlaneSN != null)
             {
                 //TODO-if we remove here, press undo will casue an error
                 Util.removeRhinoObjectSceneNode(ref mScene, ref railPlaneSN);
                 railPlaneSN = null;
             }
-
+            */
         }
 
         private void clearDrawingPop()
@@ -800,6 +888,12 @@ namespace SparrowHawk.Interaction
                 //TODO-if we remove here, press undo will casue an error
                 Util.removeRhinoObjectSceneNode(ref mScene, ref railPlaneSN);
                 railPlaneSN = null;
+            }
+
+            if (renderObjSN != null)
+            {
+                Util.removeSceneNode(ref mScene, ref renderObjSN);
+                renderObjSN = null;
             }
 
         }
