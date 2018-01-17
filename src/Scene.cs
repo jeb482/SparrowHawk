@@ -116,6 +116,7 @@ namespace SparrowHawk
         protected int _windowHeight = 0;
         public int windowWidth { get { return _windowWidth; } }
         public int windowHeight { get { return _windowHeight; } }
+
         // Camera data
         public Matrix4 mHMDPose;
 
@@ -127,16 +128,8 @@ namespace SparrowHawk
         public int leftControllerIdx = -1;
         public int rightControllerIdx = -1;
         public Matrix4 mLeftControllerOffset = Util.createTranslationMatrix(0.01451808f, -0.08065776f, 0.006754342f);
-        //public Matrix4 mLeftControllerOffset = Util.createTranslationMatrix(0.001885863f, -0.02479392f,-0.0003346408f);
-        //public Matrix4 mLeftControllerOffset = Util.createTranslationMatrix(0.00134759f, -0.02559454f, -0.005455005f);//Util.createTranslationMatrix(0,0,0);//Util.createTranslationMatrix(0.0006068f, -.02383642f, -0.00026948f);
         public Matrix4 mRightControllerOffset = Util.createTranslationMatrix(0.006479859f, -0.02640941f, 0.0007925751f);//Util.createTranslationMatrix(-0.03205855f+ 0.0001097674f, -0.02689967f+ -0.0008004899f, 0.006957637f+ -0.0005140541f);
-        //(0.005918316, -0.02670806, 0.001123522)
-        //-0.0009147244f, -0.002345422f, -0.0006840917f
-        //-5.139893E-05f, 0.0005281732f, 0.0001677993f
-        //0.005918316f + -0.0003245298f, -0.02670806f+ 0.0002023121f, 0.001123522f + -0.0001561325f
-        //0.005497481f, -0.02618495f, 0.0009147127f
-        //0.0005435179, 0.0002183659, 0.0009561999
-        //0.006787707f+ -0.0001619215f, -0.02603238f+ -0.0003721698f, 0.002012544f+ -0.0001412859f
+
         private double leftControllerEndVibrateTime;
         private double rightControllerEndVibrateTime;
         public bool mIsLefty;
@@ -177,53 +170,12 @@ namespace SparrowHawk
                                                      0, 0, 0, 1);
         public Matrix4 platformRotation = new Matrix4(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1);
         public Transform transM = new Transform();
-        //public Matrix4 vrToRobot = new Matrix4(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1);
-        //(-1.004264, 0.01445435, -0.07111868, -0.05827864)
-        //(0.08518852, -0.02587833, -1.022716, 0.1467833)
-        //(-0.01968208, -1.006881, 0.01732827, 0.9705337)
-        //(0, 0, 0, 1)
 
 
-        //public Matrix4 vrToRobot = OpenTK.Matrix4.Identity;
-
-        /*
-        public Matrix4 vrToRobot = new Matrix4(0.04553255f, 0.0110915f, -1.016086f, -0.7004303f,
-                                               1.015694f, -0.01724754f, 0.06361949f, 0.02786883f,
-                                               -0.02152945f, -1.000105f, -0.007235864f, 1.449791f,
-                                               0, 0, 0, 1);*/
-        /*
-        public Matrix4 vrToRobot = new Matrix4(-61.6759f, 17.15416f, -996.1694f, -519.5059f,
-                                               1028.861f, -29.56195f, -60.25785f, 30.58262f,
-                                               -23.20242f, -994.0332f, -6.043113f, 1380.783f,
-                                               0, 0, 0, 1);*/
-        /*
-        public Matrix4 vrToRobot = new Matrix4(-28.97375f, 8.693132f, -981.7787f, -626.1249f,
-                                              990.0181f, -13.71652f, -31.3348f, 172.6357f,
-                                              -6.955585f, -995.7741f, -15.0203f, 702.3792f,
-                                              0, 0, 0, 1);
-        */
-        /*
-        public Matrix4 vrToRobot = new Matrix4(-24.40972f, -15.1202f, -1006.631f, -619.447f,
-                                             977.9764f, -15.0478f, -28.42042f, 173.4097f,
-                                             -16.9345f, -985.1676f, 2.534816f, 709.4443f,
-                                             0, 0, 0, 1);*/
-        /*
-public Matrix4 vrToRobot = new Matrix4(-25.23433f, -1.428557f, -986.1774f, -619.1987f,
-994.2307f, -14.8897f, -28.13068f, 175.5754f,
--9.72579f, -1007.435f, -17.07237f, 707.9531f,
-0, 0, 0, 1);*/
-        /*
-                public Matrix4 vrToRobot = new Matrix4(2.422155f, 23.61365f, -976.0397f, -582.7103f,
-                   1013.433f, -29.26103f, -0.3094192f, 173.9741f,
-        -13.29245f, -989.1036f, -30.18169f, 703.6801f,
-        0, 0, 0, 1);
-        */
-        public Matrix4 vrToRobot = new Matrix4(
--6.370714f, 10.83333f, -990.4789f, -675.4673f,
-990.6384f, -19.57521f, 7.548359f, -10.3339f,
-- 25.86966f, -999.6723f, -17.28792f, 1359.8f,
-0f, 0f, 0f, 1f
-            );
+        public Matrix4 vrToRobot = new Matrix4(-16.04682f, 10.11053f, -994.6521f, -412.0325f,
+                                                994.7281f, -16.32391f, -23.68098f, -3.561577f,
+                                                -13.79134f, -1002.81f, -30.55335f, 1444.57f,
+                                                0f, 0f, 0f, 1f);
         // Interactions
         private Stack<Interaction.Interaction> mInteractionStack = new Stack<Interaction.Interaction>();
         public List<Stack<Interaction.Interaction>> mIChainsList = new List<Stack<Interaction.Interaction>>();
@@ -332,12 +284,6 @@ public Matrix4 vrToRobot = new Matrix4(-25.23433f, -1.428557f, -986.1774f, -619.
         public bool rightControllerShouldVibrate()
         {
             return (rightControllerEndVibrateTime > gameTime);
-        }
-
-        // Implement traceray
-        public bool traceRay()
-        {
-            return false;
         }
 
         // Should really only be called by the main game on resize.

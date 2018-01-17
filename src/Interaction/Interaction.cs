@@ -222,7 +222,7 @@ namespace SparrowHawk.Interaction
         protected virtual void onClickOculusBY(ref VREvent_t vrEvent)
         {
 
-            //back buttom - make sure each interaction implements deactivate() properly
+            //back button - make sure each interaction implements deactivate() properly
             Interaction i = mScene.popInteraction();
 
             //push it back to interactionchain

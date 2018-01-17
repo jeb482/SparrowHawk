@@ -18,9 +18,8 @@ namespace SparrowHawk.Interaction
         double markingMenuSelectionDelay = .85f;
         double defaultInitialDelay = .2;
         float mMinSelectionRadius;
-        float mOuterSelectionRadius;
         float mCurrentRadius;
-        private bool isVisiable = false;
+        private bool isVisible = false;
         private bool isShowing = false;
 
         float thetaDebug = 0;
@@ -33,7 +32,6 @@ namespace SparrowHawk.Interaction
         {
             // Set initial timeout that cannot be skipped to prevent double selections.
             mInitialSelectOKTime = mScene.gameTime + defaultInitialDelay;
-
             if (mScene != null && curSelectionKey != SelectionKey.Null)
             {
                 mScene.selectionDic.Remove(curSelectionKey);
@@ -44,7 +42,7 @@ namespace SparrowHawk.Interaction
                 }
             }
 
-            if (isVisiable)
+            if (isVisible)
                 showMenu(true);
         }
 
@@ -55,33 +53,7 @@ namespace SparrowHawk.Interaction
 
         public int getNumSectors(MenuLayout layout)
         {
-            //TODO- support different layout
-            /*
-            switch (layout)
-            {
-                case MenuLayout.MainMenu: return 4;
-                case MenuLayout.ExtrudeC1: return 4;
-                case MenuLayout.ExtrudeD1Circle: return 4;
-                case MenuLayout.ExtrudeD1Rect: return 4;
-                case MenuLayout.ExtrudeD1Curve: return 4;
-                case MenuLayout.ExtrudeC2: return 4;
-                case MenuLayout.ExtrudeD2Circle: return 4;
-                case MenuLayout.ExtrudeD2Rect: return 4;
-                case MenuLayout.ExtrudeD2Curve: return 4;
-                case MenuLayout.LoftC1: return 4;
-                case MenuLayout.LoftD1: return 4;
-                case MenuLayout.LoftC2: return 4;
-                case MenuLayout.LoftD2: return 4;
-                case MenuLayout.RevolveC1: return 4;
-                case MenuLayout.RevolveD1: return 4;
-                case MenuLayout.SweepC1: return 4;
-                case MenuLayout.SweepD1: return 4;
-                case MenuLayout.SweepC2: return 4;
-                case MenuLayout.SweepD2: return 4;
-            }
-            return 0;
-            */
-            return 4;
+            return 4; // Legacy function
         }
 
         public string getTexturePath(MenuLayout layout)
@@ -154,30 +126,19 @@ namespace SparrowHawk.Interaction
             mCurrentSelection = -1;
 
             if (scene.isOculus)
-            {
                 mMinSelectionRadius = 0.2f;
-                mOuterSelectionRadius = 0.8f;
-            }
             else
-            {
                 mMinSelectionRadius = 0.4f;
-                mOuterSelectionRadius = 0.6f;
-            }
-
-
+            
             Geometry.Geometry g = new Geometry.Geometry("C:\\workspace\\SparrowHawk\\src\\resources\\circle.obj");
-            switch (mLayout)
-            {
-
-            }
+            
             radialMenuMat = new Material.RadialMenuMaterial(mScene.rhinoDoc, getTexturePath(mLayout));
             mSceneNode = new SceneNode("MarkingMenu", ref g, ref radialMenuMat);
             mSceneNode.transform = new OpenTK.Matrix4(2, 0, 0, 0,
                                                           0, 0, -2, 0,
                                                           0, 2, 0, 0,
                                                           0, 0, 0, 1);
-
-            Util.showLaser(ref mScene, false);
+            Util.showLaser(ref mScene, false); // TODO: What?
         }
 
         public override void draw(bool isTop)
@@ -197,22 +158,16 @@ namespace SparrowHawk.Interaction
                 getViveTouchpadPoint((uint)primaryControllerIdx, out mCurrentRadius, out theta);
             }
 
-            //int sector = (int)Math.Floor((((theta + 2 * Math.PI) % (2 * Math.PI)) - mFirstSectorOffsetAngle) * mNumSectors / (2 * Math.PI));
-
             float thetaOffset;
             if (theta < 0)
-            {
                 thetaOffset = (theta + (float)(2 * Math.PI)) - mFirstSectorOffsetAngle; //mFirstSectorOffsetAngle <0 so the result might greater than 360
-            }
             else
-            {
                 thetaOffset = (theta) - mFirstSectorOffsetAngle;
-            }
-
-            if(thetaOffset < 0)
+            
+            if (thetaOffset < 0)
             {
                 thetaOffset = thetaOffset + (float)(2 * Math.PI);
-            }else if (thetaOffset > (float)(2 * Math.PI))
+            } else if (thetaOffset > (float)(2 * Math.PI))
             {
                 thetaOffset = thetaOffset - (float)(2 * Math.PI);
             }
@@ -240,31 +195,10 @@ namespace SparrowHawk.Interaction
                 }
                 return;
             }
-
-            // If you're in the outer ring, select immediately
-            /*
-            if (mCurrentRadius >= mOuterSelectionRadius)
-            {
-                if (mLastRadius < mOuterSelectionRadius)
-                {
-                    mCurrentSelection = sector;
-                    mSelectOKTime = mScene.gameTime + markingMenuFeedbackDelay;
-                }
-                else
-                {
-                    if (mScene.gameTime > mSelectOKTime)
-                    {
-                        launchInteraction(mCurrentRadius, theta);
-                    }
-                }
-                return;
-            }*/
-
-
+            
             // If in midlle selection ring, check delay
             if (mCurrentRadius > mMinSelectionRadius)
             {
-                //Rhino.RhinoApp.WriteLine(r + ", " + theta);
                 if (mCurrentSelection != sector)
                 {
                     mCurrentSelection = sector;
@@ -274,7 +208,7 @@ namespace SparrowHawk.Interaction
                 {
                     if (mScene.gameTime > mSelectOKTime)
                     {
-                        launchInteraction(mCurrentRadius, theta);
+                        selectItem(mCurrentRadius, theta);
                     }
                 }
             }
@@ -310,7 +244,7 @@ namespace SparrowHawk.Interaction
 
         public void setVisible(bool visible)
         {
-            this.isVisiable = visible;
+            this.isVisible = visible;
         }
 
         //TODO- seperate activate and visible
@@ -338,14 +272,12 @@ namespace SparrowHawk.Interaction
         {
             if (!isShowing)
                 showMenu(true);
-            //terminate();
         }
 
         protected override void onClickOculusStick(ref VREvent_t vrEvent)
         {
             if(!isShowing)
                 showMenu(true);
-            //terminate();
         }
 
         protected override void onClickOculusAX(ref VREvent_t vrEvent)
@@ -371,79 +303,51 @@ namespace SparrowHawk.Interaction
 
         // TODO: Need to account for offset. Next
         // TODO: after add a new menulayout to the list, newing a new marking menu interaction and set approiate visiable attribute. it's easier for the undo function.
-        private void launchInteraction(float r, float theta)
+        ////////////////////////////////////////////////////////////////////////////////////////////////////////
+        ///                               Interaction Stuff Starts Here                                      ///
+        ////////////////////////////////////////////////////////////////////////////////////////////////////////
+        private void launchInteraction(ref Scene mScene, SelectionKey nextSelectionKey, FunctionType functionType, MenuLayout nextMenuLayout)
         {
-            //int interactionNumber = ((int) Math.Floor((mNumSectors * theta - mFirstSectorOffsetAngle) / (2 * Math.PI)));
+            mScene.selectionDic.Add(nextSelectionKey, functionType);
+            setCurSelectionKey(nextSelectionKey);
+            MarkingMenu nextMenu = new MarkingMenu(ref mScene, nextMenuLayout);
+            if (nextMenu != null)
+            {
+                nextMenu.setVisible(true);
+                mScene.pushInteraction(nextMenu);
+            }
+        }
+
+        private void selectItem(float r, float theta)
+        {
+            
             mScene.vibrateController(0.1, (uint)primaryControllerIdx);
-            int interactionNumber;
             if (theta < 0) { theta += (float)(2 * Math.PI); }
-            interactionNumber = (int)Math.Ceiling((theta - (Math.PI / mNumSectors)) / (Math.PI / 2));
+            int interactionNumber = (int)Math.Ceiling((theta - (Math.PI / mNumSectors)) / (Math.PI / 2));
             if (interactionNumber >= mNumSectors) { interactionNumber = 0; }
-            MarkingMenu nextMenu = null;
+            MarkingMenu nextMenu;
+
             switch (mLayout)
             {
                 case MenuLayout.MainMenu:
                     switch (interactionNumber)
                     {
-                        //Loft
                         case 0:
-                            mScene.selectionDic.Add(SelectionKey.ModelFun, FunctionType.Loft);
-                            setCurSelectionKey(SelectionKey.ModelFun);
-                            nextMenu = new MarkingMenu(ref mScene, MenuLayout.LoftC1);
-                            //Rhino.RhinoApp.WriteLine("section 0 : " + thetaDebug / Math.PI * 180);
-                            if (nextMenu != null)
-                            {
-                                //this.setVisible(false);
-                                nextMenu.setVisible(true);
-                                mScene.pushInteraction(nextMenu);
-                            }
+                            launchInteraction(ref mScene, SelectionKey.ModelFun, FunctionType.Loft, MenuLayout.LoftC1);
                             break;
-                        //Sweep
                         case 1:
-                            mScene.selectionDic.Add(SelectionKey.ModelFun, FunctionType.Sweep);
-                            setCurSelectionKey(SelectionKey.ModelFun);
-                            nextMenu = new MarkingMenu(ref mScene, MenuLayout.SweepC1);
-                            //Rhino.RhinoApp.WriteLine("section 1 : " + thetaDebug / Math.PI * 180);
-                            if (nextMenu != null)
-                            {
-                                //this.setVisible(false);
-                                nextMenu.setVisible(true);
-                                mScene.pushInteraction(nextMenu);
-                            }
+                            launchInteraction(ref mScene, SelectionKey.ModelFun, FunctionType.Sweep, MenuLayout.SweepC1);
                             break;
-                        //Revolve
                         case 2:
-                            mScene.selectionDic.Add(SelectionKey.ModelFun, FunctionType.Revolve);
-                            setCurSelectionKey(SelectionKey.ModelFun);
-                            nextMenu = new MarkingMenu(ref mScene, MenuLayout.RevolveC1);
-                            //Rhino.RhinoApp.WriteLine("section 2 : "+ thetaDebug / Math.PI * 180);
-                            if (nextMenu != null)
-                            {
-                                //this.setVisible(false);
-                                nextMenu.setVisible(true);
-                                mScene.pushInteraction(nextMenu);
-                            }
+                            launchInteraction(ref mScene, SelectionKey.ModelFun, FunctionType.Revolve, MenuLayout.RevolveC1);
                             break;
-                        //Extrude
                         case 3:
-                            mScene.selectionDic.Add(SelectionKey.ModelFun, FunctionType.Extrude);
-                            setCurSelectionKey(SelectionKey.ModelFun);
-                            nextMenu = new MarkingMenu(ref mScene, MenuLayout.ExtrudeC1);
-                            //Rhino.RhinoApp.WriteLine("section 3: "+ thetaDebug / Math.PI * 180);
-                            if (nextMenu != null)
-                            {
-                                //this.setVisible(false);
-                                nextMenu.setVisible(true);
-                                mScene.pushInteraction(nextMenu);
-                            }
+                            launchInteraction(ref mScene, SelectionKey.ModelFun, FunctionType.Extrude, MenuLayout.ExtrudeC1);
                             break;
                     }
                     break;
 
-                case MenuLayout.LoftC1:
-                case MenuLayout.SweepC1:
-                case MenuLayout.RevolveC1:
-                case MenuLayout.ExtrudeC1:
+                case MenuLayout.LoftC1: case  MenuLayout.SweepC1: case MenuLayout.RevolveC1: case MenuLayout.ExtrudeC1:
                     mScene.selectionDic.Add(SelectionKey.Profile1Shape, (ShapeType)(interactionNumber));
                     setCurSelectionKey(SelectionKey.Profile1Shape);
                     nextMenu = new MarkingMenu(ref mScene, (MenuLayout)((int)mLayout + interactionNumber + 1));
@@ -451,14 +355,8 @@ namespace SparrowHawk.Interaction
                     mScene.pushInteraction(nextMenu);
                     break;
 
-                case MenuLayout.LoftD1Circle:
-                case MenuLayout.LoftD1Rect:
-                case MenuLayout.LoftD1Curve:
-                case MenuLayout.SweepD1Circle:
-                case MenuLayout.SweepD1Rect:
-                case MenuLayout.SweepD1Curve:
-                case MenuLayout.ExtrudeD1Circle:
-                case MenuLayout.ExtrudeD1Rect:
+                case MenuLayout.LoftD1Circle: case MenuLayout.LoftD1Rect: case MenuLayout.LoftD1Curve: case MenuLayout.SweepD1Circle:
+                case MenuLayout.SweepD1Rect: case MenuLayout.SweepD1Curve: case MenuLayout.ExtrudeD1Circle: case MenuLayout.ExtrudeD1Rect:
                 case MenuLayout.ExtrudeD1Curve:
                     mScene.selectionDic.Add(SelectionKey.Profile1On, (DrawnType)(interactionNumber));
                     setCurSelectionKey(SelectionKey.Profile1On);
@@ -466,18 +364,14 @@ namespace SparrowHawk.Interaction
                     mScene.pushInteractionFromChain();
                     break;
 
-                case MenuLayout.RevolveD1Circle:
-                case MenuLayout.RevolveD1Rect:
-                case MenuLayout.RevolveD1Curve:
+                case MenuLayout.RevolveD1Circle: case MenuLayout.RevolveD1Rect: case MenuLayout.RevolveD1Curve:
                     mScene.selectionDic.Add(SelectionKey.Profile1On, (DrawnType)(interactionNumber));
                     setCurSelectionKey(SelectionKey.Profile1On);
                     initInteractionChain(CurveID.ProfileCurve1);
                     mScene.pushInteractionFromChain();
                     break;
 
-                case MenuLayout.LoftC2:
-                case MenuLayout.SweepC2:
-                case MenuLayout.ExtrudeC2:
+                case MenuLayout.LoftC2: case MenuLayout.SweepC2: case MenuLayout.ExtrudeC2:
                     mScene.selectionDic.Add(SelectionKey.Profile2Shape, (ShapeType)(interactionNumber));
                     setCurSelectionKey(SelectionKey.Profile2Shape);
                     nextMenu = new MarkingMenu(ref mScene, (MenuLayout)((int)mLayout + interactionNumber + 1));
@@ -485,15 +379,9 @@ namespace SparrowHawk.Interaction
                     mScene.pushInteraction(nextMenu);
                     break;
 
-                case MenuLayout.LoftD2Circle:
-                case MenuLayout.LoftD2Rect:
-                case MenuLayout.LoftD2Curve:
-                case MenuLayout.SweepD2Circle:
-                case MenuLayout.SweepD2Rect:
-                case MenuLayout.SweepD2Curve:
-                case MenuLayout.ExtrudeD2Circle:
-                case MenuLayout.ExtrudeD2Rect:
-                case MenuLayout.ExtrudeD2Curve:
+                case MenuLayout.LoftD2Circle: case MenuLayout.LoftD2Rect: case MenuLayout.LoftD2Curve:
+                case MenuLayout.SweepD2Circle: case MenuLayout.SweepD2Rect: case MenuLayout.SweepD2Curve:
+                case MenuLayout.ExtrudeD2Circle: case MenuLayout.ExtrudeD2Rect: case MenuLayout.ExtrudeD2Curve:
                     mScene.selectionDic.Add(SelectionKey.Profile2On, (DrawnType)(interactionNumber));
                     setCurSelectionKey(SelectionKey.Profile2On);
                     initInteractionChain(CurveID.ProfileCurve2);
@@ -510,7 +398,6 @@ namespace SparrowHawk.Interaction
 
         private void initInteractionChain(CurveID curveID)
         {
-            //0-Surface, 1-3D, 2-Plane, 3-Reference
             interactionChain.Clear();
             //always remove from the last
             if (mScene.mIChainsList.Count > 0)

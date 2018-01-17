@@ -535,6 +535,8 @@ namespace SparrowHawk.Interaction
                 Rhino.Geometry.Curve[] edgeCurves = (targetBrep.Faces[minIndex].DuplicateFace(false)).DuplicateEdgeCurves(true);
                 double tol = mScene.rhinoDoc.ModelAbsoluteTolerance * 2.1;
                 edgeCurves = Rhino.Geometry.Curve.JoinCurves(edgeCurves, tol);
+
+                // TODO: Check if null
                 contourCurve = edgeCurves[0];
 
                 //detect whether it's rect or circle then generate a snap pointList
