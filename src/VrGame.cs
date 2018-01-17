@@ -399,24 +399,6 @@ namespace SparrowHawk
             if (mHMD != null)
                 mHMD.GetRecommendedRenderTargetSize(ref mRenderWidth, ref mRenderHeight);
 
-            //TODO: testing passing by ref bug of OpenGL
-            /*
-            Geometry.Geometry g = new Geometry.Geometry("C:/workspace/Kestrel/resources/meshes/bunny.obj");
-            //Material.Material m = new Material.SingleColorMaterial(mDoc,1f,1f,1f,1f);
-            Material.Material m = new Material.LambertianMaterial(1,1,1,.5f);
-            //Material.Material m = new Material.RGBNormalMaterial(1);
-            //Material.Material m = new Material.SingleColorMaterial(1, 0, 1, 1);
-            SceneNode cube = new SceneNode("Triangle", ref g, ref m);
-            cube.transform = new Matrix4(1, 0, 0, 0, 0, 1, 0, 1, 0, 0, 1, 0, 0, 0, 0, 1);
-            mScene.tableGeometry.add(ref cube);
-
-            g = new Geometry.PointMarker(new Vector3(0, 1, 0));
-            m = new Material.SingleColorMaterial(1, 1, 1, 1);
-            SceneNode point = new SceneNode("Point 1", ref g, ref m);
-            mScene.staticGeometry.add(ref point);
-            point.transform = new Matrix4(1, 0, 0, 0, 0, 1, 0, 1, 0, 0, 1, 0, 0, 0, 0, 1);
-            */
-
             //visualizing axises        
             OpenTK.Vector3 x0 = Util.platformToVRPoint(ref mScene, new OpenTK.Vector3(-240, 0, 0));
             OpenTK.Vector3 x1 = Util.platformToVRPoint(ref mScene, new OpenTK.Vector3(240, 0, 0));
@@ -480,48 +462,6 @@ namespace SparrowHawk
             mScene.yzPlane = new DesignPlane(ref mScene, XYZPlanes.YZ);
 
 
-            /*
-            List<Plane> testPlaneList = new List<Plane>();
-            List<Point3d> testPointList = new List<Point3d>();
-            testPointList.Add(new Point3d(0, 0, 0));
-            testPointList.Add(new Point3d(1, 0, 0));
-            List<Curve> testCurveList = new List<Curve>();
-            PolylineCurve testCurve = new PolylineCurve(testPointList);
-            testCurveList.Add(testCurve);
-            Plane plane1 = new Plane(new Point3d(0, 0, 0), new Rhino.Geometry.Vector3d(0, 0, 1));
-            testPlaneList.Add(plane1);
-            Transform testRot = Transform.Rotation((30f / 360f) * 2 * Math.PI, plane1.Normal, plane1.Origin);
-            //bool done = testPlaneList[0].Transform(testRot);
-            testCurve.Transform(testRot);
-            testCurveList[0].Transform(testRot);
-            Plane plane2 = testPlaneList[0];
-            plane2.Transform(testRot);
-            testPlaneList[0] = plane2;
-            */
-
-            //xzPlane = new DesignPlane(ref mScene, 1);
-            //xyPlane = new DesignPlane(ref mScene, 2);
-            //yzPlane = new DesignPlane(ref mScene, 0);
-
-            //xzPlane2 = new DesignPlane2(ref mScene, "XZ");
-            //xyPlane2 = new DesignPlane2(ref mScene, "XY");
-            //yzPlane2 = new DesignPlane2(ref mScene, "YZ");
-
-            //Find the Rhino Object start with 'a' and render it
-            //Material.Material mesh_m = new Material.RGBNormalMaterial(1); ;
-            //Rhino.DocObjects.ObjectEnumeratorSettings settings = new Rhino.DocObjects.ObjectEnumeratorSettings();
-            //settings.ObjectTypeFilter = Rhino.DocObjects.ObjectType.Brep
-            //int obj_count = 0;
-            //foreach (Rhino.DocObjects.RhinoObject rhObj in mScene.rhinoDoc.Objects.GetObjectList(settings))
-            //{
-            //    if (rhObj.Attributes.Name.StartsWith("a"))
-            //    {
-            //        Util.addSceneNode(ref mScene, ((Surface)rhObj.Geometry).ToBrep(), ref mesh_m, rhObj.Attributes.Name);
-            //        mScene.rhinoDoc.Views.Redraw();
-            //    }
-            //    obj_count++;
-            //}
-            //Rhino.RhinoApp.WriteLine(obj_count + " breps found");
         }
 
         public bool init()

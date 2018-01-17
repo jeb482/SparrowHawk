@@ -278,12 +278,12 @@ namespace SparrowHawk
 
         public bool leftControllerShouldVibrate()
         {
-            return (leftControllerEndVibrateTime > gameTime);
+            return (leftControllerEndVibrateTime > gameTime || false);
         }
 
         public bool rightControllerShouldVibrate()
         {
-            return (rightControllerEndVibrateTime > gameTime);
+            return (rightControllerEndVibrateTime > gameTime || false);
         }
 
         // Should really only be called by the main game on resize.

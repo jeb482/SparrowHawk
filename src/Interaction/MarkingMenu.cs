@@ -417,16 +417,19 @@ namespace SparrowHawk.Interaction
                 switch (modelFun)
                 {
                     case FunctionType.Extrude:
+                        Rhino.RhinoApp.WriteLine("ExtrudeC2");
                         nextMenu = new MarkingMenu(ref mScene, MenuLayout.ExtrudeC2);
                         nextMenu.setVisible(true);
                         pushInteractionChain(nextMenu);
                         break;
                     case FunctionType.Sweep:
+                        Rhino.RhinoApp.WriteLine("SweepC2");
                         nextMenu = new MarkingMenu(ref mScene, MenuLayout.SweepC2);
                         nextMenu.setVisible(true);
                         pushInteractionChain(nextMenu);
                         break;
                     case FunctionType.Loft:
+                        Rhino.RhinoApp.WriteLine("LoftC2");
                         nextMenu = new MarkingMenu(ref mScene, MenuLayout.LoftC2);
                         nextMenu.setVisible(true);
                         pushInteractionChain(nextMenu);
