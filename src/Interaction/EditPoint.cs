@@ -269,7 +269,7 @@ namespace SparrowHawk.Interaction
             //TODO-support Undo
             if (curveID == CurveID.ProfileCurve1 && shapeSN != null)
             {
-                Util.removeSceneNode(ref mScene, ref shapeSN);
+                UtilOld.removeSceneNode(ref mScene, ref shapeSN);
                 shapeSN = null;
             }
 
@@ -291,7 +291,7 @@ namespace SparrowHawk.Interaction
 
             if (onPlane)
             {
-                Util.showLaser(ref mScene, true);
+                UtilOld.showLaser(ref mScene, true);
                 //init rayCastingObjs
                 //TODO-fix that the new edit curve didn't have the key value on it
                 string testStr = mScene.iCurveList[mScene.iCurveList.Count - 1].GetUserString(CurveData.CurveOnObj.ToString());
@@ -302,18 +302,18 @@ namespace SparrowHawk.Interaction
                 //get curveOnplane for edit circle and rect, todo-fix this should be only use when edit circle and rect not for the open curve
                 if (isEditCircle || isEditRect)
                 {
-                    curvePlane = new Plane(Util.getPointfromString(mScene.iCurveList[mScene.iCurveList.Count - 1].GetUserString(CurveData.PlaneOrigin.ToString())),
-                        Util.getVectorfromString(mScene.iCurveList[mScene.iCurveList.Count - 1].GetUserString(CurveData.PlaneNormal.ToString())));
+                    curvePlane = new Plane(UtilOld.getPointfromString(mScene.iCurveList[mScene.iCurveList.Count - 1].GetUserString(CurveData.PlaneOrigin.ToString())),
+                        UtilOld.getVectorfromString(mScene.iCurveList[mScene.iCurveList.Count - 1].GetUserString(CurveData.PlaneNormal.ToString())));
                 }
              
                 Geometry.Geometry geo = new Geometry.DrawPointMarker(new OpenTK.Vector3(0, 0, 0));
                 Material.Material m = new Material.SingleColorMaterial(1, 1, 1, 0);//TODO: teseting alpha working or not
                 drawPoint = new SceneNode("drawPoint", ref geo, ref m);
-                Util.addSceneNode(ref mScene, ref drawPoint);
+                UtilOld.addSceneNode(ref mScene, ref drawPoint);
 
             }else
             {
-                Util.showLaser(ref mScene, true);
+                UtilOld.showLaser(ref mScene, true);
             }
                 
             if (isEditCircle)
@@ -389,15 +389,15 @@ namespace SparrowHawk.Interaction
                 joystickControl();
             }
 
-            OpenTK.Vector4 controller_p = Util.getControllerTipPosition(ref mScene, primaryDeviceIndex == mScene.leftControllerIdx) * new OpenTK.Vector4(0, 0, 0, 1);
-            OpenTK.Vector4 controller_pZ = Util.getControllerTipPosition(ref mScene, primaryDeviceIndex == mScene.leftControllerIdx) * new OpenTK.Vector4(0, 0, -1, 1);
-            Point3d controller_pRhino = Util.openTkToRhinoPoint(Util.vrToPlatformPoint(ref mScene, new OpenTK.Vector3(controller_p.X, controller_p.Y, controller_p.Z)));
-            Point3d controller_pZRhin = Util.openTkToRhinoPoint(Util.vrToPlatformPoint(ref mScene, new OpenTK.Vector3(controller_pZ.X, controller_pZ.Y, controller_pZ.Z)));
+            OpenTK.Vector4 controller_p = UtilOld.getControllerTipPosition(ref mScene, primaryDeviceIndex == mScene.leftControllerIdx) * new OpenTK.Vector4(0, 0, 0, 1);
+            OpenTK.Vector4 controller_pZ = UtilOld.getControllerTipPosition(ref mScene, primaryDeviceIndex == mScene.leftControllerIdx) * new OpenTK.Vector4(0, 0, -1, 1);
+            Point3d controller_pRhino = UtilOld.openTkToRhinoPoint(UtilOld.vrToPlatformPoint(ref mScene, new OpenTK.Vector3(controller_p.X, controller_p.Y, controller_p.Z)));
+            Point3d controller_pZRhin = UtilOld.openTkToRhinoPoint(UtilOld.vrToPlatformPoint(ref mScene, new OpenTK.Vector3(controller_pZ.X, controller_pZ.Y, controller_pZ.Z)));
             Rhino.Geometry.Vector3d direction = new Rhino.Geometry.Vector3d(controller_pZRhin.X - controller_pRhino.X, controller_pZRhin.Y - controller_pRhino.Y, controller_pZRhin.Z - controller_pRhino.Z);
 
             if (drawnType != DrawnType.In3D)
             {
-                Util.rayCasting(controller_pRhino, direction, ref rayCastingObjs, ref projectP, out targetPRhObjID);
+                UtilOld.rayCasting(controller_pRhino, direction, ref rayCastingObjs, ref projectP, out targetPRhObjID);
 
                 //handle draw outside of the surface
             }
@@ -414,10 +414,10 @@ namespace SparrowHawk.Interaction
                 {
                     List<int> ignoreIndexes = new List<int>();
                     ignoreIndexes.Add(0);
-                    snapIndex = Util.snapToPoints(ref projectP, ref curvePoints, ignoreIndexes);
+                    snapIndex = UtilOld.snapToPoints(ref projectP, ref curvePoints, ignoreIndexes);
                 }else
                 {
-                    snapIndex =Util.snapToPoints(ref projectP, ref curvePoints);
+                    snapIndex =UtilOld.snapToPoints(ref projectP, ref curvePoints);
                 }
 
                 if (snapIndex != -1)
@@ -447,7 +447,7 @@ namespace SparrowHawk.Interaction
             }
 
             //render project point
-            Vector3 projectPVR = Util.platformToVRPoint(ref mScene, Util.RhinoToOpenTKPoint(projectP));
+            Vector3 projectPVR = UtilOld.platformToVRPoint(ref mScene, UtilOld.RhinoToOpenTKPoint(projectP));
             if (drawnType != DrawnType.In3D)
             {
                 OpenTK.Matrix4 t = OpenTK.Matrix4.CreateTranslation(projectPVR);
@@ -467,10 +467,10 @@ namespace SparrowHawk.Interaction
             if (currentState == State.Snap)
             {
                 //update the curve- we can't update editCurve.Points[snapIndex] directly (bug)
-                OpenTK.Vector3 ep = Util.RhinoToOpenTKPoint(projectP);
+                OpenTK.Vector3 ep = UtilOld.RhinoToOpenTKPoint(projectP);
                 //accumulate displacement
                 displacement = displacement + (float)Math.Sqrt(Math.Pow(ep.X - curvePoints[snapIndex].X, 2) + Math.Pow(ep.Y - curvePoints[snapIndex].Y, 2) + Math.Pow(ep.Z - curvePoints[snapIndex].Z, 2));
-                curvePoints[snapIndex] = Util.openTkToRhinoPoint(ep);
+                curvePoints[snapIndex] = UtilOld.openTkToRhinoPoint(ep);
 
                 int order = editCurve.Order;
                 if (editCurve.IsClosed)
@@ -523,7 +523,7 @@ namespace SparrowHawk.Interaction
                     Geometry.Geometry geo = new Geometry.DrawPointMarker(new Vector3(0,0,0));
                     Material.Material m = new Material.SingleColorMaterial(0, 1, 0, 1);
                     SceneNode epSN;
-                    Util.MarkPointVR(ref mScene, Util.platformToVRPoint(ref mScene, new OpenTK.Vector3((float)ep.X, (float)ep.Y, (float)ep.Z)), ref geo, ref m, out epSN);
+                    UtilOld.MarkPointVR(ref mScene, UtilOld.platformToVRPoint(ref mScene, new OpenTK.Vector3((float)ep.X, (float)ep.Y, (float)ep.Z)), ref geo, ref m, out epSN);
                     pointMarkers.Add(epSN);
                 }
 
@@ -534,17 +534,17 @@ namespace SparrowHawk.Interaction
                 for (int i = 0; i < pointMarkers.Count; i++)
                 {
                     SceneNode epSN = pointMarkers[i];
-                    Util.removeSceneNode(ref mScene, ref epSN);
+                    UtilOld.removeSceneNode(ref mScene, ref epSN);
                 }
                 pointMarkers.Clear();
 
                 for (int i = 0; i < editCurve.Points.Count; i++)
                 {
                     Point3d ep = new Point3d(editCurve.Points.ElementAt(i).Location.X, editCurve.Points.ElementAt(i).Location.Y, editCurve.Points.ElementAt(i).Location.Z);
-                    Geometry.Geometry geo = new Geometry.DrawPointMarker(Util.platformToVRPoint(ref mScene, new OpenTK.Vector3((float)ep.X, (float)ep.Y, (float)ep.Z)));
+                    Geometry.Geometry geo = new Geometry.DrawPointMarker(UtilOld.platformToVRPoint(ref mScene, new OpenTK.Vector3((float)ep.X, (float)ep.Y, (float)ep.Z)));
                     Material.Material m = new Material.SingleColorMaterial(0, 1, 0, 1);
                     SceneNode epSN;
-                    Util.MarkPointVR(ref mScene, Util.platformToVRPoint(ref mScene, new OpenTK.Vector3((float)ep.X, (float)ep.Y, (float)ep.Z)), ref geo, ref m, out epSN);
+                    UtilOld.MarkPointVR(ref mScene, UtilOld.platformToVRPoint(ref mScene, new OpenTK.Vector3((float)ep.X, (float)ep.Y, (float)ep.Z)), ref geo, ref m, out epSN);
                     pointMarkers.Add(epSN);
                 }
             }
@@ -555,18 +555,18 @@ namespace SparrowHawk.Interaction
             {
                 for (int i = 0; i < polyline.PointCount; i++)
                 {
-                    ((Geometry.GeometryStroke)stroke_g2).addPoint(Util.platformToVRPoint(ref mScene, new OpenTK.Vector3((float)polyline.Point(i).X, (float)polyline.Point(i).Y, (float)polyline.Point(i).Z)));
+                    ((Geometry.GeometryStroke)stroke_g2).addPoint(UtilOld.platformToVRPoint(ref mScene, new OpenTK.Vector3((float)polyline.Point(i).X, (float)polyline.Point(i).Y, (float)polyline.Point(i).Z)));
 
                 }
                 stroke = new SceneNode("EditCurve", ref stroke_g2, ref stroke_m2);
-                Util.addSceneNode(ref mScene, ref stroke);
+                UtilOld.addSceneNode(ref mScene, ref stroke);
             }
             else
             {
                 ((Geometry.GeometryStroke)stroke_g2).removePoint();
                 for (int i = 0; i < polyline.PointCount; i++)
                 {
-                    ((Geometry.GeometryStroke)stroke_g2).addPoint(Util.platformToVRPoint(ref mScene, new OpenTK.Vector3((float)polyline.Point(i).X, (float)polyline.Point(i).Y, (float)polyline.Point(i).Z)));
+                    ((Geometry.GeometryStroke)stroke_g2).addPoint(UtilOld.platformToVRPoint(ref mScene, new OpenTK.Vector3((float)polyline.Point(i).X, (float)polyline.Point(i).Y, (float)polyline.Point(i).Z)));
                 }
             }
 
@@ -578,8 +578,8 @@ namespace SparrowHawk.Interaction
             if (dynamicRender == "Extrude")
             {
 
-                OpenTK.Vector3 heightVector = Util.RhinoToOpenTKPoint(editCurve.PointAtEnd) - Util.RhinoToOpenTKPoint(editCurve.PointAtStart);
-                OpenTK.Vector3 planeNormal = Util.RhinoToOpenTKVector(Util.getVectorfromString(localListCurve[0].GetUserString(CurveData.PlaneNormal.ToString())));
+                OpenTK.Vector3 heightVector = UtilOld.RhinoToOpenTKPoint(editCurve.PointAtEnd) - UtilOld.RhinoToOpenTKPoint(editCurve.PointAtStart);
+                OpenTK.Vector3 planeNormal = UtilOld.RhinoToOpenTKVector(UtilOld.getVectorfromString(localListCurve[0].GetUserString(CurveData.PlaneNormal.ToString())));
                 planeNormal.Normalize();
                 height = OpenTK.Vector3.Dot(heightVector, planeNormal) / planeNormal.Length;
 
@@ -613,7 +613,7 @@ namespace SparrowHawk.Interaction
                     Brep[] shapes = Brep.CreatePlanarBreps(circleCurve);
                     Brep circle_s = shapes[0];
 
-                    Util.updateSceneNode(ref mScene, circle_s, ref mesh_m, "Circle", ref shapeSN);
+                    UtilOld.updateSceneNode(ref mScene, circle_s, ref mesh_m, "Circle", ref shapeSN);
 
                     //updating the iPointList and iCurveList
                     circleCurve.SetUserString(CurveData.CurveOnObj.ToString(), oldCurveOnObjID);
@@ -622,8 +622,8 @@ namespace SparrowHawk.Interaction
                     //mScene.iCurveList[mScene.iCurveList.Count - 1] = circleCurve;
                     localListCurve[localListCurve.Count - 1] = circleCurve;
                     string testStr = localListCurve[localListCurve.Count - 1].GetUserString(CurveData.CurveOnObj.ToString());
-                    mScene.iPointList[mScene.iPointList.Count - 2] = Util.platformToVRPoint(ref mScene, new Vector3((float)origin.X, (float)origin.Y, (float)origin.Z));
-                    mScene.iPointList[mScene.iPointList.Count - 1] = Util.platformToVRPoint(ref mScene, new Vector3((float)circleP.X, (float)circleP.Y, (float)circleP.Z));
+                    mScene.iPointList[mScene.iPointList.Count - 2] = UtilOld.platformToVRPoint(ref mScene, new Vector3((float)origin.X, (float)origin.Y, (float)origin.Z));
+                    mScene.iPointList[mScene.iPointList.Count - 1] = UtilOld.platformToVRPoint(ref mScene, new Vector3((float)circleP.X, (float)circleP.Y, (float)circleP.Z));
 
                 }
             }
@@ -644,7 +644,7 @@ namespace SparrowHawk.Interaction
                     Brep[] shapes = Brep.CreatePlanarBreps(rectCurve);
                     Brep rectBrep = shapes[0];
 
-                    Util.updateSceneNode(ref mScene, rectBrep, ref mesh_m, "Rect", ref shapeSN);
+                    UtilOld.updateSceneNode(ref mScene, rectBrep, ref mesh_m, "Rect", ref shapeSN);
 
                     //updating the iPointList and iCurveList
                     rectCurve.SetUserString(CurveData.CurveOnObj.ToString(), oldCurveOnObjID);
@@ -652,8 +652,8 @@ namespace SparrowHawk.Interaction
                     rectCurve.SetUserString(CurveData.PlaneNormal.ToString(), oldPlaneNormal);
                     //mScene.iCurveList[mScene.iCurveList.Count - 1] = rectCurve;
                     localListCurve[localListCurve.Count - 1] = rectCurve;
-                    mScene.iPointList[mScene.iPointList.Count - 2] = Util.platformToVRPoint(ref mScene, new Vector3((float)rectCenter.X, (float)rectCenter.Y, (float)rectCenter.Z));
-                    mScene.iPointList[mScene.iPointList.Count - 1] = Util.platformToVRPoint(ref mScene, new Vector3((float)bottomRightP.X, (float)bottomRightP.Y, (float)bottomRightP.Z));
+                    mScene.iPointList[mScene.iPointList.Count - 2] = UtilOld.platformToVRPoint(ref mScene, new Vector3((float)rectCenter.X, (float)rectCenter.Y, (float)rectCenter.Z));
+                    mScene.iPointList[mScene.iPointList.Count - 1] = UtilOld.platformToVRPoint(ref mScene, new Vector3((float)bottomRightP.X, (float)bottomRightP.Y, (float)bottomRightP.Z));
 
                     width = (float)rect.Width;
                     height = (float)rect.Height;
@@ -679,38 +679,38 @@ namespace SparrowHawk.Interaction
             }
             else if (dynamicRender == "Revolve")
             {
-                dynamicBrep = Util.RevolveFunc(ref mScene, ref localListCurve);
+                dynamicBrep = UtilOld.RevolveFunc(ref mScene, ref localListCurve);
             }
             else if (dynamicRender == "Loft")
             {
-                dynamicBrep = Util.LoftFunc(ref mScene, ref localListCurve);
+                dynamicBrep = UtilOld.LoftFunc(ref mScene, ref localListCurve);
             }
             else if (dynamicRender == "Extrude")
             {
                 //TODO-using Sweep fnction to do and find the intersect point             
-                dynamicBrep = Util.ExtrudeFunc(ref mScene, ref localListCurve);
+                dynamicBrep = UtilOld.ExtrudeFunc(ref mScene, ref localListCurve);
             }
             else if (dynamicRender == "Sweep")
             {
-                dynamicBrep = Util.SweepFun(ref mScene, ref localListCurve);
+                dynamicBrep = UtilOld.SweepFun(ref mScene, ref localListCurve);
             }
             else if (dynamicRender == "Sweep-Circle")
             {
-                dynamicBrep = Util.SweepCapFun(ref mScene, ref localListCurve);
+                dynamicBrep = UtilOld.SweepCapFun(ref mScene, ref localListCurve);
             }
             else if (dynamicRender == "Sweep-Rect")
             {
-                dynamicBrep = Util.SweepCapFun(ref mScene, ref localListCurve);
+                dynamicBrep = UtilOld.SweepCapFun(ref mScene, ref localListCurve);
             }
             else if (dynamicRender == "Extrude-Circle")
             {
                 //dynamicBrep = Util.ExtrudeCapFunc(ref mScene, ref mScene.iCurveList);
-                dynamicBrep = Util.SweepCapFun(ref mScene, ref localListCurve);
+                dynamicBrep = UtilOld.SweepCapFun(ref mScene, ref localListCurve);
             }
             else if (dynamicRender == "Extrude-Rect")
             {
                 //dynamicBrep = Util.ExtrudeCapFunc(ref mScene, ref mScene.iCurveList);
-                dynamicBrep = Util.SweepCapFun(ref mScene, ref localListCurve);
+                dynamicBrep = UtilOld.SweepCapFun(ref mScene, ref localListCurve);
             }
 
 
@@ -722,7 +722,7 @@ namespace SparrowHawk.Interaction
             {
                 if (modelName == "tprint")
                 {
-                    Util.updateSceneNode(ref mScene, dynamicBrep, ref mesh_m, modelName, ref previewObjSN);
+                    UtilOld.updateSceneNode(ref mScene, dynamicBrep, ref mesh_m, modelName, ref previewObjSN);
 
                     //SweepCapFun debugging
                     if (dynamicRender == "Sweep-Circle" || dynamicRender == "Sweep-Rect" || dynamicRender == "Extrude-Circle" || dynamicRender == "Loft")
@@ -739,11 +739,11 @@ namespace SparrowHawk.Interaction
                 }
                 else if (modelName.Contains("aprint"))
                 {
-                    Guid guid = Util.addRhinoObjectSceneNode(ref mScene, ref dynamicBrep, ref profile_m, modelName, out renderObjSN, false, true);
+                    Guid guid = UtilOld.addRhinoObjectSceneNode(ref mScene, ref dynamicBrep, ref profile_m, modelName, out renderObjSN, false, true);
 
                     clearDrawingFinish();
-                    Util.clearPlanePoints(ref mScene);
-                    Util.clearCurveTargetRhObj(ref mScene);
+                    UtilOld.clearPlanePoints(ref mScene);
+                    UtilOld.clearCurveTargetRhObj(ref mScene);
 
                     //TODO- OpenGL compile error why?
                     //Util.setPlaneAlpha(ref mScene, 0.0f);
@@ -792,20 +792,20 @@ namespace SparrowHawk.Interaction
         {
             if (drawPoint != null)
             {
-                Util.removeSceneNode(ref mScene, ref drawPoint);
+                UtilOld.removeSceneNode(ref mScene, ref drawPoint);
                 drawPoint = null;
             }
 
             for (int i = 0; i < pointMarkers.Count; i++)
             {
                 SceneNode sn = pointMarkers[i];
-                Util.removeSceneNode(ref mScene, ref sn);
+                UtilOld.removeSceneNode(ref mScene, ref sn);
             }
             pointMarkers.Clear();
 
             if (previewObjSN != null)
             {
-                Util.removeSceneNode(ref mScene, ref previewObjSN);
+                UtilOld.removeSceneNode(ref mScene, ref previewObjSN);
                 previewObjSN = null;
             }
 
@@ -821,7 +821,7 @@ namespace SparrowHawk.Interaction
 
             if (stroke != null) //we don't want to render railcurve
             {
-                Util.removeSceneNode(ref mScene, ref stroke);
+                UtilOld.removeSceneNode(ref mScene, ref stroke);
                 stroke = null;
             }
 
@@ -835,7 +835,7 @@ namespace SparrowHawk.Interaction
                     string objName = curveOnObjRef.Object().Attributes.Name;
                     if (objName.Contains("MoveP") || objName.Contains("railPlane") || objName.Contains("Panel"))
                     {
-                        Util.removeRhinoObject(ref mScene, curveOnObjRef.ObjectId);
+                        UtilOld.removeRhinoObject(ref mScene, curveOnObjRef.ObjectId);
                     }
                 }
             }
@@ -846,31 +846,31 @@ namespace SparrowHawk.Interaction
         {
             if (drawPoint != null)
             {
-                Util.removeSceneNode(ref mScene, ref drawPoint);
+                UtilOld.removeSceneNode(ref mScene, ref drawPoint);
                 drawPoint = null;
             }
            
             for (int i = 0; i < pointMarkers.Count; i++)
             {
                 SceneNode sn = pointMarkers[i];
-                Util.removeSceneNode(ref mScene, ref sn);
+                UtilOld.removeSceneNode(ref mScene, ref sn);
             }
             pointMarkers.Clear();
 
             if (previewObjSN != null)
             {
-                Util.removeSceneNode(ref mScene, ref previewObjSN);
+                UtilOld.removeSceneNode(ref mScene, ref previewObjSN);
                 previewObjSN = null;
             }
 
             //if we have shapeSN then we don't want stroke abd shape
             if(curveID == CurveID.ProfileCurve1 && shapeSN != null)
             {
-                Util.removeSceneNode(ref mScene, ref stroke);
+                UtilOld.removeSceneNode(ref mScene, ref stroke);
                 stroke = null;
             }else if (curveID == CurveID.ProfileCurve2) //we don't want to render railcurve
             {
-                Util.removeSceneNode(ref mScene, ref stroke);
+                UtilOld.removeSceneNode(ref mScene, ref stroke);
                 stroke = null;
             }
 
@@ -881,31 +881,31 @@ namespace SparrowHawk.Interaction
             
             if (drawPoint != null)
             {
-                Util.removeSceneNode(ref mScene, ref drawPoint);
+                UtilOld.removeSceneNode(ref mScene, ref drawPoint);
                 drawPoint = null;
             }
 
             for (int i = 0; i < pointMarkers.Count; i++)
             {
                 SceneNode sn = pointMarkers[i];
-                Util.removeSceneNode(ref mScene, ref sn);
+                UtilOld.removeSceneNode(ref mScene, ref sn);
             }
             pointMarkers.Clear();
 
             if (previewObjSN != null){
-                Util.removeSceneNode(ref mScene, ref previewObjSN);
+                UtilOld.removeSceneNode(ref mScene, ref previewObjSN);
                 previewObjSN = null;
             }
 
             if(shapeSN != null)
             {
-                Util.removeSceneNode(ref mScene, ref shapeSN);
+                UtilOld.removeSceneNode(ref mScene, ref shapeSN);
                 shapeSN = null;
             }
 
             if(stroke != null)
             {
-                Util.removeSceneNode(ref mScene, ref stroke);
+                UtilOld.removeSceneNode(ref mScene, ref stroke);
                 stroke = null;
             }
 
@@ -934,7 +934,7 @@ namespace SparrowHawk.Interaction
                     ObjRef curveOnObjRef = new ObjRef(curveOnObjId);
                     if (curveOnObjRef.Object().Attributes.Name.Contains("Panel"))
                     {
-                        Util.removeRhinoObject(ref mScene, curveOnObjRef.ObjectId);
+                        UtilOld.removeRhinoObject(ref mScene, curveOnObjRef.ObjectId);
                     }
 
                 }
@@ -950,7 +950,7 @@ namespace SparrowHawk.Interaction
             //TODO- need to consider this might be the first time editpoint.
             //start slicing model by changing the name of the model
             //mScene.popInteraction();
-            Util.setPlaneAlpha(ref mScene, 0.0f);
+            UtilOld.setPlaneAlpha(ref mScene, 0.0f);
 
             currentState = State.End;
 
@@ -1016,8 +1016,8 @@ namespace SparrowHawk.Interaction
             //general way to get the center of closed curve
             //OpenTK.Vector3 shapeCenter = Util.RhinoToOpenTKPoint(mScene.iCurveList[mScene.iCurveList.Count - 2].GetBoundingBox(true).Center);
             //OpenTK.Vector3 shapeP = Util.RhinoToOpenTKPoint(mScene.iCurveList[mScene.iCurveList.Count - 2].PointAtStart);
-            OpenTK.Vector3 shapeCenter = Util.RhinoToOpenTKPoint(localListCurve[localListCurve.Count - 2].GetBoundingBox(true).Center);
-            OpenTK.Vector3 shapeP = Util.RhinoToOpenTKPoint(localListCurve[localListCurve.Count - 2].PointAtStart);
+            OpenTK.Vector3 shapeCenter = UtilOld.RhinoToOpenTKPoint(localListCurve[localListCurve.Count - 2].GetBoundingBox(true).Center);
+            OpenTK.Vector3 shapeP = UtilOld.RhinoToOpenTKPoint(localListCurve[localListCurve.Count - 2].PointAtStart);
             OpenTK.Vector3 shapeNormal = new Vector3(0, 0, 0);
 
             //get curvePlane. TODO-can store first whenever we add a curve
@@ -1033,27 +1033,27 @@ namespace SparrowHawk.Interaction
                 tolerance++;
             }
 
-            OpenTK.Vector3 railStartPoint = Util.RhinoToOpenTKPoint(rail.PointAtStart);
-            OpenTK.Vector3 railStartNormal = Util.RhinoToOpenTKVector(rail.TangentAtStart);
-            OpenTK.Vector3 railEndPoint = Util.RhinoToOpenTKPoint(rail.PointAtEnd);
-            OpenTK.Vector3 railEndNormal = Util.RhinoToOpenTKVector(rail.TangentAtEnd);
+            OpenTK.Vector3 railStartPoint = UtilOld.RhinoToOpenTKPoint(rail.PointAtStart);
+            OpenTK.Vector3 railStartNormal = UtilOld.RhinoToOpenTKVector(rail.TangentAtStart);
+            OpenTK.Vector3 railEndPoint = UtilOld.RhinoToOpenTKPoint(rail.PointAtEnd);
+            OpenTK.Vector3 railEndNormal = UtilOld.RhinoToOpenTKVector(rail.TangentAtEnd);
 
             Plane endPlane = new Plane(rail.PointAtEnd, rail.TangentAtEnd);
             //compute the transform from profile curve to railstart and railend
             OpenTK.Matrix4 transMStart = new Matrix4();
-            transMStart = Util.getCoordinateTransM(shapeCenter, railStartPoint, shapeNormal, railStartNormal);
-            Transform tStart = Util.OpenTKToRhinoTransform(transMStart);
+            transMStart = UtilOld.getCoordinateTransM(shapeCenter, railStartPoint, shapeNormal, railStartNormal);
+            Transform tStart = UtilOld.OpenTKToRhinoTransform(transMStart);
 
             OpenTK.Matrix4 transMEnd = new Matrix4();
-            transMEnd = Util.getCoordinateTransM(shapeCenter, railEndPoint, shapeNormal, railEndNormal);
-            Transform tEnd = Util.OpenTKToRhinoTransform(transMEnd);
+            transMEnd = UtilOld.getCoordinateTransM(shapeCenter, railEndPoint, shapeNormal, railEndNormal);
+            Transform tEnd = UtilOld.OpenTKToRhinoTransform(transMEnd);
 
             //create endPlane Rhino Object                
             PlaneSurface plane_surface = new PlaneSurface(endPlane, new Interval(-120, 120), new Interval(-120, 120));
             Brep designPlane = Brep.CreateFromSurface(plane_surface);
 
 
-            Guid guid = Util.addRhinoObject(ref mScene, ref designPlane, "Panel");
+            Guid guid = UtilOld.addRhinoObject(ref mScene, ref designPlane, "Panel");
 
 
             if ((ShapeType)mScene.selectionDic[SelectionKey.Profile1Shape] == ShapeType.Circle)
@@ -1086,8 +1086,8 @@ namespace SparrowHawk.Interaction
                     }
                     localListCurve.Add(endCurve);
  
-                    mScene.iPointList.Add(Util.platformToVRPoint(ref mScene, Util.RhinoToOpenTKPoint(endCircle.Center)));
-                    mScene.iPointList.Add(Util.platformToVRPoint(ref mScene, Util.RhinoToOpenTKPoint(endCircle.PointAt(0))));
+                    mScene.iPointList.Add(UtilOld.platformToVRPoint(ref mScene, UtilOld.RhinoToOpenTKPoint(endCircle.Center)));
+                    mScene.iPointList.Add(UtilOld.platformToVRPoint(ref mScene, UtilOld.RhinoToOpenTKPoint(endCircle.PointAt(0))));
                 }
 
                 /*
@@ -1126,8 +1126,8 @@ namespace SparrowHawk.Interaction
                 if (endCurve.TryGetPolyline(out polyline))
                 {
                     Rectangle3d endRect = Rectangle3d.CreateFromPolyline(polyline);
-                    mScene.iPointList.Add(Util.platformToVRPoint(ref mScene, Util.RhinoToOpenTKPoint(endRect.Center)));
-                    mScene.iPointList.Add(Util.platformToVRPoint(ref mScene, Util.RhinoToOpenTKPoint(endRect.Corner(3))));
+                    mScene.iPointList.Add(UtilOld.platformToVRPoint(ref mScene, UtilOld.RhinoToOpenTKPoint(endRect.Center)));
+                    mScene.iPointList.Add(UtilOld.platformToVRPoint(ref mScene, UtilOld.RhinoToOpenTKPoint(endRect.Corner(3))));
                 }
                 
 
@@ -1320,7 +1320,7 @@ namespace SparrowHawk.Interaction
                     localListCurve[localListCurve.Count - 1].ClosestPoint(referencePoint, out curveT);
                     localListCurve[localListCurve.Count - 1].ChangeClosedCurveSeam(curveT);
 
-                    Util.MarkDebugPoint(ref mScene, Util.platformToVRPoint(ref mScene, Util.platformToVRPoint(ref mScene, Util.RhinoToOpenTKPoint(referencePoint))), 1.0f, 1.0f, 1.0f);
+                    UtilOld.MarkDebugPoint(ref mScene, UtilOld.platformToVRPoint(ref mScene, UtilOld.platformToVRPoint(ref mScene, UtilOld.RhinoToOpenTKPoint(referencePoint))), 1.0f, 1.0f, 1.0f);
                     R = d.BeginInvoke(new AsyncCallback(modelCompleted), null);
                 }              
 

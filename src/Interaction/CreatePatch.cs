@@ -36,7 +36,7 @@ namespace SparrowHawk.Interaction
             else
                 primaryDeviceIndex = (uint)mScene.rightControllerIdx;
 
-            Util.showLaser(ref mScene, false);
+            UtilOld.showLaser(ref mScene, false);
 
         }
 
@@ -77,7 +77,7 @@ namespace SparrowHawk.Interaction
         {
             //Brep patchSurface = Brep.CreatePatch(curvelist, 4, 4, mScene.rhinoDoc.ModelAbsoluteTolerance);
             Brep patchSurface = Brep.CreatePatch(allPoints, 10, 10, mScene.rhinoDoc.ModelAbsoluteTolerance);          
-            Guid planGuid = Util.addRhinoObjectSceneNode(ref mScene, ref patchSurface, ref mesh_m, "patchSurface", out planeSN);
+            Guid planGuid = UtilOld.addRhinoObjectSceneNode(ref mScene, ref patchSurface, ref mesh_m, "patchSurface", out planeSN);
 
             //clear profile curves
             foreach (Guid id in curveGuids)
@@ -106,8 +106,8 @@ namespace SparrowHawk.Interaction
                 // -y_rhino = z_gl, z_rhino = y_gl and unit conversion
                 // OpenTK.Vector3 p = Util.transformPoint(Util.mGLToRhino, point*1000);              
                 //curvePoints.Add(new Point3d(p.X, p.Y, p.Z));
-                curvePoints.Add(Util.openTkToRhinoPoint(Util.vrToPlatformPoint(ref mScene, point)));
-                allPoints.Add(new Point(Util.openTkToRhinoPoint(Util.vrToPlatformPoint(ref mScene, point))));
+                curvePoints.Add(UtilOld.openTkToRhinoPoint(UtilOld.vrToPlatformPoint(ref mScene, point)));
+                allPoints.Add(new Point(UtilOld.openTkToRhinoPoint(UtilOld.vrToPlatformPoint(ref mScene, point))));
             }
 
             //Rhino CreateInterpolatedCurve and CreatePlanarBreps

@@ -102,7 +102,7 @@ namespace SparrowHawk.Interaction
                 mScene.iCurveList.RemoveAt(mScene.iCurveList.Count - 1);             
                 if (renderObjSN != null)
                 {
-                    Util.removeSceneNode(ref mScene, ref renderObjSN);
+                    UtilOld.removeSceneNode(ref mScene, ref renderObjSN);
                     renderObjSN = null;
                 }
             }
@@ -118,7 +118,7 @@ namespace SparrowHawk.Interaction
                 isProjection = false;
             }
 
-            Util.showLaser(ref mScene, false);
+            UtilOld.showLaser(ref mScene, false);
 
         }
 
@@ -143,7 +143,7 @@ namespace SparrowHawk.Interaction
         {
             if (previewObjSN != null)
             {
-                Util.removeSceneNode(ref mScene, ref previewObjSN);
+                UtilOld.removeSceneNode(ref mScene, ref previewObjSN);
                 previewObjSN = null;
             }
 
@@ -153,13 +153,13 @@ namespace SparrowHawk.Interaction
         {
             if (previewObjSN != null)
             {
-                Util.removeSceneNode(ref mScene, ref previewObjSN);
+                UtilOld.removeSceneNode(ref mScene, ref previewObjSN);
                 previewObjSN = null;
             }
 
             if (renderObjSN != null)
             {
-                Util.removeSceneNode(ref mScene, ref renderObjSN);
+                UtilOld.removeSceneNode(ref mScene, ref renderObjSN);
                 renderObjSN = null;
             }
         }
@@ -305,18 +305,18 @@ namespace SparrowHawk.Interaction
 
 
             //offset the point a little bit to make the plane better
-            OpenTK.Vector4 controller_p = Util.getControllerTipPosition(ref mScene, primaryControllerIdx == mScene.leftControllerIdx) * new OpenTK.Vector4(0, 0, -0.05f, 1);
-            OpenTK.Vector4 controller_pZ = Util.getControllerTipPosition(ref mScene, primaryControllerIdx == mScene.leftControllerIdx) * new OpenTK.Vector4(0, 0, -1, 1);
-            Point3d controller_pRhino = Util.openTkToRhinoPoint(Util.vrToPlatformPoint(ref mScene, new OpenTK.Vector3(controller_p.X, controller_p.Y, controller_p.Z)));
-            Point3d controller_pZRhin = Util.openTkToRhinoPoint(Util.vrToPlatformPoint(ref mScene, new OpenTK.Vector3(controller_pZ.X, controller_pZ.Y, controller_pZ.Z)));
+            OpenTK.Vector4 controller_p = UtilOld.getControllerTipPosition(ref mScene, primaryControllerIdx == mScene.leftControllerIdx) * new OpenTK.Vector4(0, 0, -0.05f, 1);
+            OpenTK.Vector4 controller_pZ = UtilOld.getControllerTipPosition(ref mScene, primaryControllerIdx == mScene.leftControllerIdx) * new OpenTK.Vector4(0, 0, -1, 1);
+            Point3d controller_pRhino = UtilOld.openTkToRhinoPoint(UtilOld.vrToPlatformPoint(ref mScene, new OpenTK.Vector3(controller_p.X, controller_p.Y, controller_p.Z)));
+            Point3d controller_pZRhin = UtilOld.openTkToRhinoPoint(UtilOld.vrToPlatformPoint(ref mScene, new OpenTK.Vector3(controller_pZ.X, controller_pZ.Y, controller_pZ.Z)));
 
             Rhino.Geometry.Vector3d normal = new Rhino.Geometry.Vector3d(controller_pZRhin.X - controller_pRhino.X, controller_pZRhin.Y - controller_pRhino.Y, controller_pZRhin.Z - controller_pRhino.Z);
 
             //fix the x and y axis of the model Plane
-            OpenTK.Vector4 controller_x1 = Util.getControllerTipPosition(ref mScene, primaryControllerIdx == mScene.leftControllerIdx) * new OpenTK.Vector4(1, 0, -0.05f, 1);
-            OpenTK.Vector4 controller_y1 = Util.getControllerTipPosition(ref mScene, primaryControllerIdx == mScene.leftControllerIdx) * new OpenTK.Vector4(0, 1, -0.05f, 1);
-            Point3d controller_x1Rhino = Util.openTkToRhinoPoint(Util.vrToPlatformPoint(ref mScene, new OpenTK.Vector3(controller_x1.X, controller_x1.Y, controller_x1.Z)));
-            Point3d controller_y1Rhino = Util.openTkToRhinoPoint(Util.vrToPlatformPoint(ref mScene, new OpenTK.Vector3(controller_y1.X, controller_y1.Y, controller_y1.Z)));
+            OpenTK.Vector4 controller_x1 = UtilOld.getControllerTipPosition(ref mScene, primaryControllerIdx == mScene.leftControllerIdx) * new OpenTK.Vector4(1, 0, -0.05f, 1);
+            OpenTK.Vector4 controller_y1 = UtilOld.getControllerTipPosition(ref mScene, primaryControllerIdx == mScene.leftControllerIdx) * new OpenTK.Vector4(0, 1, -0.05f, 1);
+            Point3d controller_x1Rhino = UtilOld.openTkToRhinoPoint(UtilOld.vrToPlatformPoint(ref mScene, new OpenTK.Vector3(controller_x1.X, controller_x1.Y, controller_x1.Z)));
+            Point3d controller_y1Rhino = UtilOld.openTkToRhinoPoint(UtilOld.vrToPlatformPoint(ref mScene, new OpenTK.Vector3(controller_y1.X, controller_y1.Y, controller_y1.Z)));
 
 
             modelPlane = new Plane(controller_pRhino, normal);
@@ -344,7 +344,7 @@ namespace SparrowHawk.Interaction
             {
                 Brep[] shapes = Brep.CreatePlanarBreps(modelcurve);
                 modelBrep = shapes[0];
-                Util.updateSceneNode(ref mScene, modelBrep, ref mesh_m, "3D-" + shapeType.ToString(), ref previewObjSN);
+                UtilOld.updateSceneNode(ref mScene, modelBrep, ref mesh_m, "3D-" + shapeType.ToString(), ref previewObjSN);
             }
 
         }
@@ -359,7 +359,7 @@ namespace SparrowHawk.Interaction
                 Brep[] shapes = Brep.CreatePlanarBreps(modelcurve);
                 modelBrep = shapes[0];
                 //Util.addRhinoObjectSceneNode(ref mScene, ref modelBrep, ref mesh_m, shapeType.ToString(), out renderObjSN);
-                Util.addSceneNode(ref mScene, ref modelBrep, ref mesh_m, shapeType.ToString(), out renderObjSN);
+                UtilOld.addSceneNode(ref mScene, ref modelBrep, ref mesh_m, shapeType.ToString(), out renderObjSN);
 
                 if (shapeType == ShapeType.Circle)
                 {
@@ -397,9 +397,9 @@ namespace SparrowHawk.Interaction
             //creating perendicular plane
             //TODO-need to decide whether it's XAxis or YAxis as normal
             OpenTK.Vector3 worldUpAxis = new Vector3(0, 0, 1); //in Rhino z axis is up
-            OpenTK.Vector3 planeXAxis = Util.RhinoToOpenTKVector(modelPlane.XAxis);
-            OpenTK.Vector3 planeYAxis = Util.RhinoToOpenTKVector(modelPlane.YAxis);
-            OpenTK.Vector3 planeNormal = Util.RhinoToOpenTKVector(modelPlane.Normal);
+            OpenTK.Vector3 planeXAxis = UtilOld.RhinoToOpenTKVector(modelPlane.XAxis);
+            OpenTK.Vector3 planeYAxis = UtilOld.RhinoToOpenTKVector(modelPlane.YAxis);
+            OpenTK.Vector3 planeNormal = UtilOld.RhinoToOpenTKVector(modelPlane.Normal);
 
 
             //Plane planeX = new Plane(modelPlane.Origin, modelPlane.XAxis);
@@ -408,8 +408,8 @@ namespace SparrowHawk.Interaction
             Plane planeX = new Plane(planeCenter, modelPlane.XAxis);
             Plane planeY = new Plane(planeCenter, modelPlane.YAxis);
 
-            float xAngle = OpenTK.Vector3.CalculateAngle(Util.RhinoToOpenTKVector(planeX.Normal), worldUpAxis);
-            float yAngle = OpenTK.Vector3.CalculateAngle(Util.RhinoToOpenTKVector(planeY.Normal), worldUpAxis);
+            float xAngle = OpenTK.Vector3.CalculateAngle(UtilOld.RhinoToOpenTKVector(planeX.Normal), worldUpAxis);
+            float yAngle = OpenTK.Vector3.CalculateAngle(UtilOld.RhinoToOpenTKVector(planeY.Normal), worldUpAxis);
             Rhino.RhinoApp.WriteLine("xAngle: " + xAngle + " yAngle: " + yAngle);
             Rhino.Geometry.Vector3d normal2;
             Plane plane2;
@@ -437,7 +437,7 @@ namespace SparrowHawk.Interaction
             */
 
             //testing new method
-            plane2 = new Plane(planeCenter, Util.openTkToRhinoVector(Vector3.Cross(planeNormal, worldUpAxis)));
+            plane2 = new Plane(planeCenter, UtilOld.openTkToRhinoVector(Vector3.Cross(planeNormal, worldUpAxis)));
 
             PlaneSurface plane_surface2 = new PlaneSurface(plane2, new Interval(-planeSize, planeSize), new Interval(-planeSize, planeSize));
             Brep railPlane2 = Brep.CreateFromSurface(plane_surface2);

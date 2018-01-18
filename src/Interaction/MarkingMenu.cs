@@ -138,7 +138,7 @@ namespace SparrowHawk.Interaction
                                                           0, 0, -2, 0,
                                                           0, 2, 0, 0,
                                                           0, 0, 0, 1);
-            Util.showLaser(ref mScene, false); // TODO: What?
+            UtilOld.showLaser(ref mScene, false); // TODO: What?
         }
 
         public override void draw(bool isTop)

@@ -62,19 +62,19 @@ namespace SparrowHawk.Interaction
                 //Rhino.RhinoApp.WriteLine("Pressed an oculus button");
                 switch (vrEvent.data.controller.button)
                 {
-                    case (uint)Util.OculusButtonId.k_EButton_Oculus_AX:
+                    case (uint)UtilOld.OculusButtonId.k_EButton_Oculus_AX:
                         onClickOculusAX(ref vrEvent);
                         break;
-                    case (uint)Util.OculusButtonId.k_EButton_Oculus_BY:
+                    case (uint)UtilOld.OculusButtonId.k_EButton_Oculus_BY:
                         onClickOculusBY(ref vrEvent);
                         break;
-                    case (uint)Util.OculusButtonId.k_EButton_Oculus_Grip:
+                    case (uint)UtilOld.OculusButtonId.k_EButton_Oculus_Grip:
                         onClickOculusGrip(ref vrEvent);
                         break;
-                    case (uint)Util.OculusButtonId.k_EButton_Oculus_Stick:
+                    case (uint)UtilOld.OculusButtonId.k_EButton_Oculus_Stick:
                         onClickOculusStick(ref vrEvent);
                         break;
-                    case (uint)Util.OculusButtonId.k_EButton_Oculus_Trigger:
+                    case (uint)UtilOld.OculusButtonId.k_EButton_Oculus_Trigger:
                         onClickOculusTrigger(ref vrEvent);
                         break;
                 }
@@ -83,19 +83,19 @@ namespace SparrowHawk.Interaction
             {
                 switch (vrEvent.data.controller.button)
                 {
-                    case (uint)Util.OculusButtonId.k_EButton_Oculus_AX:
+                    case (uint)UtilOld.OculusButtonId.k_EButton_Oculus_AX:
                         onReleaseOculusAX(ref vrEvent);
                         break;
-                    case (uint)Util.OculusButtonId.k_EButton_Oculus_BY:
+                    case (uint)UtilOld.OculusButtonId.k_EButton_Oculus_BY:
                         onReleaseOculusBY(ref vrEvent);
                         break;
-                    case (uint)Util.OculusButtonId.k_EButton_Oculus_Grip:
+                    case (uint)UtilOld.OculusButtonId.k_EButton_Oculus_Grip:
                         onReleaseOculusGrip(ref vrEvent);
                         break;
-                    case (uint)Util.OculusButtonId.k_EButton_Oculus_Stick:
+                    case (uint)UtilOld.OculusButtonId.k_EButton_Oculus_Stick:
                         onReleaseOculusStick(ref vrEvent);
                         break;
-                    case (uint)Util.OculusButtonId.k_EButton_Oculus_Trigger:
+                    case (uint)UtilOld.OculusButtonId.k_EButton_Oculus_Trigger:
                         onReleaseOculusTrigger(ref vrEvent);
                         break;
                 }
@@ -105,7 +105,7 @@ namespace SparrowHawk.Interaction
             {
                 switch (vrEvent.data.controller.button)
                 {
-                    case (uint)Util.OculusButtonId.k_EButton_Oculus_Stick:
+                    case (uint)UtilOld.OculusButtonId.k_EButton_Oculus_Stick:
                         onUntouchOculusStick(ref vrEvent);
                         break;
                 }

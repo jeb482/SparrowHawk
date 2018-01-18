@@ -49,8 +49,8 @@ namespace SparrowHawk.Interaction
 
         protected override void onClickOculusTrigger(ref VREvent_t vrEvent)
         {
-            OpenTK.Vector4 controller_p = Util.getLeftControllerTipPosition(ref mScene, true) * new OpenTK.Vector4(0, 0, 0, 1);
-            Point3d controller_pRhino = Util.openTkToRhinoPoint(Util.vrToPlatformPoint(ref mScene, new OpenTK.Vector3(controller_p.X, controller_p.Y, controller_p.Z)));
+            OpenTK.Vector4 controller_p = UtilOld.getLeftControllerTipPosition(ref mScene, true) * new OpenTK.Vector4(0, 0, 0, 1);
+            Point3d controller_pRhino = UtilOld.openTkToRhinoPoint(UtilOld.vrToPlatformPoint(ref mScene, new OpenTK.Vector3(controller_p.X, controller_p.Y, controller_p.Z)));
 
             Rhino.DocObjects.RhinoObject rhobj = mScene.rhinoDoc.Objects.Find(cutPGuid);
             rhobj.Attributes.Name = "cut:" + controller_pRhino.X + ":" + controller_pRhino.Y + ":" + controller_pRhino.Z;

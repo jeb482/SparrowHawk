@@ -107,7 +107,7 @@ namespace SparrowHawk.Geometry
                 }*/
 
                 //seperate the data and visualization
-                OpenTK.Vector3 p = Util.platformToVRPoint(ref mScene, rp);
+                OpenTK.Vector3 p = UtilOld.platformToVRPoint(ref mScene, rp);
                 vertices_array.Add(p.X);
                 vertices_array.Add(p.Y);
                 vertices_array.Add(p.Z);

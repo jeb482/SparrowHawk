@@ -108,7 +108,7 @@ namespace SparrowHawk
                 M.Column3 = new OpenTK.Vector4(m.Item1, m.Item2, m.Item3, 1);
                 matrixMeasurements.Add(M);
             }
-            return Util.solveForOffsetVector(matrixMeasurements);
+            return Util.Math.solveForOffsetVector(matrixMeasurements);
         }
     }
 }

@@ -116,7 +116,7 @@ namespace SparrowHawk
             if (HMD == null)
                 return new Matrix4();
             Valve.VR.HmdMatrix44_t M = HMD.GetProjectionMatrix(eye, mNearClip, mFarClip);
-            return Util.steamVRMatrixToMatrix4(M);
+            return UtilOld.steamVRMatrixToMatrix4(M);
         }
 
         Matrix4 GetHMDMatrixPoseEye(ref Valve.VR.CVRSystem HMD, Valve.VR.EVREye eye)
@@ -124,7 +124,7 @@ namespace SparrowHawk
             if (HMD == null)
                 return new Matrix4();
             Valve.VR.HmdMatrix34_t M = HMD.GetEyeToHeadTransform(eye);
-            return Util.steamVRMatrixToMatrix4(M).Inverted();
+            return UtilOld.steamVRMatrixToMatrix4(M).Inverted();
         }
 
 

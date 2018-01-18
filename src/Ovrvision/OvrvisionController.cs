@@ -12,6 +12,7 @@ using System.Threading;
 using OpenTK.Graphics.OpenGL4;
 using System.Runtime.InteropServices;
 using Valve.VR;
+using Math = SparrowHawk.Util.Math;
 
 namespace SparrowHawk.Ovrvision
 {
@@ -143,9 +144,9 @@ namespace SparrowHawk.Ovrvision
                 mEyePosLeft = new Matrix4();
 
             Valve.VR.HmdMatrix34_t M_L = mHMD.GetEyeToHeadTransform(Valve.VR.EVREye.Eye_Left);
-            mEyePosLeft = Util.steamVRMatrixToMatrix4(M_L).Inverted();
+            mEyePosLeft = UtilOld.steamVRMatrixToMatrix4(M_L).Inverted();
             Valve.VR.HmdMatrix34_t M_R = mHMD.GetEyeToHeadTransform(Valve.VR.EVREye.Eye_Right);
-            mEyePosRight = Util.steamVRMatrixToMatrix4(M_R).Inverted();
+            mEyePosRight = UtilOld.steamVRMatrixToMatrix4(M_R).Inverted();
 
         }
 
@@ -505,7 +506,7 @@ namespace SparrowHawk.Ovrvision
             if (vr_points.Count < 8)
             {
                 //only use left controller for the calibration
-                center = Util.getTranslationVector3(Util.getControllerTipPosition(ref mScene, primaryDeviceIndex == mScene.leftControllerIdx));
+                center = Math.GetTranslationVector3(UtilOld.getControllerTipPosition(ref mScene, primaryDeviceIndex == mScene.leftControllerIdx));
                 Rhino.RhinoApp.WriteLine(center.ToString());
                 
                 vr_points.Add(new MCvPoint3D32f(center.X, center.Y, center.Z));

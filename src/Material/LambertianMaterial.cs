@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using OpenTK;
 using OpenTK.Graphics.OpenGL4;
+using Math = SparrowHawk.Util.Math;
 
 namespace SparrowHawk.Material
 {
@@ -35,7 +36,7 @@ namespace SparrowHawk.Material
 
         public override void draw(ref Geometry.Geometry g, ref Matrix4 model, ref Matrix4 vp)
         {
-            Util.depthSort(model*vp,g);
+            UtilOld.depthSort(model*vp,g);
             GL.Disable(EnableCap.DepthTest);
             GL.BlendFunc(BlendingFactorSrc.SrcAlpha, BlendingFactorDest.OneMinusSrcAlpha);
             GL.Enable(EnableCap.Blend);
@@ -47,7 +48,7 @@ namespace SparrowHawk.Material
             mShader.uploadAttrib<int>("indices", g.mGeometryIndices.Length, dim, 4, VertexAttribPointerType.UnsignedInt, false, ref g.mGeometryIndices, 0);
             mShader.uploadAttrib<float>("position", g.mGeometry.Count(), 3, 4, VertexAttribPointerType.Float, false, ref g.mGeometry, 0);
             if (g.mNormals == null)
-                Util.addNormalsToMesh(g); 
+                Math.addNormalsToMesh(g); 
             if (g.mNormals != null)
                 mShader.uploadAttrib<float>("normal", g.mNormals.Count(), 3, 4, VertexAttribPointerType.Float, false, ref g.mNormals, 0);
             GL.Uniform4(mShader.uniform("color"), mColor);

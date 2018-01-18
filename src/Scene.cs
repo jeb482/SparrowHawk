@@ -127,8 +127,8 @@ namespace SparrowHawk
         public char[] mDeviceClassChar = new char[Valve.VR.OpenVR.k_unMaxTrackedDeviceCount];
         public int leftControllerIdx = -1;
         public int rightControllerIdx = -1;
-        public Matrix4 mLeftControllerOffset = Util.createTranslationMatrix(0.01451808f, -0.08065776f, 0.006754342f);
-        public Matrix4 mRightControllerOffset = Util.createTranslationMatrix(0.006479859f, -0.02640941f, 0.0007925751f);//Util.createTranslationMatrix(-0.03205855f+ 0.0001097674f, -0.02689967f+ -0.0008004899f, 0.006957637f+ -0.0005140541f);
+        public Matrix4 mLeftControllerOffset = Util.Math.createTranslationMatrix(0.01451808f, -0.08065776f, 0.006754342f);
+        public Matrix4 mRightControllerOffset = Util.Math.createTranslationMatrix(0.006479859f, -0.02640941f, 0.0007925751f);//Util.createTranslationMatrix(-0.03205855f+ 0.0001097674f, -0.02689967f+ -0.0008004899f, 0.006957637f+ -0.0005140541f);
 
         private double leftControllerEndVibrateTime;
         private double rightControllerEndVibrateTime;

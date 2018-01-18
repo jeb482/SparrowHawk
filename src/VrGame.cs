@@ -89,7 +89,7 @@ namespace SparrowHawk
                 var device = gamePoseArray[i];
                 if (device.bPoseIsValid)
                 {
-                    mScene.mDevicePose[i] = Util.steamVRMatrixToMatrix4(mScene.mTrackedDevices[i].mDeviceToAbsoluteTracking);
+                    mScene.mDevicePose[i] = UtilOld.steamVRMatrixToMatrix4(mScene.mTrackedDevices[i].mDeviceToAbsoluteTracking);
                     mHMD.GetTrackedDeviceClass(i);
                     if (mScene.mDeviceClassChar[i] == 0)
                     {
@@ -97,7 +97,7 @@ namespace SparrowHawk
                         {
                             case ETrackedDeviceClass.Controller:
                                 mScene.mDeviceClassChar[i] = 'C';
-                                string name = Util.GetTrackedDeviceString(ref mHMD, i, ETrackedDeviceProperty.Prop_RenderModelName_String);
+                                string name = UtilOld.GetTrackedDeviceString(ref mHMD, i, ETrackedDeviceProperty.Prop_RenderModelName_String);
                                 if (name.ToLower().Contains("left"))
                                 {
                                     mScene.leftControllerIdx = (int)i;
@@ -128,7 +128,7 @@ namespace SparrowHawk
 
             if (gamePoseArray[OpenVR.k_unTrackedDeviceIndex_Hmd].bPoseIsValid)
             {
-                mScene.mHMDPose = Util.steamVRMatrixToMatrix4(gamePoseArray[OpenVR.k_unTrackedDeviceIndex_Hmd].mDeviceToAbsoluteTracking).Inverted();
+                mScene.mHMDPose = UtilOld.steamVRMatrixToMatrix4(gamePoseArray[OpenVR.k_unTrackedDeviceIndex_Hmd].mDeviceToAbsoluteTracking).Inverted();
             }
 
             if (mScene.leftControllerIdx > 0)
@@ -144,13 +144,13 @@ namespace SparrowHawk
             if (mLeftControllerPoses.Count >= 4 && mLeftControllerPoses.Count > lastNumLeftControllerPoses)
             {
                 lastNumLeftControllerPoses = mLeftControllerPoses.Count;
-                Vector3 x = Util.solveForOffsetVector(mLeftControllerPoses);
+                Vector3 x = Util.Math.solveForOffsetVector(mLeftControllerPoses);
                 Rhino.RhinoApp.WriteLine("Left controller offset: " + x);
             }
             if (mRightControllerPoses.Count >= 4 && mRightControllerPoses.Count > lastNumRightControllerPoses)
             {
                 lastNumRightControllerPoses = mRightControllerPoses.Count;
-                Vector3 x = Util.solveForOffsetVector(mRightControllerPoses);
+                Vector3 x = Util.Math.solveForOffsetVector(mRightControllerPoses);
                 Rhino.RhinoApp.WriteLine("Right controller offset: " + x);
             }
         }
@@ -230,9 +230,9 @@ namespace SparrowHawk
                         if (s.data[0] == 0)
                         {
                             OpenTK.Vector3 p1 = new Vector3(s.data[1], s.data[2], s.data[3]);
-                            p1 = Util.platformToVRPoint(ref mScene, p1);
+                            p1 = UtilOld.platformToVRPoint(ref mScene, p1);
                             OpenTK.Vector3 p2 = new Vector3(s.data[4], s.data[5], s.data[6]);
-                            p2 = Util.platformToVRPoint(ref mScene, p2);
+                            p2 = UtilOld.platformToVRPoint(ref mScene, p2);
 
                             if (((Geometry.RobotPrintStroke)printStroke).mPoints.Count == 0)
                             {
@@ -251,7 +251,7 @@ namespace SparrowHawk
                         else
                         {
                             OpenTK.Vector3 p1 = new Vector3(s.data[1], s.data[2], s.data[3]);
-                            p1 = Util.platformToVRPoint(ref mScene, p1);
+                            p1 = UtilOld.platformToVRPoint(ref mScene, p1);
                             //((Geometry.GeometryStroke2)printStroke).addPoint(p1);
                             ((Geometry.RobotPrintStroke)printStroke).addEdge(((Geometry.RobotPrintStroke)printStroke).mPoints[((Geometry.RobotPrintStroke)printStroke).mPoints.Count - 1], p1);
                             printStrokeSN.geometry = printStroke;
@@ -261,7 +261,7 @@ namespace SparrowHawk
                 case SparrowHawkSignal.ESparrowHawkSigalType.CutType:
                     string guidStr = s.strData;                  
                     Guid delId = new Guid(guidStr);
-                    Util.removeRhinoObjectSceneNode(ref mScene, delId);
+                    UtilOld.removeRhinoObjectSceneNode(ref mScene, delId);
                     //removePrintStroke and show the model again
                     ((Geometry.RobotPrintStroke)printStroke).removePoint();
                     //mScene.tableGeometry.remove(ref printStrokeSN); //already remove
@@ -341,18 +341,18 @@ namespace SparrowHawk
         private void calibrationVRtoRobot()
         {
 
-            Vector3 vrPoint = Util.getTranslationVector3(Util.getControllerTipPosition(ref mScene, true));
+            Vector3 vrPoint = Util.Math.GetTranslationVector3(UtilOld.getControllerTipPosition(ref mScene, true));
             vrCallibrationPoints.Add(vrPoint);
             Rhino.RhinoApp.WriteLine("add vrCallibrationPoints: " + vrPoint.ToString());
-            Util.MarkPoint(ref mScene.staticGeometry, vrPoint, 1, 1, 0);
+            UtilOld.MarkPoint(ref mScene.staticGeometry, vrPoint, 1, 1, 0);
             if (vrCallibrationPoints.Count == 8)
             {
-                Util.solveForAffineTransformOpenCV(vrCallibrationPoints, robotCallibrationPoints, ref mScene.vrToRobot);
+                Util.Math.solveForAffineTransformOpenCV(vrCallibrationPoints, robotCallibrationPoints, ref mScene.vrToRobot);
                 foreach (Vector3 v in robotCallibrationPoints)
                 {
                     Vector4 v4 = new Vector4(v.X, v.Y, v.Z, 1);
                     v4 = mScene.vrToRobot.Inverted() * v4;
-                    Util.MarkPoint(ref mScene.staticGeometry, new Vector3(v4.X, v4.Y, v4.Z), 0, 1, 0);
+                    UtilOld.MarkPoint(ref mScene.staticGeometry, new Vector3(v4.X, v4.Y, v4.Z), 0, 1, 0);
                 }
                 Rhino.RhinoApp.WriteLine(mScene.vrToRobot.ToString());
                 Rhino.RhinoApp.WriteLine(mScene.vrToRobot.M11 + "f, " + mScene.vrToRobot.M12 + "f, " + mScene.vrToRobot.M13 + "f, " + mScene.vrToRobot.M14 + "f,");
@@ -400,12 +400,12 @@ namespace SparrowHawk
                 mHMD.GetRecommendedRenderTargetSize(ref mRenderWidth, ref mRenderHeight);
 
             //visualizing axises        
-            OpenTK.Vector3 x0 = Util.platformToVRPoint(ref mScene, new OpenTK.Vector3(-240, 0, 0));
-            OpenTK.Vector3 x1 = Util.platformToVRPoint(ref mScene, new OpenTK.Vector3(240, 0, 0));
-            OpenTK.Vector3 y0 = Util.platformToVRPoint(ref mScene, new OpenTK.Vector3(0, -240, 0));
-            OpenTK.Vector3 y1 = Util.platformToVRPoint(ref mScene, new OpenTK.Vector3(0, 240, 0));
-            OpenTK.Vector3 z0 = Util.platformToVRPoint(ref mScene, new OpenTK.Vector3(0, 0, -240));
-            OpenTK.Vector3 z1 = Util.platformToVRPoint(ref mScene, new OpenTK.Vector3(0, 0, 240));
+            OpenTK.Vector3 x0 = UtilOld.platformToVRPoint(ref mScene, new OpenTK.Vector3(-240, 0, 0));
+            OpenTK.Vector3 x1 = UtilOld.platformToVRPoint(ref mScene, new OpenTK.Vector3(240, 0, 0));
+            OpenTK.Vector3 y0 = UtilOld.platformToVRPoint(ref mScene, new OpenTK.Vector3(0, -240, 0));
+            OpenTK.Vector3 y1 = UtilOld.platformToVRPoint(ref mScene, new OpenTK.Vector3(0, 240, 0));
+            OpenTK.Vector3 z0 = UtilOld.platformToVRPoint(ref mScene, new OpenTK.Vector3(0, 0, -240));
+            OpenTK.Vector3 z1 = UtilOld.platformToVRPoint(ref mScene, new OpenTK.Vector3(0, 0, 240));
             Geometry.Geometry xAxis_g = new Geometry.GeometryStroke(ref mScene);
             Material.Material xAxis_m = new Material.SingleColorMaterial(1, 1, 1, 0);
             ((Geometry.GeometryStroke)xAxis_g).addPoint(x0);
@@ -455,7 +455,7 @@ namespace SparrowHawk
                 mScene.rightControllerNode.add(ref rayTraceL);
             rayTraceL.transform = new Matrix4(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1);//mScene.mLeftControllerOffset;
 
-            Util.showLaser(ref mScene, false);
+            UtilOld.showLaser(ref mScene, false);
 
             mScene.xzPlane = new DesignPlane(ref mScene, XYZPlanes.XZ);
             mScene.xyPlane = new DesignPlane(ref mScene, XYZPlanes.XY);
@@ -492,8 +492,8 @@ namespace SparrowHawk
             Height = 692;
 
             // Window Setup Info
-            mStrDriver = Util.GetTrackedDeviceString(ref mHMD, OpenVR.k_unTrackedDeviceIndex_Hmd, ETrackedDeviceProperty.Prop_TrackingSystemName_String);
-            mStrDisplay = Util.GetTrackedDeviceString(ref mHMD, OpenVR.k_unTrackedDeviceIndex_Hmd, ETrackedDeviceProperty.Prop_SerialNumber_String);
+            mStrDriver = UtilOld.GetTrackedDeviceString(ref mHMD, OpenVR.k_unTrackedDeviceIndex_Hmd, ETrackedDeviceProperty.Prop_TrackingSystemName_String);
+            mStrDisplay = UtilOld.GetTrackedDeviceString(ref mHMD, OpenVR.k_unTrackedDeviceIndex_Hmd, ETrackedDeviceProperty.Prop_SerialNumber_String);
             mTitleBase = "SparrowHawk - " + mStrDriver + " " + mStrDisplay;
             Title = mTitleBase;
             MakeCurrent();
@@ -514,7 +514,7 @@ namespace SparrowHawk
             {
                 Vector4 v4 = new Vector4(v.X, v.Y, v.Z, 1);
                 v4 = mScene.vrToRobot.Inverted() * v4;
-                Util.MarkPoint(ref mScene.staticGeometry, new Vector3(v4.X, v4.Y, v4.Z), 1, 1, 1);
+                UtilOld.MarkPoint(ref mScene.staticGeometry, new Vector3(v4.X, v4.Y, v4.Z), 1, 1, 1);
             }
             robotCallibrationPointsTest.Clear();
 
@@ -631,11 +631,11 @@ namespace SparrowHawk
                 Material.Material mesh_m = new Material.LambertianMaterial(.7f, .7f, .7f, .3f);
                 string modelName = "aprint";
                 SceneNode teapotBodySN;
-                Util.addRhinoObjectSceneNode(ref mScene, ref teapotBody, ref mesh_m, modelName, out teapotBodySN);
+                UtilOld.addRhinoObjectSceneNode(ref mScene, ref teapotBody, ref mesh_m, modelName, out teapotBodySN);
                 SceneNode teapotSproutSN;
-                Util.addRhinoObjectSceneNode(ref mScene, ref teapotSprout, ref mesh_m, modelName, out teapotSproutSN);
+                UtilOld.addRhinoObjectSceneNode(ref mScene, ref teapotSprout, ref mesh_m, modelName, out teapotSproutSN);
                 SceneNode teapotHandleSN;
-                Util.addRhinoObjectSceneNode(ref mScene, ref teapotHandle, ref mesh_m, modelName, out teapotHandleSN);
+                UtilOld.addRhinoObjectSceneNode(ref mScene, ref teapotHandle, ref mesh_m, modelName, out teapotHandleSN);
 
             }
 
@@ -686,7 +686,7 @@ namespace SparrowHawk
             if (e.KeyChar == 'O' || e.KeyChar == 'o')
             {
                 mScene.popInteraction();
-                Util.clearAllModel(ref mScene);
+                UtilOld.clearAllModel(ref mScene);
             }
 
             if (e.KeyChar == 'Q' || e.KeyChar == 'q')
@@ -732,9 +732,9 @@ namespace SparrowHawk
         {
             //Vector3 tableOrigin = Util.transformPoint(mScene.vrToRobot.Inverted(), new Vector3(0, 0, 0));
 
-            Vector3 tableOrigin = Util.platformToVRPoint(ref mScene, new Vector3(0, 0, 0));
+            Vector3 tableOrigin = UtilOld.platformToVRPoint(ref mScene, new Vector3(0, 0, 0));
 
-            Vector3 headOrigin = Util.transformPoint(mScene.mHMDPose.Inverted(), new Vector3(0, 0, 0));
+            Vector3 headOrigin = UtilOld.transformPoint(mScene.mHMDPose.Inverted(), new Vector3(0, 0, 0));
 
             Vector3 displacement = tableOrigin - headOrigin;
 

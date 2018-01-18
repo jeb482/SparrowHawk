@@ -62,12 +62,12 @@ namespace SparrowHawk
             Point3d newOrigin = planeObjRef.Object().Geometry.GetBoundingBox(true).Center;
             Matrix4 transMInvert = Matrix4.CreateTranslation(new Vector3(0f - (float)newOrigin.X, 0f - (float)newOrigin.Y, 0f - (float)newOrigin.Z));
             transMInvert.Transpose();
-            Util.updateRhinoObjectSceneNode(ref mScene, ref planeObjRef, Util.OpenTKToRhinoTransform(transMInvert));
+            UtilOld.updateRhinoObjectSceneNode(ref mScene, ref planeObjRef, UtilOld.OpenTKToRhinoTransform(transMInvert));
         }
 
         public void applyTrasform(Rhino.Geometry.Transform transM)
         {         
-            Util.updateRhinoObjectSceneNode(ref mScene, ref planeObjRef, transM);
+            UtilOld.updateRhinoObjectSceneNode(ref mScene, ref planeObjRef, transM);
         }
 
         private void createPlaneBrep()
@@ -91,7 +91,7 @@ namespace SparrowHawk
 
             if (planeBrep != null)
             {
-                Guid guid = Util.addRhinoObjectSceneNode(ref mScene, ref planeBrep, ref mesh_m, "plane" + type.ToString(), out planeSN, true);
+                Guid guid = UtilOld.addRhinoObjectSceneNode(ref mScene, ref planeBrep, ref mesh_m, "plane" + type.ToString(), out planeSN, true);
                 planeObjRef = new Rhino.DocObjects.ObjRef(guid);
             }
 

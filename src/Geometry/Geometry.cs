@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 //using ObjLoader.Loader;
 using OpenTK;
+using Math = SparrowHawk.Util.Math;
 
 
 namespace SparrowHawk.Geometry
@@ -120,7 +121,7 @@ namespace SparrowHawk.Geometry
                     mGeometry[9 * i + 3 * v + 1] = (float)obj.VertexList.ElementAt(f.VertexIndexList[v] - 1).Y;
                     mGeometry[9 * i + 3 * v + 2] = (float)obj.VertexList.ElementAt(f.VertexIndexList[v] - 1).Z;
                 }
-                n = Util.calculateFaceNormal(normalCreators[0], normalCreators[1], normalCreators[2]);
+                n = Math.calculateFaceNormal(normalCreators[0], normalCreators[1], normalCreators[2]);
                 for (int j = 0; j < 3; j++)
                 {
                     mNormals[9 * i + 3 * j + 0] = n.X;

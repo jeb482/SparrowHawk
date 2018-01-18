@@ -9,10 +9,22 @@ using static SparrowHawk.Scene;
 
 namespace SparrowHawk
 {
+    namespace Util
+    {
 
+        public static class Rhino
+        {
+        }
+        public static class Scene
+        {
+        }
+        public static class OpenVr
+        {
 
+        }
+    }
 
-    public static class Util
+    public static class UtilOld
     {
 
         // Directly from OpenVr's openGL starter code.
@@ -59,158 +71,15 @@ namespace SparrowHawk
             return output;
         }
 
-        /// <summary>
-        /// Get the translational component of the given Matrix4 as a Vector3
-        /// </summary>
-        /// <param name="M"></param>
-        /// <returns></returns>
-        public static OpenTK.Vector3 getTranslationVector3(OpenTK.Matrix4 M)
-        {
-            OpenTK.Vector4 output = M * new OpenTK.Vector4(0, 0, 0, 1);
-            return new OpenTK.Vector3(output.X, output.Y, output.Z);
-        }
-
         //using opencv by Eric                
         // TODO remove redundant processing at *
-        public static void solveForAffineTransformOpenCV(List<OpenTK.Vector3> xs, List<OpenTK.Vector3> bs, ref OpenTK.Matrix4 M)
-        {
-            if (xs.Count < 4)
-                return;
 
-            List<Emgu.CV.Structure.MCvPoint3D32f> OpenCvXs = new List<Emgu.CV.Structure.MCvPoint3D32f>();
-            List<Emgu.CV.Structure.MCvPoint3D32f> OpenCvBs = new List<Emgu.CV.Structure.MCvPoint3D32f>();
-
-            //* STAR can replace with OpenTK to array
-            foreach (OpenTK.Vector3 x in xs)
-                OpenCvXs.Add(new Emgu.CV.Structure.MCvPoint3D32f(x.X, x.Y, x.Z));
-
-            foreach (OpenTK.Vector3 b in bs)
-                OpenCvBs.Add(new Emgu.CV.Structure.MCvPoint3D32f(b.X, b.Y, b.Z));
-
-            byte[] inliers;
-            Emgu.CV.Matrix<double> OpenCvM;
-            Emgu.CV.CvInvoke.EstimateAffine3D(OpenCvXs.ToArray(), OpenCvBs.ToArray(), out OpenCvM, out inliers, 7, 0.95);
-
-            M = new OpenTK.Matrix4(
-                (float)OpenCvM[0, 0], (float)OpenCvM[0, 1], (float)OpenCvM[0, 2], (float)OpenCvM[0, 3],
-                (float)OpenCvM[1, 0], (float)OpenCvM[1, 1], (float)OpenCvM[1, 2], (float)OpenCvM[1, 3],
-                (float)OpenCvM[2, 0], (float)OpenCvM[2, 1], (float)OpenCvM[2, 2], (float)OpenCvM[2, 3],
-                0, 0, 0, 1
-            );
-        }
-
-
-        /// <summary>
-        /// WARNING: Non-functional
-        /// Find the matrix M that gives the best mapping Mx_i = b_i for all pairs
-        /// of vectors (x_i, b_i).
-        /// </summary>
-        /// <param name="x">Untransformed vectors</param>
-        /// <param name="b">Transformed vectors</param>
-        /// <param name="getOrthogonal">If true, ensure that M has orthonormal columns.</param>
-        /// <returns></returns>
-        public static bool solveForAffineTransform(List<OpenTK.Vector3> xs, List<OpenTK.Vector3> bs, ref OpenTK.Matrix4 M, bool getOrthogonal = true)
-        {
-            // Guard, and then build matrices
-            int n = xs.Count();
-            if (n < 4)
-                return false;
-
-            MathNet.Numerics.LinearAlgebra.Matrix<float> A = MathNet.Numerics.LinearAlgebra.CreateMatrix.Dense<float>(3 * n, 12);
-            MathNet.Numerics.LinearAlgebra.Matrix<float> B = MathNet.Numerics.LinearAlgebra.CreateMatrix.Dense<float>(3 * n, 1);
-            MathNet.Numerics.LinearAlgebra.Matrix<float> MVec = MathNet.Numerics.LinearAlgebra.CreateMatrix.Dense<float>(12, 1);
-
-            // Fill up A and B
-            int i = 0;
-            foreach (OpenTK.Vector3 x in xs)
-            {
-                A.SetRow(3 * i + 0, new float[] { x.X, x.Y, x.Z, 1, 0, 0, 0, 0, 0, 0, 0, 0 });
-                A.SetRow(3 * i + 1, new float[] { 0, 0, 0, 0, x.X, x.Y, x.Z, 1, 0, 0, 0, 0 });
-                A.SetRow(3 * i + 2, new float[] { 0, 0, 0, 0, 0, 0, 0, 0, x.X, x.Y, x.Z, 1 });
-                i++;
-            }
-            i = 0;
-            foreach (OpenTK.Vector3 b in bs)
-            {
-                B.SetRow(3 * i + 0, new float[] { b.X });
-                B.SetRow(3 * i + 1, new float[] { b.Y });
-                B.SetRow(3 * i + 2, new float[] { b.Z });
-                i++;
-            }
-
-            // Solve for M
-            var qr = A.QR();
-            MVec = qr.R.Solve(qr.Q.TransposeThisAndMultiply(B));
-
-            // Orthogonalize if desired
-            if (getOrthogonal)
-            {
-                var normalized = MathNet.Numerics.LinearAlgebra.CreateMatrix.Dense<float>(3, 3);
-                normalized[0, 0] = MVec[0, 0];
-                normalized[0, 1] = MVec[1, 0];
-                normalized[0, 2] = MVec[2, 0];
-                normalized[1, 0] = MVec[4, 0];
-                normalized[1, 1] = MVec[5, 0];
-                normalized[1, 2] = MVec[6, 0];
-                normalized[2, 0] = MVec[8, 0];
-                normalized[2, 1] = MVec[9, 0];
-                normalized[2, 2] = MVec[10, 0];
-                // TODO: If this doesn't work out, try out the built-in Grahm-Schmidt method.
-                normalized = normalized.GramSchmidt().Q;
-                MVec[0, 0] = normalized[0, 0];
-                MVec[1, 0] = normalized[0, 1];
-                MVec[2, 0] = normalized[0, 2];
-                MVec[4, 0] = normalized[1, 0];
-                MVec[5, 0] = normalized[1, 1];
-                MVec[6, 0] = normalized[1, 2];
-                MVec[8, 0] = normalized[2, 0];
-                MVec[9, 0] = normalized[2, 1];
-                MVec[10, 0] = normalized[2, 2];
-            }
-
-            for (i = 0; i < 3; i++)
-                for (int j = 0; j < 4; j++)
-                    M[i, j] = MVec[4 * i + j, 0];
-            M[3, 0] = 0; M[3, 1] = 0; M[3, 2] = 0; M[3, 3] = 1;
-
-            return true;
-        }
-
-        public static void TestAffineSolve()
-        {
-            OpenTK.Matrix4 M = new OpenTK.Matrix4();
-            //float norm;
-
-            // Test the identity with no translation
-            List<OpenTK.Vector3> xs = new List<OpenTK.Vector3>();
-            List<OpenTK.Vector3> bs = new List<OpenTK.Vector3>();
-            xs.Add(new OpenTK.Vector3(1, 0, 0)); xs.Add(new OpenTK.Vector3(0, 1, 0)); xs.Add(new OpenTK.Vector3(0, 0, 1)); xs.Add(new OpenTK.Vector3(2, 2, 2));
-            bs.Add(new OpenTK.Vector3(1, 0, 0)); bs.Add(new OpenTK.Vector3(0, 1, 0)); bs.Add(new OpenTK.Vector3(0, 0, 1)); bs.Add(new OpenTK.Vector3(2, 2, 2));
-            solveForAffineTransform(xs, bs, ref M, false);
-            // Normalized
-            solveForAffineTransform(xs, bs, ref M, true);
-
-            // Identity with a translation
-            xs.Clear(); bs.Clear();
-            xs.Add(new OpenTK.Vector3(1, 0, 0)); xs.Add(new OpenTK.Vector3(0, 1, 0)); xs.Add(new OpenTK.Vector3(0, 0, 1)); xs.Add(new OpenTK.Vector3(2, 2, 2));
-            bs.Add(new OpenTK.Vector3(0, -1, -1)); bs.Add(new OpenTK.Vector3(-1, 0, -1)); bs.Add(new OpenTK.Vector3(-1, -1, 0)); bs.Add(new OpenTK.Vector3(1, 1, 1));
-            // Normalized
-            solveForAffineTransform(xs, bs, ref M, false);
-            solveForAffineTransform(xs, bs, ref M, true);
-
-            // Rotation 
-            xs.Clear(); bs.Clear();
-            xs.Add(new OpenTK.Vector3(1, 0, 0)); xs.Add(new OpenTK.Vector3(0, 1, 0)); xs.Add(new OpenTK.Vector3(0, 0, 1)); xs.Add(new OpenTK.Vector3(2, 2, 2));
-            bs.Add(new OpenTK.Vector3(0, 1, 0)); bs.Add(new OpenTK.Vector3(-1, 0, 0)); bs.Add(new OpenTK.Vector3(0, 0, 1)); bs.Add(new OpenTK.Vector3(-2, 2, 2));
-            solveForAffineTransform(xs, bs, ref M, false);
-            solveForAffineTransform(xs, bs, ref M, true);
-        }
 
         public static void MarkPointVR(ref Scene mScene, OpenTK.Vector3 p, ref Geometry.Geometry geo, ref Material.Material m, out SceneNode pointSN)
         {
             pointSN = new SceneNode("EditPoint", ref geo, ref m);
             pointSN.transform = new OpenTK.Matrix4(1, 0, 0, p.X, 0, 1, 0, p.Y, 0, 0, 1, p.Z, 0, 0, 0, 1);
-            Util.addSceneNode(ref mScene, ref pointSN);
+            UtilOld.addSceneNode(ref mScene, ref pointSN);
         }
 
         public static SceneNode MarkProjectionPoint(ref Scene mScene, OpenTK.Vector3 p, float r, float g, float b)
@@ -250,7 +119,7 @@ namespace SparrowHawk
             Material.Material m = new Material.SingleColorMaterial(r, g, b, 1);
             SceneNode child = new SceneNode("DebugPoint", ref geo, ref m);
             child.transform = new OpenTK.Matrix4(1, 0, 0, p.X, 0, 1, 0, p.Y, 0, 0, 1, p.Z, 0, 0, 0, 1);
-            Util.addSceneNode(ref mScene, ref child);
+            UtilOld.addSceneNode(ref mScene, ref child);
         }
 
         public static OpenTK.Vector3 vrToPlatformVector(ref Scene scene, OpenTK.Vector3 v)
@@ -258,13 +127,13 @@ namespace SparrowHawk
 
             if (scene.vrToRobot.Equals(OpenTK.Matrix4.Identity))
             {
-                v = Util.transformVec(Util.mGLToRhino, v);
+                v = UtilOld.transformVec(UtilOld.mGLToRhino, v);
                 //v *= 1000;
             }
             else
             {
-                v = Util.transformVec(scene.vrToRobot, v);
-                v = Util.transformVec(scene.robotToPlatform, v);
+                v = UtilOld.transformVec(scene.vrToRobot, v);
+                v = UtilOld.transformVec(scene.robotToPlatform, v);
                 //platform to rhino
                 //v = Util.transformVec(scene.platformRotation, v);
             }
@@ -277,13 +146,13 @@ namespace SparrowHawk
 
             if (scene.vrToRobot.Equals(OpenTK.Matrix4.Identity))
             {
-                p = Util.transformPoint(Util.mGLToRhino, p);
+                p = UtilOld.transformPoint(UtilOld.mGLToRhino, p);
                 // p *= 1000;
             }
             else
             {
-                p = Util.transformPoint(scene.vrToRobot, p);
-                p = Util.transformPoint(scene.robotToPlatform, p);
+                p = UtilOld.transformPoint(scene.vrToRobot, p);
+                p = UtilOld.transformPoint(scene.robotToPlatform, p);
                 //platform to rhino
                 //p = Util.transformPoint(scene.platformRotation, p);
             }
@@ -299,7 +168,7 @@ namespace SparrowHawk
             if (scene.vrToRobot.Equals(OpenTK.Matrix4.Identity))
             {
                 m = OpenTK.Matrix4.CreateScale(0.001f);
-                m = Util.mRhinoToGL * m;
+                m = UtilOld.mRhinoToGL * m;
             }
             else
             {
@@ -319,14 +188,14 @@ namespace SparrowHawk
             if (scene.vrToRobot.Equals(OpenTK.Matrix4.Identity))
             {
                 p /= 1000;
-                p = Util.transformPoint(Util.mRhinoToGL, p);
+                p = UtilOld.transformPoint(UtilOld.mRhinoToGL, p);
             }
             else
             {
                 //rhino to platform
                 //p = Util.transformPoint(scene.platformRotation.Inverted(), p);
-                p = Util.transformPoint(scene.robotToPlatform.Inverted(), p);
-                p = Util.transformPoint(scene.vrToRobot.Inverted(), p);
+                p = UtilOld.transformPoint(scene.robotToPlatform.Inverted(), p);
+                p = UtilOld.transformPoint(scene.vrToRobot.Inverted(), p);
                 //p = Util.transformPoint(scene.tableGeometry.transform.Inverted(), p);
             }
 
@@ -340,14 +209,14 @@ namespace SparrowHawk
             if (scene.vrToRobot.Equals(OpenTK.Matrix4.Identity))
             {
                 v /= 1000;
-                v = Util.transformPoint(Util.mRhinoToGL, v);
+                v = UtilOld.transformPoint(UtilOld.mRhinoToGL, v);
             }
             else
             {
                 //rhino to platform
                 //v = Util.transformVec(scene.platformRotation.Inverted(), v);
-                v = Util.transformVec(scene.robotToPlatform.Inverted(), v);
-                v = Util.transformVec(scene.vrToRobot.Inverted(), v);
+                v = UtilOld.transformVec(scene.robotToPlatform.Inverted(), v);
+                v = UtilOld.transformVec(scene.vrToRobot.Inverted(), v);
                 //v = Util.transformVec(scene.tableGeometry.transform.Inverted(), v);
             }
 
@@ -447,45 +316,6 @@ namespace SparrowHawk
 
 
         //Quick test about Douglas-Peucker for rhino points, return point3d with rhino coordinate system
-        public static List<OpenTK.Vector3> DouglasPeucker(ref List<OpenTK.Vector3> points, int startIndex, int lastIndex, float epsilon)
-        {
-            float dmax = 0f;
-            int index = startIndex;
-
-            for (int i = index + 1; i < lastIndex; ++i)
-            {
-                float d = PointLineDistance(points[i], points[startIndex], points[lastIndex]);
-                if (d > dmax)
-                {
-                    index = i;
-                    dmax = d;
-                }
-            }
-
-            if (dmax > epsilon)
-            {
-                List<OpenTK.Vector3> res1 = DouglasPeucker(ref points, startIndex, index, epsilon);
-                List<OpenTK.Vector3> res2 = DouglasPeucker(ref points, index, lastIndex, epsilon);
-
-                //watch out the coordinate system
-                List<OpenTK.Vector3> finalRes = new List<OpenTK.Vector3>();
-                for (int i = 0; i < res1.Count - 1; ++i)
-                {
-                    finalRes.Add(res1[i]);
-                }
-
-                for (int i = 0; i < res2.Count; ++i)
-                {
-                    finalRes.Add(res2[i]);
-                }
-
-                return finalRes;
-            }
-            else
-            {
-                return new List<OpenTK.Vector3>(new OpenTK.Vector3[] { points[startIndex], points[lastIndex] });
-            }
-        }
 
         public static float PointLineDistance(OpenTK.Vector3 point, OpenTK.Vector3 start, OpenTK.Vector3 end)
         {
@@ -499,63 +329,6 @@ namespace SparrowHawk
             OpenTK.Vector3 pq = new OpenTK.Vector3(point.X - start.X, point.Y - start.Y, point.Z - start.Z);
 
             return OpenTK.Vector3.Cross(pq, u).Length / u.Length;
-        }
-
-
-        public static OpenTK.Vector3 calculateFaceNormal(float v0x, float v0y, float v0z, float v1x, float v1y, float v1z, float v2x, float v2y, float v2z)
-        {
-            OpenTK.Vector3 p = new OpenTK.Vector3(v1x - v0x, v1y - v0y, v1z - v0z);
-            OpenTK.Vector3 q = new OpenTK.Vector3(v2x - v0x, v2y - v0y, v2z - v0z);
-            return OpenTK.Vector3.Cross(p, q).Normalized();
-        }
-
-        public static OpenTK.Vector3 calculateFaceNormal(OpenTK.Vector3 v0, OpenTK.Vector3 v1, OpenTK.Vector3 v2)
-        {
-            return OpenTK.Vector3.Cross(v1 - v0, v2 - v0).Normalized();
-        }
-
-        /// <summary>
-        /// Adds normals to the mesh appropriate for flat shading. 
-        /// Note: depending on the mesh, this may increase the number of 
-        /// vertices by a factor of three!
-        /// Must be a triangulated mesh
-        /// </summary>
-        /// <param name="mesh"></param>
-        /// <returns></returns>
-        public static void addNormalsToMesh(Geometry.Geometry mesh)
-        {
-            if (mesh.primitiveType != OpenTK.Graphics.OpenGL4.BeginMode.Triangles)
-                return;
-
-            float[] mGeometry = new float[3 * 3 * mesh.mNumPrimitives];
-            int[] mGeometryIndices = new int[3 * mesh.mNumPrimitives];
-            float[] mNormals = new float[3 * 3 * mesh.mNumPrimitives];
-
-            OpenTK.Vector3[] faceVertices = new OpenTK.Vector3[3];
-            for (int f = 0; f < mesh.mNumPrimitives; f++)
-            {
-                for (int v = 0; v < 3; v++)
-                {
-                    mGeometry[9 * f + 3 * v + 0] = mesh.mGeometry[3 * mesh.mGeometryIndices[3 * f + v] + 0];
-                    mGeometry[9 * f + 3 * v + 1] = mesh.mGeometry[3 * mesh.mGeometryIndices[3 * f + v] + 1];
-                    mGeometry[9 * f + 3 * v + 2] = mesh.mGeometry[3 * mesh.mGeometryIndices[3 * f + v] + 2];
-                    faceVertices[v] = new OpenTK.Vector3(mGeometry[9 * f + 3 * v + 0], mGeometry[9 * f + 3 * v + 1], mGeometry[9 * f + 3 * v + 2]);
-                }
-                OpenTK.Vector3 n = Util.calculateFaceNormal(faceVertices[0], faceVertices[1], faceVertices[2]);
-                for (int v = 0; v < 3; v++)
-                {
-                    mNormals[9 * f + 3 * v + 0] = n.X;
-                    mNormals[9 * f + 3 * v + 1] = n.Y;
-                    mNormals[9 * f + 3 * v + 2] = n.Z;
-                }
-            }
-
-            for (int i = 0; i < mGeometryIndices.Count(); i++)
-                mGeometryIndices[i] = i;
-
-            mesh.mGeometry = mGeometry;
-            mesh.mGeometryIndices = mGeometryIndices;
-            mesh.mNormals = mNormals;
         }
 
 
@@ -926,7 +699,7 @@ namespace SparrowHawk
 
             //debug
             Point3d c2 = rhinoObjRef.Brep().GetBoundingBox(true).Center;
-            Matrix4 transMVR =  mScene.vrToRobot.Inverted() * mScene.robotToPlatform.Inverted() * Util.rhinoToOpenTKTransform(transM) * mScene.robotToPlatform * mScene.vrToRobot;
+            Matrix4 transMVR =  mScene.vrToRobot.Inverted() * mScene.robotToPlatform.Inverted() * UtilOld.rhinoToOpenTKTransform(transM) * mScene.robotToPlatform * mScene.vrToRobot;
             updateSN.transform = mScene.tableGeometry.transform.Inverted() * transMVR * updateSN.transform;
         }
 
@@ -1177,11 +950,11 @@ namespace SparrowHawk
             {
                 Rhino.DocObjects.ObjRef curveOnObj1Ref = new Rhino.DocObjects.ObjRef(new Guid(profileCurves[0].GetUserString(CurveData.CurveOnObj.ToString())));
 
-                Plane plane1 = new Plane(Util.getPointfromString(profileCurves[0].GetUserString(CurveData.PlaneOrigin.ToString())),
-                    Util.getVectorfromString(profileCurves[0].GetUserString(CurveData.PlaneNormal.ToString())));
+                Plane plane1 = new Plane(UtilOld.getPointfromString(profileCurves[0].GetUserString(CurveData.PlaneOrigin.ToString())),
+                    UtilOld.getVectorfromString(profileCurves[0].GetUserString(CurveData.PlaneNormal.ToString())));
 
-                Plane plane2 = new Plane(Util.getPointfromString(profileCurves[1].GetUserString(CurveData.PlaneOrigin.ToString())),
-                   Util.getVectorfromString(profileCurves[1].GetUserString(CurveData.PlaneNormal.ToString())));
+                Plane plane2 = new Plane(UtilOld.getPointfromString(profileCurves[1].GetUserString(CurveData.PlaneOrigin.ToString())),
+                   UtilOld.getVectorfromString(profileCurves[1].GetUserString(CurveData.PlaneNormal.ToString())));
 
                 Transform projectTranslate = Transform.Translation(50 * plane1.Normal);
                 profileCurves[0].Transform(projectTranslate);
@@ -1192,10 +965,10 @@ namespace SparrowHawk
                 Point3d sPlaneCenter = profileCurves[0].GetBoundingBox(true).Center;
                 Point3d ePlaneCenter = profileCurves[1].GetBoundingBox(true).Center;
                 Rhino.Geometry.Vector3d direction = new Rhino.Geometry.Vector3d(ePlaneCenter.X - sPlaneCenter.X, ePlaneCenter.Y - sPlaneCenter.Y, ePlaneCenter.Z - sPlaneCenter.Z);
-                Vector3 loftDirection = Util.RhinoToOpenTKVector(direction);
+                Vector3 loftDirection = UtilOld.RhinoToOpenTKVector(direction);
 
-                OpenTK.Vector3 n1 = Util.RhinoToOpenTKVector(plane1.Normal);
-                OpenTK.Vector3 n2 = Util.RhinoToOpenTKVector(plane2.Normal);
+                OpenTK.Vector3 n1 = UtilOld.RhinoToOpenTKVector(plane1.Normal);
+                OpenTK.Vector3 n2 = UtilOld.RhinoToOpenTKVector(plane2.Normal);
 
                 //n1,n2 should be the same with railNormal and railEndNormal
                 n1.Normalize();
@@ -1314,14 +1087,14 @@ namespace SparrowHawk
 
             NurbsCurve rail = (NurbsCurve)curveList[1];
             PolylineCurve railPL = rail.ToPolyline(0, 0, 0, 0, 0, 1, 1, 0, true);
-            OpenTK.Vector3 railStartPoint = Util.RhinoToOpenTKPoint(railPL.PointAtStart);
-            OpenTK.Vector3 railstartNormal = Util.RhinoToOpenTKVector(railPL.TangentAtStart);
-            OpenTK.Vector3 railEndPoint = Util.RhinoToOpenTKPoint(railPL.PointAtEnd);
-            OpenTK.Vector3 railEndNormal = Util.RhinoToOpenTKVector(railPL.TangentAtEnd);
+            OpenTK.Vector3 railStartPoint = UtilOld.RhinoToOpenTKPoint(railPL.PointAtStart);
+            OpenTK.Vector3 railstartNormal = UtilOld.RhinoToOpenTKVector(railPL.TangentAtStart);
+            OpenTK.Vector3 railEndPoint = UtilOld.RhinoToOpenTKPoint(railPL.PointAtEnd);
+            OpenTK.Vector3 railEndNormal = UtilOld.RhinoToOpenTKVector(railPL.TangentAtEnd);
 
             //changing seam
-            OpenTK.Matrix4 transMEnd = Util.getCoordinateTransM(railStartPoint, railEndPoint, railstartNormal, railEndNormal);
-            Transform t = Util.OpenTKToRhinoTransform(transMEnd);
+            OpenTK.Matrix4 transMEnd = UtilOld.getCoordinateTransM(railStartPoint, railEndPoint, railstartNormal, railEndNormal);
+            Transform t = UtilOld.OpenTKToRhinoTransform(transMEnd);
 
             if ((Scene.ShapeType)mScene.selectionDic[Scene.SelectionKey.Profile1Shape] == Scene.ShapeType.Circle)
             {
@@ -1345,26 +1118,26 @@ namespace SparrowHawk
                 {
                     //testing create new rect
                     //TODO- don't need to move to the railcurve start unlike sweep
-                    Vector3 rectCenterRhino1 = Util.vrToPlatformPoint(ref mScene, mScene.iPointList[0]);
-                    Vector3 rectBottomRightRhino1 = Util.vrToPlatformPoint(ref mScene, mScene.iPointList[1]);
+                    Vector3 rectCenterRhino1 = UtilOld.vrToPlatformPoint(ref mScene, mScene.iPointList[0]);
+                    Vector3 rectBottomRightRhino1 = UtilOld.vrToPlatformPoint(ref mScene, mScene.iPointList[1]);
 
                     Vector3 rectDiagonal1 = new Vector3((float)(rectCenterRhino1.X - rectBottomRightRhino1.X), (float)(rectCenterRhino1.Y - rectBottomRightRhino1.Y), (float)(rectCenterRhino1.Z - rectBottomRightRhino1.Z));
                     float lenDiagonal1 = rectDiagonal1.Length;
                     Vector3 rectLeftTop = new Vector3((float)rectCenterRhino1.X, (float)rectCenterRhino1.Y, (float)rectCenterRhino1.Z) + lenDiagonal1 * rectDiagonal1.Normalized();
                     Point3d topLeftP = new Point3d(rectLeftTop.X, rectLeftTop.Y, rectLeftTop.Z);
 
-                    Vector3 rectCenterRhino2 = Util.vrToPlatformPoint(ref mScene, mScene.iPointList[2]);
-                    Vector3 rectBottomRightRhino2 = Util.vrToPlatformPoint(ref mScene, mScene.iPointList[3]);
+                    Vector3 rectCenterRhino2 = UtilOld.vrToPlatformPoint(ref mScene, mScene.iPointList[2]);
+                    Vector3 rectBottomRightRhino2 = UtilOld.vrToPlatformPoint(ref mScene, mScene.iPointList[3]);
 
                     Vector3 rectDiagonal2 = new Vector3((float)(rectCenterRhino2.X - rectBottomRightRhino2.X), (float)(rectCenterRhino2.Y - rectBottomRightRhino2.Y), (float)(rectCenterRhino2.Z - rectBottomRightRhino2.Z));
                     float lenDiagonal2 = rectDiagonal2.Length;
                     Vector3 rectLeftTop2 = new Vector3((float)rectCenterRhino2.X, (float)rectCenterRhino2.Y, (float)rectCenterRhino2.Z) + lenDiagonal2 * rectDiagonal2.Normalized();
                     Point3d topLeftP2 = new Point3d(rectLeftTop2.X, rectLeftTop2.Y, rectLeftTop2.Z);
 
-                    Plane testPlane1 = new Plane(Util.openTkToRhinoPoint(rectCenterRhino1), railPL.TangentAtStart);
-                    Plane testPlane2 = new Plane(Util.openTkToRhinoPoint(rectCenterRhino2), railPL.TangentAtEnd);
+                    Plane testPlane1 = new Plane(UtilOld.openTkToRhinoPoint(rectCenterRhino1), railPL.TangentAtStart);
+                    Plane testPlane2 = new Plane(UtilOld.openTkToRhinoPoint(rectCenterRhino2), railPL.TangentAtEnd);
 
-                    Rectangle3d tmpRect1 = new Rectangle3d(testPlane1, topLeftP, Util.openTkToRhinoPoint(rectBottomRightRhino1));
+                    Rectangle3d tmpRect1 = new Rectangle3d(testPlane1, topLeftP, UtilOld.openTkToRhinoPoint(rectBottomRightRhino1));
                     //Rectangle3d rect1 = new Rectangle3d(testPlane1, tmpRect1.Width, tmpRect1.Height);
                     Rectangle3d rect1 = new Rectangle3d(testPlane1, new Interval(-tmpRect1.Width / 2, tmpRect1.Width / 2), new Interval(-tmpRect1.Height / 2, tmpRect1.Height / 2));
 
@@ -1374,7 +1147,7 @@ namespace SparrowHawk
                     //TODO- after chaning the seam, the profile curve will moves
                     //how we pre-move the profile curves to make it's seam to the orginal center position. only tranlation?
                     //try create the profile curve on the same plane first to match the cornel points then transform to the end
-                    Rectangle3d tmpRect2 = new Rectangle3d(testPlane2, topLeftP2, Util.openTkToRhinoPoint(rectBottomRightRhino2));
+                    Rectangle3d tmpRect2 = new Rectangle3d(testPlane2, topLeftP2, UtilOld.openTkToRhinoPoint(rectBottomRightRhino2));
                     Rectangle3d rect2 = new Rectangle3d(testPlane2, new Interval(-tmpRect2.Width / 2, tmpRect2.Width / 2), new Interval(-tmpRect2.Height / 2, tmpRect2.Height / 2));
                     /*
                     Rectangle3d rect2 = new Rectangle3d(testPlane1, new Interval(-tmpRect2.Width / 2, tmpRect2.Width / 2), new Interval(-tmpRect2.Height / 2, tmpRect2.Height / 2));
@@ -1427,7 +1200,7 @@ namespace SparrowHawk
                     profileCurves[1].ClosestPoint(mScene.eStartP, out curveT);
                     profileCurves[1].ChangeClosedCurveSeam(curveT);
                 }
-                CurveOrientation dir3 = profileCurves[1].ClosedCurveOrientation(Util.openTkToRhinoVector(railEndNormal)); //new Vector3(0,0,1)
+                CurveOrientation dir3 = profileCurves[1].ClosedCurveOrientation(UtilOld.openTkToRhinoVector(railEndNormal)); //new Vector3(0,0,1)
                 mScene.c3D = dir3.ToString();
             }
 
@@ -1525,14 +1298,14 @@ namespace SparrowHawk
            
             //compute the transfrom from railStart to railEnd
             NurbsCurve rail = curveList[curveList.Count - 2].ToNurbsCurve();
-            OpenTK.Vector3 railStartPoint = Util.RhinoToOpenTKPoint(rail.PointAtStart);
-            OpenTK.Vector3 railStartNormal = Util.RhinoToOpenTKVector(rail.TangentAtStart);
-            OpenTK.Vector3 railEndPoint = Util.RhinoToOpenTKPoint(rail.PointAtEnd);
-            OpenTK.Vector3 railEndNormal = Util.RhinoToOpenTKVector(rail.TangentAtEnd);
+            OpenTK.Vector3 railStartPoint = UtilOld.RhinoToOpenTKPoint(rail.PointAtStart);
+            OpenTK.Vector3 railStartNormal = UtilOld.RhinoToOpenTKVector(rail.TangentAtStart);
+            OpenTK.Vector3 railEndPoint = UtilOld.RhinoToOpenTKPoint(rail.PointAtEnd);
+            OpenTK.Vector3 railEndNormal = UtilOld.RhinoToOpenTKVector(rail.TangentAtEnd);
 
             OpenTK.Matrix4 transMStartEnd = new Matrix4();
-            transMStartEnd = Util.getCoordinateTransM(railStartPoint, railEndPoint, railStartNormal, railEndNormal);
-            Transform tStartEnd = Util.OpenTKToRhinoTransform(transMStartEnd);
+            transMStartEnd = UtilOld.getCoordinateTransM(railStartPoint, railEndPoint, railStartNormal, railEndNormal);
+            Transform tStartEnd = UtilOld.OpenTKToRhinoTransform(transMStartEnd);
 
             List<Curve> profileCurves = new List<Curve>();
             profileCurves.Add(curveList[curveList.Count - 3]);
@@ -1617,7 +1390,7 @@ namespace SparrowHawk
                 profileCurves[1].ClosestPoint(mScene.eStartP, out curveT);
                 profileCurves[1].ChangeClosedCurveSeam(curveT);
 
-                CurveOrientation dir3 = profileCurves[1].ClosedCurveOrientation(Util.openTkToRhinoVector(railEndNormal)); //new Vector3(0,0,1)
+                CurveOrientation dir3 = profileCurves[1].ClosedCurveOrientation(UtilOld.openTkToRhinoVector(railEndNormal)); //new Vector3(0,0,1)
                 mScene.c3D = dir3.ToString();
 
             }
@@ -1636,8 +1409,8 @@ namespace SparrowHawk
 
                 //angle = atan2(norm(cross(a,b)), dot(a,b))
                 float angle = Vector3.Dot(n1, n2);
-                CurveOrientation dir = profileCurves[0].ClosedCurveOrientation(Util.openTkToRhinoVector(n1)); //new Vector3(0,0,1)
-                CurveOrientation dir2 = profileCurves[1].ClosedCurveOrientation(Util.openTkToRhinoVector(n2)); //new Vector3(0,0,1)
+                CurveOrientation dir = profileCurves[0].ClosedCurveOrientation(UtilOld.openTkToRhinoVector(n1)); //new Vector3(0,0,1)
+                CurveOrientation dir2 = profileCurves[1].ClosedCurveOrientation(UtilOld.openTkToRhinoVector(n2)); //new Vector3(0,0,1)
 
                 //debugging
                 mScene.angleD = angle;
@@ -1909,50 +1682,6 @@ namespace SparrowHawk
             }
         }
 
-        /// <summary>
-        /// Finds the homogenous 3d point x (with x_4 = 1) to minimize the least squares
-        /// error of M_1x - M_2x = 1; Assumes that each M_i is affine4x4.
-        /// </summary>
-        /// <param name="matrices"></param>
-        /// <returns></returns>
-        public static OpenTK.Vector3 solveForOffsetVector(List<OpenTK.Matrix4> matrices)
-        {
-            OpenTK.Vector3 x = new OpenTK.Vector3();
-            var A = MathNet.Numerics.LinearAlgebra.CreateMatrix.Dense<float>(matrices.Count * (matrices.Count), 3);
-            var B = MathNet.Numerics.LinearAlgebra.CreateMatrix.Dense<float>(matrices.Count * (matrices.Count), 1);
-            int row = 0;
-            for (int i = 0; i < matrices.Count - 1; i++)
-            {
-                A.SetRow(row, new float[] {matrices.ElementAt(i).M11 - matrices.ElementAt(i+1).M11,
-                                               matrices.ElementAt(i).M12 - matrices.ElementAt(i+1).M12,
-                                               matrices.ElementAt(i).M13 - matrices.ElementAt(i+1).M13});
-
-                A.SetRow(row + 1, new float[] {matrices.ElementAt(i).M21 - matrices.ElementAt(i+1).M21,
-                                                 matrices.ElementAt(i).M22 - matrices.ElementAt(i+1).M22,
-                                                 matrices.ElementAt(i).M23 - matrices.ElementAt(i+1).M23});
-
-                A.SetRow(row + 2, new float[] {matrices.ElementAt(i).M31 - matrices.ElementAt(i+1).M31,
-                                                 matrices.ElementAt(i).M32 - matrices.ElementAt(i+1).M32,
-                                                 matrices.ElementAt(i).M33 - matrices.ElementAt(i+1).M33});
-
-                B.SetRow(row, new float[] { matrices.ElementAt(i + 1).M14 - matrices.ElementAt(i).M14 });
-                B.SetRow(row + 1, new float[] { matrices.ElementAt(i + 1).M24 - matrices.ElementAt(i).M24 });
-                B.SetRow(row + 2, new float[] { matrices.ElementAt(i + 1).M34 - matrices.ElementAt(i).M34 });
-                row += 3;
-            }
-            var qr = A.QR();
-            var matX = qr.R.Solve(qr.Q.Transpose() * B);
-            x.X = matX[0, 0];
-            x.Y = matX[1, 0];
-            x.Z = matX[2, 0];
-            return x;
-        }
-
-        public static OpenTK.Matrix4 createTranslationMatrix(float x, float y, float z)
-        {
-            return new OpenTK.Matrix4(1, 0, 0, x, 0, 1, 0, y, 0, 0, 1, z, 0, 0, 0, 1);
-        }
-
         public static OpenTK.Matrix4 getControllerTipPosition(ref Scene scene, bool left)
         {
             //mScene.mIsLefty decide whether it's right hand or left hand
@@ -1973,26 +1702,6 @@ namespace SparrowHawk
             {
                 return scene.mDevicePose[scene.rightControllerIdx] * scene.mRightControllerOffset;
             }
-        }
-
-        /// <summary>
-        /// Returns the integer associated with the dominant axis about which the rotation moves.
-        /// Chooses Z in the two degenerate cases.
-        /// x = 0
-        /// y = 1
-        /// z = 2
-        /// Doesn't work.
-        /// </summary>
-        /// <param name="M">The affine matrix with some rotational componenet to analyse.</param>
-        /// <returns></returns>
-        public static int getDominantRotationAxis(OpenTK.Matrix4 M)
-        {
-            OpenTK.Quaternion R = M.ExtractRotation();
-            if (Math.Abs(R.X) > Math.Abs(R.Y) && Math.Abs(R.X) > Math.Abs(R.Z))
-                return 0;
-            else if (Math.Abs(R.Y) > Math.Abs(R.Z))
-                return 1;
-            return 2;
         }
 
         /// <summary>

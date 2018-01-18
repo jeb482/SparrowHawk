@@ -117,10 +117,10 @@ namespace SparrowHawk.Interaction
             if (onPlane && isTop)
             {
                 //ray casting to the pre-defind planes
-                OpenTK.Vector4 controller_p = Util.getControllerTipPosition(ref mScene, primaryDeviceIndex == mScene.leftControllerIdx) * new OpenTK.Vector4(0, 0, 0, 1);
-                OpenTK.Vector4 controller_pZ = Util.getControllerTipPosition(ref mScene, primaryDeviceIndex == mScene.leftControllerIdx) * new OpenTK.Vector4(0, 0, -1, 1);
-                Point3d controller_pRhino = Util.openTkToRhinoPoint(Util.vrToPlatformPoint(ref mScene, new OpenTK.Vector3(controller_p.X, controller_p.Y, controller_p.Z)));
-                Point3d controller_pZRhin = Util.openTkToRhinoPoint(Util.vrToPlatformPoint(ref mScene, new OpenTK.Vector3(controller_pZ.X, controller_pZ.Y, controller_pZ.Z)));
+                OpenTK.Vector4 controller_p = UtilOld.getControllerTipPosition(ref mScene, primaryDeviceIndex == mScene.leftControllerIdx) * new OpenTK.Vector4(0, 0, 0, 1);
+                OpenTK.Vector4 controller_pZ = UtilOld.getControllerTipPosition(ref mScene, primaryDeviceIndex == mScene.leftControllerIdx) * new OpenTK.Vector4(0, 0, -1, 1);
+                Point3d controller_pRhino = UtilOld.openTkToRhinoPoint(UtilOld.vrToPlatformPoint(ref mScene, new OpenTK.Vector3(controller_p.X, controller_p.Y, controller_p.Z)));
+                Point3d controller_pZRhin = UtilOld.openTkToRhinoPoint(UtilOld.vrToPlatformPoint(ref mScene, new OpenTK.Vector3(controller_pZ.X, controller_pZ.Y, controller_pZ.Z)));
 
                 Rhino.Geometry.Vector3d direction = new Rhino.Geometry.Vector3d(controller_pZRhin.X - controller_pRhino.X, controller_pZRhin.Y - controller_pRhino.Y, controller_pZRhin.Z - controller_pRhino.Z);
                 Ray3d ray = new Ray3d(controller_pRhino, direction);
@@ -144,7 +144,7 @@ namespace SparrowHawk.Interaction
                             if (rayIntersections != null)
                             {
                                 //get the nearest one
-                                OpenTK.Vector3 tmpP = Util.platformToVRPoint(ref mScene, new OpenTK.Vector3((float)rayIntersections[0].X, (float)rayIntersections[0].Y, (float)rayIntersections[0].Z));
+                                OpenTK.Vector3 tmpP = UtilOld.platformToVRPoint(ref mScene, new OpenTK.Vector3((float)rayIntersections[0].X, (float)rayIntersections[0].Y, (float)rayIntersections[0].Z));
                                 float distance = (float)Math.Sqrt(Math.Pow(tmpP.X - controller_p.X, 2) + Math.Pow(tmpP.Y - controller_p.Y, 2) + Math.Pow(tmpP.Z - controller_p.Z, 2));
 
                                 if (distance < mimD)
@@ -152,7 +152,7 @@ namespace SparrowHawk.Interaction
                                     hitPlane = true;
                                     targetPRhObj = rhObj;
                                     mimD = distance;
-                                    projectP = Util.platformToVRPoint(ref mScene, new OpenTK.Vector3((float)rayIntersections[0].X, (float)rayIntersections[0].Y, (float)rayIntersections[0].Z));
+                                    projectP = UtilOld.platformToVRPoint(ref mScene, new OpenTK.Vector3((float)rayIntersections[0].X, (float)rayIntersections[0].Y, (float)rayIntersections[0].Z));
                                 }
                             }
                         }
@@ -168,14 +168,14 @@ namespace SparrowHawk.Interaction
                         if (rayIntersections != null)
                         {
                             //get the nearest one
-                            OpenTK.Vector3 tmpP = Util.platformToVRPoint(ref mScene, new OpenTK.Vector3((float)rayIntersections[0].X, (float)rayIntersections[0].Y, (float)rayIntersections[0].Z));
+                            OpenTK.Vector3 tmpP = UtilOld.platformToVRPoint(ref mScene, new OpenTK.Vector3((float)rayIntersections[0].X, (float)rayIntersections[0].Y, (float)rayIntersections[0].Z));
                             float distance = (float)Math.Sqrt(Math.Pow(tmpP.X - controller_p.X, 2) + Math.Pow(tmpP.Y - controller_p.Y, 2) + Math.Pow(tmpP.Z - controller_p.Z, 2));
 
                             if (distance < mimD)
                             {
                                 hitPlane = true;
                                 mimD = distance;
-                                projectP = Util.platformToVRPoint(ref mScene, new OpenTK.Vector3((float)rayIntersections[0].X, (float)rayIntersections[0].Y, (float)rayIntersections[0].Z));
+                                projectP = UtilOld.platformToVRPoint(ref mScene, new OpenTK.Vector3((float)rayIntersections[0].X, (float)rayIntersections[0].Y, (float)rayIntersections[0].Z));
                             }
                         }
                     }
@@ -190,7 +190,7 @@ namespace SparrowHawk.Interaction
                 //visualize the projection points
                 // inverted rotation first
 
-                OpenTK.Matrix4 t = OpenTK.Matrix4.CreateTranslation(Util.transformPoint(mScene.tableGeometry.transform.Inverted(), projectP));
+                OpenTK.Matrix4 t = OpenTK.Matrix4.CreateTranslation(UtilOld.transformPoint(mScene.tableGeometry.transform.Inverted(), projectP));
                 t.Transpose();
                 drawPoint.transform = t;
             }
@@ -210,16 +210,16 @@ namespace SparrowHawk.Interaction
                 {
                     //GeometryStroke handle rotation
                     ((Geometry.GeometryStroke)stroke_g).addPoint(pos);
-                    rhihoPointList.Add(Util.openTkToRhinoPoint(Util.vrToPlatformPoint(ref mScene, pos)));
+                    rhihoPointList.Add(UtilOld.openTkToRhinoPoint(UtilOld.vrToPlatformPoint(ref mScene, pos)));
                 }
 
             }
             else
             {
-                pos = Util.getTranslationVector3(Util.getControllerTipPosition(ref mScene, primaryDeviceIndex == mScene.leftControllerIdx));
+                pos = Util.Math.GetTranslationVector3(UtilOld.getControllerTipPosition(ref mScene, primaryDeviceIndex == mScene.leftControllerIdx));
                 //GeometryStroke handle rotation already
                 ((Geometry.GeometryStroke)stroke_g).addPoint(pos);
-                rhihoPointList.Add(Util.openTkToRhinoPoint(Util.vrToPlatformPoint(ref mScene, pos)));
+                rhihoPointList.Add(UtilOld.openTkToRhinoPoint(UtilOld.vrToPlatformPoint(ref mScene, pos)));
             }
 
             if (((Geometry.GeometryStroke)stroke_g).mNumPrimitives == 1)

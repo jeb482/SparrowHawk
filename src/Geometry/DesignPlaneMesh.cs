@@ -93,8 +93,8 @@ namespace SparrowHawk.Geometry
             // visualize the origin of the platform for debugging
             if (!mScene.vrToRobot.Equals(OpenTK.Matrix4.Identity))
             {
-                OpenTK.Vector3 robotO = Util.platformToVRPoint(ref mScene, new OpenTK.Vector3(0, 0, 0));
-                Util.MarkPoint(ref mScene.staticGeometry, robotO, 0, 1, 0);
+                OpenTK.Vector3 robotO = UtilOld.platformToVRPoint(ref mScene, new OpenTK.Vector3(0, 0, 0));
+                UtilOld.MarkPoint(ref mScene.staticGeometry, robotO, 0, 1, 0);
             }
 
 
@@ -110,9 +110,9 @@ namespace SparrowHawk.Geometry
                 }*/
 
                 //seperate the data and visualization
-                OpenTK.Vector3 p = Util.platformToVRPoint(ref mScene, rp);
+                OpenTK.Vector3 p = UtilOld.platformToVRPoint(ref mScene, rp);
                 if (isRotate)
-                    p = Util.transformPoint(mScene.tableGeometry.transform.Inverted(), p);
+                    p = UtilOld.transformPoint(mScene.tableGeometry.transform.Inverted(), p);
                 vertices_array.Add(p.X);
                 vertices_array.Add(p.Y);
                 vertices_array.Add(p.Z);

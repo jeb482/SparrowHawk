@@ -146,7 +146,7 @@ namespace SparrowHawk.Interaction
                     ObjRef curveOnObjRef = new ObjRef(curveOnObjId);
                     if (curveOnObjRef.Object().Attributes.Name.Contains("MoveP"))
                     {
-                        Util.removeRhinoObject(ref mScene, curveOnObjRef.ObjectId);
+                        UtilOld.removeRhinoObject(ref mScene, curveOnObjRef.ObjectId);
                     }
 
                 }
@@ -158,10 +158,10 @@ namespace SparrowHawk.Interaction
 
             if (drawnType != DrawnType.In3D && drawnType != DrawnType.None)
             {
-                Util.showLaser(ref mScene, true);
+                UtilOld.showLaser(ref mScene, true);
                 if (drawnType == DrawnType.Plane)
                 {
-                    Util.setPlaneAlpha(ref mScene, 0.4f);
+                    UtilOld.setPlaneAlpha(ref mScene, 0.4f);
                 }
 
                 //init rayCastingObjs
@@ -182,11 +182,11 @@ namespace SparrowHawk.Interaction
                 Geometry.Geometry geo = new Geometry.DrawPointMarker(new OpenTK.Vector3(0, 0, 0));
                 Material.Material m = new Material.SingleColorMaterial(1, 1, 1, 0);
                 drawPoint = new SceneNode("drawPoint", ref geo, ref m);
-                Util.addSceneNode(ref mScene, ref drawPoint);
+                UtilOld.addSceneNode(ref mScene, ref drawPoint);
 
             }else
             {
-                Util.showLaser(ref mScene, false);
+                UtilOld.showLaser(ref mScene, false);
             }
 
         }
@@ -200,15 +200,15 @@ namespace SparrowHawk.Interaction
             }
 
 
-            OpenTK.Vector4 controller_p = Util.getControllerTipPosition(ref mScene, primaryDeviceIndex == mScene.leftControllerIdx) * new OpenTK.Vector4(0, 0, 0, 1);
-            OpenTK.Vector4 controller_pZ = Util.getControllerTipPosition(ref mScene, primaryDeviceIndex == mScene.leftControllerIdx) * new OpenTK.Vector4(0, 0, -1, 1);
-            Point3d controller_pRhino = Util.openTkToRhinoPoint(Util.vrToPlatformPoint(ref mScene, new OpenTK.Vector3(controller_p.X, controller_p.Y, controller_p.Z)));
-            Point3d controller_pZRhin = Util.openTkToRhinoPoint(Util.vrToPlatformPoint(ref mScene, new OpenTK.Vector3(controller_pZ.X, controller_pZ.Y, controller_pZ.Z)));
+            OpenTK.Vector4 controller_p = UtilOld.getControllerTipPosition(ref mScene, primaryDeviceIndex == mScene.leftControllerIdx) * new OpenTK.Vector4(0, 0, 0, 1);
+            OpenTK.Vector4 controller_pZ = UtilOld.getControllerTipPosition(ref mScene, primaryDeviceIndex == mScene.leftControllerIdx) * new OpenTK.Vector4(0, 0, -1, 1);
+            Point3d controller_pRhino = UtilOld.openTkToRhinoPoint(UtilOld.vrToPlatformPoint(ref mScene, new OpenTK.Vector3(controller_p.X, controller_p.Y, controller_p.Z)));
+            Point3d controller_pZRhin = UtilOld.openTkToRhinoPoint(UtilOld.vrToPlatformPoint(ref mScene, new OpenTK.Vector3(controller_pZ.X, controller_pZ.Y, controller_pZ.Z)));
             Rhino.Geometry.Vector3d direction = new Rhino.Geometry.Vector3d(controller_pZRhin.X - controller_pRhino.X, controller_pZRhin.Y - controller_pRhino.Y, controller_pZRhin.Z - controller_pRhino.Z);
 
             if (drawnType != DrawnType.In3D)
             {
-                Util.rayCasting(controller_pRhino, direction, ref rayCastingObjs, ref projectP, out targetPRhObjID);
+                UtilOld.rayCasting(controller_pRhino, direction, ref rayCastingObjs, ref projectP, out targetPRhObjID);
             }
             else
             {
@@ -219,10 +219,10 @@ namespace SparrowHawk.Interaction
             if(pointMarkers.Count == 0 && targetPRhObjID != Guid.Empty)
             {
                 computeContourCurve();
-                Util.snapToPoints(ref projectP, ref snapPointsList);
+                UtilOld.snapToPoints(ref projectP, ref snapPointsList);
             }       
 
-            Vector3 projectPVR = Util.platformToVRPoint(ref mScene, Util.RhinoToOpenTKPoint(projectP));
+            Vector3 projectPVR = UtilOld.platformToVRPoint(ref mScene, UtilOld.RhinoToOpenTKPoint(projectP));
             if (drawnType != DrawnType.In3D)
             {
                 OpenTK.Matrix4 t = OpenTK.Matrix4.CreateTranslation(projectPVR);
@@ -244,15 +244,15 @@ namespace SparrowHawk.Interaction
             //moving XYZ planes
             if (currentState == State.MOVEPLANE)
             {
-                OpenTK.Vector3 controllerVector = Util.vrToPlatformPoint(ref mScene, new OpenTK.Vector3(controller_p.X, controller_p.Y, controller_p.Z)) - Util.RhinoToOpenTKPoint(moveControlerOrigin);
+                OpenTK.Vector3 controllerVector = UtilOld.vrToPlatformPoint(ref mScene, new OpenTK.Vector3(controller_p.X, controller_p.Y, controller_p.Z)) - UtilOld.RhinoToOpenTKPoint(moveControlerOrigin);
              
-                float translate = OpenTK.Vector3.Dot(controllerVector, Util.RhinoToOpenTKVector(planeNormal)) / (float)planeNormal.Length;
+                float translate = OpenTK.Vector3.Dot(controllerVector, UtilOld.RhinoToOpenTKVector(planeNormal)) / (float)planeNormal.Length;
                 float relTranslate = translate - lastTranslate;
                 lastTranslate = translate;
 
                 Matrix4 transM = Matrix4.CreateTranslation(new Vector3(relTranslate * (float)planeNormal.X, relTranslate * (float)planeNormal.Y, relTranslate * (float)planeNormal.Z));
                 transM.Transpose();
-                Util.updateRhinoObjectSceneNode(ref mScene, ref movePlaneRef, Util.OpenTKToRhinoTransform(transM));
+                UtilOld.updateRhinoObjectSceneNode(ref mScene, ref movePlaneRef, UtilOld.OpenTKToRhinoTransform(transM));
                 
             }
 
@@ -273,15 +273,15 @@ namespace SparrowHawk.Interaction
             rayCastingObjs.Add(pointOnObjRef);
 
             //testing
-            Vector3 projectPVR = Util.platformToVRPoint(ref mScene, Util.RhinoToOpenTKPoint(projectP));
-            mScene.iPointList.Add(Util.platformToVRPoint(ref mScene, projectPVR)); //not use at the current version, point is VR coordinate
+            Vector3 projectPVR = UtilOld.platformToVRPoint(ref mScene, UtilOld.RhinoToOpenTKPoint(projectP));
+            mScene.iPointList.Add(UtilOld.platformToVRPoint(ref mScene, projectPVR)); //not use at the current version, point is VR coordinate
             pointsList.Add(projectP);
 
             //render edit points in VR
             Geometry.Geometry geo = new Geometry.DrawPointMarker(new Vector3(0, 0, 0));
             Material.Material m = new Material.SingleColorMaterial(0, 1, 0, 1);
             SceneNode editPointSN;
-            Util.MarkPointVR(ref mScene, projectPVR, ref geo, ref m, out editPointSN);
+            UtilOld.MarkPointVR(ref mScene, projectPVR, ref geo, ref m, out editPointSN);
             pointMarkers.Add(editPointSN);
 
             //TODO-hide two other design plane
@@ -289,7 +289,7 @@ namespace SparrowHawk.Interaction
             {
                 if (pointOnObjRef != null && drawnType == DrawnType.Plane)
                 {
-                    Util.hideOtherPlanes(ref mScene, pointOnObjRef.Object().Attributes.Name);
+                    UtilOld.hideOtherPlanes(ref mScene, pointOnObjRef.Object().Attributes.Name);
                     computeContourCurve();
                 }
                 else if (pointOnObjRef != null && drawnType == DrawnType.Surface)
@@ -367,7 +367,7 @@ namespace SparrowHawk.Interaction
                     PlaneSurface plane_surface = new PlaneSurface(newPlane, new Interval(-size, size), new Interval(-size, size));
                     Brep newPlaneBrep = Brep.CreateFromSurface(plane_surface);
 
-                    Guid newPlaneID = Util.addRhinoObject(ref mScene, ref newPlaneBrep, "MoveP");
+                    Guid newPlaneID = UtilOld.addRhinoObject(ref mScene, ref newPlaneBrep, "MoveP");
                     //might be better to use Replace(), just need to be careful about the referece count
                     pointOnObjRef = null;
                     pointOnObjRef = new ObjRef(newPlaneID);
@@ -408,20 +408,20 @@ namespace SparrowHawk.Interaction
                 mScene.xyPlane.resetOrgin();
                 mScene.yzPlane.resetOrgin();
                 mScene.xzPlane.resetOrgin();
-                Util.setPlaneAlpha(ref mScene, 0.0f);
+                UtilOld.setPlaneAlpha(ref mScene, 0.0f);
             }
 
             for (int i = 0; i < pointMarkers.Count; i++)
             {
                 SceneNode sn = pointMarkers[i];
-                Util.removeSceneNode(ref mScene, ref sn);
+                UtilOld.removeSceneNode(ref mScene, ref sn);
             }
 
             pointMarkers.Clear();
             pointsList.Clear();
 
             //clear drawPoint
-            Util.removeSceneNode(ref mScene, ref drawPoint);
+            UtilOld.removeSceneNode(ref mScene, ref drawPoint);
           
         }
 
@@ -433,20 +433,20 @@ namespace SparrowHawk.Interaction
                 mScene.xyPlane.resetOrgin();
                 mScene.yzPlane.resetOrgin();
                 mScene.xzPlane.resetOrgin();
-                Util.setPlaneAlpha(ref mScene, 0.0f);
+                UtilOld.setPlaneAlpha(ref mScene, 0.0f);
             }
 
             for (int i = 0; i < pointMarkers.Count; i++)
             {
                 SceneNode sn = pointMarkers[i];
-                Util.removeSceneNode(ref mScene, ref sn);
+                UtilOld.removeSceneNode(ref mScene, ref sn);
             }
 
             pointMarkers.Clear();
             pointsList.Clear();
 
             //clear drawPoint
-            Util.removeSceneNode(ref mScene, ref drawPoint);
+            UtilOld.removeSceneNode(ref mScene, ref drawPoint);
 
         }
 
@@ -476,10 +476,10 @@ namespace SparrowHawk.Interaction
                 planeNormal = new Rhino.Geometry.Vector3d(0, 1, 0);
             }
 
-            OpenTK.Vector4 controller_p = Util.getControllerTipPosition(ref mScene, primaryControllerIdx == mScene.leftControllerIdx) * new OpenTK.Vector4(0, 0, 0, 1);
-            OpenTK.Vector3 controllerVector = Util.vrToPlatformPoint(ref mScene, new OpenTK.Vector3(controller_p.X, controller_p.Y, controller_p.Z));
+            OpenTK.Vector4 controller_p = UtilOld.getControllerTipPosition(ref mScene, primaryControllerIdx == mScene.leftControllerIdx) * new OpenTK.Vector4(0, 0, 0, 1);
+            OpenTK.Vector3 controllerVector = UtilOld.vrToPlatformPoint(ref mScene, new OpenTK.Vector3(controller_p.X, controller_p.Y, controller_p.Z));
 
-            float translate = OpenTK.Vector3.Dot(controllerVector, Util.RhinoToOpenTKVector(planeNormal)) / (float)planeNormal.Length;
+            float translate = OpenTK.Vector3.Dot(controllerVector, UtilOld.RhinoToOpenTKVector(planeNormal)) / (float)planeNormal.Length;
             //move from the porjection point not origin
             moveControlerOrigin = new Point3d(0 + translate * planeNormal.X, 0 + translate * planeNormal.Y, 0 + translate * planeNormal.Z);
 

@@ -128,7 +128,8 @@
     <Compile Include="SparrowHawkCommand.cs" />
     <Compile Include="SparrowHawkPlugIn.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Util.cs" />
+    <Compile Include="Util\Math.cs" />
+    <Compile Include="Util\Util.cs" />
     <Compile Include="VrApp.cs" />
     <Compile Include="VrGame.cs" />
     <Compile Include="VrRenderer.cs" />
