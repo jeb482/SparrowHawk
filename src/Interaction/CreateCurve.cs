@@ -15,7 +15,7 @@ namespace SparrowHawk.Interaction
     {
         public enum State
         {
-            READY = 0, PAINT = 1, MOVEPLANE =2, END = 3
+            READY = 0, DRAW = 1, MOVEPLANE =2, END = 3
         };
 
         protected State currentState;
@@ -82,16 +82,10 @@ namespace SparrowHawk.Interaction
         string oldPlaneOrigin;
         string oldPlaneNormal;
 
-        public CreateCurve(ref Scene scene) : base(ref scene)
-        {
-            stroke_g = new Geometry.GeometryStroke(ref mScene);
-            stroke_m = new Material.SingleColorMaterial(1, 0, 0, 1);
-            currentState = State.READY;
-        }
+        
 
         public CreateCurve(ref Scene scene, bool _isClosed, CurveID curveID) : base(ref scene)
         {
-            mScene = scene;
             beforeCurveCount = mScene.iCurveList.Count;
             stroke_g = new Geometry.GeometryStroke(ref mScene);
             stroke_m = new Material.SingleColorMaterial(1, 0, 0, 1);
@@ -334,7 +328,7 @@ namespace SparrowHawk.Interaction
                 return;
             }
 
-
+            // Clean this monstrosity
             OpenTK.Vector4 controller_p = Util.getControllerTipPosition(ref mScene, primaryDeviceIndex == mScene.leftControllerIdx) * new OpenTK.Vector4(0, 0, 0, 1);
             OpenTK.Vector4 controller_pZ = Util.getControllerTipPosition(ref mScene, primaryDeviceIndex == mScene.leftControllerIdx) * new OpenTK.Vector4(0, 0, -1, 1);
             Point3d controller_pRhino = Util.openTkToRhinoPoint(Util.vrToPlatformPoint(ref mScene, new OpenTK.Vector3(controller_p.X, controller_p.Y, controller_p.Z)));
@@ -350,7 +344,7 @@ namespace SparrowHawk.Interaction
             }
 
             //only snap for the first drawing point
-            if (currentState != State.PAINT && snapPointsList.Count > 0)
+            if (currentState != State.DRAW && snapPointsList.Count > 0)
             {
                 if (Util.snapToPoints(ref projectP, ref snapPointsList) != -1)
                 {
@@ -401,7 +395,7 @@ namespace SparrowHawk.Interaction
 
 
 
-            if (currentState != State.PAINT)
+            if (currentState != State.DRAW)
             {
                 return;
             }else 
@@ -658,7 +652,7 @@ namespace SparrowHawk.Interaction
                 {
                     stroke_g = new Geometry.GeometryStroke(ref mScene);
                     reducePoints = new List<Vector3>();
-                    currentState = State.PAINT;
+                    currentState = State.DRAW;
                 }
                 else
                 {
@@ -674,7 +668,7 @@ namespace SparrowHawk.Interaction
                         rayCastingObjs.Add(curveOnObjRef);
                         stroke_g = new Geometry.GeometryStroke(ref mScene);
                         reducePoints = new List<Vector3>();
-                        currentState = State.PAINT;
+                        currentState = State.DRAW;
 
                         //TODO- figure out why we do this here
                         if (drawnType == DrawnType.Plane)
@@ -743,7 +737,7 @@ namespace SparrowHawk.Interaction
         protected override void onReleaseOculusTrigger(ref VREvent_t vrEvent)
         {
 
-            if (currentState == State.PAINT)
+            if (currentState == State.DRAW)
             {  
                 //simplfy the curve first before doing next interaction
                 if (((Geometry.GeometryStroke)(stroke_g)).mPoints.Count >= 2)
@@ -824,14 +818,11 @@ namespace SparrowHawk.Interaction
         {
             if (drawnType == DrawnType.Plane)
             {
-
                 //resetPlane
                 mScene.xyPlane.resetOrgin();
                 mScene.yzPlane.resetOrgin();
                 mScene.xzPlane.resetOrgin();
-
                 Util.setPlaneAlpha(ref mScene, 0.0f);            
-
             }
 
             Util.removeSceneNode(ref mScene, ref drawPoint);

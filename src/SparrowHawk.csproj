@@ -98,6 +98,7 @@
     <Compile Include="Interaction\CreatePlane.cs" />
     <Compile Include="Interaction\Cut.cs" />
     <Compile Include="Interaction\EditPoint.cs" />
+    <Compile Include="Interaction\PointSource.cs" />
     <Compile Include="Interaction\Stroke.cs" />
     <Compile Include="Material\LambertianMaterial.cs" />
     <Compile Include="Material\RadialMenuMaterial.cs" />

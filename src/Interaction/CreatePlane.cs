@@ -52,8 +52,6 @@ namespace SparrowHawk.Interaction
 
         public CreatePlane(ref Scene scene, CurveID curveID) : base(ref scene)
         {
-            
-            mScene = scene;
             beforeCurveCount = mScene.iCurveList.Count;
 
             mesh_m = new Material.SingleColorMaterial(0.5f, 0.5f, 0, 0.4f);
@@ -68,21 +66,6 @@ namespace SparrowHawk.Interaction
                 shapeType = (ShapeType)mScene.selectionDic[SelectionKey.Profile2Shape];
                 drawnType = (DrawnType)mScene.selectionDic[SelectionKey.Profile2On];
             }
-
-            mNumSectors = 4;
-            mCurrentSelection = -1;
-
-            if (scene.isOculus)
-            {
-                mMinSelectionRadius = 0.2f;
-                //mOuterSelectionRadius = 0.8f;
-            }
-            else
-            {
-                mMinSelectionRadius = 0.4f;
-                //mOuterSelectionRadius = 0.6f;
-            }
-
         }
 
         public float getAngularMenuOffset(int numOptions)
