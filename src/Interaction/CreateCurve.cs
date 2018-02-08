@@ -742,13 +742,26 @@ namespace SparrowHawk.Interaction
                 //simplfy the curve first before doing next interaction
                 if (((Geometry.GeometryStroke)(stroke_g)).mPoints.Count >= 2)
                 {
-                   
+
                     //simplifyCurve(ref ((Geometry.GeometryStroke)(stroke_g)).mPoints);
 
                     //add to Scene curve object ,targetRhobj and check the next interaction
 
+                    //since dynamicRender  == "none" then it didn't enter generateModel function
+                    if (dynamicRender == "none")
+                    {
+                        if (drawnType != DrawnType.In3D && curveOnObjRef != null)
+                        {
+                            simplifyCurve(ref ((Geometry.GeometryStroke)(stroke_g)).mPoints);
+                            simplifiedCurve.SetUserString(CurveData.CurveOnObj.ToString(), curveOnObjRef.ObjectId.ToString());
+                        }
+
+                        localListCurve.Add(simplifiedCurve);
+
+                    }
+
                     //generate new curveOnObj for mvoingPlane cases and move all moveplanes back to original position later
-                    if(drawnType == DrawnType.Plane)
+                    if (drawnType == DrawnType.Plane)
                     {
                         Rhino.Geometry.Vector3d newNormal = new Rhino.Geometry.Vector3d(); ;
                         Point3d newOrigin = new Point3d();
@@ -780,22 +793,10 @@ namespace SparrowHawk.Interaction
                         curveOnObjRef = new ObjRef(newPlaneID);
 
                         //update curveOnObj to new plane
-                        localListCurve[localListCurve.Count-1].SetUserString(CurveData.CurveOnObj.ToString(), curveOnObjRef.ObjectId.ToString());
-                    }
-
-                    //since dynamicRender  == "none" then it didn't enter generateModel function
-                    if (dynamicRender == "none")
-                    {
-                        if (drawnType != DrawnType.In3D && curveOnObjRef != null)
-                        {
-                            simplifyCurve(ref ((Geometry.GeometryStroke)(stroke_g)).mPoints);
-                            simplifiedCurve.SetUserString(CurveData.CurveOnObj.ToString(), curveOnObjRef.ObjectId.ToString());
-                        }
-
-                        localListCurve.Add(simplifiedCurve);
+                        localListCurve[localListCurve.Count - 1].SetUserString(CurveData.CurveOnObj.ToString(), curveOnObjRef.ObjectId.ToString());
 
                     }
-
+                  
                     //call next interaction in the chain
                     currentState = State.END;
                     afterCurveCount = localListCurve.Count;
