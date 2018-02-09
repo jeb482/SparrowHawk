@@ -163,7 +163,7 @@ namespace SparrowHawk
             //set default interaction to main menu
             if (mScene.interactionStackEmpty())
             {
-                mScene.pushInteraction(new Interaction.MarkingMenu(ref mScene, Scene.MenuLayout.MainMenu));
+                mScene.pushInteraction(new Interaction.MarkingMenu(ref mScene, Scene.MenuLayout2.MainMenu));
             }
 
             //TODO- use activate() instead of init()

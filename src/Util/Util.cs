@@ -795,7 +795,7 @@ namespace SparrowHawk
             {
                 mScene.staticGeometry.children.Remove(SN);
             }
-            mScene.rhinoDoc.Views.Redraw();
+            //mScene.rhinoDoc.Views.Redraw();
         }
 
         public static void removeRhinoObjectSceneNode(ref Scene mScene, Guid guid, bool isStatic = false)
@@ -903,7 +903,19 @@ namespace SparrowHawk
 
         public static Brep RevolveFunc(ref Scene mScene, ref List<Curve> curveList)
         {
-            Line axis = new Line(new Point3d(0, 0, 0), new Point3d(0, 0, 1));
+            Line axis = new Line();
+            if ((AxisType)mScene.selectionDic[SelectionKey.RevolveAxis] == AxisType.worldX)
+            {
+                axis = new Line(new Point3d(0, 0, 0), new Point3d(1, 0, 0));
+            }
+            else if ((AxisType)mScene.selectionDic[SelectionKey.RevolveAxis] == AxisType.worldY)
+            {
+                axis = new Line(new Point3d(0, 0, 0), new Point3d(0, 1, 0));
+            }
+            else
+            {
+                axis = new Line(new Point3d(0, 0, 0), new Point3d(0, 0, 1));
+            }
             RevSurface revsrf = RevSurface.Create(curveList[curveList.Count - 1], axis);
             return Brep.CreateFromRevSurface(revsrf, false, false);
         }
@@ -926,6 +938,7 @@ namespace SparrowHawk
             return extrusion.ToBrep();
         }
 
+        /*
         public static Brep LoftFunc(ref Scene mScene, ref List<Curve> curveList)
         {
             List<Curve> profileCurves = new List<Curve>();
@@ -935,7 +948,6 @@ namespace SparrowHawk
             {
                 profileCurves.Add(curve);
             }
-
             //pass the user data to new curve
             string oldCurveOnObjID0 = profileCurves[0].GetUserString(CurveData.CurveOnObj.ToString());
             string oldPlaneOrigin0 = profileCurves[0].GetUserString(CurveData.PlaneOrigin.ToString());
@@ -1069,6 +1081,18 @@ namespace SparrowHawk
             }
 
             Brep[] loftBreps = Brep.CreateFromLoft(profileCurves, Point3d.Unset, Point3d.Unset, LoftType.Tight, false);
+            Brep brep = new Brep();
+            foreach (Brep bp in loftBreps)
+            {
+                brep.Append(bp);
+            }
+
+            return brep;
+        }
+        */
+        public static Brep LoftFunc(ref Scene mScene, ref List<Curve> curveList)
+        {
+            Brep[] loftBreps = Brep.CreateFromLoft(curveList, Point3d.Unset, Point3d.Unset, LoftType.Tight, false);
             Brep brep = new Brep();
             foreach (Brep bp in loftBreps)
             {

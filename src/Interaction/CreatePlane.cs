@@ -1,4 +1,5 @@
 ﻿using OpenTK;
+using Rhino.DocObjects;
 using Rhino.Geometry;
 using System;
 using System.Collections.Generic;
@@ -30,6 +31,7 @@ namespace SparrowHawk.Interaction
         float width = 40;
         float height = 30;
         float delta = 0.6f;
+        float minLength = 10;
 
         private Plane modelPlane;
         private float planeSize = 240;
@@ -44,6 +46,8 @@ namespace SparrowHawk.Interaction
 
         private int beforeCurveCount = 0;
         private int afterCurveCount = 0;
+
+        protected Rhino.DocObjects.ObjRef pointOnObjRef;
 
         public CreatePlane(ref Scene scene) : base(ref scene)
         {
@@ -108,6 +112,16 @@ namespace SparrowHawk.Interaction
             if (mScene != null && (afterCurveCount - beforeCurveCount) > 0)
             {
                 //don't have curveOnObject don't need to do anything
+                if (mScene.iCurveList[mScene.iCurveList.Count - 1].GetUserString(CurveData.CurveOnObj.ToString()) != "")
+                {
+                    Guid curveOnObjId = new Guid(mScene.iCurveList[mScene.iCurveList.Count - 1].GetUserString(CurveData.CurveOnObj.ToString()));
+                    ObjRef curveOnObjRef = new ObjRef(curveOnObjId);
+                    if (curveOnObjRef.Object().Attributes.Name.Contains("MoveP"))
+                    {
+                        UtilOld.removeRhinoObject(ref mScene, curveOnObjRef.ObjectId);
+                    }
+
+                }
                 mScene.iCurveList.RemoveAt(mScene.iCurveList.Count - 1);             
                 if (renderObjSN != null)
                 {
@@ -251,9 +265,9 @@ namespace SparrowHawk.Interaction
                 else if (sector == 3)
                 {
                     radius -= delta;
-                    if (radius <= 0)
+                    if (radius <= minLength)
                     {
-                        radius = 1;
+                        radius = minLength;
                     }
                 }
             }
@@ -266,9 +280,9 @@ namespace SparrowHawk.Interaction
                 else if (sector == 3)
                 {
                     width -= delta;
-                    if (width <= 0)
+                    if (width <= minLength*2)
                     {
-                        width = 1;
+                        width = minLength*2;
                     }
                 }
                 else if (sector == 2)
@@ -278,9 +292,9 @@ namespace SparrowHawk.Interaction
                 else if (sector == 4)
                 {
                     height -= delta;
-                    if (height <= 0)
+                    if (height <= minLength*2)
                     {
-                        height = 1;
+                        height = minLength*2;
                     }
                 }
             }
@@ -380,6 +394,9 @@ namespace SparrowHawk.Interaction
                     {
                         planeCenter = circle.Center;
                     }
+
+                    mScene.iPointList.Add(UtilOld.platformToVRPoint(ref mScene, UtilOld.RhinoToOpenTKPoint(circle.Center)));
+                    mScene.iPointList.Add(UtilOld.platformToVRPoint(ref mScene, UtilOld.RhinoToOpenTKPoint(circle.PointAt(0))));
                 }
                 else if (shapeType == ShapeType.Rect)
                 {
@@ -388,7 +405,10 @@ namespace SparrowHawk.Interaction
                     {
                         Rectangle3d rect = Rectangle3d.CreateFromPolyline(polyline);
                         planeCenter = rect.Center;
+                        mScene.iPointList.Add(UtilOld.platformToVRPoint(ref mScene, UtilOld.RhinoToOpenTKPoint(rect.Center)));
+                        mScene.iPointList.Add(UtilOld.platformToVRPoint(ref mScene, UtilOld.RhinoToOpenTKPoint(rect.Corner(3))));
                     }
+                    
                 }
             }
 
@@ -404,6 +424,15 @@ namespace SparrowHawk.Interaction
                 }
                 tolerance++;
             }
+
+            int size = 240;
+            PlaneSurface plane_surface = new PlaneSurface(curvePlane, new Interval(-size, size), new Interval(-size, size));
+            Brep newPlaneBrep = Brep.CreateFromSurface(plane_surface);
+
+            Guid newPlaneID = UtilOld.addRhinoObject(ref mScene, ref newPlaneBrep, "3DP");
+            //might be better to use Replace(), just need to be careful about the referece count
+            pointOnObjRef = null;
+            pointOnObjRef = new ObjRef(newPlaneID);
 
 
             //creating perendicular plane
@@ -465,6 +494,7 @@ namespace SparrowHawk.Interaction
 
 
             //add icurveList since we don't use EditPoint2 for circle and rect
+            modelcurve.SetUserString(CurveData.CurveOnObj.ToString(), newPlaneID.ToString());
             modelcurve.SetUserString(CurveData.PlaneOrigin.ToString(), curvePlane.Origin.ToString());
             modelcurve.SetUserString(CurveData.PlaneNormal.ToString(), curvePlane.Normal.ToString());
 

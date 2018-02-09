@@ -252,6 +252,11 @@ namespace SparrowHawk.Interaction
             
                     Vector3 railPlaneNormal = UtilOld.RhinoToOpenTKVector(UtilOld.getVectorfromString(mScene.iCurveList[mScene.iCurveList.Count - 1].GetUserString(CurveData.PlaneNormal.ToString())));
                     OpenTK.Vector3 worldUpAxis = new Vector3(0, 0, 1);
+                    //trick to avoid cross product of 2 parallel vetors
+                    if(railPlaneNormal.X == 0 && railPlaneNormal.Y == 0 && railPlaneNormal.Z == 1)
+                    {
+                        railPlaneNormal = new Vector3(0, 0.005f, 1);
+                    }
                     Plane railPlane = new Plane(mScene.iCurveList[mScene.iCurveList.Count - 1].GetBoundingBox(true).Center, UtilOld.openTkToRhinoVector(Vector3.Cross(railPlaneNormal, worldUpAxis)));
                     float planeSize = 240;
                     PlaneSurface plane_surface2 = new PlaneSurface(railPlane, new Interval(-planeSize, planeSize), new Interval(-planeSize, planeSize));
@@ -473,17 +478,16 @@ namespace SparrowHawk.Interaction
                         simplifiedCurve.SetUserString(CurveData.CurveOnObj.ToString(),  curveOnObjRef.ObjectId.ToString());
                         simplifiedCurve.SetUserString(CurveData.PlaneOrigin.ToString(), curvePlane.Origin.ToString());
                         simplifiedCurve.SetUserString(CurveData.PlaneNormal.ToString(), curvePlane.Normal.ToString());
-                    }
-                 
+                    }                 
                     mScene.iCurveList.Add(simplifiedCurve);
 
                 }
                 else
                 {
                     //get the curve info for later update use
-                    string oldCurveOnObjID = mScene.iCurveList[mScene.iCurveList.Count - 1].GetUserString(CurveData.CurveOnObj.ToString());
-                    string oldPlaneOrigin = mScene.iCurveList[mScene.iCurveList.Count - 1].GetUserString(CurveData.PlaneOrigin.ToString());
-                    string oldPlaneNormal = mScene.iCurveList[mScene.iCurveList.Count - 1].GetUserString(CurveData.PlaneNormal.ToString());
+                    oldCurveOnObjID = mScene.iCurveList[mScene.iCurveList.Count - 1].GetUserString(CurveData.CurveOnObj.ToString());
+                    oldPlaneOrigin = mScene.iCurveList[mScene.iCurveList.Count - 1].GetUserString(CurveData.PlaneOrigin.ToString());
+                    oldPlaneNormal = mScene.iCurveList[mScene.iCurveList.Count - 1].GetUserString(CurveData.PlaneNormal.ToString());
 
                     simplifiedCurve.SetUserString(CurveData.CurveOnObj.ToString(), oldCurveOnObjID);
                     simplifiedCurve.SetUserString(CurveData.PlaneOrigin.ToString(), oldPlaneOrigin);
@@ -494,6 +498,7 @@ namespace SparrowHawk.Interaction
 
                 dynamicBrep = UtilOld.RevolveFunc(ref mScene, ref mScene.iCurveList);
             }
+            //TODO- fix the bug that when release, it accidently assign the old plane id to the curve.
             else if (dynamicRender == "Loft")
             {
                 if (mScene.iCurveList.Count == 1)
@@ -505,14 +510,13 @@ namespace SparrowHawk.Interaction
                         simplifiedCurve.SetUserString(CurveData.PlaneNormal.ToString(), curvePlane.Normal.ToString());
                     }
                     mScene.iCurveList.Add(simplifiedCurve);
-                    //get the curve info for later update use
-                    oldCurveOnObjID = mScene.iCurveList[mScene.iCurveList.Count - 1].GetUserString(CurveData.CurveOnObj.ToString());
-                    oldPlaneOrigin = mScene.iCurveList[mScene.iCurveList.Count - 1].GetUserString(CurveData.PlaneOrigin.ToString());
-                    oldPlaneNormal = mScene.iCurveList[mScene.iCurveList.Count - 1].GetUserString(CurveData.PlaneNormal.ToString());
+
                 }
                 else
                 {
-
+                    oldCurveOnObjID = mScene.iCurveList[mScene.iCurveList.Count - 1].GetUserString(CurveData.CurveOnObj.ToString());
+                    oldPlaneOrigin = mScene.iCurveList[mScene.iCurveList.Count - 1].GetUserString(CurveData.PlaneOrigin.ToString());
+                    oldPlaneNormal = mScene.iCurveList[mScene.iCurveList.Count - 1].GetUserString(CurveData.PlaneNormal.ToString());
 
                     simplifiedCurve.SetUserString(CurveData.CurveOnObj.ToString(), oldCurveOnObjID);
                     simplifiedCurve.SetUserString(CurveData.PlaneOrigin.ToString(), oldPlaneOrigin);
@@ -548,16 +552,13 @@ namespace SparrowHawk.Interaction
                         editCurve.SetUserString(CurveData.PlaneOrigin.ToString(), curvePlane.Origin.ToString());
                         editCurve.SetUserString(CurveData.PlaneNormal.ToString(), curvePlane.Normal.ToString());
                     }
-
                     localListCurve.Add(editCurve);
-                    //get the curve info for later update use
-                    oldCurveOnObjID = localListCurve[localListCurve.Count - 1].GetUserString(CurveData.CurveOnObj.ToString());
-                    oldPlaneOrigin = localListCurve[localListCurve.Count - 1].GetUserString(CurveData.PlaneOrigin.ToString());
-                    oldPlaneNormal = localListCurve[localListCurve.Count - 1].GetUserString(CurveData.PlaneNormal.ToString());
                 }
                 else
                 {
-
+                    oldCurveOnObjID = mScene.iCurveList[mScene.iCurveList.Count - 1].GetUserString(CurveData.CurveOnObj.ToString());
+                    oldPlaneOrigin = mScene.iCurveList[mScene.iCurveList.Count - 1].GetUserString(CurveData.PlaneOrigin.ToString());
+                    oldPlaneNormal = mScene.iCurveList[mScene.iCurveList.Count - 1].GetUserString(CurveData.PlaneNormal.ToString());
 
                     editCurve.SetUserString(CurveData.CurveOnObj.ToString(), oldCurveOnObjID);
                     editCurve.SetUserString(CurveData.PlaneOrigin.ToString(), oldPlaneOrigin);
@@ -579,14 +580,15 @@ namespace SparrowHawk.Interaction
                         simplifiedCurve.SetUserString(CurveData.PlaneNormal.ToString(), curvePlane.Normal.ToString());
                     }
                     localListCurve.Add(simplifiedCurve);
-                    //get the curve info for later update use
-                    oldCurveOnObjID = localListCurve[localListCurve.Count - 1].GetUserString(CurveData.CurveOnObj.ToString());
-                    oldPlaneOrigin = localListCurve[localListCurve.Count - 1].GetUserString(CurveData.PlaneOrigin.ToString());
-                    oldPlaneNormal = localListCurve[localListCurve.Count - 1].GetUserString(CurveData.PlaneNormal.ToString());
 
                 }
                 else
                 {
+
+                    oldCurveOnObjID = mScene.iCurveList[mScene.iCurveList.Count - 1].GetUserString(CurveData.CurveOnObj.ToString());
+                    oldPlaneOrigin = mScene.iCurveList[mScene.iCurveList.Count - 1].GetUserString(CurveData.PlaneOrigin.ToString());
+                    oldPlaneNormal = mScene.iCurveList[mScene.iCurveList.Count - 1].GetUserString(CurveData.PlaneNormal.ToString());
+
                     simplifiedCurve.SetUserString(CurveData.CurveOnObj.ToString(), oldCurveOnObjID);
                     simplifiedCurve.SetUserString(CurveData.PlaneOrigin.ToString(), oldPlaneOrigin);
                     simplifiedCurve.SetUserString(CurveData.PlaneNormal.ToString(), oldPlaneNormal);
@@ -743,7 +745,7 @@ namespace SparrowHawk.Interaction
                 if (((Geometry.GeometryStroke)(stroke_g)).mPoints.Count >= 2)
                 {
 
-                    //simplifyCurve(ref ((Geometry.GeometryStroke)(stroke_g)).mPoints);
+                    simplifyCurve(ref ((Geometry.GeometryStroke)(stroke_g)).mPoints);
 
                     //add to Scene curve object ,targetRhobj and check the next interaction
 
@@ -752,7 +754,7 @@ namespace SparrowHawk.Interaction
                     {
                         if (drawnType != DrawnType.In3D && curveOnObjRef != null)
                         {
-                            simplifyCurve(ref ((Geometry.GeometryStroke)(stroke_g)).mPoints);
+                            //simplifyCurve(ref ((Geometry.GeometryStroke)(stroke_g)).mPoints);
                             simplifiedCurve.SetUserString(CurveData.CurveOnObj.ToString(), curveOnObjRef.ObjectId.ToString());
                         }
 
@@ -793,11 +795,27 @@ namespace SparrowHawk.Interaction
                         curveOnObjRef = new ObjRef(newPlaneID);
 
                         //update curveOnObj to new plane
-                        localListCurve[localListCurve.Count - 1].SetUserString(CurveData.CurveOnObj.ToString(), curveOnObjRef.ObjectId.ToString());
+                        if(localListCurve.Count > 0)
+                        {
+                            localListCurve[localListCurve.Count - 1].SetUserString(CurveData.CurveOnObj.ToString(), curveOnObjRef.ObjectId.ToString());
+                        }else
+                        {
+                            localListCurve.Add(simplifiedCurve);
+                            localListCurve[localListCurve.Count - 1].SetUserString(CurveData.CurveOnObj.ToString(), curveOnObjRef.ObjectId.ToString());
+                        }
+                        
 
                     }
-                  
+
                     //call next interaction in the chain
+                    //testing if mScene.iCurveList update
+                    /*
+                    mScene.iCurveList.Clear();
+                    for (int i =0; i < localListCurve.Count; i++)
+                    {
+                        mScene.iCurveList.Add(localListCurve[i]);
+                    }*/               
+
                     currentState = State.END;
                     afterCurveCount = localListCurve.Count;
                     if (dynamicRender != "none" && backgroundStart == false)

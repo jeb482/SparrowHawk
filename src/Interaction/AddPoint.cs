@@ -268,9 +268,12 @@ namespace SparrowHawk.Interaction
             }
 
             pointOnObjRef = new ObjRef(targetPRhObjID);
-            //chage to only raycasting to the obj where we draw
-            rayCastingObjs.Clear();
-            rayCastingObjs.Add(pointOnObjRef);
+            //chage to only raycasting to the obj where we draw, if not snap to the origin
+            if (!(projectP.X == 0 && projectP.Y == 0 && projectP.Z == 0))
+            {
+                rayCastingObjs.Clear();
+                rayCastingObjs.Add(pointOnObjRef);
+            }
 
             //testing
             Vector3 projectPVR = UtilOld.platformToVRPoint(ref mScene, UtilOld.RhinoToOpenTKPoint(projectP));
@@ -289,7 +292,10 @@ namespace SparrowHawk.Interaction
             {
                 if (pointOnObjRef != null && drawnType == DrawnType.Plane)
                 {
-                    UtilOld.hideOtherPlanes(ref mScene, pointOnObjRef.Object().Attributes.Name);
+                    if (!(projectP.X == 0 && projectP.Y == 0 && projectP.Z == 0))
+                    {
+                        UtilOld.hideOtherPlanes(ref mScene, pointOnObjRef.Object().Attributes.Name);                  
+                    }
                     computeContourCurve();
                 }
                 else if (pointOnObjRef != null && drawnType == DrawnType.Surface)

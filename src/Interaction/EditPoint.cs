@@ -73,6 +73,7 @@ namespace SparrowHawk.Interaction
         float width = 0;
         float height = 0;
         float delta = 0.6f;
+        float minLength = 10;
 
         float mCurrentRadius;
         float mMinSelectionRadius;
@@ -229,6 +230,7 @@ namespace SparrowHawk.Interaction
             width = 0;
             height = 0;
             delta = 0.6f;
+            minLength = 10.0f;
 
             mCurrentRadius = 0;
             mMinSelectionRadius = 0;
@@ -279,17 +281,21 @@ namespace SparrowHawk.Interaction
             }
 
             //get the curve info for later update use
-            oldCurveOnObjID = mScene.iCurveList[mScene.iCurveList.Count - 1].GetUserString(CurveData.CurveOnObj.ToString());
-            oldPlaneOrigin = mScene.iCurveList[mScene.iCurveList.Count - 1].GetUserString(CurveData.PlaneOrigin.ToString());
-            oldPlaneNormal = mScene.iCurveList[mScene.iCurveList.Count - 1].GetUserString(CurveData.PlaneNormal.ToString());
+            if (!(drawnType == DrawnType.In3D && shapeType == ShapeType.Curve))
+            {
+                oldCurveOnObjID = mScene.iCurveList[mScene.iCurveList.Count - 1].GetUserString(CurveData.CurveOnObj.ToString());
+                oldPlaneOrigin = mScene.iCurveList[mScene.iCurveList.Count - 1].GetUserString(CurveData.PlaneOrigin.ToString());
+                oldPlaneNormal = mScene.iCurveList[mScene.iCurveList.Count - 1].GetUserString(CurveData.PlaneNormal.ToString());
+            }
 
             //mScene.selectionList[mScene.selectionList.Count - 1] how to detect 2nd profile?
             isEditCircle = (shapeType == ShapeType.Circle) ? true : false;
             isEditRect = (shapeType == ShapeType.Rect) ? true : false;
             if (drawnType == DrawnType.Plane || drawnType == DrawnType.Surface || drawnType == DrawnType.Reference)
                 onPlane = true;
-
-            if (onPlane)
+            
+            //TODO-fix the issuse when edit 3d circle and rect
+            if (onPlane || isEditCircle || isEditRect)
             {
                 UtilOld.showLaser(ref mScene, true);
                 //init rayCastingObjs
@@ -498,7 +504,7 @@ namespace SparrowHawk.Interaction
 
                 renderEditCurve();
                 updateEditCurve();
-
+                Rhino.RhinoApp.WriteLine("displacement: " + displacement);
                 //dynamic render model
                 if (backgroundStart == false && displacement > 10)
                 {
@@ -591,10 +597,12 @@ namespace SparrowHawk.Interaction
                 extrudeCurveP.Add(endP);
                 //update the edit curve
                 editCurve = Rhino.Geometry.NurbsCurve.Create(false, 1, extrudeCurveP.ToArray()); //need to edit editcurve as well for extrude
-
-                editCurve.SetUserString(CurveData.CurveOnObj.ToString(), oldCurveOnObjID);
-                editCurve.SetUserString(CurveData.PlaneOrigin.ToString(), oldPlaneOrigin);
-                editCurve.SetUserString(CurveData.PlaneNormal.ToString(), oldPlaneNormal);
+                if (drawnType != DrawnType.In3D)
+                {
+                    editCurve.SetUserString(CurveData.CurveOnObj.ToString(), oldCurveOnObjID);
+                    editCurve.SetUserString(CurveData.PlaneOrigin.ToString(), oldPlaneOrigin);
+                    editCurve.SetUserString(CurveData.PlaneNormal.ToString(), oldPlaneNormal);
+                }
                 //mScene.iCurveList[mScene.iCurveList.Count - 1] = editCurve;
                 localListCurve[localListCurve.Count - 1] = editCurve;
 
@@ -616,9 +624,12 @@ namespace SparrowHawk.Interaction
                     UtilOld.updateSceneNode(ref mScene, circle_s, ref mesh_m, "Circle", ref shapeSN);
 
                     //updating the iPointList and iCurveList
+                    //TODO -fix the issue that circle and rect need to update it's curve as well
+
                     circleCurve.SetUserString(CurveData.CurveOnObj.ToString(), oldCurveOnObjID);
                     circleCurve.SetUserString(CurveData.PlaneOrigin.ToString(), oldPlaneOrigin);
                     circleCurve.SetUserString(CurveData.PlaneNormal.ToString(), oldPlaneNormal);
+                    
                     //mScene.iCurveList[mScene.iCurveList.Count - 1] = circleCurve;
                     localListCurve[localListCurve.Count - 1] = circleCurve;
                     string testStr = localListCurve[localListCurve.Count - 1].GetUserString(CurveData.CurveOnObj.ToString());
@@ -647,9 +658,11 @@ namespace SparrowHawk.Interaction
                     UtilOld.updateSceneNode(ref mScene, rectBrep, ref mesh_m, "Rect", ref shapeSN);
 
                     //updating the iPointList and iCurveList
+
                     rectCurve.SetUserString(CurveData.CurveOnObj.ToString(), oldCurveOnObjID);
                     rectCurve.SetUserString(CurveData.PlaneOrigin.ToString(), oldPlaneOrigin);
                     rectCurve.SetUserString(CurveData.PlaneNormal.ToString(), oldPlaneNormal);
+                    
                     //mScene.iCurveList[mScene.iCurveList.Count - 1] = rectCurve;
                     localListCurve[localListCurve.Count - 1] = rectCurve;
                     mScene.iPointList[mScene.iPointList.Count - 2] = UtilOld.platformToVRPoint(ref mScene, new Vector3((float)rectCenter.X, (float)rectCenter.Y, (float)rectCenter.Z));
@@ -663,9 +676,12 @@ namespace SparrowHawk.Interaction
             }
             else
             {
-                editCurve.SetUserString(CurveData.CurveOnObj.ToString(), oldCurveOnObjID);
-                editCurve.SetUserString(CurveData.PlaneOrigin.ToString(), oldPlaneOrigin);
-                editCurve.SetUserString(CurveData.PlaneNormal.ToString(), oldPlaneNormal);
+                if (drawnType != DrawnType.In3D)
+                {
+                    editCurve.SetUserString(CurveData.CurveOnObj.ToString(), oldCurveOnObjID);
+                    editCurve.SetUserString(CurveData.PlaneOrigin.ToString(), oldPlaneOrigin);
+                    editCurve.SetUserString(CurveData.PlaneNormal.ToString(), oldPlaneNormal);
+                }
                 //mScene.iCurveList[mScene.iCurveList.Count - 1] = editCurve;
                 localListCurve[localListCurve.Count - 1] = editCurve;
             }
@@ -809,11 +825,11 @@ namespace SparrowHawk.Interaction
                 previewObjSN = null;
             }
 
-            //need to remove 2 shapeSN 
+            //need to remove 2 shapeSN and EditCurve
             for (int i = mScene.tableGeometry.children.Count - 1; i >= 0; i--)
             {
                 SceneNode sn = mScene.tableGeometry.children[i];
-                if(sn.name == "Circle" || sn.name == "Rect")
+                if(sn.name == "Circle" || sn.name == "Rect" || sn.name == "EditCurve")
                 {
                     mScene.tableGeometry.children.Remove(sn);
                 }
@@ -1233,9 +1249,9 @@ namespace SparrowHawk.Interaction
                 else if (sector == 3)
                 {
                     radius -= delta;
-                    if (radius <= 0)
+                    if (radius <= minLength)
                     {
-                        radius = 1;
+                        radius = minLength;
                     }
                 }
                 //TODO- need to change the curvePoint[1], find the direction and move the point directly
@@ -1263,9 +1279,9 @@ namespace SparrowHawk.Interaction
                 else if (sector == 3)
                 {
                     width -= delta;
-                    if (width <= 0)
+                    if (width <= minLength*2)
                     {
-                        width = 1;
+                        width = minLength*2;
                     }
                 }
                 else if (sector == 2)
@@ -1275,9 +1291,9 @@ namespace SparrowHawk.Interaction
                 else if (sector == 4)
                 {
                     height -= delta;
-                    if (height <= 0)
+                    if (height <= minLength*2)
                     {
-                        height = 1;
+                        height = minLength*2;
                     }
                 }
 
