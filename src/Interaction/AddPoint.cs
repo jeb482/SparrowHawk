@@ -298,6 +298,8 @@ namespace SparrowHawk.Interaction
                     }
                     computeContourCurve();
                 }
+                //TODO- how to find the curvePlane on the surface like teapot body, using the normal of first point?
+                //do we need to use different ways for patch surface and other generated surface
                 else if (pointOnObjRef != null && drawnType == DrawnType.Surface)
                 {
                     computeContourCurve();

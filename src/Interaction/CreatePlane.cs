@@ -335,27 +335,27 @@ namespace SparrowHawk.Interaction
 
            
             //fix the x and y axis of the model Plane
-            OpenTK.Vector4 controller_x1 = UtilOld.getControllerTipPosition(ref mScene, primaryControllerIdx == mScene.leftControllerIdx) * new OpenTK.Vector4(1, 0, -0.05f, 1);
-            OpenTK.Vector4 controller_y1 = UtilOld.getControllerTipPosition(ref mScene, primaryControllerIdx == mScene.leftControllerIdx) * new OpenTK.Vector4(0, 1, -0.05f, 1);
+            OpenTK.Vector4 controller_x1 = UtilOld.getControllerTipPosition(ref mScene, primaryControllerIdx == mScene.leftControllerIdx) * new OpenTK.Vector4(1, 0, 0, 1);
+            OpenTK.Vector4 controller_y1 = UtilOld.getControllerTipPosition(ref mScene, primaryControllerIdx == mScene.leftControllerIdx) * new OpenTK.Vector4(0, 1, 0, 1);
             Point3d controller_x1Rhino = UtilOld.openTkToRhinoPoint(UtilOld.vrToPlatformPoint(ref mScene, new OpenTK.Vector3(controller_x1.X, controller_x1.Y, controller_x1.Z)));
             Point3d controller_y1Rhino = UtilOld.openTkToRhinoPoint(UtilOld.vrToPlatformPoint(ref mScene, new OpenTK.Vector3(controller_y1.X, controller_y1.Y, controller_y1.Z)));
             
             OpenTK.Vector4 controller_o = UtilOld.getControllerTipPosition(ref mScene, primaryControllerIdx == mScene.leftControllerIdx) * new OpenTK.Vector4(0, 0, 0, 1);
             Point3d controller_oRhino = UtilOld.openTkToRhinoPoint(UtilOld.vrToPlatformPoint(ref mScene, new OpenTK.Vector3(controller_o.X, controller_o.Y, controller_o.Z)));
-            Rhino.Geometry.Vector3d normal = new Rhino.Geometry.Vector3d(controller_pZRhin.X - controller_o.X, controller_pZRhin.Y - controller_o.Y, controller_pZRhin.Z - controller_o.Z);
+            Rhino.Geometry.Vector3d normal = new Rhino.Geometry.Vector3d(controller_pZRhin.X - controller_oRhino.X, controller_pZRhin.Y - controller_oRhino.Y, controller_pZRhin.Z - controller_oRhino.Z);
             normal.Unitize();
             modelPlane = new Plane(controller_oRhino, normal);
             
             if (shapeType == ShapeType.Circle)
             {
-                Rhino.Geometry.Circle circle = new Rhino.Geometry.Circle(modelPlane, controller_pRhino, radius);
+                Rhino.Geometry.Circle circle = new Rhino.Geometry.Circle(modelPlane, controller_oRhino, radius);
                 modelcurve = circle.ToNurbsCurve();
             }
             else if (shapeType == ShapeType.Rect)
             {
-                Rhino.Geometry.Vector3d xAxis = new Rhino.Geometry.Vector3d(controller_x1Rhino.X - controller_pRhino.X, controller_x1Rhino.Y - controller_pRhino.Y, controller_x1Rhino.Z - controller_pRhino.Z);
+                Rhino.Geometry.Vector3d xAxis = new Rhino.Geometry.Vector3d(controller_x1Rhino.X - controller_oRhino.X, controller_x1Rhino.Y - controller_oRhino.Y, controller_x1Rhino.Z - controller_oRhino.Z);
                 xAxis.Unitize();
-                Rhino.Geometry.Vector3d yAxis = new Rhino.Geometry.Vector3d(controller_y1Rhino.X - controller_pRhino.X, controller_y1Rhino.Y - controller_pRhino.Y, controller_y1Rhino.Z - controller_pRhino.Z);
+                Rhino.Geometry.Vector3d yAxis = new Rhino.Geometry.Vector3d(controller_y1Rhino.X - controller_oRhino.X, controller_y1Rhino.Y - controller_oRhino.Y, controller_y1Rhino.Z - controller_oRhino.Z);
                 yAxis.Unitize();
                 
                 modelPlane.XAxis = xAxis;
