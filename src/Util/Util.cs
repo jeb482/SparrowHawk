@@ -856,7 +856,7 @@ namespace SparrowHawk
             foreach (Rhino.DocObjects.RhinoObject rhObj in mScene.rhinoDoc.Objects.GetObjectList(settings))
             {
                 //check for different drawing curve types
-                if (rhObj.Attributes.Name.Contains("panel"))
+                if (rhObj.Attributes.Name.Contains("panel") || rhObj.Attributes.Name.Contains("3DP"))
                 {
                     mScene.rhinoDoc.Objects.Delete(rhObj.Id, true);
                 }
@@ -938,7 +938,7 @@ namespace SparrowHawk
             return extrusion.ToBrep();
         }
 
-        /*
+        
         public static Brep LoftFunc(ref Scene mScene, ref List<Curve> curveList)
         {
             List<Curve> profileCurves = new List<Curve>();
@@ -957,23 +957,49 @@ namespace SparrowHawk
             string oldPlaneOrigin1 = profileCurves[1].GetUserString(CurveData.PlaneOrigin.ToString());
             string oldPlaneNormal1 = profileCurves[1].GetUserString(CurveData.PlaneNormal.ToString());
 
-            //need to project to the first RhinoObj, but need to translate profile curve along it's normal first and project -normal
-            if ((Scene.ShapeType)mScene.selectionDic[Scene.SelectionKey.Profile1Shape] == Scene.ShapeType.Circle || (Scene.ShapeType)mScene.selectionDic[Scene.SelectionKey.Profile1Shape] == Scene.ShapeType.Rect)
+            Scene.ShapeType shapeType = (Scene.ShapeType)mScene.selectionDic[Scene.SelectionKey.Profile2Shape];
+
+            if (shapeType == Scene.ShapeType.Circle || shapeType == Scene.ShapeType.Rect)
             {
-                Rhino.DocObjects.ObjRef curveOnObj1Ref = new Rhino.DocObjects.ObjRef(new Guid(profileCurves[0].GetUserString(CurveData.CurveOnObj.ToString())));
 
-                Plane plane1 = new Plane(UtilOld.getPointfromString(profileCurves[0].GetUserString(CurveData.PlaneOrigin.ToString())),
-                    UtilOld.getVectorfromString(profileCurves[0].GetUserString(CurveData.PlaneNormal.ToString())));
+                Plane plane1 = new Plane(UtilOld.getPointfromString(oldPlaneOrigin0), UtilOld.getVectorfromString(oldPlaneNormal0));
+                Plane plane2 = new Plane(UtilOld.getPointfromString(oldPlaneOrigin1), UtilOld.getVectorfromString(oldPlaneNormal1));
 
-                Plane plane2 = new Plane(UtilOld.getPointfromString(profileCurves[1].GetUserString(CurveData.PlaneOrigin.ToString())),
-                   UtilOld.getVectorfromString(profileCurves[1].GetUserString(CurveData.PlaneNormal.ToString())));
+                //project to the first RhinoObj, translate profile curve along it's normal first and project -normal, make sure it's outside of the surface
+                if (oldCurveOnObjID0 != "") {
+                    //TODO-fix the issue when plane1.Normal is inward
+                    Rhino.DocObjects.ObjRef curveOnObj1Ref = new Rhino.DocObjects.ObjRef(new Guid(oldCurveOnObjID0));
+                    Rhino.Geometry.Vector3d dirPlanetoObj = new Rhino.Geometry.Vector3d(profileCurves[0].GetBoundingBox(true).Center.X - curveOnObj1Ref.Object().Geometry.GetBoundingBox(true).Center.X,
+                                                        profileCurves[0].GetBoundingBox(true).Center.Y - curveOnObj1Ref.Object().Geometry.GetBoundingBox(true).Center.Y,
+                                                        profileCurves[0].GetBoundingBox(true).Center.Z - curveOnObj1Ref.Object().Geometry.GetBoundingBox(true).Center.Z);
 
-                Transform projectTranslate = Transform.Translation(50 * plane1.Normal);
-                profileCurves[0].Transform(projectTranslate);
+                    //check the plane normadirPlanetoOb
+                    dirPlanetoObj.Unitize();
+                    Rhino.Geometry.Vector3d pNormal = plane1.Normal;
+                    if (Vector3.Dot(UtilOld.RhinoToOpenTKVector(dirPlanetoObj), UtilOld.RhinoToOpenTKVector(plane1.Normal)) < 0)
+                        pNormal = -plane1.Normal;
 
-                Curve projectCurve = Curve.ProjectToBrep(profileCurves[0], (Brep)curveOnObj1Ref.Object().Geometry, -plane1.Normal, mScene.rhinoDoc.ModelAbsoluteTolerance)[0].ToNurbsCurve();
-                profileCurves[0] = projectCurve;
+                    Transform projectTranslate = Transform.Translation(50 * pNormal);
+                    profileCurves[0].Transform(projectTranslate);
+                    Curve[] projectCurveList = Curve.ProjectToBrep(profileCurves[0], (Brep)curveOnObj1Ref.Object().Geometry, -pNormal, mScene.rhinoDoc.ModelAbsoluteTolerance);
+                    
+                    //trick to detect inward or outward
+                    float minD = 1000000f;
+                    int minIndex = -1;
+                    for (int i = 0; i < projectCurveList.Count(); i++)
+                    {
+                        float distance = (float)Math.Sqrt(Math.Pow(projectCurveList[i].GetBoundingBox(true).Center.X - profileCurves[0].GetBoundingBox(true).Center.X, 2) + Math.Pow(projectCurveList[i].GetBoundingBox(true).Center.Y - profileCurves[0].GetBoundingBox(true).Center.Y, 2) + Math.Pow(projectCurveList[i].GetBoundingBox(true).Center.Z - profileCurves[0].GetBoundingBox(true).Center.Z, 2));
+                        if (distance < minD)
+                        {
+                            minD = distance;
+                            minIndex = i;
+                        }
+                    }
+                    Curve projectCurve = projectCurveList[minIndex].ToNurbsCurve();
 
+                    profileCurves[0] = projectCurve;
+                }
+                
                 Point3d sPlaneCenter = profileCurves[0].GetBoundingBox(true).Center;
                 Point3d ePlaneCenter = profileCurves[1].GetBoundingBox(true).Center;
                 Rhino.Geometry.Vector3d direction = new Rhino.Geometry.Vector3d(ePlaneCenter.X - sPlaneCenter.X, ePlaneCenter.Y - sPlaneCenter.Y, ePlaneCenter.Z - sPlaneCenter.Z);
@@ -1030,28 +1056,57 @@ namespace SparrowHawk
                 mScene.sStartP = new Point3d(profileCurves[0].PointAt(curveT0));
                 //mScene.sStartP = profileCurves[0].GetBoundingBox(true).Center;
 
-                Rhino.DocObjects.ObjRef curveOnObj2Ref = new Rhino.DocObjects.ObjRef(new Guid(mScene.iCurveList[mScene.iCurveList.Count - 1].GetUserString(CurveData.CurveOnObj.ToString())));
+                Rhino.DocObjects.ObjRef curveOnObj2Ref = new Rhino.DocObjects.ObjRef(new Guid(oldCurveOnObjID1));
                 List<GeometryBase> geometries = new List<GeometryBase>();
                 geometries.Add(curveOnObj2Ref.Object().Geometry);
-                //must be a brep or surface, not mesh
+
+                //TODO- in some cases that the rayIntersections == null if the loftdirection too skew
                 Point3d[] rayIntersections = Rhino.Geometry.Intersect.Intersection.RayShoot(ray1, geometries, 1);
                 if (rayIntersections != null)
                 {
                     //find the closest point on profileCurve2
-                    double curveT1 = 0;
-                    profileCurves[1].ClosestPoint(rayIntersections[0], out curveT1);
-                    profileCurves[1].ChangeClosedCurveSeam(curveT1);
-                    mScene.eStartP = new Point3d(profileCurves[1].PointAt(curveT1));
-                    //mScene.eStartP = new Point3d(ePlaneCenter);
-                }
+                    if (shapeType == Scene.ShapeType.Circle)
+                    {
+                        double curveT1 = 0;
+                        profileCurves[1].ClosestPoint(rayIntersections[0], out curveT1);
+                        profileCurves[1].ChangeClosedCurveSeam(curveT1);
+                        mScene.eStartP = new Point3d(profileCurves[1].PointAt(curveT1));
+                        //mScene.eStartP = new Point3d(ePlaneCenter);
+                    }
+                    else
+                    {
+                        Rhino.Geometry.Polyline polyline;
+                        if (profileCurves[1].TryGetPolyline(out polyline))
+                        {
+                           Rectangle3d rect = Rectangle3d.CreateFromPolyline(polyline);
+                           float minD = 1000000f;
+                           int minIndex = -1;
+                           for(int i = 0; i < 4; i++)
+                           {
+                                float distance = (float)Math.Sqrt(Math.Pow(rayIntersections[0].X - rect.Corner(i).X, 2) + Math.Pow(rayIntersections[0].Y - rect.Corner(i).Y, 2) + Math.Pow(rayIntersections[0].Z - rect.Corner(i).Z, 2));
+                                if(distance < minD)
+                                {
+                                    minD = distance;
+                                    minIndex = i;
+                                }                              
+                            }
+                            double curveT1 = 0;
+                            profileCurves[1].ClosestPoint(rect.Corner(minIndex), out curveT1);
+                            profileCurves[1].ChangeClosedCurveSeam(curveT1);
+                            mScene.eStartP = new Point3d(profileCurves[1].PointAt(curveT1));
+                        }
+                    }
+                 }
 
             }
 
-            if ((Scene.ShapeType)mScene.selectionDic[Scene.SelectionKey.Profile1Shape] == Scene.ShapeType.Circle)
+            if (shapeType == Scene.ShapeType.Circle || shapeType == Scene.ShapeType.Rect)
             {
-                profileCurves[0] = profileCurves[0].Rebuild(((NurbsCurve)profileCurves[0]).Points.Count, profileCurves[0].Degree, true);
-                profileCurves[1] = profileCurves[1].Rebuild(((NurbsCurve)profileCurves[1]).Points.Count, profileCurves[1].Degree, true);
+                if (shapeType == Scene.ShapeType.Circle){
 
+                    profileCurves[0] = profileCurves[0].Rebuild(((NurbsCurve)profileCurves[0]).Points.Count, profileCurves[0].Degree, true);
+                    profileCurves[1] = profileCurves[1].Rebuild(((NurbsCurve)profileCurves[1]).Points.Count, profileCurves[1].Degree, true);
+                }
                 curveList[0].SetUserString(CurveData.CurveOnObj.ToString(), oldCurveOnObjID0);
                 curveList[0].SetUserString(CurveData.PlaneOrigin.ToString(), oldPlaneOrigin0);
                 curveList[0].SetUserString(CurveData.PlaneNormal.ToString(), oldPlaneNormal0);
@@ -1064,6 +1119,7 @@ namespace SparrowHawk
             //debug
             //mScene.rhinoDoc.Objects.AddCurve(profileCurves[0]);
             //mScene.rhinoDoc.Objects.AddCurve(profileCurves[1]);
+            //huaishu's side need the patchCurve data
             Rhino.DocObjects.ObjectEnumeratorSettings settings = new Rhino.DocObjects.ObjectEnumeratorSettings();
             settings.ObjectTypeFilter = Rhino.DocObjects.ObjectType.Curve;
             settings.NameFilter = "patchCurve";
@@ -1089,7 +1145,8 @@ namespace SparrowHawk
 
             return brep;
         }
-        */
+        
+        /*
         public static Brep LoftFunc(ref Scene mScene, ref List<Curve> curveList)
         {
             Brep[] loftBreps = Brep.CreateFromLoft(curveList, Point3d.Unset, Point3d.Unset, LoftType.Tight, false);
@@ -1101,6 +1158,7 @@ namespace SparrowHawk
 
             return brep;
         }
+        */
 
         //using loft function to implement
         public static Brep ExtrudeCapFunc(ref Scene mScene, ref List<Curve> curveList)
@@ -1318,7 +1376,6 @@ namespace SparrowHawk
         //TODO- Profile Curve 1 has been changed before we call SweepCapFun
         public static Brep SweepCapFun(ref Scene mScene, ref List<Curve> curveList)
         {
-
            
             //compute the transfrom from railStart to railEnd
             NurbsCurve rail = curveList[curveList.Count - 2].ToNurbsCurve();
@@ -1454,18 +1511,32 @@ namespace SparrowHawk
                 if (profileCurves[0].TryGetPolyline(out polylineStart) && profileCurves[1].TryGetPolyline(out polylineEnd))
                 {
                     //testing changing seam
-                    
+
                     Rectangle3d startRect = Rectangle3d.CreateFromPolyline(polylineStart);
                     Rectangle3d endRect = Rectangle3d.CreateFromPolyline(polylineEnd);
 
-                    //finding the corner seam
-                    float d0 = (float)Math.Sqrt(Math.Pow(startRect.Corner(0).X - endRect.Corner(0).X, 2) + Math.Pow(startRect.Corner(0).Y - endRect.Corner(0).Y, 2) + Math.Pow(startRect.Corner(0).Z - endRect.Corner(0).Z, 2));
-                    float d1 = (float)Math.Sqrt(Math.Pow(startRect.Corner(0).X - endRect.Corner(1).X, 2) + Math.Pow(startRect.Corner(0).Y - endRect.Corner(1).Y, 2) + Math.Pow(startRect.Corner(0).Z - endRect.Corner(1).Z, 2));
-                    float d2 = (float)Math.Sqrt(Math.Pow(startRect.Corner(0).X - endRect.Corner(2).X, 2) + Math.Pow(startRect.Corner(0).Y - endRect.Corner(2).Y, 2) + Math.Pow(startRect.Corner(0).Z - endRect.Corner(2).Z, 2));
-                    float d3 = (float)Math.Sqrt(Math.Pow(startRect.Corner(0).X - endRect.Corner(3).X, 2) + Math.Pow(startRect.Corner(0).Y - endRect.Corner(3).Y, 2) + Math.Pow(startRect.Corner(0).Z - endRect.Corner(3).Z, 2));
+                    Point3d tmpCornerS = new Point3d(startRect.Corner(0).X, startRect.Corner(0).Y, startRect.Corner(0).Z);
+                    tmpCornerS.Transform(tStartEnd);
 
-                    float[] distaneArr = { d0, d1, d2, d3 };
-                    int minIndex = Array.IndexOf(distaneArr, distaneArr.Min());
+                    //finding the corner seam
+                    float minD = 1000000f;
+                    int minIndex = -1;
+                    for (int i = 0; i < 4; i++)
+                    {
+                        float distance = (float)Math.Sqrt(Math.Pow(tmpCornerS.X - endRect.Corner(i).X, 2) + Math.Pow(tmpCornerS.Y - endRect.Corner(i).Y, 2) + Math.Pow(tmpCornerS.Z - endRect.Corner(i).Z, 2));
+                        if (distance < minD)
+                        {
+                            minD = distance;
+                            minIndex = i;
+                        }
+                    }
+                  
+                    double curveT = 0;
+                    profileCurves[0].ClosestPoint(startRect.Corner(0), out curveT);
+                    profileCurves[0].ChangeClosedCurveSeam(curveT);
+                    double curveT1 = 0;
+                    profileCurves[1].ClosestPoint(endRect.Corner(minIndex), out curveT1);
+                    profileCurves[1].ChangeClosedCurveSeam(curveT1);
 
                     //testing manually align
                     /*
@@ -1553,9 +1624,13 @@ namespace SparrowHawk
             }
             else if ((Scene.ShapeType)mScene.selectionDic[Scene.SelectionKey.Profile1Shape] == Scene.ShapeType.Rect)
             {
-                //TODO- rebuild will generate non-rect
-                //profileCurves[0] = new NurbsCurve((NurbsCurve)profileCurves[0]);
-                //profileCurves[1] = new NurbsCurve((NurbsCurve)profileCurves[1]);
+                curveList[curveList.Count - 3].SetUserString(CurveData.CurveOnObj.ToString(), oldCurveOnObjID0);
+                curveList[curveList.Count - 3].SetUserString(CurveData.PlaneOrigin.ToString(), oldPlaneOrigin0);
+                curveList[curveList.Count - 3].SetUserString(CurveData.PlaneNormal.ToString(), oldPlaneNormal0);
+
+                curveList[curveList.Count - 1].SetUserString(CurveData.CurveOnObj.ToString(), oldCurveOnObjID1);
+                curveList[curveList.Count - 1].SetUserString(CurveData.PlaneOrigin.ToString(), oldPlaneOrigin1);
+                curveList[curveList.Count - 1].SetUserString(CurveData.PlaneNormal.ToString(), oldPlaneNormal1);
             }
 
             //mScene.rhinoDoc.ModelAbsoluteTolerance
@@ -1688,7 +1763,7 @@ namespace SparrowHawk
             //rotation
             //parallel
             float dotV = Math.Abs(Vector3.Dot(normal1, normal2));
-            if (Math.Abs(Vector3.Dot(normal1, normal2)) >= 0.95)
+            if (Math.Abs(Vector3.Dot(normal1, normal2)) >= 0.98) //> 0.95
             {
                 return transToTarget * transToOrigin;
             }

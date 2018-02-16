@@ -434,70 +434,10 @@ namespace SparrowHawk.Interaction
             pointOnObjRef = null;
             pointOnObjRef = new ObjRef(newPlaneID);
 
-
-            //creating perendicular plane
-            //TODO-need to decide whether it's XAxis or YAxis as normal
-            OpenTK.Vector3 worldUpAxis = new Vector3(0, 0, 1); //in Rhino z axis is up
-            OpenTK.Vector3 planeXAxis = UtilOld.RhinoToOpenTKVector(modelPlane.XAxis);
-            OpenTK.Vector3 planeYAxis = UtilOld.RhinoToOpenTKVector(modelPlane.YAxis);
-            OpenTK.Vector3 planeNormal = UtilOld.RhinoToOpenTKVector(modelPlane.Normal);
-
-
-            //Plane planeX = new Plane(modelPlane.Origin, modelPlane.XAxis);
-            //Plane planeY = new Plane(modelPlane.Origin, modelPlane.YAxis)
-
-            Plane planeX = new Plane(planeCenter, modelPlane.XAxis);
-            Plane planeY = new Plane(planeCenter, modelPlane.YAxis);
-
-            float xAngle = OpenTK.Vector3.CalculateAngle(UtilOld.RhinoToOpenTKVector(planeX.Normal), worldUpAxis);
-            float yAngle = OpenTK.Vector3.CalculateAngle(UtilOld.RhinoToOpenTKVector(planeY.Normal), worldUpAxis);
-            Rhino.RhinoApp.WriteLine("xAngle: " + xAngle + " yAngle: " + yAngle);
-            Rhino.Geometry.Vector3d normal2;
-            Plane plane2;
-            if (yAngle > xAngle)
-            {
-                if (yAngle <= Math.PI / 2)
-                    plane2 = planeY;
-                else
-                    plane2 = planeX;
-            }
-            else
-            {
-                if (xAngle < Math.PI / 2)
-                    plane2 = planeX;
-                else
-                    plane2 = planeY;
-            }
-
-            /*
-            PlaneSurface plane_surfaceX = new PlaneSurface(planeX, new Interval(-planeSize, planeSize), new Interval(-planeSize, planeSize));
-            Brep railPlaneX = Brep.CreateFromSurface(plane_surfaceX);
-
-            PlaneSurface plane_surfaceY = new PlaneSurface(planeY, new Interval(-planeSize, planeSize), new Interval(-planeSize, planeSize));
-            Brep railPlaneY = Brep.CreateFromSurface(plane_surfaceY);
-            */
-
-            //testing new method
-            plane2 = new Plane(planeCenter, UtilOld.openTkToRhinoVector(Vector3.Cross(planeNormal, worldUpAxis)));
-
-            PlaneSurface plane_surface2 = new PlaneSurface(plane2, new Interval(-planeSize, planeSize), new Interval(-planeSize, planeSize));
-            Brep railPlane2 = Brep.CreateFromSurface(plane_surface2);
-
-            //testing
-            /* 
-            Material.Material mesh_mX = new Material.SingleColorMaterial(0.5f, 0.0f, 0, 0.4f);
-            Material.Material mesh_mY = new Material.SingleColorMaterial(0.0f, 0.5f, 0, 0.4f);
-            Util.addSceneNode(ref mScene, railPlaneX, ref mesh_mX, "railPlaneX");
-            Util.addSceneNode(ref mScene, railPlaneY, ref mesh_mY, "railPlaneY");
-            */
-            //Util.addSceneNode(ref mScene, railPlane2, ref mesh_m, "railPlane");
-
-
             //add icurveList since we don't use EditPoint2 for circle and rect
             modelcurve.SetUserString(CurveData.CurveOnObj.ToString(), newPlaneID.ToString());
             modelcurve.SetUserString(CurveData.PlaneOrigin.ToString(), curvePlane.Origin.ToString());
             modelcurve.SetUserString(CurveData.PlaneNormal.ToString(), curvePlane.Normal.ToString());
-
             mScene.iCurveList.Add(modelcurve);
 
             //call next interaction in the chain

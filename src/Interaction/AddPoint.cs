@@ -41,7 +41,7 @@ namespace SparrowHawk.Interaction
         private DrawnType drawnType = DrawnType.None;
         private ShapeType shapeType = ShapeType.None;
         private List<ObjRef> rayCastingObjs;
-        private int toleranceMax = 100000;
+        private int toleranceMax = 100;
         private bool isSnap = false;
         private bool shouldSnap = false;
         private float snapDistance = 20; //mm
@@ -109,7 +109,7 @@ namespace SparrowHawk.Interaction
             contourCurve = null;
             curvePlane = new Plane();
 
-            toleranceMax = 100000;
+            toleranceMax = 100;
             snapDistance = 40;
             isSnap = false;
             shouldSnap = false;
@@ -525,9 +525,10 @@ namespace SparrowHawk.Interaction
                     {
                         minD = (float)dist;
                         minIndex = i;
-                    
+
                     }
                 }
+
                 Surface s = targetBrep.Faces[minIndex];
                 //surface might not be a perfect planar surface                     
                 while (tolerance < toleranceMax)
@@ -539,41 +540,54 @@ namespace SparrowHawk.Interaction
                     tolerance++;
                 }
 
-                //testing finding the edge curve
-                Rhino.Geometry.Curve[] edgeCurves = (targetBrep.Faces[minIndex].DuplicateFace(false)).DuplicateEdgeCurves(true);
-                double tol = mScene.rhinoDoc.ModelAbsoluteTolerance * 2.1;
-                edgeCurves = Rhino.Geometry.Curve.JoinCurves(edgeCurves, tol);
-
-                // TODO: Check if null
-                contourCurve = edgeCurves[0];
-
-                //detect whether it's rect or circle then generate a snap pointList
-                Circle circle;
-                Rhino.Geometry.Polyline polyline;
-                if (contourCurve.TryGetCircle(out circle))
+                if (tolerance >= toleranceMax)
                 {
-                    snapPointsList.Add(circle.Center);
-                    snapPointsList.Add(circle.PointAt(0));
-                    snapPointsList.Add(circle.PointAt(Math.PI / 2));
-                    snapPointsList.Add(circle.PointAt(Math.PI));
-                    snapPointsList.Add(circle.PointAt(Math.PI * 1.5));
-
-                }
-                else if (contourCurve.TryGetPolyline(out polyline))
-                {
-                    Rectangle3d rect = Rectangle3d.CreateFromPolyline(polyline);
-                    snapPointsList.Add(rect.Center);
-                    snapPointsList.Add(rect.Corner(0));
-                    snapPointsList.Add(rect.Corner(1));
-                    snapPointsList.Add(rect.Corner(2));
-                    snapPointsList.Add(rect.Corner(3));
+                    double u, v;
+                    if (s.ClosestPoint(projectP, out u, out v))
+                    {
+                        Rhino.Geometry.Vector3d normal = s.NormalAt(u, v);
+                        //TODO fix the issue when normal is inward
+                        curvePlane = new Plane(projectP, normal);
+                    }                      
                 }
                 else
                 {
-                    double u = 0;
-                    double v = 0;
-                    s.ClosestPoint(s.GetBoundingBox(true).Center, out u, out v);
-                    snapPointsList.Add(s.PointAt(u, v));
+                    //testing finding the edge curve
+                    Rhino.Geometry.Curve[] edgeCurves = (targetBrep.Faces[minIndex].DuplicateFace(false)).DuplicateEdgeCurves(true);
+                    double tol = mScene.rhinoDoc.ModelAbsoluteTolerance * 2.1;
+                    edgeCurves = Rhino.Geometry.Curve.JoinCurves(edgeCurves, tol);
+
+                    // TODO: Check if null
+                    contourCurve = edgeCurves[0];
+
+                    //detect whether it's rect or circle then generate a snap pointList
+                    Circle circle;
+                    Rhino.Geometry.Polyline polyline;
+                    if (contourCurve.TryGetCircle(out circle))
+                    {
+                        snapPointsList.Add(circle.Center);
+                        snapPointsList.Add(circle.PointAt(0));
+                        snapPointsList.Add(circle.PointAt(Math.PI / 2));
+                        snapPointsList.Add(circle.PointAt(Math.PI));
+                        snapPointsList.Add(circle.PointAt(Math.PI * 1.5));
+
+                    }
+                    else if (contourCurve.TryGetPolyline(out polyline))
+                    {
+                        Rectangle3d rect = Rectangle3d.CreateFromPolyline(polyline);
+                        snapPointsList.Add(rect.Center);
+                        snapPointsList.Add(rect.Corner(0));
+                        snapPointsList.Add(rect.Corner(1));
+                        snapPointsList.Add(rect.Corner(2));
+                        snapPointsList.Add(rect.Corner(3));
+                    }
+                    else
+                    {
+                        double u = 0;
+                        double v = 0;
+                        s.ClosestPoint(s.GetBoundingBox(true).Center, out u, out v);
+                        snapPointsList.Add(s.PointAt(u, v));
+                    }
                 }
             }
 

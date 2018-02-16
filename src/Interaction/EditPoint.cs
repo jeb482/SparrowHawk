@@ -354,7 +354,8 @@ namespace SparrowHawk.Interaction
                     editCurve = Rhino.Geometry.NurbsCurve.Create(false, 1, rectPoints.ToArray());
                     //rect.Plane's center is incorrect
                     //curvePlane = rect.Plane;
-                    //curvePlane = new Plane(rect.Center, rect.Plane.Normal);
+                    curvePlane.XAxis = rect.Plane.XAxis;
+                    curvePlane.YAxis = rect.Plane.YAxis;
 
                     width = (float)rect.Width;
                     height = (float)rect.Height;
