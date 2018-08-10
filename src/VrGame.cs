@@ -488,8 +488,9 @@ namespace SparrowHawk
             // Height = 820; 
 
             // THIS IS FOR CLIPPED RECTANGLE
-            Width = 691;
-            Height = 692;
+            // Meta 2 Dims: 2560 x 1440
+            Width = 2560;//691;
+            Height = 1440;//692;
 
             // Window Setup Info
             mStrDriver = UtilOld.GetTrackedDeviceString(ref mHMD, OpenVR.k_unTrackedDeviceIndex_Hmd, ETrackedDeviceProperty.Prop_TrackingSystemName_String);

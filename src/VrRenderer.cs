@@ -42,7 +42,7 @@ namespace SparrowHawk
         protected Valve.VR.CVRSystem mHMD;
         protected Scene mScene;
         public OvrvisionController ovrvision_controller;
-        protected bool enableAR = true;
+        protected bool enableAR = false;
         protected Geometry.Geometry fullscreenQuad;
 
 
@@ -289,7 +289,7 @@ namespace SparrowHawk
                 GL.Finish();
                 GL.Flush();
 
-                renderCompanionWindow();
+                renderMetaWindow();
                 Valve.VR.Texture_t leftEyeTexture, rightEyeTexture;
                 leftEyeTexture.handle = new IntPtr(leftEyeDesc.resolveTextureId);
                 rightEyeTexture.handle = new IntPtr(rightEyeDesc.resolveTextureId);
@@ -307,65 +307,38 @@ namespace SparrowHawk
         }
 
 
+        public void renderMetaWindow()
+        {
+            // Per eye oculus dims: 1080x1200
+            // Meta 2 Dims: 2560 x 1440
 
+            // Copy Right Eye
+            GL.BindFramebuffer(FramebufferTarget.ReadFramebuffer, rightEyeDesc.renderFramebufferId);
+            GL.BindFramebuffer(FramebufferTarget.DrawFramebuffer, 0);
+            int leftOffset = 183;
+            int botOffset = 517;
+            int rightOffset = 470;
+            int topOffset = 392;
+            GL.BlitFramebuffer(leftOffset, botOffset, (int)vrRenderWidth - rightOffset, (int)vrRenderHeight - topOffset, 0, (int)vrRenderHeight - (botOffset + topOffset), (int)2560 - (leftOffset + rightOffset), 0, ClearBufferMask.ColorBufferBit, BlitFramebufferFilter.Linear);
+
+
+            // Copy Left Eye
+            GL.BindFramebuffer(FramebufferTarget.ReadFramebuffer, leftEyeDesc.renderFramebufferId);
+            GL.BindFramebuffer(FramebufferTarget.DrawFramebuffer, 0);
+            leftOffset = 183 + 1280;
+            botOffset = 517;
+            rightOffset = 470;
+            topOffset = 392;
+            GL.BlitFramebuffer(leftOffset, botOffset, (int)vrRenderWidth - rightOffset, (int)vrRenderHeight - topOffset, 0, (int)vrRenderHeight - (botOffset + topOffset), (int)2560 - (leftOffset + rightOffset), 0, ClearBufferMask.ColorBufferBit, BlitFramebufferFilter.Linear);
+
+
+        }
         public void renderCompanionWindow()
         {
-            //// Temp: move it to a single startup method. 
-            //Geometry.Geometry fs_quad_g = new Geometry.Geometry();
-            //fs_quad_g.mGeometry = new float[12] {-1.0f, 1.0f, 0.0f,
-            //                                                 1.0f,  1.0f, 0.0f,
-            //                                                 1.0f, -1.0f, 0.0f,
-            //                                                 -1.0f, -1.0f, 0.0f};
-            //
-            //fs_quad_g.mGeometryIndices = new int[6]{ 0, 1, 2,
-            //                                                 2, 3, 0};
-            //fs_quad_g.mUvs = new float[8] { 0.0f, 0.0f,
-            //                                    1.0f, 0.0f,
-            //                                    1.0f, 1.0f,
-            //                                    0.0f, 1.0f};
-            //
-            //fs_quad_g.mNumPrimitives = 2;
-            //fs_quad_g.primitiveType = BeginMode.Triangles;
-            //
-            //
-            //
-            //GL.BindFramebuffer(FramebufferTarget.ReadFramebuffer, rightEyeDesc.renderFramebufferId);
-            ////Material.TextureMaterial mat = new Material.TextureMaterial(mScene.rhinoDoc, rightEyeDesc.renderFramebufferId, (int) vrRenderWidth, (int) vrRenderHeight);
-            //
-            ////mat.updateTextureFromFramebuffer(rightEyeDesc.renderFramebufferId);
-            ////GL.Disable(EnableCap.DepthTest);
-            ////Matrix4 model = new Matrix4(Vector4.UnitX, Vector4.UnitY, Vector4.UnitZ, Vector4.UnitW);
-            ////Matrix4 vp = new Matrix4(Vector4.UnitX, Vector4.UnitY, Vector4.UnitZ, Vector4.UnitW*.000000000000001f);
-            ////Material.SingleColorMaterial mat = new Material.SingleColorMaterial(1, 1, 0, 1);
-            //
-            //var mat = new Material.NaiveMaterial(mScene.rhinoDoc);
-            //GL.BindFramebuffer(FramebufferTarget.DrawFramebuffer, 0);
-            //GL.BindFramebuffer(FramebufferTarget.Framebuffer, 0);
-            //GL.BindFramebuffer(FramebufferTarget.ReadFramebuffer, 0);
-            //GL.BindFramebuffer(FramebufferTarget.FramebufferExt, 0);
-            //GL.ClearColor(0, 0, 1,1);
-            //GL.Clear( ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
-            //var m = new Matrix4(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1);
-            //var vp = new Matrix4(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1);
-            //mat.draw(ref fs_quad_g, ref m, ref vp);
+
             
             GL.BindFramebuffer(FramebufferTarget.ReadFramebuffer, rightEyeDesc.renderFramebufferId);
             GL.BindFramebuffer(FramebufferTarget.DrawFramebuffer, 0);
-            //if (enableAR)
-            //{
-            //    int ox = ((int)vrRenderWidth - ovrvision_controller.camWidth) / 2;
-            //    int oy = ((int)vrRenderHeight - ovrvision_controller.camHeight) / 2;
-            //    GL.BlitFramebuffer(ox + 100, oy, ovrvision_controller.camWidth, ovrvision_controller.camHeight, 0, 0, ovrvision_controller.camWidth, ovrvision_controller.camHeight, ClearBufferMask.ColorBufferBit, BlitFramebufferFilter.Linear);
-            //} 
-            //else
-            //
-            
-            // THIS ONE IS WITHOUT ANY CLIPPING
-            // 
-            // int leftOffset = 100;
-            // int botOffset = 415;
-            // int rightOffset = 300;
-            // int topOffset = 375;
 
             // THIS ONE CLIPS TO A NICE RECTANGLE
             int leftOffset = 183;
@@ -374,9 +347,9 @@ namespace SparrowHawk
             int topOffset = 392;
 
 
-            GL.BlitFramebuffer(leftOffset, botOffset, (int)vrRenderWidth - rightOffset, (int)vrRenderHeight - topOffset, 0, 0, (int)vrRenderWidth - (leftOffset + rightOffset), (int)vrRenderHeight - (botOffset + topOffset), ClearBufferMask.ColorBufferBit, BlitFramebufferFilter.Linear);
+            GL.BlitFramebuffer(leftOffset, botOffset, (int)vrRenderWidth - rightOffset, (int)vrRenderHeight - topOffset, 0, (int)vrRenderHeight - (botOffset + topOffset), (int)vrRenderWidth - (leftOffset + rightOffset), 0, ClearBufferMask.ColorBufferBit, BlitFramebufferFilter.Linear);
             
-            //GL.BlitFramebuffer(100, 400, (int)vrRenderWidth - 100, (int)vrRenderHeight - 300 , 0, 0, (int)vrRenderWidth - 200, (int)vrRenderHeight -  700, ClearBufferMask.ColorBufferBit, BlitFramebufferFilter.Linear);
+
             GL.BindFramebuffer(FramebufferTarget.ReadFramebuffer, 0);
             
         }
