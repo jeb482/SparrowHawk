@@ -1,13 +1,18 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 14
-VisualStudioVersion = 14.0.25123.0
+# Visual Studio 15
+VisualStudioVersion = 15.0.27130.2003
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SparrowHawk", "src\SparrowHawk.csproj", "{3E46E3C0-0DF4-4C9D-AF60-8225AE191B76}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "STL", "ext\STLdotNet\Source\STL\STL.csproj", "{F32F3151-1595-4211-A01E-2F7BEB34F88D}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ObjParser", "ext\ObjParser\ObjParser\ObjParser.csproj", "{04AA9B94-B460-4E73-BAF0-0154494BFE82}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SparrowHawkCalibration", "SparrowHawkCalibration\SparrowHawkCalibration.csproj", "{580B6C61-5330-4BEE-9039-3C576171A206}"
+	ProjectSection(ProjectDependencies) = postProject
+		{3E46E3C0-0DF4-4C9D-AF60-8225AE191B76} = {3E46E3C0-0DF4-4C9D-AF60-8225AE191B76}
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -118,8 +123,41 @@ Global
 		{04AA9B94-B460-4E73-BAF0-0154494BFE82}.Release|x64.Build.0 = Release|Any CPU
 		{04AA9B94-B460-4E73-BAF0-0154494BFE82}.Release|x86.ActiveCfg = Release|Any CPU
 		{04AA9B94-B460-4E73-BAF0-0154494BFE82}.Release|x86.Build.0 = Release|Any CPU
+		{580B6C61-5330-4BEE-9039-3C576171A206}.AppDebug64|Any CPU.ActiveCfg = Debug|Any CPU
+		{580B6C61-5330-4BEE-9039-3C576171A206}.AppDebug64|Any CPU.Build.0 = Debug|Any CPU
+		{580B6C61-5330-4BEE-9039-3C576171A206}.AppDebug64|x64.ActiveCfg = Debug|Any CPU
+		{580B6C61-5330-4BEE-9039-3C576171A206}.AppDebug64|x64.Build.0 = Debug|Any CPU
+		{580B6C61-5330-4BEE-9039-3C576171A206}.AppDebug64|x86.ActiveCfg = Debug|Any CPU
+		{580B6C61-5330-4BEE-9039-3C576171A206}.AppDebug64|x86.Build.0 = Debug|Any CPU
+		{580B6C61-5330-4BEE-9039-3C576171A206}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{580B6C61-5330-4BEE-9039-3C576171A206}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{580B6C61-5330-4BEE-9039-3C576171A206}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{580B6C61-5330-4BEE-9039-3C576171A206}.Debug|x64.Build.0 = Debug|Any CPU
+		{580B6C61-5330-4BEE-9039-3C576171A206}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{580B6C61-5330-4BEE-9039-3C576171A206}.Debug|x86.Build.0 = Debug|Any CPU
+		{580B6C61-5330-4BEE-9039-3C576171A206}.Debug32|Any CPU.ActiveCfg = Debug|Any CPU
+		{580B6C61-5330-4BEE-9039-3C576171A206}.Debug32|Any CPU.Build.0 = Debug|Any CPU
+		{580B6C61-5330-4BEE-9039-3C576171A206}.Debug32|x64.ActiveCfg = Debug|Any CPU
+		{580B6C61-5330-4BEE-9039-3C576171A206}.Debug32|x64.Build.0 = Debug|Any CPU
+		{580B6C61-5330-4BEE-9039-3C576171A206}.Debug32|x86.ActiveCfg = Debug|Any CPU
+		{580B6C61-5330-4BEE-9039-3C576171A206}.Debug32|x86.Build.0 = Debug|Any CPU
+		{580B6C61-5330-4BEE-9039-3C576171A206}.Debug64|Any CPU.ActiveCfg = Debug|Any CPU
+		{580B6C61-5330-4BEE-9039-3C576171A206}.Debug64|Any CPU.Build.0 = Debug|Any CPU
+		{580B6C61-5330-4BEE-9039-3C576171A206}.Debug64|x64.ActiveCfg = Debug|Any CPU
+		{580B6C61-5330-4BEE-9039-3C576171A206}.Debug64|x64.Build.0 = Debug|Any CPU
+		{580B6C61-5330-4BEE-9039-3C576171A206}.Debug64|x86.ActiveCfg = Debug|Any CPU
+		{580B6C61-5330-4BEE-9039-3C576171A206}.Debug64|x86.Build.0 = Debug|Any CPU
+		{580B6C61-5330-4BEE-9039-3C576171A206}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{580B6C61-5330-4BEE-9039-3C576171A206}.Release|Any CPU.Build.0 = Release|Any CPU
+		{580B6C61-5330-4BEE-9039-3C576171A206}.Release|x64.ActiveCfg = Release|Any CPU
+		{580B6C61-5330-4BEE-9039-3C576171A206}.Release|x64.Build.0 = Release|Any CPU
+		{580B6C61-5330-4BEE-9039-3C576171A206}.Release|x86.ActiveCfg = Release|Any CPU
+		{580B6C61-5330-4BEE-9039-3C576171A206}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {DD339BB0-E4E7-47FB-A7A6-F7D132790345}
 	EndGlobalSection
 EndGlobal
