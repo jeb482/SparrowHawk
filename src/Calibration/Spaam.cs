@@ -9,7 +9,7 @@ using LinAlg = MathNet.Numerics.LinearAlgebra;
 
 namespace SparrowHawk.Calibration
 {
-    class Spaam
+    public class Spaam
     {
         private static Geometry.Geometry crosshairs = new Geometry.Polyline(new float[] {-1,0,0,1,0,0,0,-1,0,0,1,0});
         private static Material.SingleColorMaterial crosshairMaterial = new Material.SingleColorMaterial(1, 1, 1, 1);

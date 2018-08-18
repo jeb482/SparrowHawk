@@ -67,7 +67,7 @@ namespace SparrowHawk
          * that comes with the openvr project.
          * 
          */
-        protected bool CreateFrameBuffer(int width, int height, out FramebufferDesc framebufferDesc)
+        public static bool CreateFrameBuffer(int width, int height, out FramebufferDesc framebufferDesc)
         {
             framebufferDesc = new FramebufferDesc();
             framebufferDesc.renderFramebufferId = GL.GenFramebuffer();
