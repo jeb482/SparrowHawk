@@ -34,7 +34,7 @@ namespace SparrowHawk.Material
         public override void draw(ref Geometry.Geometry g, ref Matrix4 model, ref Matrix4 vp)
         {
             GL.Disable(EnableCap.DepthTest);
-            GL.BlendFunc(BlendingFactorSrc.SrcAlpha, BlendingFactorDest.OneMinusSrcAlpha);
+            GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
             GL.Enable(EnableCap.Blend);
             int dim;
             if (g.primitiveType == BeginMode.Lines) dim = 2; else dim = 3;

@@ -11,6 +11,9 @@ namespace SparrowHawk.Calibration
 {
     class Spaam
     {
+        private static Geometry.Geometry crosshairs = new Geometry.Polyline(new float[] {-1,0,0,1,0,0,0,-1,0,0,1,0});
+        private static Material.SingleColorMaterial crosshairMaterial = new Material.SingleColorMaterial(1, 1, 1, 1);
+     
         /// <summary>
         /// 
         /// A = GFC 
@@ -24,7 +27,7 @@ namespace SparrowHawk.Calibration
         /// <param name="screenPoints">The pixel coordinates corresponding to the known point in each pose</param>
         /// <param name="knownPoint">The known 3D calibration point in world space</param>
         /// <returns>P</returns>
-        Matrix4 estimateProjectionMatrix(List<Matrix4> markPoses, List<Vector2> screenPoints, Vector4 knownPoint)
+        static Matrix3x4d estimateProjectionMatrix3x4(List<Matrix4> markPoses, List<Vector2> screenPoints, Vector4 knownPoint)
         {
             var B = LinAlg.CreateMatrix.Dense<double>(2 * markPoses.Count, 12);
             for (int i = 0; i < markPoses.Count; i++)
@@ -38,16 +41,23 @@ namespace SparrowHawk.Calibration
             var evd = B.Evd();
             var v = evd.EigenVectors.Column(0);
             Matrix3x4d P = new Matrix3x4d(v.At(0), v.At(1), v.At(2), v.At(3),
-                                    v.At(4), v.At(5), v.At(6), v.At(7),
-                                    v.At(8), v.At(9), v.At(10), v.At(11));
-            return Matrix4.Identity;
+                                       v.At(4), v.At(5), v.At(6), v.At(7),
+                                       v.At(8), v.At(9), v.At(10), v.At(11));
+            return P;
         }
-        void renderCrossHairs(Vector2 pixel, Color4 color, FramebufferDesc framebuffer)
+
+        static void renderCrosshairs(Vector2 screenPos, Color4 color, FramebufferDesc framebuffer)
         {
             GL.BindFramebuffer(FramebufferTarget.Framebuffer, framebuffer.renderFramebufferId);
-
             GL.ClearColor(0,0,0,1);
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
+            crosshairs.mGeometry[1] = screenPos.Y;
+            crosshairs.mGeometry[4] = screenPos.Y;
+            crosshairs.mGeometry[6] = screenPos.X;
+            crosshairs.mGeometry[9] = screenPos.X;
+            crosshairMaterial.mColor = color;
+            var id = Matrix4.Identity;
+            crosshairMaterial.draw(ref crosshairs, ref id, ref id);
         }
     }
 }
