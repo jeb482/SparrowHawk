@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -95,23 +96,26 @@ namespace SparrowHawk.Interaction
 
         public string getTexturePath(MenuLayout2 layout)
         {
+
+            string parentPath = System.IO.Directory.GetParent(Directory.GetCurrentDirectory()).FullName + "\\resources\\menus\\new3\\";
             switch (layout)
             {
                 //testing C:\\Users\\ericw\\Documents at home, C:\workspace at lab
-                case MenuLayout2.MainMenu: return @"C:\workspace\SparrowHawk\src\resources\menus\new3\MainMenu.png";
-                case MenuLayout2.SweepC1: return @"C:\workspace\SparrowHawk\src\resources\menus\new3\SweepC1.png";
-                case MenuLayout2.SweepD1: return @"C:\workspace\SparrowHawk\src\resources\menus\new3\SweepD1.png";
-                case MenuLayout2.SweepC2D2: return @"C:\workspace\SparrowHawk\src\resources\menus\new3\SweepC2D2.png";
-                case MenuLayout2.ExtrudeC1: return @"C:\workspace\SparrowHawk\src\resources\menus\new3\ExtrudeC1.png";
-                case MenuLayout2.ExtrudeD1: return @"C:\workspace\SparrowHawk\src\resources\menus\new3\ExtrudeD1.png";
-                case MenuLayout2.ExtrudeC2D2: return @"C:\workspace\SparrowHawk\src\resources\menus\new3\ExtrudeC2D2.png";
-                case MenuLayout2.LoftC1: return @"C:\workspace\SparrowHawk\src\resources\menus\new3\LoftC1.png";
-                case MenuLayout2.LoftD1: return @"C:\workspace\SparrowHawk\src\resources\menus\new3\LoftD1.png";
-                case MenuLayout2.LoftC2D2: return @"C:\workspace\SparrowHawk\src\resources\menus\new3\LoftC2D2.png";
-                case MenuLayout2.LoftC2: return @"C:\workspace\SparrowHawk\src\resources\menus\new3\LoftC2.png";
-                case MenuLayout2.LoftD2: return @"C:\workspace\SparrowHawk\src\resources\menus\new3\LoftD2.png";
-                case MenuLayout2.RevolveC1D1: return @"C:\workspace\SparrowHawk\src\resources\menus\new3\RevolveC1D1.png";
-                case MenuLayout2.RevolveAxis: return @"C:\workspace\SparrowHawk\src\resources\menus\new3\RevolveAxis.png";
+
+                case MenuLayout2.MainMenu: return parentPath+@"MainMenu.png";
+                case MenuLayout2.SweepC1: return parentPath + @"SweepC1.png";
+                case MenuLayout2.SweepD1: return parentPath + @"SweepD1.png";
+                case MenuLayout2.SweepC2D2: return parentPath + @"SweepC2D2.png";
+                case MenuLayout2.ExtrudeC1: return parentPath + @"ExtrudeC1.png";
+                case MenuLayout2.ExtrudeD1: return parentPath + @"ExtrudeD1.png";
+                case MenuLayout2.ExtrudeC2D2: return parentPath + @"ExtrudeC2D2.png";
+                case MenuLayout2.LoftC1: return parentPath + @"LoftC1.png";
+                case MenuLayout2.LoftD1: return parentPath + @"LoftD1.png";
+                case MenuLayout2.LoftC2D2: return parentPath + @"LoftC2D2.png";
+                case MenuLayout2.LoftC2: return parentPath + @"LoftC2.png";
+                case MenuLayout2.LoftD2: return parentPath + @"LoftD2.png";
+                case MenuLayout2.RevolveC1D1: return parentPath + @"RevolveC1D1.png";
+                case MenuLayout2.RevolveAxis: return parentPath + @"RevolveAxis.png";
 
             }
             return "";
