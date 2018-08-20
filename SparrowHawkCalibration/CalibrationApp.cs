@@ -19,8 +19,8 @@ namespace SparrowHawkCalibration
         String mStrDriver = "No Driver";
         String mStrDisplay = "No Display";
         String mTitleBase;
-        uint mRenderWidth = 1280;
-        uint mRenderHeight = 720;
+        //uint mRenderWidth = 1280;
+        //uint mRenderHeight = 720;
         int mLeftControllerIdx, mRightControllerIdx;
         TrackedDevicePose_t[] mGamePoseArray = new TrackedDevicePose_t[OpenVR.k_unMaxTrackedDeviceCount];
         TrackedDevicePose_t[] mTrackedDevices = new TrackedDevicePose_t[OpenVR.k_unMaxTrackedDeviceCount];

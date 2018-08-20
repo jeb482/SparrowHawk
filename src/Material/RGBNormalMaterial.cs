@@ -29,7 +29,7 @@ namespace SparrowHawk.Material
         {
             // bind shader
             GL.Disable(EnableCap.DepthTest);
-            GL.BlendFunc(BlendingFactorSrc.SrcAlpha, BlendingFactorDest.OneMinusSrcAlpha);
+            GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
             mShader.bind();
 
             Matrix4 modelIT = model.Inverted();

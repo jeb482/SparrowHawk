@@ -38,7 +38,7 @@ namespace SparrowHawk.Material
         {
             UtilOld.depthSort(model*vp,g);
             GL.Disable(EnableCap.DepthTest);
-            GL.BlendFunc(BlendingFactorSrc.SrcAlpha, BlendingFactorDest.OneMinusSrcAlpha);
+            GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
             GL.Enable(EnableCap.Blend);
             Matrix4 modelIT = model.Inverted();
             modelIT.Transpose();
