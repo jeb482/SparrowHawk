@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Xml.Serialization;
+using System.IO;
 using OpenTK;
 using OpenTK.Graphics;
 using OpenTK.Graphics.OpenGL4;
@@ -71,5 +73,10 @@ namespace SparrowHawk.Calibration
             var id = Matrix4.Identity;
             crosshairMaterial.draw(ref crosshairs, ref id, ref id);
         }
+    }
+
+    public class MetaCalibrationData
+    {
+
     }
 }
