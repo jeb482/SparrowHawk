@@ -28,7 +28,7 @@ namespace SparrowHawk.Calibration
         /// <param name="screenPoints">The pixel coordinates corresponding to the known point in each pose</param>
         /// <param name="knownPoint">The known 3D calibration point in world space</param>
         /// <returns>The 3x4 projection matrix</returns>
-        static Matrix3x4 estimateProjectionMatrix3x4(List<Matrix4> markPoses, List<Vector2> screenPoints, Vector4 knownPoint)
+        public static Matrix3x4 estimateProjectionMatrix3x4(List<Matrix4> markPoses, List<Vector2> screenPoints, Vector4 knownPoint)
         {
             var B = LinAlg.CreateMatrix.Dense<float>(2 * markPoses.Count, 12);
             for (int i = 0; i < markPoses.Count; i++)
@@ -49,7 +49,7 @@ namespace SparrowHawk.Calibration
         }
 
         
-        static Matrix4 constructProjectionMatrix4x4(Matrix3x4 proj, float n, float f, int r, int l, int t, int b)
+        public static Matrix4 constructProjectionMatrix4x4(Matrix3x4 proj, float n, float f, int r, int l, int t, int b)
         {
             // Duplicate last row.
             Matrix4 P = new Matrix4(proj.Row0, proj.Row1, proj.Row2, proj.Row2);
@@ -58,7 +58,7 @@ namespace SparrowHawk.Calibration
             return P* Matrix4.CreateOrthographicOffCenter(l, r, b, t, n, f);
         }
 
-        static void renderCrosshairs(Vector2 screenPos, Color4 color, FramebufferDesc framebuffer)
+        public static void RenderCrosshairs(Vector2 screenPos, Color4 color, FramebufferDesc framebuffer)
         {
             GL.BindFramebuffer(FramebufferTarget.Framebuffer, framebuffer.renderFramebufferId);
             GL.ClearColor(0,0,0,1);
