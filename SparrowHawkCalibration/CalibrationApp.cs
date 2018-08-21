@@ -6,6 +6,10 @@ using OpenTK;
 using Valve.VR;
 using SparrowHawk;
 using SparrowHawk.Calibration;
+using OpenTK.Input;
+using System.Xml.Serialization;
+using System.IO;
+using OpenTK.Graphics.OpenGL4;
 
 namespace SparrowHawkCalibration
 {
@@ -16,11 +20,6 @@ namespace SparrowHawkCalibration
     public class CalibrationApp : OpenTK.GameWindow
     {
         CVRSystem mHMD;
-        String mStrDriver = "No Driver";
-        String mStrDisplay = "No Display";
-        String mTitleBase;
-        //uint mRenderWidth = 1280;
-        //uint mRenderHeight = 720;
         int mLeftControllerIdx, mRightControllerIdx;
         TrackedDevicePose_t[] mGamePoseArray = new TrackedDevicePose_t[OpenVR.k_unMaxTrackedDeviceCount];
         TrackedDevicePose_t[] mTrackedDevices = new TrackedDevicePose_t[OpenVR.k_unMaxTrackedDeviceCount];
@@ -32,7 +31,7 @@ namespace SparrowHawkCalibration
 
         int mPointIndex = 0;
         bool calibrateLeft = true;
-        bool hasKnownPoint = false;
+        bool hasKnownPoint = true;
         bool hasOffset = false;
         bool calibrationDone = false;
         Vector4 knownPoint = Vector4.Zero;
@@ -40,8 +39,9 @@ namespace SparrowHawkCalibration
         List<Vector2> mScreenPoints;
         List<Matrix4> mLeftHeadPoses;
         List<Matrix4> mRightHeadPoses;
-        Matrix4 leftProj = Matrix4.Identity;
-        Matrix4 rightProj = Matrix4.Identity;
+        MetaTwoCalibrationData calibrationData;
+        string CalibrationPath = "meta_calibration.xml";
+
 
         /// <summary>
         /// Updates matrix poses. Should probably inherit from VrGame
@@ -80,6 +80,12 @@ namespace SparrowHawkCalibration
             }
         }
 
+
+        public CalibrationApp()
+        {
+            Init();
+        }
+
         protected void Init()
         {
             // Init VR
@@ -100,7 +106,7 @@ namespace SparrowHawkCalibration
             mScreenPoints = new List<Vector2>();
             for (int i = 0; i < 6; i++)
             {
-                mScreenPoints.Add(new Vector2(mRand.Next(Width / 2), mRand.Next(Width / 2)));
+                mScreenPoints.Add(new Vector2((float) mRand.NextDouble(), (float)mRand.NextDouble()));
             }
             mLeftHeadPoses = new List<Matrix4>();
             mRightHeadPoses = new List<Matrix4>();
@@ -121,15 +127,14 @@ namespace SparrowHawkCalibration
                 var p4x4 = Spaam.constructProjectionMatrix4x4(p3x4, 0.02f, 5, Width / 4, Width / 4, Height / 2, Height / 2);
                 if (calibrateLeft)
                 {
-                    leftProj = p4x4;
+                    calibrationData.leftEyeProjection = p4x4;
                     calibrateLeft = false;
                     mPointIndex = 0;
                 } else
                 {
-                    rightProj = p4x4;
+                    calibrationData.rightEyeProjection = p4x4;
                     calibrationDone = true;
                 }
-                SaveMatrices();
             }
 
             // Render the active point.
@@ -140,12 +145,28 @@ namespace SparrowHawkCalibration
             {
                 // TODO: Render a debug scene.
             }
-                
 
+            RenderMetaWindow();
             
 
 
             //SparrowHawk.Calibration.Spaam
+        }
+
+        protected void RenderMetaWindow()
+        {
+            MakeCurrent();
+            GL.BindFramebuffer(FramebufferTarget.ReadFramebuffer, mLeftEyeDesc.renderFramebufferId);
+            GL.BindFramebuffer(FramebufferTarget.DrawFramebuffer, 0);
+            GL.BlitFramebuffer(0,0,Width/2,Height, Width / 2, Height, 0, 0, ClearBufferMask.ColorBufferBit, BlitFramebufferFilter.Linear);
+
+            GL.BindFramebuffer(FramebufferTarget.ReadFramebuffer, mRightEyeDesc.renderFramebufferId);
+            GL.BlitFramebuffer(0, 0, Width / 2, Height, Width, Height, Width/2, 0, ClearBufferMask.ColorBufferBit, BlitFramebufferFilter.Linear);
+            GL.BindFramebuffer(FramebufferTarget.ReadFramebuffer, 0);
+            GL.Flush();
+            GL.Finish();
+
+            SwapBuffers();
         }
 
         protected void HandleInput()
@@ -155,7 +176,7 @@ namespace SparrowHawkCalibration
             VREvent_t vrEvent  = new VREvent_t();
             unsafe
             {
-                while (mHMD.PollNextEvent(ref vrEvent, (uint)sizeof(VREvent_t)))
+                while (mHMD != null && mHMD.PollNextEvent(ref vrEvent, (uint)sizeof(VREvent_t)))
                 {
                     if (vrEvent.eventType == (int) EVREventType.VREvent_ButtonPress
                         && vrEvent.data.controller.button == (uint)UtilOld.OculusButtonId.k_EButton_Oculus_Trigger)
@@ -163,6 +184,18 @@ namespace SparrowHawkCalibration
                         RegisterPoint();
                     }
                 }
+            }
+        }
+
+        protected override void OnKeyDown(KeyboardKeyEventArgs e)
+        {
+            base.OnKeyDown(e);
+            switch (e.Key) {
+                case Key.S:
+                    SaveMatrices();
+                    break;
+                default:
+                    break;
             }
         }
 
@@ -186,12 +219,16 @@ namespace SparrowHawkCalibration
 
         protected void SaveMatrices()
         {
-            // #TODO:
+            Console.WriteLine("Saving calibration data to " + CalibrationPath);
+            XmlSerializer xmlf = new XmlSerializer(typeof(MetaTwoCalibrationData));
+            FileStream file = File.Open(CalibrationPath, FileMode.OpenOrCreate);
+            xmlf.Serialize(file, calibrationData);
+            file.Close();
         }
 
         static void Main(string[] args)
         {
-
+            new CalibrationApp().Run();
         }
     }
 }

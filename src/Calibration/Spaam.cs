@@ -69,14 +69,16 @@ namespace SparrowHawk.Calibration
             crosshairs.mGeometry[4] = screenPos.Y;
             crosshairs.mGeometry[6] = screenPos.X;
             crosshairs.mGeometry[9] = screenPos.X;
-            crosshairMaterial.mColor = color;
+            
             var id = Matrix4.Identity;
             crosshairMaterial.draw(ref crosshairs, ref id, ref id);
         }
     }
 
-    public class MetaCalibrationData
+    [Serializable]
+    public class MetaTwoCalibrationData
     {
-
+        public Matrix4 leftEyeProjection = Matrix4.Identity;
+        public Matrix4 rightEyeProjection = Matrix4.Identity;
     }
 }
