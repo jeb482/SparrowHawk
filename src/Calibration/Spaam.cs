@@ -13,7 +13,7 @@ namespace SparrowHawk.Calibration
 {
     public class Spaam
     {
-        private static Geometry.Geometry crosshairs = new Geometry.Polyline(new float[] {-1,0,0,1,0,0,0,-1,0,0,1,0});
+        private static Geometry.Geometry crosshairs = new Geometry.Polyline(new float[] {-1,0,1,1,0,1,0,-1,1,0,1,1});
         private static Material.SingleColorMaterial crosshairMaterial = new Material.SingleColorMaterial(1, 1, 1, 1);
      
         /// <summary>
@@ -63,7 +63,8 @@ namespace SparrowHawk.Calibration
         public static void RenderCrosshairs(Vector2 screenPos, Color4 color, FramebufferDesc framebuffer)
         {
             GL.BindFramebuffer(FramebufferTarget.Framebuffer, framebuffer.renderFramebufferId);
-            GL.ClearColor(0,0,0,1);
+            GL.Viewport(0, 0, 1280, 1440);
+            GL.ClearColor(0.1f,0,0.1f,1);
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
             crosshairs.mGeometry[1] = screenPos.Y;
             crosshairs.mGeometry[4] = screenPos.Y;
@@ -72,6 +73,7 @@ namespace SparrowHawk.Calibration
             
             var id = Matrix4.Identity;
             crosshairMaterial.draw(ref crosshairs, ref id, ref id);
+
         }
     }
 

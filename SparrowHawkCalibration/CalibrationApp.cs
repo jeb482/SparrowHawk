@@ -30,7 +30,7 @@ namespace SparrowHawkCalibration
         
 
         int mPointIndex = 0;
-        bool calibrateLeft = true;
+        bool calibrateLeft = false;
         bool hasKnownPoint = true;
         bool hasOffset = false;
         bool calibrationDone = false;
@@ -106,7 +106,7 @@ namespace SparrowHawkCalibration
             mScreenPoints = new List<Vector2>();
             for (int i = 0; i < 6; i++)
             {
-                mScreenPoints.Add(new Vector2((float) mRand.NextDouble(), (float)mRand.NextDouble()));
+                mScreenPoints.Add(new Vector2((float) mRand.NextDouble() * 2 - 1, (float) mRand.NextDouble() * 2 - 1));
             }
             mLeftHeadPoses = new List<Matrix4>();
             mRightHeadPoses = new List<Matrix4>();
@@ -194,6 +194,9 @@ namespace SparrowHawkCalibration
                 case Key.S:
                     SaveMatrices();
                     break;
+                case Key.P:
+                    RegisterPoint();
+                    break;
                 default:
                     break;
             }
@@ -201,6 +204,11 @@ namespace SparrowHawkCalibration
 
         protected void RegisterPoint()
         {
+            if (mHMD == null)
+            {
+                mPointIndex += 1;
+                return;
+            }
             if (!hasKnownPoint)
             {
                 var controllerPose = UtilOld.steamVRMatrixToMatrix4(mGamePoseArray[mRightControllerIdx].mDeviceToAbsoluteTracking);
