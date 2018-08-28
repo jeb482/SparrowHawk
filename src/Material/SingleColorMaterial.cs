@@ -9,7 +9,7 @@ using OpenTK.Graphics.OpenGL4;
 namespace SparrowHawk.Material
 {
 
-    class SingleColorMaterial : Material
+    public class SingleColorMaterial : Material
     {
         public OpenTK.Graphics.Color4 mColor;
 

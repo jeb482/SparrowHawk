@@ -25,6 +25,8 @@ namespace SparrowHawk
         public int renderFramebufferId;
         public int resolveTextureId;
         public int resolveFramebufferId;
+        public int Width;
+        public int Height;
     }
 
     public class VrRenderer
@@ -70,6 +72,8 @@ namespace SparrowHawk
         public static bool CreateFrameBuffer(int width, int height, out FramebufferDesc framebufferDesc)
         {
             framebufferDesc = new FramebufferDesc();
+            framebufferDesc.Width = width;
+            framebufferDesc.Height = height;
             framebufferDesc.renderFramebufferId = GL.GenFramebuffer();
             GL.BindFramebuffer(FramebufferTarget.Framebuffer, framebufferDesc.renderFramebufferId);
 
@@ -93,6 +97,7 @@ namespace SparrowHawk
             GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgba8, width, height, 0, OpenTK.Graphics.OpenGL4.PixelFormat.Rgba, PixelType.UnsignedByte, new IntPtr()); // Hoping this is a nullptr
             GL.FramebufferTexture2D(FramebufferTarget.Framebuffer, FramebufferAttachment.ColorAttachment0, TextureTarget.Texture2D, framebufferDesc.resolveTextureId, 0);
 
+
             FramebufferErrorCode status = GL.CheckFramebufferStatus(FramebufferTarget.Framebuffer);
             if (status != FramebufferErrorCode.FramebufferComplete)
                 return false;
@@ -111,15 +116,15 @@ namespace SparrowHawk
             return true;
         }
 
-        Matrix4 GetHMDMatrixProjectionEye(ref Valve.VR.CVRSystem HMD, Valve.VR.EVREye eye)
+        public static Matrix4 GetHMDMatrixProjectionEye(ref Valve.VR.CVRSystem HMD, Valve.VR.EVREye eye, float near, float far)
         {
             if (HMD == null)
                 return new Matrix4();
-            Valve.VR.HmdMatrix44_t M = HMD.GetProjectionMatrix(eye, mNearClip, mFarClip);
+            Valve.VR.HmdMatrix44_t M = HMD.GetProjectionMatrix(eye, near, far);
             return UtilOld.steamVRMatrixToMatrix4(M);
         }
 
-        Matrix4 GetHMDMatrixPoseEye(ref Valve.VR.CVRSystem HMD, Valve.VR.EVREye eye)
+        public static Matrix4 GetHMDMatrixPoseEye(ref Valve.VR.CVRSystem HMD, Valve.VR.EVREye eye)
         {
             if (HMD == null)
                 return new Matrix4();
@@ -270,12 +275,27 @@ namespace SparrowHawk
         {
             mEyePosLeft = GetHMDMatrixPoseEye(ref mHMD, Valve.VR.EVREye.Eye_Left);
             mEyePosRight = GetHMDMatrixPoseEye(ref mHMD, Valve.VR.EVREye.Eye_Right);
-            mEyeProjLeft = GetHMDMatrixProjectionEye(ref mHMD, Valve.VR.EVREye.Eye_Left);
-            mEyeProjRight = GetHMDMatrixProjectionEye(ref mHMD, Valve.VR.EVREye.Eye_Right);
+            mEyeProjLeft = GetHMDMatrixProjectionEye(ref mHMD, Valve.VR.EVREye.Eye_Left, mNearClip, mFarClip);
+            mEyeProjRight = GetHMDMatrixProjectionEye(ref mHMD, Valve.VR.EVREye.Eye_Right, mNearClip, mFarClip);
         }
         
-        
-        
+        public static void SubmitToHmd(FramebufferDesc leftEyeDesc, FramebufferDesc rightEyeDesc)
+        {
+            Valve.VR.Texture_t leftEyeTexture, rightEyeTexture;
+            leftEyeTexture.handle = new IntPtr(leftEyeDesc.resolveTextureId);
+            rightEyeTexture.handle = new IntPtr(rightEyeDesc.resolveTextureId);
+            leftEyeTexture.eType = Valve.VR.ETextureType.OpenGL;
+            rightEyeTexture.eType = Valve.VR.ETextureType.OpenGL;
+            leftEyeTexture.eColorSpace = Valve.VR.EColorSpace.Gamma;
+            rightEyeTexture.eColorSpace = Valve.VR.EColorSpace.Gamma;
+            Valve.VR.VRTextureBounds_t pBounds = new Valve.VR.VRTextureBounds_t();
+            pBounds.uMax = 1; pBounds.uMin = 0; pBounds.vMax = 1; pBounds.uMin = 0;
+            Valve.VR.OpenVR.Compositor.Submit(Valve.VR.EVREye.Eye_Left, ref leftEyeTexture, ref pBounds, Valve.VR.EVRSubmitFlags.Submit_LensDistortionAlreadyApplied); // TODO: There's a distortion already applied flag.
+            Valve.VR.OpenVR.Compositor.Submit(Valve.VR.EVREye.Eye_Right, ref rightEyeTexture, ref pBounds, Valve.VR.EVRSubmitFlags.Submit_LensDistortionAlreadyApplied);
+            GL.Finish();
+        }
+
+
         public void renderFrame()
         {
             if (mHMD != null)
@@ -290,19 +310,7 @@ namespace SparrowHawk
                 GL.Flush();
 
                 renderMetaWindow();
-                Valve.VR.Texture_t leftEyeTexture, rightEyeTexture;
-                leftEyeTexture.handle = new IntPtr(leftEyeDesc.resolveTextureId);
-                rightEyeTexture.handle = new IntPtr(rightEyeDesc.resolveTextureId);
-                leftEyeTexture.eType = Valve.VR.ETextureType.OpenGL;
-                rightEyeTexture.eType = Valve.VR.ETextureType.OpenGL;
-                leftEyeTexture.eColorSpace = Valve.VR.EColorSpace.Gamma;
-                rightEyeTexture.eColorSpace = Valve.VR.EColorSpace.Gamma;
-                Valve.VR.VRTextureBounds_t pBounds = new Valve.VR.VRTextureBounds_t();
-                pBounds.uMax = 1; pBounds.uMin = 0; pBounds.vMax = 1; pBounds.uMin = 0;
-                Valve.VR.OpenVR.Compositor.Submit(Valve.VR.EVREye.Eye_Left, ref leftEyeTexture, ref pBounds, Valve.VR.EVRSubmitFlags.Submit_LensDistortionAlreadyApplied); // TODO: There's a distortion already applied flag.
-                Valve.VR.OpenVR.Compositor.Submit(Valve.VR.EVREye.Eye_Right, ref rightEyeTexture, ref pBounds, Valve.VR.EVRSubmitFlags.Submit_LensDistortionAlreadyApplied);
-                
-                GL.Finish();
+                SubmitToHmd(leftEyeDesc, rightEyeDesc);
             }
         }
 

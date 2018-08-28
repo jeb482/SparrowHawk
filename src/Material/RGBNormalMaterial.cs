@@ -8,7 +8,7 @@ using Math = SparrowHawk.Util.Math;
 
 namespace SparrowHawk.Material
 {
-    class RGBNormalMaterial : Material
+    public class RGBNormalMaterial : Material
     {
         float mAlpha;
         int vboPositions;
