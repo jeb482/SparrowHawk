@@ -38,11 +38,11 @@ namespace SparrowHawk.Calibration
                 Vector4 p = markPoses[i] * knownPoint;
                 Vector2 s = -screenPoints[i];
                 p /= p.W;
-                B.SetRow(2 * i, new float[] { p.X, p.Y, p.Z, 1, 0, 0, 0, 0, 0, 0, 0, 0, s.X * p.X, s.X * p.Y, s.X * p.Z, s.X });
-                B.SetRow(2 * i, new float[] { 0, 0, 0, 0, p.X, p.Y, p.Z, 1, 0, 0, 0, 0, s.Y * p.X, s.Y * p.Y, s.Y * p.Z, s.Y });
+                B.SetRow(2 * i,     new float[] { p.X, p.Y, p.Z, 1, 0, 0, 0, 0, s.X * p.X, s.X * p.Y, s.X * p.Z, s.X });
+                B.SetRow(2 * i + 1, new float[] { 0, 0, 0, 0, p.X, p.Y, p.Z, 1, s.Y * p.X, s.Y * p.Y, s.Y * p.Z, s.Y });
             }
-            var evd = B.Evd();
-            var v = evd.EigenVectors.Column(0);
+            var svd = B.Svd();
+            var v = svd.VT.Column(0);
             Matrix3x4 P = new Matrix3x4(v.At(0), v.At(1), v.At(2), v.At(3),
                                         v.At(4), v.At(5), v.At(6), v.At(7),
                                         v.At(8), v.At(9), v.At(10), v.At(11));
@@ -57,13 +57,13 @@ namespace SparrowHawk.Calibration
             Matrix4 P = new Matrix4(proj.Row0, proj.Row1, proj.Row2, proj.Row2);
             P.Row2 *= (-f - n);
             P.M34 += f * n;
-            return P* Matrix4.CreateOrthographicOffCenter(l, r, b, t, n, f);
+            return P* Matrix4.CreateOrthographicOffCenter(0, 1, 0, 1, n, f);
         }
 
         public static void RenderCrosshairs(Vector2 screenPos, Color4 color, FramebufferDesc framebuffer, bool clear=true)
         {
             GL.BindFramebuffer(FramebufferTarget.Framebuffer, framebuffer.renderFramebufferId);
-            GL.Viewport(0, 0, 1280, 1440);
+            GL.Viewport(0, 0, framebuffer.Width, framebuffer.Width);
             GL.ClearColor(0.1f,0,0.1f,1);
             if (clear)
                 GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);

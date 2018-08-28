@@ -31,7 +31,7 @@ namespace SparrowHawkCalibration
         // Callibration Machinery
         int mPointIndex = 0;
         bool calibrateLeft = true;
-        bool hasKnownPoint = true;
+        bool hasKnownPoint = false;
         bool calibrationDone = false;
         Vector4 knownPoint = Vector4.Zero;
         Vector3 controllerOffset = Vector3.Zero;
@@ -112,15 +112,15 @@ namespace SparrowHawkCalibration
             VrRenderer.CreateFrameBuffer(Width / 2, Height, out mRightEyeDesc);
             mRand = new Random();
             mScreenPoints = new List<Vector2>();
-            for (int i = 0; i < 6; i++)
+            for (int i = 0; i < 8; i++)
             {
-                mScreenPoints.Add(new Vector2((float) mRand.NextDouble() * 2 - 1, (float) mRand.NextDouble() * 2 - 1));
+                mScreenPoints.Add(new Vector2((float) mRand.NextDouble() * 1.5f - .75f, (float) mRand.NextDouble() * 1.5f - .75f));
             }
             mLeftHeadPoses = new List<Matrix4>();
             mRightHeadPoses = new List<Matrix4>();
 
-            debugPoint = new SparrowHawk.Geometry.PointMarker(new Vector3(0,0,0));
-            bunny = new SparrowHawk.Geometry.Geometry("D:\\workspace\\SparrowHawk\\src\\resources\\Bunny-LowPoly.stl");
+            debugPoint = new SparrowHawk.Geometry.DrawPointMarker(new Vector3(0,0,0));//new SparrowHawk.Geometry.PointMarker(new Vector3(0,0,0));
+            bunny = new SparrowHawk.Geometry.Geometry("D:\\workspace\\SparrowHawk\\src\\resources\\bunny.obj");
             pointMaterial = new SparrowHawk.Material.SingleColorMaterial(1,1,0,1);
             bunnyMat = new SparrowHawk.Material.RGBNormalMaterial(1);
         }
@@ -133,7 +133,7 @@ namespace SparrowHawkCalibration
 
             // Handle Input; Update state 
             HandleInput();
-            if (!calibrationDone && mPointIndex >= 6)
+            if (!calibrationDone && mPointIndex >= 8)
             {
                 var poses = (calibrateLeft) ? mLeftHeadPoses : mRightHeadPoses;
                 var p3x4 = Spaam.EstimateProjectionMatrix3x4(poses, mScreenPoints, knownPoint);
@@ -167,6 +167,7 @@ namespace SparrowHawkCalibration
             {
                 BlitToResolve(mLeftEyeDesc);
                 BlitToResolve(mRightEyeDesc);
+                RenderMetaWindow();
                 VrRenderer.SubmitToHmd(mLeftEyeDesc, mRightEyeDesc);
                
             }
@@ -193,17 +194,21 @@ namespace SparrowHawkCalibration
 
         protected void RenderTestScene(bool clear)
         {
-            Matrix4 modelTransform = Matrix4.CreateTranslation(-knownPoint.Xyz);
+            //Matrix4 modelTransform = UtilOld.steamVRMatrixToMatrix4(mGamePoseArray[mRightControllerIdx].mDeviceToAbsoluteTracking);
+            Matrix4 modelTransform = Matrix4.CreateTranslation(knownPoint.Xyz);
+            modelTransform.Transpose();
             GL.Viewport(0, 0, Width / 2, Height);
             GL.ClearColor(0.1f, 0, 0.1f, 1);
 
-            Matrix4 viewProject = calibrationData.leftEyeProjection * UtilOld.steamVRMatrixToMatrix4(mGamePoseArray[mLeftControllerIdx].mDeviceToAbsoluteTracking);
+            Matrix4 viewProject = calibrationData.leftEyeProjection * UtilOld.steamVRMatrixToMatrix4(mGamePoseArray[mLeftControllerIdx].mDeviceToAbsoluteTracking).Inverted();
+            viewProject.Transpose();
             GL.BindFramebuffer(FramebufferTarget.Framebuffer, mLeftEyeDesc.renderFramebufferId);
             if (clear)
                 GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
             bunnyMat.draw(ref bunny, ref modelTransform , ref viewProject);
 
-            viewProject = calibrationData.rightEyeProjection * UtilOld.steamVRMatrixToMatrix4(mGamePoseArray[mLeftControllerIdx].mDeviceToAbsoluteTracking);
+            viewProject = calibrationData.rightEyeProjection * UtilOld.steamVRMatrixToMatrix4(mGamePoseArray[mLeftControllerIdx].mDeviceToAbsoluteTracking).Inverted();
+            viewProject.Transpose();
             GL.BindFramebuffer(FramebufferTarget.Framebuffer, mRightEyeDesc.renderFramebufferId);
             if (clear)
                 GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
@@ -223,16 +228,21 @@ namespace SparrowHawkCalibration
 
         protected void RenderDebugScene()
         {
-            Matrix4 modelTransform = Matrix4.CreateTranslation(-knownPoint.Xyz);
+            //(vp = mEyeProjRight * mEyePosRight * mScene.mHMDPose).T
+            //Matrix4 modelTransform = UtilOld.steamVRMatrixToMatrix4(mGamePoseArray[mRightControllerIdx].mDeviceToAbsoluteTracking);
+            Matrix4 modelTransform = Matrix4.CreateTranslation(knownPoint.Xyz);
+            modelTransform.Transpose();
             GL.Viewport(0, 0, Width / 2, Height);
             GL.ClearColor(0.1f, 0, 0.1f, 1);
 
-            Matrix4 viewProject = VrRenderer.GetHMDMatrixProjectionEye(ref mHMD, EVREye.Eye_Left, 0.01f, 10f) * VrRenderer.GetHMDMatrixPoseEye(ref mHMD, EVREye.Eye_Left);
+            Matrix4 viewProject = VrRenderer.GetHMDMatrixProjectionEye(ref mHMD, EVREye.Eye_Left, 0.01f, 10f) * VrRenderer.GetHMDMatrixPoseEye(ref mHMD, EVREye.Eye_Left) * UtilOld.steamVRMatrixToMatrix4(mGamePoseArray[OpenVR.k_unTrackedDeviceIndex_Hmd].mDeviceToAbsoluteTracking).Inverted();
+            viewProject.Transpose();
             GL.BindFramebuffer(FramebufferTarget.Framebuffer, mLeftEyeDesc.renderFramebufferId);
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
             pointMaterial.draw(ref debugPoint, ref modelTransform, ref viewProject);
 
-            viewProject = VrRenderer.GetHMDMatrixProjectionEye(ref mHMD, EVREye.Eye_Right, 0.01f, 10f) * VrRenderer.GetHMDMatrixPoseEye(ref mHMD, EVREye.Eye_Right);
+            viewProject = VrRenderer.GetHMDMatrixProjectionEye(ref mHMD, EVREye.Eye_Right, 0.01f, 10f) * VrRenderer.GetHMDMatrixPoseEye(ref mHMD, EVREye.Eye_Right) * UtilOld.steamVRMatrixToMatrix4(mGamePoseArray[OpenVR.k_unTrackedDeviceIndex_Hmd].mDeviceToAbsoluteTracking).Inverted();
+            viewProject.Transpose();
             GL.BindFramebuffer(FramebufferTarget.Framebuffer, mRightEyeDesc.renderFramebufferId);
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
             pointMaterial.draw(ref debugPoint, ref modelTransform, ref viewProject);
