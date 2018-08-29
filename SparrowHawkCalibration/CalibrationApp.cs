@@ -114,7 +114,7 @@ namespace SparrowHawkCalibration
             mScreenPoints = new List<Vector2>();
             for (int i = 0; i < 8; i++)
             {
-                mScreenPoints.Add(new Vector2((float) mRand.NextDouble() * 1.5f - .75f, (float) mRand.NextDouble() * 1.5f - .75f));
+                mScreenPoints.Add(new Vector2((float) mRand.NextDouble() * 1f - .5f, (float) mRand.NextDouble() * 1f - .5f));
             }
             mLeftHeadPoses = new List<Matrix4>();
             mRightHeadPoses = new List<Matrix4>();
@@ -137,17 +137,23 @@ namespace SparrowHawkCalibration
             {
                 var poses = (calibrateLeft) ? mLeftHeadPoses : mRightHeadPoses;
                 var p3x4 = Spaam.EstimateProjectionMatrix3x4(poses, mScreenPoints, knownPoint);
-                var p4x4 = Spaam.ConstructProjectionMatrix4x4(p3x4, 0.02f, 5, Width / 4, Width / 4, Height / 2, Height / 2);
+                var p4x4 = Spaam.ConstructProjectionMatrix4x4(p3x4, 0.01f, 10, Width / 4, Width / 4, Height / 2, Height / 2);
                 if (calibrateLeft)
                 {
                     calibrationData.leftEyeProjection = p4x4;
+                    Console.WriteLine("Left:");
+                    Console.WriteLine(VrRenderer.GetHMDMatrixProjectionEye(ref mHMD, EVREye.Eye_Left, 0.01f, 10f) * VrRenderer.GetHMDMatrixPoseEye(ref mHMD, EVREye.Eye_Left));
                     calibrateLeft = false;
                     mPointIndex = 0;
                 } else
                 {
                     calibrationData.rightEyeProjection = p4x4;
+                    Console.WriteLine("Right:");
+                    Console.WriteLine(VrRenderer.GetHMDMatrixProjectionEye(ref mHMD, EVREye.Eye_Right, 0.01f, 10f) * VrRenderer.GetHMDMatrixPoseEye(ref mHMD, EVREye.Eye_Right));
                     calibrationDone = true;
                 }
+                Console.WriteLine(p4x4);
+                
             }
 
             // In debug mode, pretend oculus is an optical see-through system.
@@ -293,11 +299,13 @@ namespace SparrowHawkCalibration
                 hasKnownPoint = true;
             } else if (calibrateLeft)
             {
-                mLeftHeadPoses.Add(UtilOld.steamVRMatrixToMatrix4(mGamePoseArray[mLeftControllerIdx].mDeviceToAbsoluteTracking));
+                //mLeftHeadPoses.Add(UtilOld.steamVRMatrixToMatrix4(mGamePoseArray[mLeftControllerIdx].mDeviceToAbsoluteTracking));
+                mLeftHeadPoses.Add(UtilOld.steamVRMatrixToMatrix4(mGamePoseArray[OpenVR.k_unTrackedDeviceIndex_Hmd].mDeviceToAbsoluteTracking).Inverted());
                 mPointIndex += 1;
             } else
             {
-                mRightHeadPoses.Add(UtilOld.steamVRMatrixToMatrix4(mGamePoseArray[mLeftControllerIdx].mDeviceToAbsoluteTracking));
+                //mRightHeadPoses.Add(UtilOld.steamVRMatrixToMatrix4(mGamePoseArray[mLeftControllerIdx].mDeviceToAbsoluteTracking));
+                mRightHeadPoses.Add(UtilOld.steamVRMatrixToMatrix4(mGamePoseArray[OpenVR.k_unTrackedDeviceIndex_Hmd].mDeviceToAbsoluteTracking).Inverted());
                 mPointIndex += 1;
             }
         }
