@@ -36,11 +36,8 @@ namespace SparrowHawk.Calibration
             for (int i = 0; i < markPoses.Count; i++)
             {
                 Vector4 p = markPoses[i] * knownPoint;
-                //Vector2 s = -screenPoints[i];
                 Vector2 s = screenPoints[i];
                 p /= p.W;
-                //B.SetRow(2 * i,     new float[] { p.X, p.Y, p.Z, 1, 0, 0, 0, 0, s.X * p.X, s.X * p.Y, s.X * p.Z, s.X });
-                //B.SetRow(2 * i + 1, new float[] { 0, 0, 0, 0, p.X, p.Y, p.Z, 1, s.Y * p.X, s.Y * p.Y, s.Y * p.Z, s.Y });
                 B.SetRow(2 * i, new float[] { 0,0,0,0, -p.X, -p.Y, -p.Z, -1, s.Y * p.X, s.Y*p.Y, s.Y*p.Z, s.Y});
                 B.SetRow(2 * i + 1, new float[] { p.X, p.Y, p.Z, 1, 0,0,0,0, -s.X * p.X, -s.X * p.Y, -s.X * p.Z, -s.X });
             }
@@ -58,9 +55,6 @@ namespace SparrowHawk.Calibration
                 P *= -1;
             }
                 
-            Console.WriteLine("Calculated Matrix");
-            Console.WriteLine(P);
-
             // Reprojection Error
             float residual = 0;
             for (int i = 0; i < markPoses.Count; i++)

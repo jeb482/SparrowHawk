@@ -142,16 +142,12 @@ namespace SparrowHawkCalibration
                 if (calibrateLeft)
                 { 
                     calibrationData.leftEyeProjection = p4x4;
-                    //Console.WriteLine("Left:");
-                    //Console.WriteLine(VrRenderer.GetHMDMatrixProjectionEye(ref mHMD, EVREye.Eye_Left, 0.01f, 10f) * VrRenderer.GetHMDMatrixPoseEye(ref mHMD, EVREye.Eye_Left));
                     Console.WriteLine(Spaam.CalculateProjectionError(p4x4, poses, mScreenPoints, knownPoint));
                     calibrateLeft = false;
                     mPointIndex = 0;
                 } else
                 {
                     calibrationData.rightEyeProjection = p4x4;
-                    //Console.WriteLine("Right:");
-                    //Console.WriteLine(VrRenderer.GetHMDMatrixProjectionEye(ref mHMD, EVREye.Eye_Right, 0.01f, 10f) * VrRenderer.GetHMDMatrixPoseEye(ref mHMD, EVREye.Eye_Right));
                     Console.WriteLine(Spaam.CalculateProjectionError(p4x4, poses, mScreenPoints, knownPoint));
                     calibrationDone = true;
                 }
@@ -173,16 +169,14 @@ namespace SparrowHawkCalibration
                 RenderTestScene(!debug);
             }
 
+            // Submit to SteamVR compositor if running in debug mode.
             if (debug && mHMD != null)
             {
                 BlitToResolve(mLeftEyeDesc);
                 BlitToResolve(mRightEyeDesc);
                 RenderMetaWindow();
-                VrRenderer.SubmitToHmd(mLeftEyeDesc, mRightEyeDesc);
-               
+                VrRenderer.SubmitToHmd(mLeftEyeDesc, mRightEyeDesc); 
             }
-                
-
             RenderMetaWindow();
         }
 
@@ -204,7 +198,6 @@ namespace SparrowHawkCalibration
 
         protected void RenderTestScene(bool clear)
         {
-            //Matrix4 modelTransform = UtilOld.steamVRMatrixToMatrix4(mGamePoseArray[mRightControllerIdx].mDeviceToAbsoluteTracking);
             Matrix4 modelTransform = Matrix4.CreateTranslation(knownPoint.Xyz);
             modelTransform.Transpose();
             GL.Viewport(0, 0, Width / 2, Height);
@@ -239,7 +232,6 @@ namespace SparrowHawkCalibration
         protected void RenderDebugScene()
         {
             //(vp = mEyeProjRight * mEyePosRight * mScene.mHMDPose).T
-            //Matrix4 modelTransform = UtilOld.steamVRMatrixToMatrix4(mGamePoseArray[mRightControllerIdx].mDeviceToAbsoluteTracking);
             Matrix4 modelTransform = Matrix4.CreateTranslation(knownPoint.Xyz);
             modelTransform.Transpose();
             GL.Viewport(0, 0, Width / 2, Height);
@@ -304,12 +296,10 @@ namespace SparrowHawkCalibration
             } else if (calibrateLeft)
             {
                 mLeftHeadPoses.Add(UtilOld.steamVRMatrixToMatrix4(mGamePoseArray[mLeftControllerIdx].mDeviceToAbsoluteTracking).Inverted());
-                //mLeftHeadPoses.Add(UtilOld.steamVRMatrixToMatrix4(mGamePoseArray[OpenVR.k_unTrackedDeviceIndex_Hmd].mDeviceToAbsoluteTracking).Inverted());
                 mPointIndex += 1;
             } else
             {
                 mRightHeadPoses.Add(UtilOld.steamVRMatrixToMatrix4(mGamePoseArray[mLeftControllerIdx].mDeviceToAbsoluteTracking).Inverted());
-                //mRightHeadPoses.Add(UtilOld.steamVRMatrixToMatrix4(mGamePoseArray[OpenVR.k_unTrackedDeviceIndex_Hmd].mDeviceToAbsoluteTracking).Inverted());
                 mPointIndex += 1;
             }
         }
