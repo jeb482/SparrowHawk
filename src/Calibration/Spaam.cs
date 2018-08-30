@@ -76,7 +76,7 @@ namespace SparrowHawk.Calibration
         {
             // Duplicate last row.
             Matrix4 P = new Matrix4(proj.Row0, proj.Row1, proj.Row2, proj.Row2);
-            P.Row2 *= (-f - n);
+            P.Row3 *= (-f - n);
             P.M34 += f * n;
             return P* Matrix4.CreateOrthographicOffCenter(-1, 1, -1, 1, 0.01f, 10);
         }

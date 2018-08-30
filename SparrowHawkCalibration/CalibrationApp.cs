@@ -30,6 +30,7 @@ namespace SparrowHawkCalibration
         
         // Callibration Machinery
         int mPointIndex = 0;
+        int numCalibrationPoints = 6;
         bool calibrateLeft = true;
         bool hasKnownPoint = false;
         bool calibrationDone = false;
@@ -112,7 +113,7 @@ namespace SparrowHawkCalibration
             VrRenderer.CreateFrameBuffer(Width / 2, Height, out mRightEyeDesc);
             mRand = new Random();
             mScreenPoints = new List<Vector2>();
-            for (int i = 0; i < 8; i++)
+            for (int i = 0; i < numCalibrationPoints; i++)
             {
                 mScreenPoints.Add(new Vector2((float) mRand.NextDouble() * 1f - .5f, (float) mRand.NextDouble() * 1f - .5f));
             }
@@ -133,16 +134,17 @@ namespace SparrowHawkCalibration
 
             // Handle Input; Update state 
             HandleInput();
-            if (!calibrationDone && mPointIndex >= 8)
+            if (!calibrationDone && mPointIndex >= numCalibrationPoints)
             {
                 var poses = (calibrateLeft) ? mLeftHeadPoses : mRightHeadPoses;
                 var p3x4 = Spaam.EstimateProjectionMatrix3x4(poses, mScreenPoints, knownPoint);
                 var p4x4 = Spaam.ConstructProjectionMatrix4x4(p3x4, 0.01f, 10, Width / 4, Width / 4, Height / 2, Height / 2);
                 if (calibrateLeft)
-                {
+                { 
                     calibrationData.leftEyeProjection = p4x4;
                     Console.WriteLine("Left:");
                     Console.WriteLine(VrRenderer.GetHMDMatrixProjectionEye(ref mHMD, EVREye.Eye_Left, 0.01f, 10f) * VrRenderer.GetHMDMatrixPoseEye(ref mHMD, EVREye.Eye_Left));
+                    
                     calibrateLeft = false;
                     mPointIndex = 0;
                 } else
@@ -153,7 +155,8 @@ namespace SparrowHawkCalibration
                     calibrationDone = true;
                 }
                 Console.WriteLine(p4x4);
-                
+                Console.WriteLine(p4x4* (UtilOld.steamVRMatrixToMatrix4(mGamePoseArray[OpenVR.k_unTrackedDeviceIndex_Hmd].mDeviceToAbsoluteTracking).Inverted() *knownPoint));
+
             }
 
             // In debug mode, pretend oculus is an optical see-through system.
@@ -206,14 +209,14 @@ namespace SparrowHawkCalibration
             GL.Viewport(0, 0, Width / 2, Height);
             GL.ClearColor(0.1f, 0, 0.1f, 1);
 
-            Matrix4 viewProject = calibrationData.leftEyeProjection * UtilOld.steamVRMatrixToMatrix4(mGamePoseArray[mLeftControllerIdx].mDeviceToAbsoluteTracking).Inverted();
+            Matrix4 viewProject = calibrationData.leftEyeProjection * UtilOld.steamVRMatrixToMatrix4(mGamePoseArray[OpenVR.k_unTrackedDeviceIndex_Hmd].mDeviceToAbsoluteTracking).Inverted(); ;
             viewProject.Transpose();
             GL.BindFramebuffer(FramebufferTarget.Framebuffer, mLeftEyeDesc.renderFramebufferId);
             if (clear)
                 GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
             bunnyMat.draw(ref bunny, ref modelTransform , ref viewProject);
 
-            viewProject = calibrationData.rightEyeProjection * UtilOld.steamVRMatrixToMatrix4(mGamePoseArray[mLeftControllerIdx].mDeviceToAbsoluteTracking).Inverted();
+            viewProject = calibrationData.rightEyeProjection * UtilOld.steamVRMatrixToMatrix4(mGamePoseArray[OpenVR.k_unTrackedDeviceIndex_Hmd].mDeviceToAbsoluteTracking).Inverted();
             viewProject.Transpose();
             GL.BindFramebuffer(FramebufferTarget.Framebuffer, mRightEyeDesc.renderFramebufferId);
             if (clear)
