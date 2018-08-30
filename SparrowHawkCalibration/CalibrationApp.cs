@@ -30,7 +30,7 @@ namespace SparrowHawkCalibration
         
         // Callibration Machinery
         int mPointIndex = 0;
-        int numCalibrationPoints = 6;
+        int numCalibrationPoints = 12;
         bool calibrateLeft = true;
         bool hasKnownPoint = false;
         bool calibrationDone = false;
@@ -142,16 +142,17 @@ namespace SparrowHawkCalibration
                 if (calibrateLeft)
                 { 
                     calibrationData.leftEyeProjection = p4x4;
-                    Console.WriteLine("Left:");
-                    Console.WriteLine(VrRenderer.GetHMDMatrixProjectionEye(ref mHMD, EVREye.Eye_Left, 0.01f, 10f) * VrRenderer.GetHMDMatrixPoseEye(ref mHMD, EVREye.Eye_Left));
-                    
+                    //Console.WriteLine("Left:");
+                    //Console.WriteLine(VrRenderer.GetHMDMatrixProjectionEye(ref mHMD, EVREye.Eye_Left, 0.01f, 10f) * VrRenderer.GetHMDMatrixPoseEye(ref mHMD, EVREye.Eye_Left));
+                    Console.WriteLine(Spaam.CalculateProjectionError(p4x4, poses, mScreenPoints, knownPoint));
                     calibrateLeft = false;
                     mPointIndex = 0;
                 } else
                 {
                     calibrationData.rightEyeProjection = p4x4;
-                    Console.WriteLine("Right:");
-                    Console.WriteLine(VrRenderer.GetHMDMatrixProjectionEye(ref mHMD, EVREye.Eye_Right, 0.01f, 10f) * VrRenderer.GetHMDMatrixPoseEye(ref mHMD, EVREye.Eye_Right));
+                    //Console.WriteLine("Right:");
+                    //Console.WriteLine(VrRenderer.GetHMDMatrixProjectionEye(ref mHMD, EVREye.Eye_Right, 0.01f, 10f) * VrRenderer.GetHMDMatrixPoseEye(ref mHMD, EVREye.Eye_Right));
+                    Console.WriteLine(Spaam.CalculateProjectionError(p4x4, poses, mScreenPoints, knownPoint));
                     calibrationDone = true;
                 }
                 Console.WriteLine(p4x4);
@@ -209,7 +210,7 @@ namespace SparrowHawkCalibration
             GL.Viewport(0, 0, Width / 2, Height);
             GL.ClearColor(0.1f, 0, 0.1f, 1);
 
-            Matrix4 viewProject = calibrationData.leftEyeProjection * UtilOld.steamVRMatrixToMatrix4(mGamePoseArray[OpenVR.k_unTrackedDeviceIndex_Hmd].mDeviceToAbsoluteTracking).Inverted(); ;
+            Matrix4 viewProject = calibrationData.leftEyeProjection * UtilOld.steamVRMatrixToMatrix4(mGamePoseArray[OpenVR.k_unTrackedDeviceIndex_Hmd].mDeviceToAbsoluteTracking).Inverted();
             viewProject.Transpose();
             GL.BindFramebuffer(FramebufferTarget.Framebuffer, mLeftEyeDesc.renderFramebufferId);
             if (clear)

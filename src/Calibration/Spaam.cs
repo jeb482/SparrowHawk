@@ -45,13 +45,19 @@ namespace SparrowHawk.Calibration
                 B.SetRow(2 * i + 1, new float[] { p.X, p.Y, p.Z, 1, 0,0,0,0, -s.X * p.X, -s.X * p.Y, -s.X * p.Z, -s.X });
             }
             var svd = B.Svd();
-            Console.WriteLine("SVD");
-            Console.WriteLine(svd.U + "\n" + svd.S + "\n" + svd.VT);
 
             var v = svd.VT.Row(11);
             Matrix3x4 P = new Matrix3x4(v.At(0), v.At(1), v.At(2), v.At(3),
                                         v.At(4), v.At(5), v.At(6), v.At(7),
                                         v.At(8), v.At(9), v.At(10), v.At(11));
+
+            // Negate matrix if it projects point behind camera
+            if (Vector4.Dot(P.Row2, markPoses[0] * knownPoint) < 0)
+            {
+                Console.WriteLine("Reversed");
+                P *= -1;
+            }
+                
             Console.WriteLine("Calculated Matrix");
             Console.WriteLine(P);
 
@@ -76,9 +82,9 @@ namespace SparrowHawk.Calibration
         {
             // Duplicate last row.
             Matrix4 P = new Matrix4(proj.Row0, proj.Row1, proj.Row2, proj.Row2);
-            P.Row3 *= (-f - n);
-            P.M34 += f * n;
-            return P* Matrix4.CreateOrthographicOffCenter(-1, 1, -1, 1, 0.01f, 10);
+            //P.Row3 *= (-f - n);
+            //P.M34 += f * n;
+            return P;// * Matrix4.CreateOrthographicOffCenter(-1, 1, -1, 1, 0.01f, 10);
         }
 
         public static void RenderCrosshairs(Vector2 screenPos, Color4 color, FramebufferDesc framebuffer, bool clear=true)
@@ -96,6 +102,21 @@ namespace SparrowHawk.Calibration
             var id = Matrix4.Identity;
             crosshairMaterial.draw(ref crosshairs, ref id, ref id);
 
+        }
+
+        public static float CalculateProjectionError(Matrix4 P, List<Matrix4> markPoses, List<Vector2> screenPoints, Vector4 knownPoint)
+        {
+            Console.WriteLine("P_{4x4} residual calculation");
+            float residual = 0;
+            for (int i = 0; i < markPoses.Count; i++)
+            {
+                var p = P * markPoses[i] * knownPoint;
+                p /= p.W;
+                Console.WriteLine(p + " -- " + screenPoints[i]);
+                residual += (p.Xy - screenPoints[i]).Length;
+            }
+
+            return residual;
         }
     }
 
