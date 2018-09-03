@@ -95,6 +95,7 @@ namespace SparrowHawk.Interaction
 
         public string getTexturePath(MenuLayout2 layout)
         {
+            Rhino.RhinoApp.WriteLine(VrGame.RootDir + @"\src\resources\menus\new3\MainMenu.png");
             switch (layout)
             {
                 //testing C:\\Users\\ericw\\Documents at home, C:\workspace at lab

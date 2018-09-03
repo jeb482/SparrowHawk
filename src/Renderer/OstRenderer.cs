@@ -65,7 +65,7 @@ namespace SparrowHawk.Renderer
         /// <param name="eye"></param>
         protected void RenderScene(EVREye eye)
         {
-            GL.ClearColor(0f, 0f, 0f, 0f);
+            GL.ClearColor(0.1f, 0.0f, 0.1f, 1f);
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
             Matrix4 vp;
             switch (eye)
@@ -74,7 +74,7 @@ namespace SparrowHawk.Renderer
                     vp = CalibrationData.leftEyeProjection * mScene.mDevicePose[mScene.leftControllerIdx].Inverted();
                     break;
                 default:
-                    vp = CalibrationData.rightEyeProjection * mScene.mDevicePose[mScene.rightControllerIdx].Inverted();
+                    vp = CalibrationData.rightEyeProjection * mScene.mDevicePose[mScene.leftControllerIdx].Inverted();
                     break;
             }
             vp.Transpose();
@@ -94,7 +94,7 @@ namespace SparrowHawk.Renderer
             leftEyeDesc.BlitToResolve();
 
             GL.BindFramebuffer(FramebufferTarget.Framebuffer, rightEyeDesc.renderFramebufferId);
-            RenderScene(Valve.VR.EVREye.Eye_Left);
+            RenderScene(Valve.VR.EVREye.Eye_Right);
             rightEyeDesc.BlitToResolve();
         }
 
@@ -103,13 +103,14 @@ namespace SparrowHawk.Renderer
             if (mHMD != null)
             {
                 GL.DepthFunc(DepthFunction.Less);
-                GL.Enable(EnableCap.DepthTest);
+                GL.Disable(EnableCap.DepthTest);
                 RenderStereoTargets();
                 GL.Finish();
                 GL.Flush();
 
                 RenderOstWindow(leftEyeDesc, rightEyeDesc);
                 SubmitToHmd(leftEyeDesc, rightEyeDesc);
+
             }
         }
     }

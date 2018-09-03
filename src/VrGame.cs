@@ -19,7 +19,7 @@ namespace SparrowHawk
         public enum RenderMode { MetaTwo, OculusVr, OculusCst };
         
 
-        public RenderMode mRenderMode = RenderMode.MetaTwo;
+        public RenderMode mRenderMode = RenderMode.OculusVr;
         CVRSystem mHMD;
         CVRRenderModels mRenderModels;
         Scene mScene;
