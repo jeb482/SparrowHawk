@@ -110,7 +110,9 @@
     <Compile Include="OfflineCalibration.cs" />
     <Compile Include="Ovrvision\COvrvision.cs" />
     <Compile Include="Geometry\CubeGeometry.cs" />
+    <Compile Include="Renderer\AbstractRenderer.cs" />
     <Compile Include="Renderer\DepthPeelingRenderer.cs" />
+    <Compile Include="Renderer\OstRenderer.cs" />
     <Compile Include="Renderer\TextRenderer.cs" />
     <Compile Include="SparrowHawkEventListeners.cs" />
     <Compile Include="Geometry\Polyline.cs" />
@@ -137,7 +139,7 @@
     <Compile Include="Util\Util.cs" />
     <Compile Include="VrApp.cs" />
     <Compile Include="VrGame.cs" />
-    <Compile Include="VrRenderer.cs" />
+    <Compile Include="Renderer\VrRenderer.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />

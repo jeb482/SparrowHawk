@@ -10,6 +10,7 @@ using OpenTK.Input;
 using System.Xml.Serialization;
 using System.IO;
 using OpenTK.Graphics.OpenGL4;
+using SparrowHawk.Renderer;
 
 
 namespace SparrowHawkCalibration
@@ -30,7 +31,7 @@ namespace SparrowHawkCalibration
         
         // Callibration Machinery
         int mPointIndex = 0;
-        int numCalibrationPoints = 12;
+        int numCalibrationPoints = 8;
         bool calibrateLeft = true;
         bool hasKnownPoint = false;
         bool calibrationDone = false;
@@ -40,7 +41,7 @@ namespace SparrowHawkCalibration
         List<Matrix4> mLeftHeadPoses;
         List<Matrix4> mRightHeadPoses;
         MetaTwoCalibrationData calibrationData = new MetaTwoCalibrationData();
-        string CalibrationPath = "meta_calibration.xml";
+        //string CalibrationPath = "meta_calibration.xml";
 
         // Debug info
         private bool debug = true;
@@ -109,8 +110,8 @@ namespace SparrowHawkCalibration
             MakeCurrent();
 
             // Create rendering scaffolding.
-            VrRenderer.CreateFrameBuffer(Width / 2, Height, out mLeftEyeDesc);
-            VrRenderer.CreateFrameBuffer(Width / 2, Height, out mRightEyeDesc);
+            FramebufferDesc.CreateFrameBuffer(Width / 2, Height, out mLeftEyeDesc);
+            FramebufferDesc.CreateFrameBuffer(Width / 2, Height, out mRightEyeDesc);
             mRand = new Random();
             mScreenPoints = new List<Vector2>();
             for (int i = 0; i < numCalibrationPoints; i++)
@@ -172,8 +173,8 @@ namespace SparrowHawkCalibration
             // Submit to SteamVR compositor if running in debug mode.
             if (debug && mHMD != null)
             {
-                BlitToResolve(mLeftEyeDesc);
-                BlitToResolve(mRightEyeDesc);
+                mLeftEyeDesc.BlitToResolve();
+                mRightEyeDesc.BlitToResolve();
                 RenderMetaWindow();
                 VrRenderer.SubmitToHmd(mLeftEyeDesc, mRightEyeDesc); 
             }
@@ -218,16 +219,6 @@ namespace SparrowHawkCalibration
             bunnyMat.draw(ref bunny, ref modelTransform, ref viewProject);
         }
 
-        protected static void BlitToResolve(FramebufferDesc desc)
-        {
-            GL.BindFramebuffer(FramebufferTarget.ReadFramebuffer, desc.renderFramebufferId);
-            GL.BindFramebuffer(FramebufferTarget.DrawFramebuffer, desc.resolveFramebufferId);
-            GL.BlitFramebuffer(0, 0, desc.Width, desc.Height, 0, 0, desc.Width, desc.Height, ClearBufferMask.ColorBufferBit, BlitFramebufferFilter.Linear);
-            GL.BindFramebuffer(FramebufferTarget.ReadFramebuffer, 0);
-            GL.BindFramebuffer(FramebufferTarget.DrawFramebuffer, 0);
-            GL.Finish();
-            GL.Flush();
-        }
 
         protected void RenderDebugScene()
         {
@@ -306,9 +297,10 @@ namespace SparrowHawkCalibration
 
         protected void SaveMatrices()
         {
-            Console.WriteLine("Saving calibration data to " + CalibrationPath);
+            Console.WriteLine("Saving calibration data to " + Spaam.CalibrationPath);
+            System.IO.Directory.CreateDirectory(Spaam.CalibrationDir);
             XmlSerializer xmlf = new XmlSerializer(typeof(MetaTwoCalibrationData));
-            FileStream file = File.Open(CalibrationPath, FileMode.OpenOrCreate);
+            FileStream file = File.Open(Spaam.CalibrationPath, FileMode.OpenOrCreate, FileAccess.ReadWrite);
             xmlf.Serialize(file, calibrationData);
             file.Close();
         }

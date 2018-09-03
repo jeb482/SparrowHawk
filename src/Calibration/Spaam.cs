@@ -8,11 +8,18 @@ using OpenTK;
 using OpenTK.Graphics;
 using OpenTK.Graphics.OpenGL4;
 using LinAlg = MathNet.Numerics.LinearAlgebra;
+using SparrowHawk.Renderer;
+
 
 namespace SparrowHawk.Calibration
 {
     public class Spaam
     {
+        public static string CalibrationDir = Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory); //'//SpecialFolder.DesktopDirectory);
+        public static string CalibrationFilename = "meta_calibration.xml";
+        public static string CalibrationPath = CalibrationDir + "\\" + CalibrationFilename;
+
+
         private static Geometry.Geometry crosshairs = new Geometry.Polyline(new float[] {-1,0,1,1,0,1,0,-1,1,0,1,1});
         private static Material.SingleColorMaterial crosshairMaterial = new Material.SingleColorMaterial(1, 1, 1, 1);
      

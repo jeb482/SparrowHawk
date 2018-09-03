@@ -22,7 +22,7 @@ namespace SparrowHawk.Renderer
             depthPeelBuffers = new FramebufferDesc[NUM_DEPTH_PEEL_LAYERS];
             for (int i = 0; i < NUM_DEPTH_PEEL_LAYERS; i++)
             {
-                if (!CreateFrameBuffer((int)vrRenderWidth, (int)vrRenderHeight, out depthPeelBuffers[i]));
+                if (!FramebufferDesc.CreateFrameBuffer((int)vrRenderWidth, (int)vrRenderHeight, out depthPeelBuffers[i]));
                    return false;
             }
             return true;

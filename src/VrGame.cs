@@ -7,15 +7,20 @@ using Rhino.Geometry;
 using Emgu.CV.Structure;
 using Emgu.CV;
 using static SparrowHawk.Scene;
+using SparrowHawk.Renderer;
 
 namespace SparrowHawk
 {
     public class VrGame : OpenTK.GameWindow
     {
+
+        public enum RenderMode { MetaTwo, OculusVr, OculusCst };
+
+        public RenderMode mRenderMode = RenderMode.MetaTwo;
         CVRSystem mHMD;
         CVRRenderModels mRenderModels;
         Scene mScene;
-        VrRenderer mRenderer;
+        Renderer.AbstractRenderer mRenderer;
         Rhino.RhinoDoc mDoc;
         String mStrDriver = "No Driver";
         String mStrDisplay = "No Display";
@@ -378,7 +383,7 @@ namespace SparrowHawk
             handleInteractions();
             if (isCalibrateController)
                 updateControllerCallibration();
-            mRenderer.renderFrame();
+            mRenderer.RenderFrame();
             SwapBuffers();
         }
 
@@ -501,10 +506,20 @@ namespace SparrowHawk
             setupScene();
 
 
-            if (eError == EVRInitError.None)
-                mRenderer = new VrRenderer(ref mHMD, ref mScene, mRenderWidth, mRenderHeight);
-            else
-                mRenderer = new VrRenderer(ref mHMD, ref mScene, mRenderWidth, mRenderHeight);
+            switch (mRenderMode)
+            {
+                case RenderMode.MetaTwo:
+                    mRenderer = new OstRenderer(ref mHMD, ref mScene, mRenderWidth, mRenderHeight);
+                    break;
+                case RenderMode.OculusVr:
+                    mRenderer = new VrRenderer(ref mHMD, ref mScene, mRenderWidth, mRenderHeight);
+                    break;
+                case RenderMode.OculusCst:
+                    mRenderer = new VrRenderer(ref mHMD, ref mScene, mRenderWidth, mRenderHeight);
+                    break;
+                
+            }
+            
 
             //use other 8 points for calibrartion
             robotCallibrationPointsTest.Add(new Vector3(22, 15, -100) / 1000);
@@ -520,8 +535,8 @@ namespace SparrowHawk
             robotCallibrationPointsTest.Clear();
 
             //set default matrix
-            if (mRenderer.ovrvision_controller != null)
-                mRenderer.ovrvision_controller.setDefaultMatrixHC();
+            if (((VrRenderer) mRenderer).ovrvision_controller != null)
+                ((VrRenderer)mRenderer).ovrvision_controller.setDefaultMatrixHC();
 
             //detecting whether users in control or left
             Rhino.DocObjects.ObjectAttributes attr = new Rhino.DocObjects.ObjectAttributes();
@@ -563,11 +578,11 @@ namespace SparrowHawk
             {
                 ((VrRenderer)mRenderer).ovrvision_controller.getMatrixHeadtoCamera(0);
                 mScene.popInteraction();
-                mScene.pushInteraction(new Interaction.CalibrationAR(ref mScene, ref mRenderer.ovrvision_controller));
+                mScene.pushInteraction(new Interaction.CalibrationAR(ref mScene, ref ((VrRenderer)mRenderer).ovrvision_controller));
             }
 
             if (e.KeyChar == 'D' || e.KeyChar == 'd')
-                mRenderer.ovrvision_controller.setDefaultMatrixHC();
+                ((VrRenderer)mRenderer).ovrvision_controller.setDefaultMatrixHC();
 
 
             if (e.KeyChar == 'J' || e.KeyChar == 'j')
