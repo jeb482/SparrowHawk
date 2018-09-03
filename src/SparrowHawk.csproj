@@ -193,4 +193,7 @@
     </PropertyGroup>
     <Error Condition="!Exists('..\packages\EMGU.CV.3.4.1.2976\build\EMGU.CV.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\EMGU.CV.3.4.1.2976\build\EMGU.CV.targets'))" />
   </Target>
+  <PropertyGroup>
+    <PreBuildEvent>Copy "$(SolutionDir)ext\openvr\bin\win64\openvr_api.dll" "$(TargetDir)\openvr_api.dll"</PreBuildEvent>
+  </PropertyGroup>
 </Project>

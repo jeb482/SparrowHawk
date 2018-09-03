@@ -11,10 +11,13 @@ using SparrowHawk.Renderer;
 
 namespace SparrowHawk
 {
+    
+
     public class VrGame : OpenTK.GameWindow
     {
-
+        public static string RootDir = "D:\\workspace\\SparrowHawk";
         public enum RenderMode { MetaTwo, OculusVr, OculusCst };
+        
 
         public RenderMode mRenderMode = RenderMode.MetaTwo;
         CVRSystem mHMD;
@@ -474,6 +477,7 @@ namespace SparrowHawk
 
             // Set up HMD
             EVRInitError eError = EVRInitError.None;
+            Rhino.RhinoApp.WriteLine("Initializing VR");
             mHMD = OpenVR.Init(ref eError, EVRApplicationType.VRApplication_Scene);
 
             if (eError == EVRInitError.None)
@@ -503,6 +507,7 @@ namespace SparrowHawk
             mTitleBase = "SparrowHawk - " + mStrDriver + " " + mStrDisplay;
             Title = mTitleBase;
             MakeCurrent();
+            Rhino.RhinoApp.WriteLine("Setting up scene.");
             setupScene();
 
 
@@ -535,8 +540,9 @@ namespace SparrowHawk
             robotCallibrationPointsTest.Clear();
 
             //set default matrix
-            if (((VrRenderer) mRenderer).ovrvision_controller != null)
-                ((VrRenderer)mRenderer).ovrvision_controller.setDefaultMatrixHC();
+            // TODO: Add this shit back in.
+            //if (((VrRenderer) mRenderer).ovrvision_controller != null)
+            //    ((VrRenderer)mRenderer).ovrvision_controller.setDefaultMatrixHC();
 
             //detecting whether users in control or left
             Rhino.DocObjects.ObjectAttributes attr = new Rhino.DocObjects.ObjectAttributes();

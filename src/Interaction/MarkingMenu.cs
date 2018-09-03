@@ -98,20 +98,20 @@ namespace SparrowHawk.Interaction
             switch (layout)
             {
                 //testing C:\\Users\\ericw\\Documents at home, C:\workspace at lab
-                case MenuLayout2.MainMenu: return @"C:\workspace\SparrowHawk\src\resources\menus\new3\MainMenu.png";
-                case MenuLayout2.SweepC1: return @"C:\workspace\SparrowHawk\src\resources\menus\new3\SweepC1.png";
-                case MenuLayout2.SweepD1: return @"C:\workspace\SparrowHawk\src\resources\menus\new3\SweepD1.png";
-                case MenuLayout2.SweepC2D2: return @"C:\workspace\SparrowHawk\src\resources\menus\new3\SweepC2D2.png";
-                case MenuLayout2.ExtrudeC1: return @"C:\workspace\SparrowHawk\src\resources\menus\new3\ExtrudeC1.png";
-                case MenuLayout2.ExtrudeD1: return @"C:\workspace\SparrowHawk\src\resources\menus\new3\ExtrudeD1.png";
-                case MenuLayout2.ExtrudeC2D2: return @"C:\workspace\SparrowHawk\src\resources\menus\new3\ExtrudeC2D2.png";
-                case MenuLayout2.LoftC1: return @"C:\workspace\SparrowHawk\src\resources\menus\new3\LoftC1.png";
-                case MenuLayout2.LoftD1: return @"C:\workspace\SparrowHawk\src\resources\menus\new3\LoftD1.png";
-                case MenuLayout2.LoftC2D2: return @"C:\workspace\SparrowHawk\src\resources\menus\new3\LoftC2D2.png";
-                case MenuLayout2.LoftC2: return @"C:\workspace\SparrowHawk\src\resources\menus\new3\LoftC2.png";
-                case MenuLayout2.LoftD2: return @"C:\workspace\SparrowHawk\src\resources\menus\new3\LoftD2.png";
-                case MenuLayout2.RevolveC1D1: return @"C:\workspace\SparrowHawk\src\resources\menus\new3\RevolveC1D1.png";
-                case MenuLayout2.RevolveAxis: return @"C:\workspace\SparrowHawk\src\resources\menus\new3\RevolveAxis.png";
+                case MenuLayout2.MainMenu: return VrGame.RootDir + @"\src\resources\menus\new3\MainMenu.png";
+                case MenuLayout2.SweepC1: return VrGame.RootDir + @"\src\resources\menus\new3\SweepC1.png";
+                case MenuLayout2.SweepD1: return VrGame.RootDir + @"\src\resources\menus\new3\SweepD1.png";
+                case MenuLayout2.SweepC2D2: return VrGame.RootDir + @"\src\resources\menus\new3\SweepC2D2.png";
+                case MenuLayout2.ExtrudeC1: return VrGame.RootDir + @"\src\resources\menus\new3\ExtrudeC1.png";
+                case MenuLayout2.ExtrudeD1: return VrGame.RootDir + @"\src\resources\menus\new3\ExtrudeD1.png";
+                case MenuLayout2.ExtrudeC2D2: return VrGame.RootDir + @"\src\resources\menus\new3\ExtrudeC2D2.png";
+                case MenuLayout2.LoftC1: return VrGame.RootDir + @"\src\resources\menus\new3\LoftC1.png";
+                case MenuLayout2.LoftD1: return VrGame.RootDir + @"\src\resources\menus\new3\LoftD1.png";
+                case MenuLayout2.LoftC2D2: return VrGame.RootDir + @"\src\resources\menus\new3\LoftC2D2.png";
+                case MenuLayout2.LoftC2: return VrGame.RootDir + @"\src\resources\menus\new3\LoftC2.png";
+                case MenuLayout2.LoftD2: return VrGame.RootDir + @"\src\resources\menus\new3\LoftD2.png";
+                case MenuLayout2.RevolveC1D1: return VrGame.RootDir + @"\src\resources\menus\new3\RevolveC1D1.png";
+                case MenuLayout2.RevolveAxis: return VrGame.RootDir + @"\src\resources\menus\new3\RevolveAxis.png";
 
             }
             return "";
@@ -159,8 +159,8 @@ namespace SparrowHawk.Interaction
                 mOuterSelectionRadius = 0.6f;
             }
 
-
-            Geometry.Geometry g = new Geometry.Geometry("C:\\workspace\\SparrowHawk\\src\\resources\\circle.obj");
+            Rhino.RhinoApp.WriteLine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData));
+            Geometry.Geometry g = new Geometry.Geometry(VrGame.RootDir + "\\src\\resources\\circle.obj");
             switch (mLayout)
             {
 
