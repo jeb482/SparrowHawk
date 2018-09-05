@@ -41,32 +41,42 @@ namespace SparrowHawk.Renderer
         }
 
         /// <summary>
+        /// Swap in-place first two elements of the input array. 
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="data"></param>
+        protected void swapFirstTwo<T>(ref T[] data)
+        {
+            if (data.Count() > 1)
+            {
+                T temp = data[0];
+                data[0] = data[1];
+                data[1] = temp;
+            }
+        }
+
+        /// <summary>
         /// Given stereo pair in left and right, renders, flipped, to a window 
         /// assumed to be sent to the OST system. 
         /// Left and right assumed to be same height.
         /// </summary>
         /// <param name="left"></param>
         /// <param name="right"></param>
-        public void RenderOstWindow(FramebufferDesc left, FramebufferDesc right, bool flipY=true, bool flipX=false)
+        public void RenderOstWindow(FramebufferDesc left, FramebufferDesc right, bool flipY=true, bool flipX=true)
         {
-            void swap(ref int a, ref int b)
-            {
-                int temp = a;
-                a = b;
-                b = temp;
-            }
-            int xMin = 0, yMin = 0, xMax = left.Width, yMax = left.Height;
-            if (flipY) swap(ref yMax, ref yMin);
-            if (flipX) swap(ref xMax, ref xMin);
+
+            int[] xBounds = { 0, left.Width }, yBounds = { 0, left.Height };
+            if (flipY) swapFirstTwo(ref yBounds);
+            if (flipX) swapFirstTwo(ref xBounds);
             GL.BindFramebuffer(FramebufferTarget.ReadFramebuffer, left.renderFramebufferId);
             GL.BindFramebuffer(FramebufferTarget.DrawFramebuffer, 0);
-            GL.BlitFramebuffer(0, 0, left.Width, left.Height, xMin, yMin, xMax, yMax, ClearBufferMask.ColorBufferBit, BlitFramebufferFilter.Linear);
+            GL.BlitFramebuffer(0, 0, left.Width, left.Height, xBounds[0], yBounds[0], xBounds[1], yBounds[1], ClearBufferMask.ColorBufferBit, BlitFramebufferFilter.Linear);
 
-            xMin = left.Width;
-            xMax = left.Width + right.Width; 
-            if (flipX) swap(ref xMax, ref xMin);
+            xBounds[0] = left.Width;
+            xBounds[1] = left.Width + right.Width;
+            if (flipX) swapFirstTwo(ref xBounds);
             GL.BindFramebuffer(FramebufferTarget.ReadFramebuffer, right.renderFramebufferId);
-            GL.BlitFramebuffer(0, 0, left.Width, left.Height, xMin, yMin, xMax, yMax, ClearBufferMask.ColorBufferBit, BlitFramebufferFilter.Linear);
+            GL.BlitFramebuffer(0, 0, left.Width, left.Height, xBounds[0], yBounds[0], xBounds[1], yBounds[1], ClearBufferMask.ColorBufferBit, BlitFramebufferFilter.Linear);
             GL.BindFramebuffer(FramebufferTarget.ReadFramebuffer, 0);
             GL.Flush();
             GL.Finish();
