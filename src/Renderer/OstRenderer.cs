@@ -42,18 +42,31 @@ namespace SparrowHawk.Renderer
 
         /// <summary>
         /// Given stereo pair in left and right, renders, flipped, to a window 
-        /// assumed to be sent to the OST system.
+        /// assumed to be sent to the OST system. 
+        /// Left and right assumed to be same height.
         /// </summary>
         /// <param name="left"></param>
         /// <param name="right"></param>
-        public void RenderOstWindow(FramebufferDesc left, FramebufferDesc right)
+        public void RenderOstWindow(FramebufferDesc left, FramebufferDesc right, bool flipY=true, bool flipX=false)
         {
+            void swap(ref int a, ref int b)
+            {
+                int temp = a;
+                a = b;
+                b = temp;
+            }
+            int xMin = 0, yMin = 0, xMax = left.Width, yMax = left.Height;
+            if (flipY) swap(ref yMax, ref yMin);
+            if (flipX) swap(ref xMax, ref xMin);
             GL.BindFramebuffer(FramebufferTarget.ReadFramebuffer, left.renderFramebufferId);
             GL.BindFramebuffer(FramebufferTarget.DrawFramebuffer, 0);
-            GL.BlitFramebuffer(0, 0, left.Width, left.Height, left.Width, left.Height, 0, 0, ClearBufferMask.ColorBufferBit, BlitFramebufferFilter.Linear);
+            GL.BlitFramebuffer(0, 0, left.Width, left.Height, xMin, yMin, xMax, yMax, ClearBufferMask.ColorBufferBit, BlitFramebufferFilter.Linear);
 
+            xMin = left.Width;
+            xMax = left.Width + right.Width; 
+            if (flipX) swap(ref xMax, ref xMin);
             GL.BindFramebuffer(FramebufferTarget.ReadFramebuffer, right.renderFramebufferId);
-            GL.BlitFramebuffer(0, 0, left.Width, left.Height, left.Width + right.Width, right.Height, left.Width, 0, ClearBufferMask.ColorBufferBit, BlitFramebufferFilter.Linear);
+            GL.BlitFramebuffer(0, 0, left.Width, left.Height, xMin, yMin, xMax, yMax, ClearBufferMask.ColorBufferBit, BlitFramebufferFilter.Linear);
             GL.BindFramebuffer(FramebufferTarget.ReadFramebuffer, 0);
             GL.Flush();
             GL.Finish();

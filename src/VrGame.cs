@@ -19,7 +19,7 @@ namespace SparrowHawk
         public enum RenderMode { MetaTwo, OculusVr, OculusCst };
         
 
-        public RenderMode mRenderMode = RenderMode.OculusVr;
+        public RenderMode mRenderMode = RenderMode.MetaTwo;
         CVRSystem mHMD;
         CVRRenderModels mRenderModels;
         Scene mScene;
@@ -74,7 +74,7 @@ namespace SparrowHawk
             Rhino.RhinoApp.WriteLine("The robot offset is: " + OfflineCalibration.solveForRobotOffsetVector(OfflineCalibration.getHuaishuRobotMeasurements()));
             Rhino.RhinoApp.WriteLine("Working Directory: " + System.IO.Directory.GetCurrentDirectory());
             mIsLefty = isLefty;
-
+            GL.Enable(EnableCap.Texture2D);
             if (init())
                 Rhino.RhinoApp.WriteLine("Initialization complete!");
 
