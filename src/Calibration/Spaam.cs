@@ -96,7 +96,7 @@ namespace SparrowHawk.Calibration
         public static Matrix4 ConstructProjectionMatrix4x4(Matrix3x4 proj, float n, float f, int r, int l, int t, int b)
         {
             // Duplicate last row.
-            r = 1; l = -1; t = 1; b = -1; n = .1f; f = 10;
+            //r = 1; l = -1; t = 1; b = -1; n = .1f; f = 10;
             Matrix4 P = new Matrix4(proj.Row0, proj.Row1, proj.Row2, proj.Row2);
             float normZ = P.Row2.Xyz.Length;
             P = new Matrix4(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0) * P;
