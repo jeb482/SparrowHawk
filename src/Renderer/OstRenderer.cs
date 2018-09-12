@@ -91,6 +91,7 @@ namespace SparrowHawk.Renderer
             GL.ClearColor(0.1f, 0.0f, 0.1f, 1f);
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
             Matrix4 vp;
+            Matrix4 ortho = Matrix4.CreateOrthographic(leftEyeDesc.Width * 2, leftEyeDesc.Height, 0.1f, 10);
             switch (eye)
             {
                 case Valve.VR.EVREye.Eye_Left:

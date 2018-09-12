@@ -139,7 +139,7 @@ namespace SparrowHawkCalibration
             {
                 var poses = (calibrateLeft) ? mLeftHeadPoses : mRightHeadPoses;
                 var p3x4 = Spaam.EstimateProjectionMatrix3x4(poses, mScreenPoints, knownPoint);
-                var p4x4 = Spaam.ConstructProjectionMatrix4x4(p3x4, 0.01f, 10, Width / 4, Width / 4, Height / 2, Height / 2);
+                var p4x4 = Spaam.ConstructProjectionMatrix4x4(p3x4, 0.01f, 10, 1, -1, 1, -1);
                 if (calibrateLeft)
                 { 
                     calibrationData.leftEyeProjection = p4x4;
