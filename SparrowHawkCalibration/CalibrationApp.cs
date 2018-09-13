@@ -204,7 +204,8 @@ namespace SparrowHawkCalibration
         {
             Matrix4 modelTransform = Matrix4.CreateTranslation(knownPoint.Xyz);
             modelTransform.Transpose();
-            Matrix4 rightControllerM = UtilOld.steamVRMatrixToMatrix4(mGamePoseArray[mRightControllerIdx].mDeviceToAbsoluteTracking);
+            Vector4 cursorPos = UtilOld.steamVRMatrixToMatrix4(mGamePoseArray[mRightControllerIdx].mDeviceToAbsoluteTracking) * new Vector4(controllerOffset, 1);
+            Matrix4 rightControllerM = Matrix4.CreateTranslation(cursorPos.Xyz);
             rightControllerM.Transpose();
             GL.Viewport(0, 0, Width / 2, Height);
             GL.ClearColor(0.1f, 0, 0.1f, 1);
