@@ -27,7 +27,8 @@ namespace SparrowHawkCalibration
         Random mRand;
         SparrowHawk.Geometry.Geometry bunny;
         SparrowHawk.Material.Material bunnyMat;
-         
+        SparrowHawk.Geometry.Geometry rightCursor;
+        SparrowHawk.Material.Material cursorMat;
         
         // Callibration Machinery
         int mPointIndex = 0;
@@ -125,6 +126,8 @@ namespace SparrowHawkCalibration
             bunny = new SparrowHawk.Geometry.Geometry("D:\\workspace\\SparrowHawk\\src\\resources\\bunny.obj");
             pointMaterial = new SparrowHawk.Material.SingleColorMaterial(1,1,0,1);
             bunnyMat = new SparrowHawk.Material.RGBNormalMaterial(1);
+            rightCursor = new SparrowHawk.Geometry.DrawPointMarker(new Vector3(0, 0, 0));
+            cursorMat = new SparrowHawk.Material.SingleColorMaterial(1, 0, 0, 1);
         }
 
         protected override void OnRenderFrame(FrameEventArgs e)
@@ -201,6 +204,8 @@ namespace SparrowHawkCalibration
         {
             Matrix4 modelTransform = Matrix4.CreateTranslation(knownPoint.Xyz);
             modelTransform.Transpose();
+            Matrix4 rightControllerM = UtilOld.steamVRMatrixToMatrix4(mGamePoseArray[mRightControllerIdx].mDeviceToAbsoluteTracking);
+            rightControllerM.Transpose();
             GL.Viewport(0, 0, Width / 2, Height);
             GL.ClearColor(0.1f, 0, 0.1f, 1);
 
@@ -210,6 +215,7 @@ namespace SparrowHawkCalibration
             if (clear)
                 GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
             bunnyMat.draw(ref bunny, ref modelTransform , ref viewProject);
+            cursorMat.draw(ref rightCursor, ref rightControllerM, ref viewProject);
 
             viewProject = calibrationData.rightEyeProjection * UtilOld.steamVRMatrixToMatrix4(mGamePoseArray[mLeftControllerIdx].mDeviceToAbsoluteTracking).Inverted();
             viewProject.Transpose();
@@ -217,6 +223,7 @@ namespace SparrowHawkCalibration
             if (clear)
                 GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
             bunnyMat.draw(ref bunny, ref modelTransform, ref viewProject);
+            cursorMat.draw(ref rightCursor, ref rightControllerM, ref viewProject);
         }
 
 

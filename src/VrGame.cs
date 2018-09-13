@@ -514,7 +514,7 @@ namespace SparrowHawk
             switch (mRenderMode)
             {
                 case RenderMode.MetaTwo:
-                    mRenderer = new OstRenderer(ref mHMD, ref mScene, mRenderWidth, mRenderHeight);
+                    mRenderer = new OstRenderer(ref mHMD, ref mScene, (uint) Width, (uint) Height);
                     break;
                 case RenderMode.OculusVr:
                     mRenderer = new VrRenderer(ref mHMD, ref mScene, mRenderWidth, mRenderHeight);
