@@ -20,7 +20,7 @@ namespace SparrowHawk.Material
         {
             //mAlpha = alpha;
             // Ignore and set a global alpha
-            mAlpha = 0.5f;
+            mAlpha = 1f;
             mShader = new GLShader();
             mShader.init("RGBNormalMaterial", ShaderSource.RGBNormalVertShader, ShaderSource.RGBNormalFragShader);
         }
