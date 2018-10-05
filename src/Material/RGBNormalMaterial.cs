@@ -27,6 +27,9 @@ namespace SparrowHawk.Material
 
         override public void draw(ref Geometry.Geometry g, ref Matrix4 model, ref Matrix4 vp)
         {
+            GL.Enable(EnableCap.CullFace);
+            GL.CullFace(CullFaceMode.Back);
+
             // bind shader
             GL.Disable(EnableCap.DepthTest);
             GL.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
@@ -50,6 +53,7 @@ namespace SparrowHawk.Material
             mShader.drawIndexed(g.primitiveType, 0, g.mNumPrimitives);
             GL.Disable(EnableCap.Blend);
             GL.Disable(EnableCap.DepthTest);
+            GL.Disable(EnableCap.CullFace);
         }
 
     }
