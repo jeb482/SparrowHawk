@@ -176,6 +176,11 @@ namespace SparrowHawk
                                                 994.7281f, -16.32391f, -23.68098f, -3.561577f,
                                                 -13.79134f, -1002.81f, -30.55335f, 1444.57f,
                                                 0f, 0f, 0f, 1f);
+
+
+        // Set this to rotation you want (in radians)
+        public Matrix4 laserBeamFrame = Matrix4.CreateRotationX(0);
+
         // Interactions
         private Stack<Interaction.Interaction> mInteractionStack = new Stack<Interaction.Interaction>();
         public List<Stack<Interaction.Interaction>> mIChainsList = new List<Stack<Interaction.Interaction>>();

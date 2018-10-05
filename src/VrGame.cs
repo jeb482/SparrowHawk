@@ -461,7 +461,8 @@ namespace SparrowHawk
                 mScene.leftControllerNode.add(ref rayTraceL);
             else
                 mScene.rightControllerNode.add(ref rayTraceL);
-            rayTraceL.transform = new Matrix4(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1);//mScene.mLeftControllerOffset;
+            rayTraceL.transform = mScene.laserBeamFrame;//mScene.mLeftControllerOffset;
+            
 
             UtilOld.showLaser(ref mScene, false);
 
