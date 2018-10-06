@@ -29,7 +29,7 @@ namespace SparrowHawk.Calibration
             if (clear)
                 GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
             
-            var view = Matrix4.CreateTranslation(-screenPos.X, -screenPos.Y,0);
+            var view = Matrix4.CreateTranslation(screenPos.X, screenPos.Y,0);
             view.Transpose();
             var id = Matrix4.Identity;
             cursorMaterial.draw(ref cursor, ref view, ref id);

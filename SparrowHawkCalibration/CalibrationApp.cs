@@ -19,7 +19,7 @@ namespace SparrowHawkCalibration
     {
         // 
         public enum CalibrationType {Spaam, StereoSpaam}
-        public CalibrationType calibrationType = CalibrationType.Spaam;
+        public CalibrationType calibrationType = CalibrationType.StereoSpaam;
 
         // VR Handling
         CVRSystem mHMD;
@@ -36,6 +36,7 @@ namespace SparrowHawkCalibration
 
         // Callibration Machinery
         int mPointIndex = 0;
+        bool haveMatrix = false;
         static int numCalibrationPoints = 8;
         CalibrationProcedure calibrationProcedure;
         Vector3 controllerOffset = Vector3.Zero;
@@ -122,9 +123,10 @@ namespace SparrowHawkCalibration
             switch (calibrationType)
             {
                 case CalibrationType.Spaam:
-                    calibrationProcedure = new StereoSpaamCalibrationProcedure(numCalibrationPoints);
+                    calibrationProcedure = new SpaamCalibrationProcedure(numCalibrationPoints);
                     break;
                 case CalibrationType.StereoSpaam:
+                    calibrationProcedure = new StereoSpaamCalibrationProcedure(numCalibrationPoints);
                     break;
             }
         }
@@ -136,15 +138,21 @@ namespace SparrowHawkCalibration
             UpdateMatrixPose();
 
             HandleInput();
-            calibrationProcedure.UpdateData();
+
+            if (!(calibrationProcedure.IsComplete()))
+                calibrationProcedure.UpdateData();
 
             if (debug)
                 RenderDebugScene();
 
-            if (calibrationProcedure.IsComplete())
+            if (calibrationProcedure.IsComplete() )
             {
-                calibrationData = calibrationProcedure.GetCalibrationData();
-                RenderTestScene(!debug);
+                if (!haveMatrix)
+                {
+                    calibrationData = calibrationProcedure.GetCalibrationData();
+                    haveMatrix = true;
+                }
+                RenderTestScene(!debug);                
             } else
             {
                 calibrationProcedure.RenderCalibrationOverlay(ref mLeftEyeDesc, ref mRightEyeDesc, debug);

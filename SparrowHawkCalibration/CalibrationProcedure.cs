@@ -94,6 +94,7 @@ namespace SparrowHawkCalibration
                 CalibrationDone = true;
             }
             Console.WriteLine(p4x4);
+            
         }
 
         public override void RegisterPoint(HmdMatrix34_t leftControllerPose, HmdMatrix34_t rightControllerPose, Vector3 rightControllerOffset)
@@ -135,6 +136,8 @@ namespace SparrowHawkCalibration
         protected int NumCalibrationPoints;
         protected Vector4 knownPoint = Vector4.Zero;
         MetaTwoCalibrationData calibrationData = new MetaTwoCalibrationData();
+        protected float max_disparity = 0.48f;
+        protected float min_disparity = 0.35f;
 
         public StereoSpaamCalibrationProcedure(int numCalibrationPoints)
         {
@@ -145,8 +148,8 @@ namespace SparrowHawkCalibration
             for (int i = 0; i < numCalibrationPoints; i++)
             {
                 mScreenPointsLeft.Add(new Vector2((float)rand.NextDouble() * 1f - .5f, (float)rand.NextDouble() * 1f - .5f));
-                float disparity = .4f;//(float)rand.NextDouble() * .2f;
-                mScreenPointsRight.Add(new Vector2(mScreenPointsLeft[i].X + disparity, mScreenPointsLeft[i].Y));
+                float disparity = (float)rand.NextDouble()*(max_disparity - min_disparity) + min_disparity;
+                mScreenPointsRight.Add(new Vector2(mScreenPointsLeft[i].X - disparity, mScreenPointsLeft[i].Y));
             }
             mHeadPoses = new List<Matrix4>();
             
@@ -167,7 +170,7 @@ namespace SparrowHawkCalibration
             return CalibrationDone;
         }
 
-        public override void RegisterPoint(HmdMatrix34_t rightControllerPose, HmdMatrix34_t leftControllerPose, Vector3 rightControllerOffset)
+        public override void RegisterPoint(HmdMatrix34_t leftControllerPose, HmdMatrix34_t rightControllerPose, Vector3 rightControllerOffset)
         {
             Matrix4 lPose = UtilOld.steamVRMatrixToMatrix4(leftControllerPose);
             Vector4 rPoint = UtilOld.steamVRMatrixToMatrix4(rightControllerPose) * new Vector4(rightControllerOffset, 1);
