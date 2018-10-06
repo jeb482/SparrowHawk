@@ -29,20 +29,13 @@ namespace SparrowHawkCalibration
         SparrowHawk.Material.Material bunnyMat;
         SparrowHawk.Geometry.Geometry rightCursor;
         SparrowHawk.Material.Material cursorMat;
-        
+
         // Callibration Machinery
         int mPointIndex = 0;
-        int numCalibrationPoints = 8;
-        bool calibrateLeft = true;
-        bool hasKnownPoint = false;
-        bool calibrationDone = false;
-        Vector4 knownPoint = Vector4.Zero;
+        static int numCalibrationPoints = 8;
+        CalibrationProcedure calibrationProcedure = new SpaamCalibrationProcedure(numCalibrationPoints);
         Vector3 controllerOffset = Vector3.Zero;
-        List<Vector2> mScreenPoints;
-        List<Matrix4> mLeftHeadPoses;
-        List<Matrix4> mRightHeadPoses;
         MetaTwoCalibrationData calibrationData = new MetaTwoCalibrationData();
-        //string CalibrationPath = "meta_calibration.xml";
 
         // Debug info
         private bool debug = true;
@@ -113,14 +106,6 @@ namespace SparrowHawkCalibration
             // Create rendering scaffolding.
             FramebufferDesc.CreateFrameBuffer(Width / 2, Height, out mLeftEyeDesc);
             FramebufferDesc.CreateFrameBuffer(Width / 2, Height, out mRightEyeDesc);
-            mRand = new Random();
-            mScreenPoints = new List<Vector2>();
-            for (int i = 0; i < numCalibrationPoints; i++)
-            {
-                mScreenPoints.Add(new Vector2((float) mRand.NextDouble() * 1f - .5f, (float) mRand.NextDouble() * 1f - .5f));
-            }
-            mLeftHeadPoses = new List<Matrix4>();
-            mRightHeadPoses = new List<Matrix4>();
 
             debugPoint = new SparrowHawk.Geometry.DrawPointMarker(new Vector3(0,0,0));//new SparrowHawk.Geometry.PointMarker(new Vector3(0,0,0));
             bunny = new SparrowHawk.Geometry.Geometry("D:\\workspace\\SparrowHawk\\src\\resources\\bunny.obj");
@@ -136,52 +121,36 @@ namespace SparrowHawkCalibration
             MakeCurrent();
             UpdateMatrixPose();
 
-            // Handle Input; Update state 
             HandleInput();
-            if (!calibrationDone && mPointIndex >= numCalibrationPoints)
-            {
-                var poses = (calibrateLeft) ? mLeftHeadPoses : mRightHeadPoses;
-                var p3x4 = Spaam.EstimateProjectionMatrix3x4(poses, mScreenPoints, knownPoint);
-                var p4x4 = Spaam.ConstructProjectionMatrix4x4(p3x4, 0.01f, 10, 1, -1, 1, -1);
-                if (calibrateLeft)
-                { 
-                    calibrationData.leftEyeProjection = p4x4;
-                    Console.WriteLine(Spaam.CalculateProjectionError(p4x4, poses, mScreenPoints, knownPoint));
-                    calibrateLeft = false;
-                    mPointIndex = 0;
-                } else
-                {
-                    calibrationData.rightEyeProjection = p4x4;
-                    Console.WriteLine(Spaam.CalculateProjectionError(p4x4, poses, mScreenPoints, knownPoint));
-                    calibrationDone = true;
-                }
-                Console.WriteLine(p4x4);
-                Console.WriteLine(p4x4* (UtilOld.steamVRMatrixToMatrix4(mGamePoseArray[OpenVR.k_unTrackedDeviceIndex_Hmd].mDeviceToAbsoluteTracking).Inverted() *knownPoint));
+            calibrationProcedure.UpdateData();
 
-            }
-
-            // In debug mode, pretend oculus is an optical see-through system.
             if (debug)
                 RenderDebugScene();
-            
-            // Render the active point.
-            if (!calibrationDone) {
-                FramebufferDesc fb = (calibrateLeft) ? mLeftEyeDesc : mRightEyeDesc;
-                Spaam.RenderCrosshairs(mScreenPoints[mPointIndex], new OpenTK.Graphics.Color4(1, 1, 1, 1), fb, !debug);
+
+            if (calibrationProcedure.IsComplete())
+            {
+                calibrationData = calibrationProcedure.GetCalibrationData();
+                RenderTestScene(!debug);
             } else
             {
-                RenderTestScene(!debug);
+                calibrationProcedure.RenderCalibrationOverlay(ref mLeftEyeDesc, ref mRightEyeDesc, debug);
             }
+                            
+            if (debug)
+                SubmitToCompositor();
+            RenderMetaWindow();
+        }
 
+        protected void SubmitToCompositor()
+        {
             // Submit to SteamVR compositor if running in debug mode.
             if (debug && mHMD != null)
             {
                 mLeftEyeDesc.BlitToResolve();
                 mRightEyeDesc.BlitToResolve();
                 RenderMetaWindow();
-                VrRenderer.SubmitToHmd(mLeftEyeDesc, mRightEyeDesc); 
+                VrRenderer.SubmitToHmd(mLeftEyeDesc, mRightEyeDesc);
             }
-            RenderMetaWindow();
         }
 
         protected void RenderMetaWindow()
@@ -202,7 +171,7 @@ namespace SparrowHawkCalibration
 
         protected void RenderTestScene(bool clear)
         {
-            Matrix4 modelTransform = Matrix4.CreateTranslation(knownPoint.Xyz);
+            Matrix4 modelTransform = Matrix4.CreateTranslation(calibrationProcedure.GetKnownPoint().Xyz);
             modelTransform.Transpose();
             Vector4 cursorPos = UtilOld.steamVRMatrixToMatrix4(mGamePoseArray[mRightControllerIdx].mDeviceToAbsoluteTracking) * new Vector4(controllerOffset, 1);
             Matrix4 rightControllerM = Matrix4.CreateTranslation(cursorPos.Xyz);
@@ -231,7 +200,7 @@ namespace SparrowHawkCalibration
         protected void RenderDebugScene()
         {
             //(vp = mEyeProjRight * mEyePosRight * mScene.mHMDPose).T
-            Matrix4 modelTransform = Matrix4.CreateTranslation(knownPoint.Xyz);
+            Matrix4 modelTransform = Matrix4.CreateTranslation(calibrationProcedure.GetKnownPoint().Xyz);
             modelTransform.Transpose();
             GL.Viewport(0, 0, Width / 2, Height);
             GL.ClearColor(0.1f, 0, 0.1f, 1);
@@ -282,24 +251,12 @@ namespace SparrowHawkCalibration
 
         protected void RegisterPoint()
         {
-            if (mHMD == null)
+            if (mHMD != null)
             {
-                mPointIndex += 1;
-                return;
-            }
-            if (!hasKnownPoint)
-            {
-                var controllerPose = UtilOld.steamVRMatrixToMatrix4(mGamePoseArray[mRightControllerIdx].mDeviceToAbsoluteTracking);
-                knownPoint = controllerPose * new Vector4(controllerOffset, 1);
-                hasKnownPoint = true;
-            } else if (calibrateLeft)
-            {
-                mLeftHeadPoses.Add(UtilOld.steamVRMatrixToMatrix4(mGamePoseArray[mLeftControllerIdx].mDeviceToAbsoluteTracking).Inverted());
-                mPointIndex += 1;
-            } else
-            {
-                mRightHeadPoses.Add(UtilOld.steamVRMatrixToMatrix4(mGamePoseArray[mLeftControllerIdx].mDeviceToAbsoluteTracking).Inverted());
-                mPointIndex += 1;
+                calibrationProcedure.RegisterPoint(
+                    mGamePoseArray[mLeftControllerIdx].mDeviceToAbsoluteTracking,
+                    mGamePoseArray[mRightControllerIdx].mDeviceToAbsoluteTracking,
+                    controllerOffset);
             }
         }
 

@@ -89,6 +89,7 @@
   <ItemGroup>
     <Compile Include="BiDictionaryOneToOne.cs" />
     <Compile Include="Calibration\Spaam.cs" />
+    <Compile Include="Calibration\StereoSpaam.cs" />
     <Compile Include="DesignPlane.cs" />
     <Compile Include="Geometry\DesignPlaneMesh.cs" />
     <Compile Include="Geometry\DrawPointMarker.cs" />
