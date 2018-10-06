@@ -17,6 +17,10 @@ namespace SparrowHawkCalibration
 {
     public class CalibrationApp : OpenTK.GameWindow
     {
+        // 
+        public enum CalibrationType {Spaam, StereoSpaam}
+        public CalibrationType calibrationType = CalibrationType.Spaam;
+
         // VR Handling
         CVRSystem mHMD;
         int mLeftControllerIdx, mRightControllerIdx;
@@ -33,7 +37,7 @@ namespace SparrowHawkCalibration
         // Callibration Machinery
         int mPointIndex = 0;
         static int numCalibrationPoints = 8;
-        CalibrationProcedure calibrationProcedure = new StereoSpaamCalibrationProcedure(numCalibrationPoints);
+        CalibrationProcedure calibrationProcedure;
         Vector3 controllerOffset = Vector3.Zero;
         MetaTwoCalibrationData calibrationData = new MetaTwoCalibrationData();
 
@@ -113,6 +117,16 @@ namespace SparrowHawkCalibration
             bunnyMat = new SparrowHawk.Material.RGBNormalMaterial(1);
             rightCursor = new SparrowHawk.Geometry.DrawPointMarker(new Vector3(0, 0, 0));
             cursorMat = new SparrowHawk.Material.SingleColorMaterial(1, 0, 0, 1);
+
+            // Calibration selection
+            switch (calibrationType)
+            {
+                case CalibrationType.Spaam:
+                    calibrationProcedure = new StereoSpaamCalibrationProcedure(numCalibrationPoints);
+                    break;
+                case CalibrationType.StereoSpaam:
+                    break;
+            }
         }
 
         protected override void OnRenderFrame(FrameEventArgs e)
