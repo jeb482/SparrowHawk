@@ -37,7 +37,7 @@ namespace SparrowHawkCalibration
         // Callibration Machinery
         int mPointIndex = 0;
         bool haveMatrix = false;
-        static int numCalibrationPoints = 8;
+        static int numCalibrationPoints = 16;
         CalibrationProcedure calibrationProcedure;
         Vector3 controllerOffset = Vector3.Zero;
         MetaTwoCalibrationData calibrationData = new MetaTwoCalibrationData();
